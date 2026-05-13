@@ -1402,7 +1402,8 @@
         var isLoadingMore = false; // For pagination
         var noMoreGeneralMessages = false; // True once we've reached the oldest message in RTDB
         var supporterUsers = {}; // Store supporter usernames as object for ES5 compatibility
-        var usernameToProfile = {}; // Cache: username -> { uid, avatarSeed, customAvatar }
+        var usernameToProfile = {}; // Cache: username -> { uid, avatarSeed }
+        var _pendingProfileFetches = {}; // Dedup in-flight on-demand lookups
         // KINDLE MEMORY: track which messages are currently rendered in the
         // general channel so child_added can dedupe across initial-load,
         // pagination, and live updates. Reset whenever the room changes.
@@ -2886,7 +2887,7 @@
                 }
             } catch (e) {}
 
-            rtdb.ref('users_public').orderByChild('lastActive').limitToLast(500).once('value').then(function (snap) {
+            rtdb.ref('users_public').orderByChild('lastActive').limitToLast(50).once('value').then(function (snap) {
                 var all = snap.val() || {};
                 usernameToProfile = {};
                 for (var uid in all) {
@@ -2914,14 +2915,50 @@
             });
         }
 
+        function fetchProfileByUsername(username, callback) {
+            // Already resolved — serve from cache immediately
+            if (_pendingProfileFetches[username] === true) {
+                if (callback) callback(usernameToProfile[username] || null);
+                return;
+            }
+            // In-flight — queue callback so all waiting canvases update together
+            if (Array.isArray(_pendingProfileFetches[username])) {
+                if (callback) _pendingProfileFetches[username].push(callback);
+                return;
+            }
+            // Start fetch, store callback queue
+            _pendingProfileFetches[username] = callback ? [callback] : [];
+            rtdb.ref('users_public').orderByChild('email')
+                .startAt(username + '@').endAt(username + '@')
+                .limitToFirst(1).once('value').then(function (snap) {
+                    var cbs = _pendingProfileFetches[username] || [];
+                    _pendingProfileFetches[username] = true; // mark resolved
+                    if (!snap.exists()) { cbs.forEach(function (cb) { cb(null); }); return; }
+                    snap.forEach(function (child) {
+                        var u = child.val();
+                        var seed = u.customAvatar || u.avatarSeed || child.key;
+                        usernameToProfile[username] = { uid: child.key, avatarSeed: seed };
+                        cbs.forEach(function (cb) { cb(usernameToProfile[username]); });
+                    });
+                })['catch'](function () {
+                    var cbs = _pendingProfileFetches[username] || [];
+                    delete _pendingProfileFetches[username];
+                    cbs.forEach(function (cb) { cb(null); });
+                });
+        }
+
         function resolveAvatar(username, canvasId) {
             var profile = usernameToProfile[username];
             if (profile) {
                 drawAvatar(canvasId, profile.avatarSeed);
-            } else {
-                // Fallback: draw from username as seed
-                drawAvatar(canvasId, username);
+                return;
             }
+            // Draw hash fallback immediately so canvas isn't blank
+            drawAvatar(canvasId, username);
+            // Fetch real profile async and redraw if found
+            fetchProfileByUsername(username, function (p) {
+                if (p) drawAvatar(canvasId, p.avatarSeed);
+            });
         }
 
         function openUserProfile(username) {
@@ -2929,9 +2966,16 @@
             var profile = usernameToProfile[username];
             if (profile && profile.uid) {
                 window.open('neighbourhood.html?uid=' + profile.uid + '&from=kindlechat', 'ReKindle_Neighbourhood');
-            } else {
-                showModal("This user does not have a profile.");
+                return;
             }
+            // Not in cache yet — look up on demand
+            fetchProfileByUsername(username, function (p) {
+                if (p && p.uid) {
+                    window.open('neighbourhood.html?uid=' + p.uid + '&from=kindlechat', 'ReKindle_Neighbourhood');
+                } else {
+                    showModal("This user does not have a profile.");
+                }
+            });
         }
 
         function renderMessage(msg, msgId, prepend) {

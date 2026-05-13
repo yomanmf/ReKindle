@@ -11,19 +11,13 @@
             ".write": "auth.token.email === 'ukiyo@rekindle.ink'"
         },
         "presence": {
-            ".read": true,
-            "$uid": {
-                ".write": "auth.uid === $uid || newData.val() == null",
-                ".validate": "newData.val() === true"
-            }
+            ".read": false,
+            ".write": false
         },
         "kindlechat": {
             "presence": {
-                ".read": true,
-                "$uid": {
-                    ".write": "auth.uid === $uid",
-                    ".validate": "newData.val() === true"
-                }
+                ".read": false,
+                ".write": false
             },
             "messages": {
                 ".read": true,
@@ -84,7 +78,7 @@
         },
         "users_public": {
             ".read": "auth != null",
-            ".indexOn": ["lastActive"],
+            ".indexOn": ["lastActive", "email"],
             "$userId": {
                 ".write": "auth != null && (auth.uid === $userId || auth.token.email === 'ukiyo@rekindle.ink')",
                 "username": {
