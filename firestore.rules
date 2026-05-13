@@ -245,11 +245,23 @@ service cloud.firestore {
     }
 
     // 2. KINDLECHAT
+    function isRoomParticipant(participants) {
+      return request.auth != null && (
+        (request.auth.token.email != null &&
+         request.auth.token.email.split('@')[0] in participants) ||
+        (request.auth.token.email == null &&
+         request.auth.uid in participants)
+      );
+    }
+
     match /rooms/{roomId} {
-      allow read: if request.auth != null;
+      allow read: if isRoomParticipant(resource.data.participants) || isDeveloper();
 
       match /messages/{messageId} {
-        allow read: if request.auth != null;
+        allow read: if isDeveloper() ||
+                       isRoomParticipant(
+                         get(/databases/$(database)/documents/rooms/$(roomId)).data.participants
+                       );
         // Secure create: Validate username and message text for safety.
         // Note: For anonymous users, email might be null, so check before accessing.
         allow create: if request.auth != null &&
@@ -259,11 +271,11 @@ service cloud.firestore {
                         ) &&
                         !request.resource.data.keys().hasAny(['isPro']) &&
                         isValidText(request.resource.data.text);
-        allow update: if request.auth != null && 
+        allow update: if request.auth != null &&
                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']);
         allow delete: if false;
       }
-      
+
       // Allow creating and updating rooms (needed for DMs)
       allow create, update: if request.auth != null;
     }
