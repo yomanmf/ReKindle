@@ -649,7 +649,7 @@
         }
 
         function updateMovesDisplay() {
-            const movesTxt = window.t ? window.t('solitaire.moves') : 'Moves: ${count}';
+            const movesTxt = window.t('solitaire.moves', 'Moves: ${count}');
             document.getElementById('moves-display').textContent = movesTxt.replace('${count}', moves);
         }
 
@@ -1013,28 +1013,30 @@
         }
 
         function submitScore() {
-            if (!currentUser) return; // Must be logged in
+            if (!currentUser) return;
+
+            const finalMoves = moves; // capture before any async gap resets the global
+            if (finalMoves === 0) return;
 
             const userRef = db.collection('leaderboard_solitaire').doc(currentUser.uid);
 
-            // Check if current score is better (lower) than existing
             userRef.get().then(doc => {
                 if (doc.exists) {
                     const best = doc.data().moves;
-                    if (moves < best) {
-                        saveScoreToDb(userRef);
+                    if (finalMoves < best) {
+                        saveScoreToDb(userRef, finalMoves);
                     }
                 } else {
-                    saveScoreToDb(userRef);
+                    saveScoreToDb(userRef, finalMoves);
                 }
             });
         }
 
-        function saveScoreToDb(ref) {
+        function saveScoreToDb(ref, finalMoves) {
             const username = currentUser.displayName || currentUser.email.split('@')[0];
             ref.set({
                 username: username,
-                moves: moves,
+                moves: finalMoves,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 console.log("Score submitted!");
