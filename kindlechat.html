@@ -1403,7 +1403,9 @@
         var noMoreGeneralMessages = false; // True once we've reached the oldest message in RTDB
         var supporterUsers = {}; // Store supporter usernames as object for ES5 compatibility
         var usernameToProfile = {}; // Cache: username -> { uid, avatarSeed }
-        var _pendingProfileFetches = {}; // Dedup in-flight on-demand lookups
+        var _pendingProfileFetches = {}; // Dedup in-flight username-based lookups
+        var _authorCache = {};          // Cache: uid -> { avatarSeed }  (uid-based, like topics)
+        var _pendingUidFetches = {};    // Dedup in-flight uid-based lookups
         // KINDLE MEMORY: track which messages are currently rendered in the
         // general channel so child_added can dedupe across initial-load,
         // pagination, and live updates. Reset whenever the room changes.
@@ -2915,6 +2917,57 @@
             });
         }
 
+        // --- UID-BASED PROFILE FETCH (like topics) ---
+        function fetchProfileByUid(uid, callback) {
+            if (_pendingUidFetches[uid] === true) {
+                if (callback) callback(_authorCache[uid] || null);
+                return;
+            }
+            if (Array.isArray(_pendingUidFetches[uid])) {
+                if (callback) _pendingUidFetches[uid].push(callback);
+                return;
+            }
+            _pendingUidFetches[uid] = callback ? [callback] : [];
+            rtdb.ref('users_public/' + uid).once('value').then(function (snap) {
+                var cbs = _pendingUidFetches[uid] || [];
+                _pendingUidFetches[uid] = true;
+                var seed = uid;
+                if (snap.exists()) {
+                    var u = snap.val();
+                    seed = u.customAvatar || u.avatarSeed || uid;
+                }
+                _authorCache[uid] = { avatarSeed: seed };
+                cbs.forEach(function (cb) { cb(_authorCache[uid]); });
+            })['catch'](function () {
+                var cbs = _pendingUidFetches[uid] || [];
+                _pendingUidFetches[uid] = true;
+                _authorCache[uid] = { avatarSeed: uid };
+                cbs.forEach(function (cb) { cb(null); });
+            });
+        }
+
+        function resolveMessageAuthor(uid, username, avatarId) {
+            if (!uid) {
+                // Old message with no uid — fall back to username-based lookup
+                resolveAvatar(username, avatarId);
+                return;
+            }
+            var cached = _authorCache[uid];
+            if (cached) {
+                drawAvatar(avatarId, cached.avatarSeed);
+                return;
+            }
+            // Draw hash fallback immediately so canvas isn't blank
+            drawAvatar(avatarId, username || uid);
+            fetchProfileByUid(uid, function (p) {
+                if (p) {
+                    drawAvatar(avatarId, p.avatarSeed);
+                    // Keep usernameToProfile in sync for any username-based paths
+                    if (username) usernameToProfile[username] = { uid: uid, avatarSeed: p.avatarSeed };
+                }
+            });
+        }
+
         function fetchProfileByUsername(username, callback) {
             // Already resolved — serve from cache immediately
             if (_pendingProfileFetches[username] === true) {
@@ -2961,14 +3014,19 @@
             });
         }
 
-        function openUserProfile(username) {
+        function openUserProfile(uid, username) {
+            // New messages have uid — open directly (like topics)
+            if (uid) {
+                window.open('neighbourhood.html?uid=' + uid + '&from=kindlechat', 'ReKindle_Neighbourhood');
+                return;
+            }
+            // Old message fallback: uid not yet in message data
             if (!username) return;
             var profile = usernameToProfile[username];
             if (profile && profile.uid) {
                 window.open('neighbourhood.html?uid=' + profile.uid + '&from=kindlechat', 'ReKindle_Neighbourhood');
                 return;
             }
-            // Not in cache yet — look up on demand
             fetchProfileByUsername(username, function (p) {
                 if (p && p.uid) {
                     window.open('neighbourhood.html?uid=' + p.uid + '&from=kindlechat', 'ReKindle_Neighbourhood');
@@ -2994,8 +3052,9 @@
             div.dataset.user = msg.user;
 
             var safeUser = escapeHtml(msg.user || '');
+            var safeUid = escapeHtml(msg.uid || '');
             var avatarId = 'avatar-' + (msgId || Math.random().toString(36).substr(2, 9));
-            var nameHtml = isSelf ? '<span class="author-name-field" onclick="openUserProfile(\'' + safeUser + '\')">' + window.t('kindlechat.msg.you', 'You') + '</span>' : '<span class="author-name-field" onclick="openUserProfile(\'' + safeUser + '\')" style="font-weight:bold;">' + safeUser + '</span>';
+            var nameHtml = isSelf ? '<span class="author-name-field" onclick="openUserProfile(\'' + safeUid + '\', \'' + safeUser + '\')">' + window.t('kindlechat.msg.you', 'You') + '</span>' : '<span class="author-name-field" onclick="openUserProfile(\'' + safeUid + '\', \'' + safeUser + '\')" style="font-weight:bold;">' + safeUser + '</span>';
 
             // Developer Badge in Name
             var isDev = (msg.user === 'ukiyo' || msg.user === 'ukiyo@rekindle.ink');
@@ -3003,12 +3062,12 @@
                 var devBadge = '<span class="dev-badge">DEV</span>';
                 var crownSvg = '<svg class="supporter-crown" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M2 4L5 18H19L22 4L15 11L12 4L9 11L2 4Z" stroke="black" stroke-width="2" fill="black"/></svg>';
                 var crown = '<a href="http://link.rekindle.ink/donate" target="_blank" style="text-decoration:none;" title="Supporter">' + crownSvg + '</a>';
-                nameHtml = isSelf ? '<span class="author-name-field" onclick="openUserProfile(\'' + safeUser + '\')">' + devBadge + crown + window.t('kindlechat.msg.you', 'You') + '</span>' : '<span class="author-name-field" onclick="openUserProfile(\'' + safeUser + '\')">' + devBadge + crown + '<span style="font-weight:bold;">Ukiyo</span></span>';
+                nameHtml = isSelf ? '<span class="author-name-field" onclick="openUserProfile(\'' + safeUid + '\', \'' + safeUser + '\')">' + devBadge + crown + window.t('kindlechat.msg.you', 'You') + '</span>' : '<span class="author-name-field" onclick="openUserProfile(\'' + safeUid + '\', \'' + safeUser + '\')">' + devBadge + crown + '<span style="font-weight:bold;">Ukiyo</span></span>';
             } else if (supporterUsers[msg.user] || msg.isPro) {
                 // Supporter Crown (SVG for Kindle compatibility)
                 var crownSvg = '<svg class="supporter-crown" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M2 4L5 18H19L22 4L15 11L12 4L9 11L2 4Z" stroke="currentColor" stroke-width="2" fill="none"/></svg>';
                 var crown = '<a href="http://link.rekindle.ink/donate" target="_blank" style="text-decoration:none;" title="Supporter">' + crownSvg + '</a>';
-                nameHtml = isSelf ? '<span class="author-name-field" onclick="openUserProfile(\'' + safeUser + '\')">' + crown + window.t('kindlechat.msg.you', 'You') + '</span>' : '<span class="author-name-field" onclick="openUserProfile(\'' + safeUser + '\')">' + crown + '<span style="font-weight:bold;">' + safeUser + '</span></span>';
+                nameHtml = isSelf ? '<span class="author-name-field" onclick="openUserProfile(\'' + safeUid + '\', \'' + safeUser + '\')">' + crown + window.t('kindlechat.msg.you', 'You') + '</span>' : '<span class="author-name-field" onclick="openUserProfile(\'' + safeUid + '\', \'' + safeUser + '\')">' + crown + '<span style="font-weight:bold;">' + safeUser + '</span></span>';
             }
 
             // ADMIN DELETE BUTTON - REMOVED (Handled in adminControlsHtml below)
@@ -3214,7 +3273,7 @@
 
             div.innerHTML = '<div class="msg-meta">' + nameHtml + '<span>' + timeStr + '</span>' + transBtnHtml + '</div>' +
                 '<div class="msg-row">' +
-                '<canvas id="' + avatarId + '" class="msg-avatar" width="32" height="32" onclick="openUserProfile(\'' + safeUser + '\')"></canvas>' +
+                '<canvas id="' + avatarId + '" class="msg-avatar" width="32" height="32" onclick="openUserProfile(\'' + safeUid + '\', \'' + safeUser + '\')"></canvas>' +
                 '<div style="display:flex; align-items:center; min-width: 0;">' +
                 (isSelf ? reactButton + saveButton + adminControlsHtml : '') +
                 bubbleContent +
@@ -3276,11 +3335,10 @@
                 history.appendChild(div);
             }
 
-            // Resolve avatar after DOM insertion. resolveAvatar is purely
-            // synchronous (cache lookup + canvas fill), so the previous
-            // setTimeout(0) wrapper just queued one timer per message —
-            // significant memory churn on Kindle when rendering 50+ messages.
-            resolveAvatar(msg.user, avatarId);
+            // Resolve avatar after DOM insertion.
+            // New messages (with uid): direct RTDB lookup, same as topics.
+            // Old messages (no uid): username-based fallback.
+            resolveMessageAuthor(msg.uid || null, msg.user, avatarId);
 
             if (msg.is_flipnote && msg.flipnote_data) {
                 setTimeout(function () { playFlipnote(msgId); }, 200);
@@ -3485,6 +3543,7 @@
                     },
                     body: JSON.stringify({
                         user: currentUsername,
+                        uid: currentUser.uid,
                         text: text
                     })
                 })
@@ -3518,6 +3577,7 @@
         function sendGeneralMessageToRTDB(text) {
             var messageData = {
                 user: currentUsername,
+                uid: currentUser.uid,
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 text: text
             };
@@ -3544,6 +3604,7 @@
         function sendDMToFirestore(text) {
             var messageData = {
                 user: currentUsername,
+                uid: currentUser.uid,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 text: text
             };

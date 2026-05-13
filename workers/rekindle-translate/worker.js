@@ -296,6 +296,7 @@ async function handleRequest(request) {
             dbPayload.uid = uid;
         } else {
             dbPayload.user = user;
+            if (uid) dbPayload.uid = uid;
             if (payload.isPro) dbPayload.isPro = true;
         }
 
