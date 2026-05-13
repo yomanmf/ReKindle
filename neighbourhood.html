@@ -660,9 +660,11 @@
             <div class="toolbar">
                 <div id="btn-posts" class="tab-btn active" onclick="switchTab('posts')"
                     data-i18n="neighbourhood.btn.view_posts">Posts</div>
+                <!-- FIND NEIGHBOURS TAB DISABLED
                 <div id="btn-list" class="tab-btn" onclick="switchTab('list')" data-i18n="neighbourhood.btn.view_list">
                     Find
                     Neighbours</div>
+                -->
                 <div id="btn-profile" class="tab-btn" onclick="switchTab('profile')"
                     data-i18n="neighbourhood.btn.view_profile">My Profile</div>
             </div>
@@ -907,7 +909,7 @@
                 </div> <!-- Close profile-edit-mode -->
             </div> <!-- Close view-profile -->
 
-            <!-- LIST TAB -->
+            <!-- LIST TAB DISABLED
             <div id="view-list" class="view-panel">
                 <div style="display:flex; margin-bottom:15px;">
                     <input type="text" id="input-search" class="input-field"
@@ -928,12 +930,12 @@
                 </div>
 
                 <div id="near-list" style="display:none;"></div>
-                <!-- Legacy container kept hidden to prevent JS null ref if needed, though variable was removed from loadAllUsers usage -->
 
                 <div class="header-sep" data-i18n="neighbourhood.header.all" style="margin-top: 20px;">All Neighbours
                 </div>
                 <div id="all-list"></div>
             </div>
+            -->
 
             <!-- POSTS TAB -->
             <div id="view-posts" class="view-panel active">
@@ -1282,9 +1284,8 @@
                 view.classList.add('active');
             }
 
-            if (tab === 'list') {
-                loadAllUsers();
-            } else if (tab === 'posts') {
+            // if (tab === 'list') { loadAllUsers(); } else
+            if (tab === 'posts') {
                 loadPosts();
             }
         }
@@ -2166,7 +2167,7 @@
                 return;
             }
 
-            db.ref('users_public').once('value')
+            db.ref('users_public').orderByChild('lastActive').limitToLast(300).once('value')
                 .then(snapshot => {
                     if (loadingMsg) loadingMsg.style.display = 'none';
                     cachedUsers = [];
@@ -2180,7 +2181,7 @@
                         }
                     });
 
-                    // Sort by last active (newest first)
+                    // Sort by last active (newest first) — limitToLast returns ascending, so reverse
                     cachedUsers.reverse();
 
                     // Initial Render
@@ -2731,32 +2732,69 @@
             feed.innerHTML = '';
 
             const postsRef = db.ref('neighbourhood_posts').limitToLast(50);
+            const renderedKeys = new Set();
+            let initialDone = false;
 
-            postsListener = postsRef.on('value', snapshot => {
+            // One-time initial fetch — same bandwidth cost as before but fires only once,
+            // not on every subsequent comment add or post edit.
+            postsRef.once('value', snapshot => {
                 loader.style.display = 'none';
 
-                // Detach all comment listeners before wiping the DOM
-                commentListeners.forEach(({ ref, fn }) => ref.off('value', fn));
-                commentListeners.clear();
-
-                feed.innerHTML = '';
-
                 recentPosts = [];
-                snapshot.forEach(child => {
-                    recentPosts.push({ id: child.key, ...child.val() });
-                });
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        recentPosts.push({ id: child.key, ...child.val() });
+                        renderedKeys.add(child.key);
+                    });
+                    recentPosts.reverse(); // Newest first
+                    recentPosts.forEach(post => renderPostItem(post, feed));
+                } else {
+                    feed.innerHTML = '<div style="text-align:center; color:#666;" data-empty="true">No posts yet. Be the first!</div>';
+                }
+                initialDone = true;
+            });
 
-                recentPosts.reverse(); // Newest first
+            // child_added — only fires for genuinely new posts added after initial load.
+            // Transmits only the one new post instead of all 50.
+            postsRef.on('child_added', snap => {
+                if (!initialDone || renderedKeys.has(snap.key)) return;
+                renderedKeys.add(snap.key);
 
-                if (recentPosts.length === 0) {
-                    feed.innerHTML = '<div style="text-align:center; color:#666;">No posts yet. Be the first!</div>';
-                    return;
+                const post = { id: snap.key, ...snap.val() };
+                recentPosts.unshift(post);
+
+                const emptyEl = feed.querySelector('[data-empty]');
+                if (emptyEl) emptyEl.remove();
+
+                renderPostItem(post, feed, /* prepend= */ true);
+            });
+
+            // child_removed — post deleted, remove card and clean up its comment listener.
+            postsRef.on('child_removed', snap => {
+                renderedKeys.delete(snap.key);
+                recentPosts = recentPosts.filter(p => p.id !== snap.key);
+
+                const card = feed.querySelector('[data-post-id="' + snap.key + '"]');
+                if (card) card.remove();
+
+                if (commentListeners.has(snap.key)) {
+                    const { ref, fn } = commentListeners.get(snap.key);
+                    ref.off('value', fn);
+                    commentListeners.delete(snap.key);
                 }
 
-                recentPosts.forEach(post => {
-                    renderPostItem(post, feed);
-                });
+                if (recentPosts.length === 0) {
+                    feed.innerHTML = '<div style="text-align:center; color:#666;" data-empty="true">No posts yet. Be the first!</div>';
+                }
             });
+
+            // NOTE: child_changed intentionally omitted. The per-post comment listeners
+            // already handle comment updates granularly. Subscribing to child_changed would
+            // re-download the full post + all its comments on every comment add — the same
+            // problem we're fixing. Post text / translation edits won't reflect in real-time
+            // (users see them on next refresh), which is an acceptable trade-off.
+
+            postsListener = postsRef; // Store ref for potential cleanup
         }
 
         function toggleAdminMode(enabled) {
@@ -2767,7 +2805,7 @@
             recentPosts.forEach(post => renderPostItem(post, feed));
         }
 
-        async function renderPostItem(post, container) {
+        async function renderPostItem(post, container, prepend = false) {
             const div = document.createElement('div');
 
             // Fetch user info
@@ -2965,7 +3003,7 @@
                 commentListeners.delete(postId);
             }
 
-            const commentsRef = db.ref('neighbourhood_posts/' + postId + '/comments').orderByChild('timestamp');
+            const commentsRef = db.ref('neighbourhood_posts/' + postId + '/comments').orderByChild('timestamp').limitToLast(100);
             const commentFn = commentsRef.on('value', async snapshot => {
                 listContainer.innerHTML = '';
                 if (!snapshot.exists()) return;
