@@ -1,15 +1,15 @@
 const admin = require('firebase-admin');
 const fs = require('fs');
+const readline = require('readline');
 
 // --- CONFIGURATION ---
-const SERVICE_ACCOUNT_PATH = './service-account.json';
+const SERVICE_ACCOUNT_PATH = '../service-account.json';
 const DATABASE_URL = 'https://rekindle-dd1fa-default-rtdb.firebaseio.com/';
 
 // --- ARGS ---
 const args = process.argv.slice(2);
 if (args.length === 0) {
-    console.error('Usage: node nuke_user.js <username_or_uid> [--force]');
-    console.error('This script will disable the user, ban their IP, and delete their content.');
+    console.error('Usage: node cleanup_user.js <username_or_uid> [--force]');
     process.exit(1);
 }
 
@@ -39,9 +39,9 @@ let targetUsername = null; // The display/kindle name
 let deletionTasks = [];
 
 async function main() {
-    console.log(`\n=== ReKindle User NUKE Tool ===`);
+    console.log(`\n=== ReKindle User Cleanup Tool ===`);
     console.log(`Target: ${TARGET_USERNAME}`);
-    console.log(`Mode: ${FORCE_MODE ? 'WET RUN (DELETING FOR REAL)' : 'DRY RUN (READ ONLY)'}\n`);
+    console.log(`Mode: ${FORCE_MODE ? 'WET RUN (DELETING)' : 'DRY RUN (READ ONLY)'}\n`);
 
     try {
         await resolveUser();
@@ -51,9 +51,6 @@ async function main() {
         }
 
         console.log(`Resolved User: ${targetUsername} (UID: ${targetUid})`);
-
-        // Execute Ban & IP Block
-        await banUserAndIP();
 
         // 1. Scan KindleChat RTDB
         await scanKindleChatRTDB();
@@ -68,16 +65,14 @@ async function main() {
         await scanNeighbourhood();
 
         console.log(`\n=== Summary ===`);
-        console.log(`Total items found for deletion: ${deletionTasks.length}`);
+        console.log(`Total items found: ${deletionTasks.length}`);
 
         if (deletionTasks.length > 0) {
             if (FORCE_MODE) {
                 await executeDeletions();
             } else {
-                console.log(`\n[DRY RUN] No changes made. Run with --force to execute bans and deletions.`);
+                console.log(`\n[DRY RUN] No changes made. Run with --force to execute.`);
             }
-        } else {
-            console.log(`\nNo content found to delete.`);
         }
 
     } catch (e) {
@@ -85,39 +80,6 @@ async function main() {
     } finally {
         process.exit(0);
     }
-}
-
-// --- BAN USER & IP ---
-async function banUserAndIP() {
-    console.log("\n--- Banning User and IP ---");
-    try {
-        const snap = await rtdb.ref(`users_private/${targetUid}/ipAddress`).once('value');
-        const ip = snap.val();
-        
-        if (ip) {
-            console.log(`Found associated IP address: ${ip}`);
-            if (FORCE_MODE) {
-                const formattedIp = ip.replace(/\./g, '-').replace(/:/g, '_');
-                await rtdb.ref(`banned_ips/${formattedIp}`).set({
-                    timestamp: admin.database.ServerValue.TIMESTAMP,
-                    bannedBy: 'nuke_user_script',
-                    bannedUid: targetUid
-                });
-                console.log(`[SUCCESS] IP ${ip} has been added to banned_ips list.`);
-            }
-        } else {
-            console.log(`No IP address found for this user in users_private.`);
-        }
-        
-        console.log(`Disabling Firebase Auth account for UID: ${targetUid}...`);
-        if (FORCE_MODE) {
-            await admin.auth().updateUser(targetUid, { disabled: true });
-            console.log(`[SUCCESS] Account is now permanently disabled.`);
-        }
-    } catch (e) {
-        console.error("Error during ban execution:", e);
-    }
-    console.log("----------------------------\n");
 }
 
 // --- RESOLVE USER ---
@@ -143,7 +105,7 @@ async function resolveUser() {
     const snap = await rtdb.ref('users_public').once('value');
     const users = snap.val() || {};
 
-    // Search by displayName or Email or raw UID
+    // 2. Search by displayName or Email
     for (const [uid, data] of Object.entries(users)) {
         const name = (data.displayName || '').toLowerCase();
         const email = (data.email || '').toLowerCase();
@@ -152,7 +114,8 @@ async function resolveUser() {
         if (name === target || email.startsWith(target + '@') || uid === TARGET_USERNAME) {
             targetUid = uid;
 
-            // Fetch the auth record to be sure of the email handle which is used for kindlechat
+            // CRITICAL FIX: KindleChat uses the EMAIL HANDLE (lowercase usually), NOT the Display Name
+            // We must fetch the Auth record to be sure of the email handle
             try {
                 const userRecord = await admin.auth().getUser(uid);
                 const authEmail = userRecord.email || '';
@@ -172,9 +135,11 @@ async function resolveUser() {
 }
 
 // --- SCANNING ---
+
 async function scanKindleChatRTDB() {
     console.log(`Scanning KindleChat (RTDB) for user='${targetUsername}'...`);
     const ref = rtdb.ref('kindlechat/messages');
+    // Indexing might be needed for 'user' query
     const snap = await ref.orderByChild('user').equalTo(targetUsername).once('value');
 
     if (snap.exists()) {
@@ -191,6 +156,11 @@ async function scanKindleChatRTDB() {
 
 async function scanKindleChatFirestore() {
     console.log("Scanning KindleChat (Firestore)...");
+
+    // Strategy: collectionGroup requires a custom index which might not exist. 
+    // Fallback to querying rooms where user is a participant.
+    // This matches the query used in the app, so it should be indexed.
+
     try {
         const roomsSnap = await db.collection('rooms')
             .where('participants', 'array-contains', targetUsername)
@@ -241,8 +211,11 @@ async function scanTopics() {
     });
 
     // 2. Comments (Deep search required if not indexed by author)
+    // Structure: topic_comments/{topicId}/{commentId}
+    // We can't query all comments easily without a global index or deep scan.
+    // 'topic_comments' is the root for comments.
     const commentsRoot = rtdb.ref('topic_comments');
-    const commentsSnap = await commentsRoot.once('value'); 
+    const commentsSnap = await commentsRoot.once('value'); // Potentially heavy!
 
     commentsSnap.forEach(topicNode => {
         topicNode.forEach(commentNode => {
@@ -279,7 +252,11 @@ async function scanNeighbourhood() {
     });
 
     // 2. Comments (Nested in posts)
-    const allPostsSnap = await postsRef.once('value'); 
+    // Structure: neighbourhood_posts/{postId}/comments/{commentId}
+    // We iterate ALL posts to find comments. (Optimized queries not possible without flat structure)
+    // Since we already fetched specific posts, we need to fetch ALL posts now to find COMMENTS on others' posts.
+
+    const allPostsSnap = await postsRef.once('value'); // Heavy read
     allPostsSnap.forEach(postNode => {
         const comments = postNode.val().comments;
         if (comments) {
@@ -318,8 +295,9 @@ async function executeDeletions() {
     }
 
     console.log(`\nOperation Complete.`);
-    console.log(`Deleted content chunks: ${deletedCount}`);
+    console.log(`Deleted: ${deletedCount}`);
     console.log(`Errors: ${errors}`);
 }
+
 
 main();

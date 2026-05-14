@@ -1,7 +1,6 @@
 .DS_Store
 /_deploy/
 /node_modules/
-/admin/
 /firebase-functions/node_modules/
 /workers/rekindle-reader/node_modules/
 /.wrangler/

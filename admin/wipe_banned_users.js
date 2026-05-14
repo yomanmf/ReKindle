@@ -2,7 +2,7 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 
 // --- CONFIGURATION ---
-const SERVICE_ACCOUNT_PATH = './service-account.json';
+const SERVICE_ACCOUNT_PATH = '../service-account.json';
 const DATABASE_URL = 'https://rekindle-dd1fa-default-rtdb.firebaseio.com/';
 
 // --- ARGS ---

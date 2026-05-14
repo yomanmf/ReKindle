@@ -2,7 +2,7 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 
 // --- CONFIGURATION ---
-const SERVICE_ACCOUNT_PATH = './service-account.json';
+const SERVICE_ACCOUNT_PATH = '../service-account.json';
 const DATABASE_URL = 'https://rekindle-dd1fa-default-rtdb.firebaseio.com/';
 
 // --- ARGS ---
@@ -71,15 +71,15 @@ async function resolveUser(target) {
         }
     }
 
-    // Look up in users_public by displayName or email
+    // Look up in users_public by username or email
     const snap = await rtdb.ref('users_public').once('value');
     const users = snap.val() || {};
     for (const [uid, data] of Object.entries(users)) {
-        const name = (data.displayName || '').toLowerCase();
+        const username = (data.username || '').toLowerCase();
         const email = (data.email || '').toLowerCase();
         const t = target.toLowerCase();
-        if (name === t || email === t || email.startsWith(t + '@') || uid === target) {
-            return { uid, name: data.displayName || t, email: data.email || '' };
+        if (username === t || email === t || email.startsWith(t + '@') || uid === target) {
+            return { uid, name: data.username || t, email: data.email || '' };
         }
     }
 
@@ -132,8 +132,10 @@ async function main() {
             console.log('Moderator permissions:');
             console.log('  - Delete messages in KindleChat general chat');
             console.log('  - Delete comments in Topics');
-            console.log('  - Delete posts in Neighbourhood');
-            console.log('  - Delete comments on Neighbourhood posts');
+            console.log('  - Delete posts and comments in Neighbourhood');
+            console.log('  - Apply social timeouts (up to 24 hours, on non-moderators)');
+            console.log('  - Read automod log and automod strikes');
+            console.log('  - Log mod actions');
         }
         console.log('');
         console.log('Remember to deploy updated Firebase rules if you have not already:');
