@@ -445,6 +445,29 @@
     </div>
 
     <script>
+        function obfuscate(str) {
+            if (!str) return str;
+            var key = 'rek';
+            var res = '';
+            for (var i = 0; i < str.length; i++) {
+                res += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return btoa(res);
+        }
+        function deobfuscate(str) {
+            if (!str) return str;
+            try {
+                var key = 'rek';
+                var raw = atob(str);
+                var res = '';
+                for (var i = 0; i < raw.length; i++) {
+                    res += String.fromCharCode(raw.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
+                return res;
+            } catch (e) { return str; }
+        }
+        function setSecureItem(key, value) { localStorage.setItem(key, obfuscate(value)); }
+        function getSecureItem(key) { return deobfuscate(localStorage.getItem(key)); }
         // --- CONFIGURATION ---
         // TODO: Replace with your Cloudflare Worker URL
         const WORKER_URL = "https://rekindle-oracle.timjarnott.workers.dev";
@@ -549,7 +572,7 @@
             useByoKey = localStorage.getItem('chat_use_byo_key') === 'true';
             aiPreset = localStorage.getItem('chat_ai_preset') || 'openai';
             aiModel = localStorage.getItem('chat_ai_model') || '';
-            apiKey = localStorage.getItem('chat_api_key') || '';
+            apiKey = getSecureItem('chat_api_key') || '';
             customEndpoint = localStorage.getItem('chat_custom_endpoint') || '';
 
             try {
@@ -690,7 +713,7 @@
             localStorage.setItem('chat_ai_preset', aiPreset);
             localStorage.setItem('chat_ai_provider', aiProvider);
             localStorage.setItem('chat_ai_model', aiModel);
-            localStorage.setItem('chat_api_key', apiKey);
+            setSecureItem('chat_api_key', apiKey);
             localStorage.setItem('chat_custom_endpoint', customEndpoint);
 
             updateQuickModelBar();

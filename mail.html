@@ -1146,7 +1146,7 @@
                         // Use special use name if available, else path/name
                         let name = f.name || f.path;
                         if (f.specialUse && f.specialUse !== '\\Noselect') {
-                            name = f.specialUse.replace('\\', '');
+                            name = f.specialUse.replace(/\\/g, '');
                         }
                         opt.innerText = name;
                         select.appendChild(opt);
@@ -1436,7 +1436,7 @@
                                 shadow.querySelectorAll('a').forEach(link => {
                                     link.addEventListener('click', (e) => {
                                         const href = link.getAttribute('href');
-                                        if (href && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('javascript:')) {
+                                        if (href && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('javascript:') && !href.startsWith('data:') && !href.startsWith('vbscript:')) {
                                             e.preventDefault();
                                             window.location.href = 'browser.html?url=' + encodeURIComponent(href);
                                         }

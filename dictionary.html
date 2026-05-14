@@ -407,6 +407,10 @@
     </div>
 
     <script>
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
         function showModal(msg, isConfirm = false, callback = null) {
             const overlay = document.getElementById('modal-overlay');
             const messageEl = document.getElementById('modal-message');
@@ -529,7 +533,8 @@
             });
 
             html += `<br><br><div style="font-size:0.7rem;color:#999;border-top:1px solid #ccc;padding-top:5px;">${window.t ? window.t('dictionary.label.source_api') : "Source: Wiktionary (via DictionaryAPI)"}</div>`;
-            content.innerHTML = html;
+            var sanitizedHtml = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+            content.innerHTML = sanitizedHtml;
             content.scrollTop = 0;
         }
 
@@ -684,7 +689,7 @@
         function renderError(query) {
             const content = document.getElementById('content-area');
             const title = window.t ? window.t('dictionary.error.title') : "No Definition Found";
-            const body = (window.t ? window.t('dictionary.error.body') : "Sorry, we couldn't find definitions for \"${query}\".").replace('${query}', query);
+            const body = (window.t ? window.t('dictionary.error.body') : "Sorry, we couldn't find definitions for \"${query}\".").replace('${query}', escapeHtml(query));
             const hint = window.t ? window.t('dictionary.error.hint') : "Please check your spelling.";
 
             content.innerHTML = `

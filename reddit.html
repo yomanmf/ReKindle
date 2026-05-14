@@ -758,7 +758,7 @@
                 this.renderSidebar();
 
                 const content = document.getElementById('content-area');
-                content.innerHTML = `<div class="loading">Loading r/${sub}...</div>`;
+                content.innerHTML = `<div class="loading">Loading r/${escapeHtml(sub)}...</div>`;
 
                 try {
                     const data = await api.getSubreddit(sub);
@@ -793,7 +793,7 @@
                     });
 
                 } catch (e) {
-                    content.innerHTML = `<div class="loading" style="color:red">Error loading r/${sub}<br>${e.message}<br><small>If proxy issues persist, try reloading.</small></div>`;
+                    content.innerHTML = `<div class="loading" style="color:red">Error loading r/${escapeHtml(sub)}<br>${escapeHtml(e.message)}<br><small>If proxy issues persist, try reloading.</small></div>`;
                 }
             },
 
@@ -857,7 +857,7 @@
                     });
 
                     html += '</div>';
-                    content.innerHTML = html;
+                    content.innerHTML = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 
                 } catch (e) {
                     content.innerHTML = `<div class="loading" style="color:red">Error loading thread<br>${e.message}</div>`;
@@ -866,7 +866,7 @@
 
             processCommentHtml(html) {
                 const div = document.createElement('div');
-                div.innerHTML = html;
+                div.innerHTML = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
                 const links = div.querySelectorAll('a');
 
                 links.forEach(a => {
@@ -879,7 +879,7 @@
 
                         // Safety: ignore simple domains unless they are explicit files
                         // e.g. "imgur.com" is a page, "i.imgur.com/xyz.png" is an image
-                        if (h.includes('imgur.com') && !h.match(/\.(jpeg|jpg|gif|png|webp)/i)) return;
+                        if ((new URL(h).hostname === 'imgur.com' || new URL(h).hostname.endsWith('.imgur.com')) && !h.match(/\.(jpeg|jpg|gif|png|webp)/i)) return;
 
                         const img = document.createElement('img');
                         // Proxy the image source!

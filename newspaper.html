@@ -550,7 +550,7 @@
                     div.onclick = () => openArticle(item.link); // Changed to open modal
 
                     // Clean HTML tags and increase length
-                    const cleanDesc = item.description.replace(/<[^>]*>?/gm, '').substring(0, 350) + "...";
+                    const cleanDesc = item.description.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/<[^>]*>?/gm, '').substring(0, 350) + "...";
 
                     // Try to find an image
                     let imgUrl = item.thumbnail || (item.enclosure ? item.enclosure.link : null);
@@ -699,7 +699,7 @@
                         if (link) {
                             e.preventDefault();
                             const href = link.href;
-                            if (href && !href.startsWith('javascript:')) {
+                            if (href && !href.startsWith('javascript:') && !href.startsWith('data:') && !href.startsWith('vbscript:')) {
                                 parent.window.location.href = 'browser.html?url=' + encodeURIComponent(href);
                             }
                             return;

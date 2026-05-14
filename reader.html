@@ -8,15 +8,15 @@
 
     <title>Reader</title>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js" integrity="sha384-6M0rZuK8mRhdpnt5f7OV2x+2kGHdPMTeq8E4qSbS5S4Ohq+Mcq1ZmSWQV3FdawvW" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js" integrity="sha384-ZqmkDa/1AGF4SKdSmXgEG+3G+Gsb6yNqUSq2Mqp0jDf1GWk+UY5eNbEd7hgwiywI" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js" integrity="sha384-MTDrIlFOzEqpmOxY6UIA/1Zkh0a64UlmJ6R0UrZXqXCPx99siPGi8EmtQjIeCcTH" crossorigin="anonymous"></script>
     <script src="time.js"></script>
     <script src="icons.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js" integrity="sha384-+KqYOH8TSu3FKjN3ld86eZMYqq6lk+y2GjV1hyOW+1hT3Pk/aD8JFueZP1W3bPh1" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" integrity="sha384-6A4YFdmYPT5gmyRp8KegTqUol1Ff3navFf6eyVLErDtdSrikTwa1MQpVhFtubVlq" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" integrity="sha384-+OubPIxtsLCp2uUuSsvWDuBB9oSIEDIYt2qQfYki+vDmSxc6GQsBbBPH6Z6x5wrq" crossorigin="anonymous"></script>
 
     <style>
         /* SYSTEM 7 STYLE */
@@ -1280,12 +1280,17 @@
             } catch (e) { resultsDiv.innerHTML = '<div style="text-align:center;">Error.</div>'; }
         }
 
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
         function createOnlineBookItem(book) {
             const epubUrl = book.formats['application/epub+zip'];
             if (!epubUrl) return null;
             const author = book.authors.length > 0 ? book.authors[0].name : 'Unknown';
-            const safeTitle = book.title.replace(/'/g, "\\'");
-            const safeAuthor = author.replace(/'/g, "\\'");
+            const safeTitle = escapeHtml(book.title).replace(/\\/g, '\\\\\\\\').replace(/'/g, "\\'");
+            const safeAuthor = escapeHtml(author).replace(/\\/g, '\\\\\\\\').replace(/'/g, "\\'");
             const div = document.createElement('div');
             div.className = 'online-book';
             div.innerHTML = `
@@ -1303,7 +1308,7 @@
 
     </script>
     <script src="https://cdn.counter.dev/script.js" data-id="4e551911-0e5d-4c48-91a6-b828c3301675"
-        data-utcoffset="11"></script>
+        data-utcoffset="11" integrity="sha384-nhrsdECZledRaozO3oR4Yu+cq4ACLwBiZ/azuVbm3o9QGzXLdLaRx+r/zDUQ6bLl" crossorigin="anonymous"></script>
     <!-- STANDARD MODAL POPUP -->
     <div id="generic-modal-overlay">
         <div class="modal-box">

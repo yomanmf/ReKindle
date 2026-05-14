@@ -651,10 +651,13 @@
             const returnTo = params.get('return');
             
             if (returnTo) {
-                document.querySelector('.close-box').onclick = () => window.location.href = returnTo;
+                // Validate returnTo to prevent open redirect
+                const isSafeReturn = returnTo.startsWith('/') || returnTo.startsWith(window.location.origin + '/');
+                const safeReturn = isSafeReturn ? returnTo : 'index';
+                document.querySelector('.close-box').onclick = () => window.location.href = safeReturn;
                 const liteBackBtn = document.getElementById('lite-back-btn');
                 if (liteBackBtn) {
-                    liteBackBtn.onclick = () => window.location.href = returnTo;
+                    liteBackBtn.onclick = () => window.location.href = safeReturn;
                 }
             }
             if (isLite) {
@@ -826,7 +829,7 @@
             if (article.title) updateTabTitle(tab.id, article.title);
             view.querySelectorAll('a').forEach(link => {
                 link.onclick = (e) => {
-                    e.preventDefault(); const href = link.getAttribute('href'); if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+                    e.preventDefault(); const href = link.getAttribute('href'); if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('data:') || href.startsWith('vbscript:')) return;
                     let nextUrl = href;
                     if (!href.startsWith('http')) { try { nextUrl = new URL(href, sourceUrl).href; } catch (_) { return; } }
                     document.getElementById('search-input').value = nextUrl; navigateTo(tab, nextUrl, nextUrl);

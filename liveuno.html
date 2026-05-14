@@ -671,6 +671,11 @@
         }
         
         // --- DRAW AVATAR ---
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
         function drawAvatar(canvasId, seed) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
@@ -819,8 +824,8 @@
         
         function renderCard(card, onClick) {
             const isWild = card.color === 'wild';
-            const displayText = isWild && card.type === '+4' ? '+4' : card.type;
-            const clickAttr = onClick ? `onclick="${onClick}"` : '';
+            const displayText = escapeHtml(isWild && card.type === '+4' ? '+4' : card.type);
+            const clickAttr = onClick ? `onclick="${escapeHtml(onClick)}"` : '';
             if (card === 'back') {
                 return `
                     <div class="card card-back" ${clickAttr}>
@@ -849,7 +854,7 @@
             myTurn = (turnId === currentUser.uid);
             
             // Status bar
-            const turnName = turnId === currentUser.uid ? "Your Turn!" : `${gameState.players[turnId].name}'s Turn`;
+            const turnName = turnId === currentUser.uid ? "Your Turn!" : `${escapeHtml(gameState.players[turnId].name)}'s Turn`;
             const turnStatusBar = document.getElementById('status-bar');
             turnStatusBar.innerHTML = `
                 <div class="status-bar-inner">
@@ -901,7 +906,7 @@
                     oppDiv.innerHTML += `
                         <div class="opponent opponent-card ${isActive ? 'active-turn' : ''}" style="display:flex; flex-direction:column; align-items:center;">
                             <canvas id="game-avatar-${uid}" width="32" height="32" style="border:2px solid black; width:32px; height:32px; image-rendering:pixelated; background:white;"></canvas>
-                            <div>${isActive ? '▶ ' : ''}${gameState.players[uid].name}</div>
+                            <div>${isActive ? '▶ ' : ''}${escapeHtml(gameState.players[uid].name)}</div>
                             <div style="font-size:0.8rem; font-weight:normal;">${count} cards</div>
                         </div>
                     `;

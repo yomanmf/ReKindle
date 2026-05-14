@@ -852,6 +852,10 @@
     </div>
 
     <script>
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
         // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyDY7x7vVmlYUyVZNLuCCmIQYa6PWFVfZqQ",
@@ -1224,7 +1228,7 @@
                     // Only show "Uncategorized" filter if user has at least one named category
                     if (cat === 'Uncategorized' && !hasNamedCategories) return;
                     // Escape single quotes in cat name for the onclick handler
-                    const escapedCat = cat.replace(/'/g, "\\'");
+                    const escapedCat = escapeHtml(cat).replace(/\\/g, '\\\\\\\\').replace(/'/g, "\\'");
                     const btnId = `filter-${cat.replace(/\s+/g, '-')}`;
                     dynamicBtns += `<button class="filter-btn ${filterMode === cat ? 'active' : ''}" id="${btnId}" onclick="setFilter('${escapedCat}')">${cat}</button>`;
                 });

@@ -685,7 +685,7 @@
             
             let playerCols = "";
             displayOrder.forEach(uid => {
-                const name = uid === currentUser.uid ? (window.t ? window.t('yahtzee.label.you', 'You') : 'You') : gameState.players[uid].name;
+                const name = uid === currentUser.uid ? (window.t ? window.t('yahtzee.label.you', 'You') : 'You') : escapeHtml(gameState.players[uid].name);
                 playerCols += `<div class="score-cell center">${name}</div>`;
             });
 
@@ -816,7 +816,7 @@
             summaryEl.innerHTML = `<b>${window.t ? window.t('liveyahtzee.label.scores_header', 'Scores:') : 'Scores:'}</b><br>` + displayOrder.map(uid => {
                 const p = gameState.players[uid];
                 const isActive = uid === currentPlayerId;
-                const name = uid === currentUser.uid ? (window.t ? window.t('yahtzee.label.you', 'You') : 'You') : p.name;
+                const name = uid === currentUser.uid ? (window.t ? window.t('yahtzee.label.you', 'You') : 'You') : escapeHtml(p.name);
                 return `<div class="opponent-score-row ${isActive ? 'active-turn' : ''}">
                     <div style="display:flex; align-items:center;">
                         <canvas id="game-avatar-${uid}" width="24" height="24" style="border:1px solid black; width:24px; height:24px; image-rendering:pixelated;"></canvas>

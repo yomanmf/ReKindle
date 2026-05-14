@@ -9,7 +9,7 @@ export async function onRequest(context) {
     // Security: Only allow reddit.com
     try {
         const u = new URL(targetUrl);
-        if (!u.hostname.endsWith("reddit.com") && !u.hostname.endsWith("redd.it")) {
+        if (!(u.hostname === 'reddit.com' || u.hostname.endsWith('.reddit.com')) && !(u.hostname === 'redd.it' || u.hostname.endsWith('.redd.it'))) {
             return new Response("Forbidden: Only reddit.com and redd.it allowed", { status: 403 });
         }
     } catch (e) {

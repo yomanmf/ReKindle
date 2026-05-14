@@ -49,7 +49,7 @@ self.addEventListener('fetch', event => {
     // 0. ABSOLUTE IGNORE: Firestore & Google APIs
     // We must return immediately for these to let the browser handle the XHR/WebSockets natively.
     // Using .href includes is the safest catch-all.
-    if (event.request.url.includes('firestore.googleapis.com')) return;
+    if (event.request.url && (new URL(event.request.url).hostname === 'firestore.googleapis.com' || new URL(event.request.url).hostname.endsWith('.firestore.googleapis.com'))) return;
     if (event.request.url.includes('/firestore/')) return;
     if (event.request.url.includes('/google.firestore.v1.Firestore')) return;
 
@@ -60,7 +60,7 @@ self.addEventListener('fetch', event => {
 
     // GUARD: Ignore Cross-Origin requests, UNLESS they are explicitly whitelisted (Firebase SDKs, Analytics)
     const isWhitelistedOrigin =
-        url.hostname.includes('gstatic.com') || // Firebase SDKs
+        (url.hostname === 'gstatic.com' || url.hostname.endsWith('.gstatic.com')) || // Firebase SDKs
         url.hostname.includes('counter.dev'); // Analytics
 
     if (!url.origin.includes(self.location.origin) && !isWhitelistedOrigin) return;

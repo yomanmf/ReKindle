@@ -899,7 +899,8 @@ function updateWordDisplay() {
             wd.innerText = gameState.currentWord.toUpperCase();
             wd.style.letterSpacing = '2px';
         } else if (gameState.wordLength) {
-            wd.innerText = Array(gameState.wordLength).fill('_').join(' ');
+            const safeLength = Math.min(Math.max(0, parseInt(gameState.wordLength) || 0), 100);
+            wd.innerText = Array(safeLength).fill('_').join(' ');
             wd.style.letterSpacing = '6px';
         } else {
             wd.innerText = '';

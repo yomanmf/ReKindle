@@ -593,6 +593,10 @@
     </div>
 
     <script>
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
         // ALERT HELPER (replaces window.alert — not supported on Kindle)
         function showAlert(msg, cb) {
             var overlay = document.createElement('div');
@@ -601,7 +605,7 @@
             overlay.style.zIndex = '10000';
             var box = document.createElement('div');
             box.className = 'modal-box';
-            box.innerHTML = '<p style="margin-bottom:16px;">' + msg + '</p><div class="modal-actions"><button class="sys-btn">OK</button></div>';
+            box.innerHTML = '<p style="margin-bottom:16px;">' + escapeHtml(msg) + '</p><div class="modal-actions"><button class="sys-btn">OK</button></div>';
             overlay.appendChild(box);
             document.body.appendChild(overlay);
             box.querySelector('button').onclick = function () { overlay.remove(); if (cb) cb(); };

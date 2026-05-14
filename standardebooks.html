@@ -9,12 +9,12 @@
     <title>Standard eBooks</title>
 
     <!-- Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js" integrity="sha384-MTDrIlFOzEqpmOxY6UIA/1Zkh0a64UlmJ6R0UrZXqXCPx99siPGi8EmtQjIeCcTH" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js" integrity="sha384-6M0rZuK8mRhdpnt5f7OV2x+2kGHdPMTeq8E4qSbS5S4Ohq+Mcq1ZmSWQV3FdawvW" crossorigin="anonymous"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js" integrity="sha384-+KqYOH8TSu3FKjN3ld86eZMYqq6lk+y2GjV1hyOW+1hT3Pk/aD8JFueZP1W3bPh1" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" integrity="sha384-6A4YFdmYPT5gmyRp8KegTqUol1Ff3navFf6eyVLErDtdSrikTwa1MQpVhFtubVlq" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" integrity="sha384-+OubPIxtsLCp2uUuSsvWDuBB9oSIEDIYt2qQfYki+vDmSxc6GQsBbBPH6Z6x5wrq" crossorigin="anonymous"></script>
 
     <style>
         /* SYSTEM 7 AESTHETICS */
@@ -494,8 +494,12 @@
             container.appendChild(div);
         }
 
+        function escapeHtml(text) {
+            if (text == null) return "";
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
         function escapeQuotes(str) {
-            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            return escapeHtml(str).replace(/\\/g, '\\\\\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         }
 
         function renderLoading(msg) {
@@ -685,7 +689,7 @@
 
     </script>
     <script src="https://cdn.counter.dev/script.js" data-id="4e551911-0e5d-4c48-91a6-b828c3301675"
-        data-utcoffset="11"></script>
+        data-utcoffset="11" integrity="sha384-nhrsdECZledRaozO3oR4Yu+cq4ACLwBiZ/azuVbm3o9QGzXLdLaRx+r/zDUQ6bLl" crossorigin="anonymous"></script>
 </body>
 
 </html>

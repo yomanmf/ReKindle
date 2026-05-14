@@ -510,6 +510,29 @@
 
 
     <script>
+        function obfuscate(str) {
+            if (!str) return str;
+            var key = 'rek';
+            var res = '';
+            for (var i = 0; i < str.length; i++) {
+                res += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return btoa(res);
+        }
+        function deobfuscate(str) {
+            if (!str) return str;
+            try {
+                var key = 'rek';
+                var raw = atob(str);
+                var res = '';
+                for (var i = 0; i < raw.length; i++) {
+                    res += String.fromCharCode(raw.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
+                return res;
+            } catch (e) { return str; }
+        }
+        function setSecureItem(key, value) { localStorage.setItem(key, obfuscate(value)); }
+        function getSecureItem(key) { return deobfuscate(localStorage.getItem(key)); }
         function showModal(msg, isConfirm = false, callback = null) {
             const overlay = document.getElementById('generic-modal-overlay');
             const messageEl = document.getElementById('modal-message');
@@ -556,18 +579,18 @@
             { name: "Tokyo", zone: "Asia/Tokyo" }
         ];
 
-        var cities = JSON.parse(localStorage.getItem('rekindle_clocks')) || DEFAULT_CITIES;
+        var cities = JSON.parse(getSecureItem('rekindle_clocks')) || DEFAULT_CITIES;
 
         // Default to Local (Auto)
         var homeCity = { name: "Local", zone: null };
 
         // Override Home City with Global Manual Location if set in Settings
-        var globalLoc = JSON.parse(localStorage.getItem('rekindle_location_manual'));
+        var globalLoc = JSON.parse(getSecureItem('rekindle_location_manual'));
         if (globalLoc && globalLoc.zone) {
             homeCity = { name: globalLoc.name, zone: globalLoc.zone };
         }
 
-        var showSeconds = JSON.parse(localStorage.getItem('rekindle_clocks_secs') || 'true');
+        var showSeconds = JSON.parse(getSecureItem('rekindle_clocks_secs') || 'true');
 
         var isEditing = false;
         var timer = null;
@@ -648,7 +671,7 @@
                         // Logic: Prioritize Global Manual Location from Settings.
                         // If it exists, it overrides the home clock, regardless of what's in the clocks doc.
                         var cloudHome = data.homeCity || { name: "Local", zone: null };
-                        var globalManual = JSON.parse(localStorage.getItem('rekindle_location_manual'));
+                        var globalManual = JSON.parse(getSecureItem('rekindle_location_manual'));
 
                         if (globalManual && globalManual.zone) {
                             newHomeCity = { name: globalManual.name, zone: globalManual.zone };
@@ -663,8 +686,8 @@
                         if (citiesChanged || homeChanged) {
                             cities = newCities;
                             homeCity = newHomeCity;
-                            localStorage.setItem('rekindle_clocks', JSON.stringify(cities));
-                            localStorage.setItem('rekindle_clocks_home', JSON.stringify(homeCity));
+                            setSecureItem('rekindle_clocks', JSON.stringify(cities));
+                            setSecureItem('rekindle_clocks_home', JSON.stringify(homeCity));
 
                             console.log("Cloud data updated, re-rendering clocks.");
                             renderClocks();
@@ -679,8 +702,8 @@
         }
 
         function saveData() {
-            localStorage.setItem('rekindle_clocks', JSON.stringify(cities));
-            localStorage.setItem('rekindle_clocks_home', JSON.stringify(homeCity));
+            setSecureItem('rekindle_clocks', JSON.stringify(cities));
+            setSecureItem('rekindle_clocks_home', JSON.stringify(homeCity));
 
             if (currentUser) {
                 db.collection('users').doc(currentUser.uid).collection('apps').doc('clocks').set({
@@ -894,7 +917,7 @@
 
                 // SYNC: Update Global Manual Location
                 var locData = { name: city.name, lat: city.latitude, lon: city.longitude, zone: city.timezone };
-                localStorage.setItem('rekindle_location_manual', JSON.stringify(locData));
+                setSecureItem('rekindle_location_manual', JSON.stringify(locData));
 
                 // Also update User Settings in Firestore if needed (mirroring settings.html logic)
                 if (currentUser) {
@@ -930,7 +953,7 @@
             }
 
             // Global Manual Location Check for Badge
-            var globalLoc = JSON.parse(localStorage.getItem('rekindle_location_manual'));
+            var globalLoc = JSON.parse(getSecureItem('rekindle_location_manual'));
 
             // Badge HTML
             var badgeHtml = '<span class="loc-badge">LOCATION</span>';
@@ -998,7 +1021,7 @@
 
         function toggleSeconds() {
             showSeconds = !showSeconds;
-            localStorage.setItem('rekindle_clocks_secs', JSON.stringify(showSeconds));
+            setSecureItem('rekindle_clocks_secs', JSON.stringify(showSeconds));
             updateSecondsBtn();
             updateClocks();
         }

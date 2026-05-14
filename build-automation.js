@@ -73,7 +73,7 @@ async function minifyHtmlContent(html) {
 
     // 3. Remove HTML Comments (Regex on final string)
     // We do this on the output because cheerio might not expose comments easily for removal
-    return $.html().replace(/<!--[\s\S]*?-->/g, '');
+    return $.html().replace(/<!--[\s\S]*?-->/g, '').replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 }
 
 async function safeMinifyJs(code) {

@@ -49,7 +49,7 @@ export default {
         let match;
         while ((match = linkRegex.exec(gtHtml)) !== null) {
           const link = "https://www.guitaretab.com" + match[1]; // match[1] is relative url
-          const titleRaw = match[2].trim().replace(/<[^>]+>/g, ''); // match[2] is text
+          const titleRaw = match[2].trim().replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/<[^>]+>/g, ''); // match[2] is text
 
           results.push({
             title: titleRaw,
@@ -76,7 +76,7 @@ export default {
         let content = "";
 
         // GuitareTab Content Extraction
-        if (targetUrl.includes("guitaretab.com")) {
+        if (new URL(targetUrl).hostname === 'guitaretab.com' || new URL(targetUrl).hostname.endsWith('.guitaretab.com')) {
           const match = pageHtml.match(/<section[^>]+class=["'][^"']*js-tab[^"']*["'][^>]*>([\s\S]*?)<\/section>/i) ||
             pageHtml.match(/<pre[^>]+class=["'][^"']*js-tab-content[^"']*["'][^>]*>([\s\S]*?)<\/pre>/i);
           if (match) content = match[1];
@@ -87,7 +87,7 @@ export default {
           .replace(/&lt;/g, "<")
           .replace(/&gt;/g, ">")
           .replace(/&amp;/g, "&")
-          .replace(/<[^>]*>/g, "");
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/<[^>]*>/g, "");
 
         if (!content) throw new Error("Could not parse content");
 

@@ -808,6 +808,29 @@
     <canvas id="tile-gen" width="32" height="32" style="display:none;"></canvas>
 
     <script>
+        function obfuscate(str) {
+            if (!str) return str;
+            var key = 'rek';
+            var res = '';
+            for (var i = 0; i < str.length; i++) {
+                res += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return btoa(res);
+        }
+        function deobfuscate(str) {
+            if (!str) return str;
+            try {
+                var key = 'rek';
+                var raw = atob(str);
+                var res = '';
+                for (var i = 0; i < raw.length; i++) {
+                    res += String.fromCharCode(raw.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
+                return res;
+            } catch (e) { return str; }
+        }
+        function setSecureItem(key, value) { localStorage.setItem(key, obfuscate(value)); }
+        function getSecureItem(key) { return deobfuscate(localStorage.getItem(key)); }
         // Updated showModal to support callbacks for simple alerts too
         function showModal(msg, isConfirm = false, callback = null) {
             // Check signatures
@@ -1709,7 +1732,7 @@
                 country_code: city.country_code || null,
                 utc_offset: offset
             };
-            localStorage.setItem('rekindle_location_manual', JSON.stringify(locData));
+            setSecureItem('rekindle_location_manual', JSON.stringify(locData));
 
             if (currentUser) {
                 db.collection('users').doc(currentUser.uid).collection('settings').doc('general').set({
@@ -1734,7 +1757,7 @@
 
 
         function updateLocationDisplay() {
-            const saved = JSON.parse(localStorage.getItem('rekindle_location_manual'));
+            const saved = JSON.parse(getSecureItem('rekindle_location_manual'));
             const el = document.getElementById('location-display-desc');
             if (saved) {
                 el.innerText = `Manual: ${saved.name}`;
@@ -1798,7 +1821,7 @@
                     // 2. If 'auto', we can re-calculate to be sure (in case i18n hasn't finished)
                     if (lang === 'auto') {
                         try {
-                            const manualLoc = JSON.parse(localStorage.getItem('rekindle_location_manual'));
+                            const manualLoc = JSON.parse(getSecureItem('rekindle_location_manual'));
                             if (manualLoc && manualLoc.country_code) {
                                 const cc = manualLoc.country_code.toUpperCase();
                                 const esCountries = ['ES', 'MX', 'AR', 'CL', 'CO', 'PE', 'VE', 'CU', 'DO', 'PR', 'GT', 'HN', 'SV', 'NI', 'CR', 'PA', 'EC', 'BO', 'PY', 'UY'];
@@ -1865,7 +1888,7 @@
                     // 2. If 'auto', we can re-calculate to be sure (in case i18n hasn't finished)
                     if (lang === 'auto') {
                         try {
-                            const manualLoc = JSON.parse(localStorage.getItem('rekindle_location_manual'));
+                            const manualLoc = JSON.parse(getSecureItem('rekindle_location_manual'));
                             if (manualLoc && manualLoc.country_code) {
                                 const cc = manualLoc.country_code.toUpperCase();
                                 const esCountries = ['ES', 'MX', 'AR', 'CL', 'CO', 'PE', 'VE', 'CU', 'DO', 'PR', 'GT', 'HN', 'SV', 'NI', 'CR', 'PA', 'EC', 'BO', 'PY', 'UY'];
@@ -1937,7 +1960,7 @@
                     }
 
                     if (data.manualLocation) {
-                        localStorage.setItem('rekindle_location_manual', JSON.stringify(data.manualLocation));
+                        setSecureItem('rekindle_location_manual', JSON.stringify(data.manualLocation));
                         updateLocationDisplay();
                     }
 
@@ -1984,11 +2007,11 @@
             db.collection('users').doc(currentUser.uid).collection('privateSettings').doc('ai').get().then(doc => {
                 if (doc.exists) {
                     const data = doc.data();
-                    localStorage.setItem('chat_use_byo_key', data.useByoKey);
-                    if (data.apiKey) localStorage.setItem('chat_custom_api_key', data.apiKey);
+                    setSecureItem('chat_use_byo_key', data.useByoKey);
+                    if (data.apiKey) setSecureItem('chat_custom_api_key', data.apiKey);
                     if (data.provider) localStorage.setItem('chat_ai_provider', data.provider);
                     if (data.model) localStorage.setItem('chat_ai_model', data.model);
-                    if (data.openaiKey) localStorage.setItem('chat_openai_key', data.openaiKey);
+                    if (data.openaiKey) setSecureItem('chat_openai_key', data.openaiKey);
                     // loadAiSettings(); // Refresh UI - Removed as function is missing
                 }
             });

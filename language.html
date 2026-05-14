@@ -1467,7 +1467,7 @@
             // Choices
             html += `<div class="choices-grid">`;
             q.choices.forEach(c => {
-                html += `<div class="choice-btn" onclick="selectChoice(this, '${c.replace(/'/g, "\\'")}')">${c}</div>`;
+                html += `<div class="choice-btn" onclick="selectChoice(this, '${escapeHtml(c).replace(/\\/g, '\\\\\\\\').replace(/'/g, "\\'")}')">${escapeHtml(c)}</div>`;
             });
             html += `</div>`;
 

@@ -715,7 +715,7 @@
             if (!note) return;
 
             document.getElementById('note-title-input').value = note.title;
-            document.getElementById('note-content').innerHTML = note.content;
+            document.getElementById('note-content').innerHTML = (note.content || '').replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 
             document.getElementById('list-view').style.display = 'none';
             document.getElementById('list-controls').style.display = 'none';
