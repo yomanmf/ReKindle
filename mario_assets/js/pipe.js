@@ -101,7 +101,7 @@
           if (ent instanceof Mario.Player) {
             ent.jumping = 0;
           }
-        } else if (Math.abs(hpos2[1] - hpos1[1] - this.hitbox[3]) > ent.vel[1] &&
+        } else if (ent.vel[1] < 0 && Math.abs(hpos2[1] - hpos1[1] - this.hitbox[3]) > ent.vel[1] &&
           center + 2 >= hpos1[0] && center - 2 <= hpos1[0] + this.hitbox[2]) {
           //ent is under the block.
           ent.vel[1] = 0;
