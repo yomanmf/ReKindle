@@ -1190,6 +1190,7 @@
                         db.ref('users_public/' + user.uid).set({
                             displayName: currentUserName,
                             email: user.email || "",
+                            createdAt: firebase.database.ServerValue.TIMESTAMP,
                             lastActive: firebase.database.ServerValue.TIMESTAMP
                         });
                     } else if (!data.email && user.email) {

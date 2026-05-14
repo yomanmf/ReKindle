@@ -449,6 +449,8 @@
                     <div class="close-box" onclick="closeArticleModal()">X</div>
                     <span class="title-text" data-i18n="news.modal.title">Article View</span>
                     <div class="title-controls">
+                        <button class="sys-btn small" onclick="decreaseFontSize()" title="Smaller">A-</button>
+                        <button class="sys-btn small" onclick="increaseFontSize()" title="Larger" style="margin-right: 10px;">A+</button>
                         <button class="sys-btn small" onclick="openExternal()" data-i18n="news.btn.external">Open
                             Externally</button>
                     </div>
@@ -480,10 +482,12 @@
         };
 
         let currentArticleUrl = "";
+        let readerFontSize = 16; // Default article font size in px
 
         window.onload = function () {
             if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
             if (window.rekindleApplyDefaultFullscreen) window.rekindleApplyDefaultFullscreen();
+            loadReaderFontSize();
             initDate();
             fetchNews('world'); // Default load
         };
@@ -691,6 +695,7 @@
                 frame.onload = () => {
                     currentPage = 1;
                     updatePaginationUI();
+                    applyReaderFontSize();
 
                     // Tap Navigation & Link Handling
                     frame.contentDocument.addEventListener('click', (e) => {
@@ -757,6 +762,43 @@
         function openExternal() {
             if (currentArticleUrl) {
                 window.open(currentArticleUrl, '_blank');
+            }
+        }
+
+        function loadReaderFontSize() {
+            const stored = parseInt(localStorage.getItem('rss_reader_font_size'));
+            if (!isNaN(stored) && stored >= 10 && stored <= 32) {
+                readerFontSize = stored;
+            }
+        }
+
+        function applyReaderFontSize() {
+            const frame = document.getElementById('article-frame');
+            if (frame && frame.contentDocument) {
+                if (frame.contentDocument.documentElement) {
+                    frame.contentDocument.documentElement.style.fontSize = readerFontSize + 'px';
+                }
+                if (frame.contentDocument.body) {
+                    frame.contentDocument.body.style.fontSize = readerFontSize + 'px';
+                }
+            }
+            // Allow the browser to reflow before recalculating pagination
+            requestAnimationFrame(() => requestAnimationFrame(() => updatePaginationUI()));
+        }
+
+        function increaseFontSize() {
+            if (readerFontSize < 32) {
+                readerFontSize += 2;
+                localStorage.setItem('rss_reader_font_size', readerFontSize);
+                applyReaderFontSize();
+            }
+        }
+
+        function decreaseFontSize() {
+            if (readerFontSize > 10) {
+                readerFontSize -= 2;
+                localStorage.setItem('rss_reader_font_size', readerFontSize);
+                applyReaderFontSize();
             }
         }
 
