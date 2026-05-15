@@ -419,19 +419,30 @@ exports.registerUser = onCall(callOptions, async (request) => {
     }
 
     // Get the real client IP from the server-side request
-    const forwarded = request.rawRequest.headers['x-forwarded-for'];
-    const rawIp = (forwarded ? forwarded.split(',')[0].trim() : request.rawRequest.ip) || '';
-    // Strip IPv4-mapped IPv6 prefix (::ffff:1.2.3.4 → 1.2.3.4)
-    const ip = rawIp.replace(/^::ffff:/, '');
+    let ip = '';
+    try {
+        const forwarded = request.rawRequest?.headers?.['x-forwarded-for'];
+        const rawIp = (forwarded ? forwarded.split(',')[0].trim() : request.rawRequest?.ip) || '';
+        // Strip IPv4-mapped IPv6 prefix (::ffff:1.2.3.4 → 1.2.3.4)
+        ip = rawIp.replace(/^::ffff:/, '');
+    } catch (ipErr) {
+        logger.warn('Unable to extract client IP:', ipErr);
+    }
 
     // Check banned IPs — this happens on the server, nothing the client can bypass
     if (ip) {
-        const safeIp = ip.replace(/\./g, '-').replace(/:/g, '_');
-        const snap = await admin.database().ref(`banned_ips/${safeIp}`).once('value');
-        if (snap.exists()) {
-            logger.warn(`Blocked registration from banned IP: ${ip} (username attempt: ${username})`);
-            await logModAction('ip_ban_registration', '', username, `Blocked registration from banned IP: ${ip}`);
-            throw new HttpsError('permission-denied', 'Registration is not available from your network.');
+        try {
+            const safeIp = ip.replace(/\./g, '-').replace(/:/g, '_');
+            const snap = await admin.database().ref(`banned_ips/${safeIp}`).once('value');
+            if (snap.exists()) {
+                logger.warn(`Blocked registration from banned IP: ${ip} (username attempt: ${username})`);
+                await logModAction('ip_ban_registration', '', username, `Blocked registration from banned IP: ${ip}`);
+                throw new HttpsError('permission-denied', 'Registration is not available from your network.');
+            }
+        } catch (e) {
+            if (e.code && e.code.startsWith('functions/')) throw e; // re-throw HttpsError
+            logger.error('Banned IP check error:', e);
+            // Don't block registration on a transient DB read failure
         }
     }
 
@@ -451,27 +462,35 @@ exports.registerUser = onCall(callOptions, async (request) => {
         throw new HttpsError('internal', 'Registration failed. Please try again.');
     }
 
-    // Store IP server-side immediately — reliable regardless of client behaviour
-    if (ip) {
-        await admin.database().ref(`users_private/${userRecord.uid}/ipAddress`).set(ip);
-    }
-
-    // Post-creation defence-in-depth: if the IP was banned in the race window
-    // between the pre-check and createUser, disable the account immediately.
-    if (ip) {
-        const safeIp = ip.replace(/\./g, '-').replace(/:/g, '_');
-        const snap = await admin.database().ref(`banned_ips/${safeIp}`).once('value');
-        if (snap.exists()) {
-            logger.warn(`Banned IP registered (race) — disabling account: ${ip} (uid: ${userRecord.uid})`);
-            await admin.auth().updateUser(userRecord.uid, { disabled: true });
-            await logModAction('ip_ban_login', userRecord.uid, username, `Account disabled after registration from banned IP: ${ip}`);
-            throw new HttpsError('permission-denied', 'Registration is not available from your network.');
+    // Everything after createUser is wrapped so a partial failure doesn't leave
+    // the client with a confusing 500 and no actionable error.
+    try {
+        // Store IP server-side immediately — reliable regardless of client behaviour
+        if (ip) {
+            await admin.database().ref(`users_private/${userRecord.uid}/ipAddress`).set(ip);
         }
-    }
 
-    // Return a custom token so the client can call signInWithCustomToken()
-    const customToken = await admin.auth().createCustomToken(userRecord.uid);
-    return { customToken };
+        // Post-creation defence-in-depth: if the IP was banned in the race window
+        // between the pre-check and createUser, disable the account immediately.
+        if (ip) {
+            const safeIp = ip.replace(/\./g, '-').replace(/:/g, '_');
+            const snap = await admin.database().ref(`banned_ips/${safeIp}`).once('value');
+            if (snap.exists()) {
+                logger.warn(`Banned IP registered (race) — disabling account: ${ip} (uid: ${userRecord.uid})`);
+                await admin.auth().updateUser(userRecord.uid, { disabled: true });
+                await logModAction('ip_ban_login', userRecord.uid, username, `Account disabled after registration from banned IP: ${ip}`);
+                throw new HttpsError('permission-denied', 'Registration is not available from your network.');
+            }
+        }
+
+        // Return a custom token so the client can call signInWithCustomToken()
+        const customToken = await admin.auth().createCustomToken(userRecord.uid);
+        return { customToken };
+    } catch (e) {
+        if (e.code && e.code.startsWith('functions/')) throw e; // re-throw HttpsError
+        logger.error('Post-registration error for uid:', userRecord.uid, e);
+        throw new HttpsError('internal', 'Please log in with your username and password.');
+    }
 });
 
 /**

@@ -2283,7 +2283,19 @@
                 const result = await registerUser({ username: u, password: p });
                 await auth.signInWithCustomToken(result.data.customToken);
             } catch (e) {
-                const msg = e.message || "Registration failed.";
+                const msg = e.message || "";
+                // Fallback: if the account was created but custom-token generation failed
+                // (e.g. IAM misconfiguration), sign in with email/password instead.
+                if (msg.includes("Please log in with your username and password.")) {
+                    document.getElementById('login-msg').innerText = "Finalising sign-in...";
+                    try {
+                        await auth.signInWithEmailAndPassword(`${u}@rekindle.ink`, p);
+                        return;
+                    } catch (loginErr) {
+                        document.getElementById('login-msg').innerText = "Error: " + (loginErr.message || "Sign-in failed.");
+                        return;
+                    }
+                }
                 document.getElementById('login-msg').innerText = "Error: " + msg;
             }
         }
