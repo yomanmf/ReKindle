@@ -21,77 +21,6 @@
             ".read": "auth != null",
             ".write": "auth.token.email === 'ukiyo@rekindle.ink'"
         },
-        "kindlechat": {
-            "presence": {
-                ".read": false,
-                ".write": false
-            },
-            "user_limits": {
-                "$username": {
-                    ".read": "auth != null && auth.token.email.beginsWith($username + '@')",
-                    ".write": "auth.token.email === 'ukiyo@rekindle.ink'"
-                }
-            },
-            "messages": {
-                ".read": true,
-                ".write": "auth.token.email === 'ukiyo@rekindle.ink'",
-                ".indexOn": [
-                    "timestamp"
-                ],
-                "$messageId": {
-                    ".write": "(auth != null && !data.exists() && (!root.child('social_timeouts').child(auth.uid).exists() || !root.child('social_timeouts').child(auth.uid).child('durationHours').isNumber() || root.child('social_timeouts').child(auth.uid).child('durationHours').val() <= 0 || (root.child('users_private').child(auth.uid).child('timeout_seen').exists() && root.child('users_private').child(auth.uid).child('timeout_seen').val() + (root.child('social_timeouts').child(auth.uid).child('durationHours').val() * 3600000) <= now))) || auth.token.email === 'ukiyo@rekindle.ink' || (auth != null && !newData.exists() && root.child('moderators').child(auth.uid).val() === true && data.child('uid').val() !== auth.uid) || (auth != null && data.exists() && newData.exists() && newData.child('text').val() === data.child('text').val() && newData.child('timestamp').val() === data.child('timestamp').val() && newData.child('uid').val() === data.child('uid').val())",
-                    ".validate": "(newData.hasChildren(['uid', 'text', 'timestamp']) && !newData.hasChild('isPro') && newData.child('uid').val() === auth.uid) || auth.token.email === 'ukiyo@rekindle.ink' || (data.exists() && newData.child('text').val() === data.child('text').val() && newData.child('timestamp').val() === data.child('timestamp').val() && newData.child('uid').val() === data.child('uid').val() && !newData.hasChild('isPro'))",
-                    "translation": {
-                        ".write": "root.child('kindlechat/messages/' + $messageId + '/uid').val() === auth.uid || auth.token.email === 'ukiyo@rekindle.ink'"
-                    },
-                    "reactions": {
-                        "$uid": {
-                            ".write": "auth.uid === $uid",
-                            ".validate": "newData.hasChildren(['reaction', 'username'])"
-                        }
-                    }
-                }
-            }
-        },
-        "topics": {
-            ".read": "auth != null",
-            ".indexOn": [
-                "lastActive",
-                "timestamp",
-                "authorId"
-            ],
-            "$topicId": {
-                ".write": "auth != null && ((!data.exists() && (!root.child('social_timeouts').child(auth.uid).exists() || !root.child('social_timeouts').child(auth.uid).child('durationHours').isNumber() || root.child('social_timeouts').child(auth.uid).child('durationHours').val() <= 0 || (root.child('users_private').child(auth.uid).child('timeout_seen').exists() && root.child('users_private').child(auth.uid).child('timeout_seen').val() + (root.child('social_timeouts').child(auth.uid).child('durationHours').val() * 3600000) <= now))) || data.child('authorId').val() === auth.uid || auth.token.email === 'ukiyo@rekindle.ink')",
-                ".validate": "newData.hasChildren(['title', 'authorId', 'timestamp'])",
-                "authorId": {
-                    ".validate": "newData.val() === auth.uid || auth.token.email === 'ukiyo@rekindle.ink'"
-                },
-                "title": {
-                    ".validate": "!data.exists() || newData.val() === data.val() || auth.token.email === 'ukiyo@rekindle.ink'"
-                },
-                "commentCount": {
-                    ".write": "auth != null",
-                    ".validate": "newData.isNumber()"
-                },
-                "lastActive": {
-                    ".write": "auth != null",
-                    ".validate": "newData.isNumber()"
-                }
-            }
-        },
-        "topic_comments": {
-            ".read": "auth.token.email === 'ukiyo@rekindle.ink'",
-            "$topicId": {
-                ".read": "auth != null",
-                ".indexOn": [
-                    "timestamp"
-                ],
-                "$commentId": {
-                    ".write": "auth != null && ((!data.exists() && (!root.child('social_timeouts').child(auth.uid).exists() || !root.child('social_timeouts').child(auth.uid).child('durationHours').isNumber() || root.child('social_timeouts').child(auth.uid).child('durationHours').val() <= 0 || (root.child('users_private').child(auth.uid).child('timeout_seen').exists() && root.child('users_private').child(auth.uid).child('timeout_seen').val() + (root.child('social_timeouts').child(auth.uid).child('durationHours').val() * 3600000) <= now))) || data.child('authorId').val() === auth.uid || auth.token.email === 'ukiyo@rekindle.ink' || (!newData.exists() && root.child('moderators').child(auth.uid).val() === true && data.child('authorId').val() !== auth.uid))",
-                    ".validate": "newData.hasChildren(['body', 'authorId', 'timestamp']) && (newData.child('authorId').val() === auth.uid || auth.token.email === 'ukiyo@rekindle.ink')"
-                }
-            }
-        },
         "user_cards": {
             ".read": "auth != null",
             ".indexOn": ["username"],
@@ -112,17 +41,7 @@
         "users_private": {
             "$userId": {
                 ".read": "auth != null && (auth.uid === $userId || auth.token.email === 'ukiyo@rekindle.ink')",
-                ".write": "auth != null && auth.uid === $userId",
-                "timeout_seen": {
-                    ".read": "auth != null && (auth.uid === $userId || auth.token.email === 'ukiyo@rekindle.ink' || root.child('moderators').child(auth.uid).val() === true)",
-                    ".write": "auth != null && (auth.uid === $userId || auth.token.email === 'ukiyo@rekindle.ink' || (!newData.exists() && root.child('moderators').child(auth.uid).val() === true && $userId !== auth.uid && $userId !== 'ukiyo' && root.child('moderators').child($userId).val() !== true && root.child('users_public').child($userId).child('email').val() !== 'ukiyo@rekindle.ink'))"
-                }
-            }
-        },
-        "social_timeouts": {
-            ".read": "auth != null",
-            "$userId": {
-                ".write": "auth.token.email === 'ukiyo@rekindle.ink' || (auth != null && root.child('moderators').child(auth.uid).val() === true && $userId !== auth.uid && $userId !== 'ukiyo' && root.child('moderators').child($userId).val() !== true && root.child('users_public').child($userId).child('email').val() !== 'ukiyo@rekindle.ink' && (!newData.exists() || (newData.hasChildren(['reason', 'durationHours', 'moderatedBy', 'createdAt']) && newData.child('reason').isString() && newData.child('reason').val().length > 0 && newData.child('reason').val().length <= 200 && newData.child('durationHours').isNumber() && newData.child('durationHours').val() > 0 && newData.child('durationHours').val() <= 24 && newData.child('moderatedBy').val() === auth.uid && newData.child('createdAt').isNumber())))"
+                ".write": "auth != null && auth.uid === $userId"
             }
         },
         "banned_ips": {
@@ -147,26 +66,6 @@
             "$actionId": {
                 ".write": "auth.token.email === 'ukiyo@rekindle.ink' || (auth != null && root.child('moderators').child(auth.uid).val() === true && (!data.exists() || (data.child('moderatorUid').val() === auth.uid && newData.exists() && data.child('type').val() === newData.child('type').val() && data.child('moderatorUid').val() === newData.child('moderatorUid').val() && data.child('targetUid').val() === newData.child('targetUid').val() && data.child('createdAt').val() === newData.child('createdAt').val())))",
                 ".validate": "newData.hasChildren(['type', 'moderatorUid', 'targetUid', 'createdAt'])"
-            }
-        },
-        "neighbourhood_posts": {
-            ".read": "auth != null",
-            ".indexOn": [
-                "timestamp",
-                "uid"
-            ],
-            "$postId": {
-                "comments": {
-                    ".indexOn": [
-                        "timestamp"
-                    ],
-                    "$commentId": {
-                        ".write": "auth != null && ((!data.exists() && (!root.child('social_timeouts').child(auth.uid).exists() || !root.child('social_timeouts').child(auth.uid).child('durationHours').isNumber() || root.child('social_timeouts').child(auth.uid).child('durationHours').val() <= 0 || (root.child('users_private').child(auth.uid).child('timeout_seen').exists() && root.child('users_private').child(auth.uid).child('timeout_seen').val() + (root.child('social_timeouts').child(auth.uid).child('durationHours').val() * 3600000) <= now))) || data.child('uid').val() === auth.uid || auth.token.email === 'ukiyo@rekindle.ink' || (!newData.exists() && root.child('moderators').child(auth.uid).val() === true && data.child('uid').val() !== auth.uid))",
-                        ".validate": "newData.hasChildren(['uid', 'text', 'timestamp']) && (newData.child('uid').val() === auth.uid || auth.token.email === 'ukiyo@rekindle.ink')"
-                    }
-                },
-                ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && (!root.child('social_timeouts').child(auth.uid).exists() || !root.child('social_timeouts').child(auth.uid).child('durationHours').isNumber() || root.child('social_timeouts').child(auth.uid).child('durationHours').val() <= 0 || (root.child('users_private').child(auth.uid).child('timeout_seen').exists() && root.child('users_private').child(auth.uid).child('timeout_seen').val() + (root.child('social_timeouts').child(auth.uid).child('durationHours').val() * 3600000) <= now))) || (data.exists() && data.child('uid').val() === auth.uid) || auth.token.email === 'ukiyo@rekindle.ink' || (!newData.exists() && root.child('moderators').child(auth.uid).val() === true && data.child('uid').val() !== auth.uid))",
-                ".validate": "auth.token.email === 'ukiyo@rekindle.ink' || !newData.exists() || (newData.hasChildren(['uid', 'text', 'timestamp']) && (newData.child('uid').val() === auth.uid || (data.exists() && data.child('uid').val() === newData.child('uid').val() && data.child('text').val() === newData.child('text').val() && data.child('timestamp').val() === newData.child('timestamp').val())))"
             }
         },
         "matchmaking": {
