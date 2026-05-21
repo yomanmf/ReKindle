@@ -794,16 +794,23 @@
         async function loadGoogleContacts() {
             document.getElementById('status-bar').innerText = window.t('tasks.status.syncing', "Syncing...");
             try {
-                const res = await gapi.client.people.people.connections.list({
-                    'resourceName': 'people/me',
-                    'pageSize': 300,
-                    'personFields': 'names,phoneNumbers,emailAddresses,organizations,addresses,urls,birthdays,biographies',
-                    'sortOrder': 'FIRST_NAME_ASCENDING'
-                });
-                contacts = res.result.connections || [];
+                contacts = [];
+                let pageToken = undefined;
+                do {
+                    const params = {
+                        'resourceName': 'people/me',
+                        'pageSize': 1000,
+                        'personFields': 'names,phoneNumbers,emailAddresses,organizations,addresses,urls,birthdays,biographies',
+                        'sortOrder': 'FIRST_NAME_ASCENDING'
+                    };
+                    if (pageToken) params.pageToken = pageToken;
+                    const res = await gapi.client.people.people.connections.list(params);
+                    const page = res.result.connections || [];
+                    contacts = contacts.concat(page);
+                    pageToken = res.result.nextPageToken;
+                } while (pageToken);
                 renderList(contacts);
                 document.getElementById('status-bar').innerText = window.t('status.synced', "Synced: ") + "Google";
-                console.log(contacts[0]);
             } catch (e) {
                 if (e.status === 401) {
                     // Token expired during use, re-auth
