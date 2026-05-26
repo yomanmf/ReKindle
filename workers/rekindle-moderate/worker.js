@@ -144,20 +144,31 @@ async function rtdbPush(path, data, userToken) {
     return await resp.json();
 }
 
-async function rtdbGet(path, env, accessToken) {
+async function rtdbGetWithUserToken(path, env, userToken) {
+    const projectId = env.FIREBASE_PROJECT_ID || "rekindle-dd1fa";
+    const url = `https://${projectId}-default-rtdb.firebaseio.com/${path}.json?auth=${encodeURIComponent(userToken)}`;
+    const resp = await fetch(url);
+    if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(`RTDB get with user token failed (${resp.status}): ${errText}`);
+    }
+    return await resp.json();
+}
+
+async function rtdbGetWithAccessToken(path, env, accessToken) {
     const projectId = env.FIREBASE_PROJECT_ID || "rekindle-dd1fa";
     const url = `https://${projectId}-default-rtdb.firebaseio.com/${path}.json?access_token=${encodeURIComponent(accessToken)}`;
     const resp = await fetch(url);
     if (!resp.ok) {
         const errText = await resp.text();
-        throw new Error(`RTDB get failed (${resp.status}): ${errText}`);
+        throw new Error(`RTDB get with access token failed (${resp.status}): ${errText}`);
     }
     return await resp.json();
 }
 
-async function checkTimeout(uid, env, accessToken) {
+async function checkTimeout(uid, env, userToken, accessToken) {
     try {
-        const data = await rtdbGet(`timeouts/${uid}`, env, accessToken);
+        const data = await rtdbGetWithUserToken(`timeouts/${uid}`, env, userToken);
         if (data && typeof data.until === "number") {
             const now = Date.now();
             if (data.until > now) {
@@ -166,7 +177,20 @@ async function checkTimeout(uid, env, accessToken) {
             }
         }
     } catch (e) {
-        console.error("[Moderate] Timeout check failed:", e.message);
+        console.error("[Moderate] Timeout check with user token failed:", e.message);
+        // Fallback to service account (bypasses rules, needs IAM permissions)
+        try {
+            const data = await rtdbGetWithAccessToken(`timeouts/${uid}`, env, accessToken);
+            if (data && typeof data.until === "number") {
+                const now = Date.now();
+                if (data.until > now) {
+                    const remainingMinutes = Math.ceil((data.until - now) / 60000);
+                    return { timedOut: true, remainingMinutes };
+                }
+            }
+        } catch (e2) {
+            console.error("[Moderate] Timeout check with access token failed:", e2.message);
+        }
     }
     return { timedOut: false };
 }
@@ -648,7 +672,7 @@ export default {
             const accessToken = await getCachedAccessToken(env);
 
             // --- TIMEOUT CHECK ---
-            const timeoutCheck = await checkTimeout(uid, env, accessToken);
+            const timeoutCheck = await checkTimeout(uid, env, token, accessToken);
             if (timeoutCheck.timedOut) {
                 return new Response(JSON.stringify({
                     error: `You are timed out. Please wait ${timeoutCheck.remainingMinutes} minute(s) before posting.`

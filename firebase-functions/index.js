@@ -876,6 +876,75 @@ exports.setUserAuthStatus = onCall(callOptions, async (request) => {
     }
 });
 
+exports.getSocialUserAuthStatus = onCall(callOptions, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'Must be signed in.');
+    }
+    const { uid } = request.data;
+    if (!uid) {
+        throw new HttpsError('invalid-argument', 'Missing uid.');
+    }
+
+    const callerUid = request.auth.uid;
+    const callerRecord = await admin.auth().getUser(callerUid);
+    const isAdmin = callerRecord.email === 'ukiyo@rekindle.ink';
+    let isMod = false;
+    if (!isAdmin) {
+        const modSnap = await admin.database().ref('moderators/' + callerUid).once('value');
+        isMod = modSnap.exists();
+    }
+    if (!isAdmin && !isMod) {
+        throw new HttpsError('permission-denied', 'Admin or moderator access required.');
+    }
+
+    if (!socialAdminApp) {
+        throw new HttpsError('failed-precondition', 'Social project not configured on server.');
+    }
+
+    try {
+        const userRecord = await socialAdminApp.auth().getUser(uid);
+        return { disabled: userRecord.disabled };
+    } catch (e) {
+        if (e.code === 'auth/user-not-found') {
+            return { disabled: null, notFound: true };
+        }
+        logger.error('getSocialUserAuthStatus error:', e);
+        throw new HttpsError('internal', 'Failed to fetch social user auth status: ' + e.message);
+    }
+});
+
+exports.setSocialUserAuthStatus = onCall(callOptions, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'Must be signed in.');
+    }
+    const { uid, disabled } = request.data;
+    if (!uid || typeof disabled !== 'boolean') {
+        throw new HttpsError('invalid-argument', 'Missing uid or disabled flag.');
+    }
+
+    const callerUid = request.auth.uid;
+    const callerRecord = await admin.auth().getUser(callerUid);
+    const isAdmin = callerRecord.email === 'ukiyo@rekindle.ink';
+    if (!isAdmin) {
+        throw new HttpsError('permission-denied', 'Admin access required.');
+    }
+
+    if (!socialAdminApp) {
+        throw new HttpsError('failed-precondition', 'Social project not configured on server.');
+    }
+
+    try {
+        await socialAdminApp.auth().updateUser(uid, { disabled });
+        return { success: true, disabled };
+    } catch (e) {
+        if (e.code === 'auth/user-not-found') {
+            throw new HttpsError('not-found', 'User not found in social project.');
+        }
+        logger.error('setSocialUserAuthStatus error:', e);
+        throw new HttpsError('internal', 'Failed to update social user auth status: ' + e.message);
+    }
+});
+
 exports.checkIPOnLogin = onCall(callOptions, async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'Must be signed in to call this function.');

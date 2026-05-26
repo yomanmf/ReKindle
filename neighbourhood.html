@@ -1219,6 +1219,34 @@
             currentUser = user;
             document.getElementById('login-overlay').style.display = 'none';
 
+            // Check active timeout and show banner
+            db.ref('timeouts/' + user.uid).once('value').then(function(snap) {
+                var t = snap.val();
+                if (t && t.until > Date.now()) {
+                    var remaining = Math.ceil((t.until - Date.now()) / 60000);
+                    var banner = document.getElementById('timeout-banner');
+                    if (!banner) {
+                        banner = document.createElement('div');
+                        banner.id = 'timeout-banner';
+                        banner.style.cssText = 'background:#8a4800;color:white;text-align:center;padding:8px;font-size:0.85rem;font-family:inherit;position:fixed;top:0;left:0;width:100%;z-index:99999;box-sizing:border-box;border-bottom:2px solid #000;';
+                        document.body.style.paddingTop = (parseInt(getComputedStyle(document.body).paddingTop || 0) + 36) + 'px';
+                        document.body.insertBefore(banner, document.body.firstChild);
+                    }
+                    banner.textContent = 'You are timed out. Please wait ' + remaining + ' minute(s) before posting.';
+                    // Grey out the page content
+                    var overlay = document.getElementById('timeout-overlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.id = 'timeout-overlay';
+                        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(128,128,128,0.35);z-index:99998;pointer-events:none;';
+                        document.body.appendChild(overlay);
+                    }
+                    // Disconnect from Firebase to stop reads/writes while timed out
+                    db.goOffline();
+                    if (socialDb) socialDb.disableNetwork();
+                }
+            });
+
             // Initial Pro check from storage
             isPlus = localStorage.getItem('rekindle_is_pro') !== 'false';
 
@@ -2817,19 +2845,23 @@
             // Timeout check
             db.ref('timeouts/' + currentUser.uid).once('value').then(function(snap) {
                 var t = snap.val();
+                console.log('[Timeout check] Data:', t);
                 if (t && t.until > Date.now()) {
                     var remaining = Math.ceil((t.until - Date.now()) / 60000);
                     showAlertModal('You are timed out. Please wait ' + remaining + ' minute(s) before posting.');
                     return;
                 }
                 doSubmitComment(postId, input, text);
-            }).catch(function() { doSubmitComment(postId, input, text); });
+            }).catch(function(err) {
+                console.error('[Timeout check] Error reading timeout:', err && err.code ? err.code : err);
+                doSubmitComment(postId, input, text);
+            });
         }
 
         function doSubmitComment(postId, input, text) {
             input.disabled = true;
 
-            var tokenSource = socialAuth.currentUser || currentUser;
+            var tokenSource = currentUser || socialAuth.currentUser;
             tokenSource.getIdToken(true).then(function (token) {
                 return fetch(MODERATION_WORKER_URL, {
                     method: 'POST',
@@ -3129,20 +3161,24 @@
             // CHECK 5: Timeout
             db.ref('timeouts/' + currentUser.uid).once('value').then(function(snap) {
                 var t = snap.val();
+                console.log('[Timeout check] Data:', t);
                 if (t && t.until > Date.now()) {
                     var remaining = Math.ceil((t.until - Date.now()) / 60000);
                     showAlertModal('You are timed out. Please wait ' + remaining + ' minute(s) before posting.');
                     return;
                 }
                 doSubmitPost(input, text);
-            }).catch(function() { doSubmitPost(input, text); });
+            }).catch(function(err) {
+                console.error('[Timeout check] Error reading timeout:', err && err.code ? err.code : err);
+                doSubmitPost(input, text);
+            });
         }
 
         function doSubmitPost(input, text) {
             const btn = document.querySelector('button[onclick="submitPost()"]');
             if (btn) btn.disabled = true;
 
-            var tokenSource = socialAuth.currentUser || currentUser;
+            var tokenSource = currentUser || socialAuth.currentUser;
             tokenSource.getIdToken(true).then(function (token) {
                 return fetch(MODERATION_WORKER_URL, {
                     method: 'POST',
@@ -3164,7 +3200,7 @@
 
                 // Request translations asynchronously via worker
                 if (typeof TRANSLATION_WORKER_URL !== 'undefined' && TRANSLATION_WORKER_URL) {
-                    var tokenSource = socialAuth.currentUser || currentUser;
+                    var tokenSource = currentUser || socialAuth.currentUser;
                     tokenSource.getIdToken(true).then(function (token) {
                         fetch(TRANSLATION_WORKER_URL, {
                             method: 'POST',
@@ -3245,7 +3281,7 @@
 
             console.log("Reprocessing post:", postId);
 
-            var tokenSource = socialAuth.currentUser || currentUser;
+            var tokenSource = currentUser || socialAuth.currentUser;
             tokenSource.getIdToken(true).then(function (token) {
                 fetch(TRANSLATION_WORKER_URL, {
                     method: 'POST',

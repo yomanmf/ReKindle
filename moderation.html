@@ -684,6 +684,16 @@
             <hr class="divider">
 
             <div class="admin-section">
+                <div class="admin-section-title">Social Apps Ban</div>
+                <div class="admin-action-row">
+                    <span id="admin-social-firebase-label" style="font-size:12px;font-family:'Courier New',monospace;">Social account: —</span>
+                    <button id="admin-social-firebase-toggle-btn" style="display:none;" onclick="adminToggleSocialFirebaseStatus()">Ban from Social Apps</button>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <div class="admin-section">
                 <div class="admin-section-title">IP Ban</div>
                 <div class="admin-action-row">
                     <span id="admin-ip-label" style="font-size:12px;font-family:'Courier New',monospace;">IP: —</span>
@@ -716,6 +726,22 @@
                 <div class="admin-action-row">
                     <button class="btn-primary" onclick="adminGrantModerator()">Grant Moderator</button>
                     <button onclick="adminRevokeModerator()">Revoke Moderator</button>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <div class="admin-section">
+                <div class="admin-section-title">Timeout</div>
+                <div class="admin-action-row">
+                    <input type="number" id="admin-timeout-amount" value="1" min="1" style="width:60px;">
+                    <select id="admin-timeout-unit">
+                        <option value="minutes">Minutes</option>
+                        <option value="hours" selected>Hours</option>
+                    </select>
+                    <input type="text" id="admin-timeout-reason" placeholder="reason (required)" style="flex:1;">
+                    <button class="btn-primary" onclick="adminSetTimeout()">Set Timeout</button>
+                    <button onclick="adminClearTimeout()">Clear Timeout</button>
                 </div>
             </div>
 
@@ -1915,7 +1941,9 @@
                 rtdb.ref('users_private/' + uid + '/ipAddress').once('value'),
                 firestore.collection('users').doc(uid).get(),
                 rtdb.ref('moderators/' + uid).once('value'),
-                firebase.functions().httpsCallable('getUserAuthStatus')({ uid }).catch(function(err) { return { data: { error: err.message || String(err) } }; })
+                rtdb.ref('timeouts/' + uid).once('value'),
+                firebase.functions().httpsCallable('getUserAuthStatus')({ uid }).catch(function(err) { return { data: { error: err.message || String(err) } }; }),
+                firebase.functions().httpsCallable('getSocialUserAuthStatus')({ uid }).catch(function(err) { return { data: { error: err.message || String(err) } }; })
             ]);
 
             var ip = results[0].val() || null;
@@ -1926,8 +1954,9 @@
             var subscriptionType = (proData && proData.subscriptionType) || '';
             var stripeCustomerId = (proData && proData.stripeCustomerId) || null;
             var isMod = results[2].exists();
+            var timeoutData = results[3].val() || null;
 
-            var authStatusResult = results[3];
+            var authStatusResult = results[4];
             var isFirebaseDisabled = false;
             var authStatusError = null;
             if (authStatusResult.data) {
@@ -1938,6 +1967,17 @@
                 }
             }
 
+            var socialAuthStatusResult = results[5];
+            var isSocialFirebaseDisabled = false;
+            var socialAuthStatusError = null;
+            if (socialAuthStatusResult.data) {
+                if (typeof socialAuthStatusResult.data.disabled === 'boolean') {
+                    isSocialFirebaseDisabled = socialAuthStatusResult.data.disabled;
+                } else if (socialAuthStatusResult.data.error) {
+                    socialAuthStatusError = socialAuthStatusResult.data.error;
+                }
+            }
+
             var isIpBanned = false;
             if (ip) {
                 var formattedIp = ip.replace(/\./g, '-').replace(/:/g, '_');
@@ -1945,7 +1985,7 @@
                 isIpBanned = ipBanSnap.exists();
             }
 
-            adminTargetUser = { uid, displayName, email, emailHandle, ip, isIpBanned, isPro, proExpiresAt, subscriptionType, stripeCustomerId, isMod, isFirebaseDisabled, authStatusError };
+            adminTargetUser = { uid, displayName, email, emailHandle, ip, isIpBanned, isPro, proExpiresAt, subscriptionType, stripeCustomerId, isMod, isFirebaseDisabled, authStatusError, isSocialFirebaseDisabled, socialAuthStatusError, timeoutData };
 
             renderAdminUserInfo();
             setAdminStatus('Ready. Select an action below.');
@@ -1966,6 +2006,12 @@
         var modLabel = u.isMod ? 'Yes' : 'No';
         var ipLabel = u.ip || '(not recorded)';
         var firebaseLabel = u.authStatusError ? 'Error checking status' : (u.isFirebaseDisabled ? 'Disabled (banned)' : 'Active');
+        var socialFirebaseLabel = u.socialAuthStatusError ? 'Error checking status' : (u.isSocialFirebaseDisabled ? 'Banned from social apps' : 'Active');
+        var timeoutLabel = 'No';
+        if (u.timeoutData && u.timeoutData.until) {
+            var remaining = Math.ceil((u.timeoutData.until - Date.now()) / 60000);
+            timeoutLabel = remaining > 0 ? (remaining + ' min') : 'Expired';
+        }
 
         document.getElementById('admin-user-info').innerHTML =
             '<div class="admin-user-detail">'
@@ -1977,6 +2023,8 @@
             + '<span class="admin-badge' + (u.isMod ? ' admin-badge-mod' : '') + '">Mod: ' + escapeHtml(modLabel) + '</span>'
             + '<span class="admin-badge' + (u.ip ? (u.isIpBanned ? ' admin-badge-ip' : ' admin-badge-ip-ok') : '') + '">IP: ' + escapeHtml(ipLabel) + '</span>'
             + '<span class="admin-badge' + (u.isFirebaseDisabled ? ' admin-badge-banned' : ' admin-badge-active') + '">Firebase: ' + escapeHtml(firebaseLabel) + '</span>'
+            + '<span class="admin-badge' + (u.isSocialFirebaseDisabled ? ' admin-badge-banned' : ' admin-badge-active') + '">Social: ' + escapeHtml(socialFirebaseLabel) + '</span>'
+            + '<span class="admin-badge' + (u.timeoutData && u.timeoutData.until && u.timeoutData.until > Date.now() ? ' admin-badge-timeout' : '') + '">Timeout: ' + escapeHtml(timeoutLabel) + '</span>'
             + '</div>';
 
         var firebaseEl = document.getElementById('admin-firebase-label');
@@ -1990,6 +2038,19 @@
             firebaseBtn.style.display = '';
             firebaseBtn.textContent = u.isFirebaseDisabled ? 'Enable Account' : 'Disable Account';
             firebaseBtn.className = u.isFirebaseDisabled ? 'btn-primary' : 'btn-delete';
+        }
+
+        var socialFirebaseEl = document.getElementById('admin-social-firebase-label');
+        socialFirebaseEl.textContent = 'Social account: ' + socialFirebaseLabel;
+        socialFirebaseEl.style.color = u.socialAuthStatusError ? '#888' : (u.isSocialFirebaseDisabled ? '#c00' : '#080');
+
+        var socialFirebaseBtn = document.getElementById('admin-social-firebase-toggle-btn');
+        if (u.socialAuthStatusError) {
+            socialFirebaseBtn.style.display = 'none';
+        } else {
+            socialFirebaseBtn.style.display = '';
+            socialFirebaseBtn.textContent = u.isSocialFirebaseDisabled ? 'Unban from Social Apps' : 'Ban from Social Apps';
+            socialFirebaseBtn.className = u.isSocialFirebaseDisabled ? 'btn-primary' : 'btn-delete';
         }
 
         var ipEl = document.getElementById('admin-ip-label');
@@ -2023,6 +2084,30 @@
         } catch (err) {
             console.error(err);
             setAdminStatus('Error toggling account status: ' + (err.message || err), true);
+        }
+    }
+
+    async function adminToggleSocialFirebaseStatus() {
+        var u = adminTargetUser;
+        if (!u) return;
+        if (u.socialAuthStatusError) { setAdminStatus('Cannot toggle: social auth status unknown.', true); return; }
+
+        var newDisabled = !u.isSocialFirebaseDisabled;
+        if (!await showConfirm((newDisabled ? 'Ban' : 'Unban') + ' ' + escapeHtml(u.emailHandle || u.uid) + ' from social apps?\n\n' + (newDisabled ? 'This will prevent the user from signing in to social features (KindleChat, Neighbourhood, Topics) while keeping their main ReKindle account active.' : 'This will allow the user to access social features again.'))) return;
+
+        setAdminStatus((newDisabled ? 'Banning' : 'Unbanning') + ' from social apps...');
+        try {
+            var result = await firebase.functions().httpsCallable('setSocialUserAuthStatus')({ uid: u.uid, disabled: newDisabled });
+            if (result.data && result.data.success) {
+                adminTargetUser.isSocialFirebaseDisabled = newDisabled;
+                renderAdminUserInfo();
+                setAdminStatus('Social apps ' + (newDisabled ? 'banned' : 'unbanned') + ' for ' + escapeHtml(u.emailHandle || u.uid) + '.');
+            } else {
+                throw new Error('Unexpected response');
+            }
+        } catch (err) {
+            console.error(err);
+            setAdminStatus('Error toggling social ban status: ' + (err.message || err), true);
         }
     }
 
@@ -2175,6 +2260,76 @@
         } catch (err) {
             console.error(err);
             setAdminStatus('Error revoking Moderator: ' + (err.message || err), true);
+        }
+    }
+
+    async function adminSetTimeout() {
+        var u = adminTargetUser;
+        if (!u) return;
+
+        var amount = parseInt(document.getElementById('admin-timeout-amount').value, 10);
+        var unit = document.getElementById('admin-timeout-unit').value;
+        var reason = document.getElementById('admin-timeout-reason').value.trim();
+
+        if (!amount || amount < 1) { setAdminStatus('Enter a valid duration.', true); return; }
+        if (!reason) { setAdminStatus('A reason is required.', true); return; }
+
+        var totalMinutes = unit === 'hours' ? amount * 60 : amount;
+        if (totalMinutes > 1440) { setAdminStatus('Maximum timeout is 24 hours.', true); return; }
+        var hours = totalMinutes / 60;
+        var until = Date.now() + (hours * 3600000);
+
+        if (!await showConfirm('Timeout ' + escapeHtml(u.emailHandle || u.uid) + ' for ' + hours + ' hour(s)?\n\nReason: ' + escapeHtml(reason))) return;
+
+        setAdminStatus('Setting timeout...');
+        try {
+            var logKey = rtdb.ref('mod_actions').push().key;
+            var updates = {};
+            updates['timeouts/' + u.uid] = {
+                until: until,
+                reason: reason,
+                moderatorUid: currentUser ? currentUser.uid : 'admin',
+                moderatorName: currentUser && currentUser.email ? currentUser.email.split('@')[0] : 'admin',
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            updates['mod_actions/' + logKey] = {
+                type: 'timeout',
+                moderatorUid: currentUser ? currentUser.uid : 'admin',
+                moderatorName: currentUser && currentUser.email ? currentUser.email.split('@')[0] : 'admin',
+                targetUid: u.uid,
+                targetName: u.emailHandle || u.uid,
+                reason: reason,
+                durationHours: hours,
+                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                undone: false
+            };
+            await rtdb.ref().update(updates);
+            adminTargetUser.timeoutData = { until: until, reason: reason };
+            renderAdminUserInfo();
+            setAdminStatus('User timed out for ' + hours + ' hour(s).');
+            document.getElementById('admin-timeout-reason').value = '';
+        } catch (err) {
+            console.error(err);
+            setAdminStatus('Error setting timeout: ' + (err.message || err), true);
+        }
+    }
+
+    async function adminClearTimeout() {
+        var u = adminTargetUser;
+        if (!u) return;
+        if (!u.timeoutData || !u.timeoutData.until) { setAdminStatus('No active timeout to clear.', true); return; }
+
+        if (!await showConfirm('Clear timeout for ' + escapeHtml(u.emailHandle || u.uid) + '?')) return;
+
+        setAdminStatus('Clearing timeout...');
+        try {
+            await rtdb.ref('timeouts/' + u.uid).remove();
+            adminTargetUser.timeoutData = null;
+            renderAdminUserInfo();
+            setAdminStatus('Timeout cleared.');
+        } catch (err) {
+            console.error(err);
+            setAdminStatus('Error clearing timeout: ' + (err.message || err), true);
         }
     }
 

@@ -85,8 +85,8 @@
         },
         "timeouts": {
             "$uid": {
-                ".read": "auth != null && auth.uid === $uid",
-                ".write": "auth != null && root.child('moderators').child(auth.uid).val() === true"
+                ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'ukiyo@rekindle.ink' || root.child('moderators').child(auth.uid).val() === true)",
+                ".write": "auth != null && (auth.token.email === 'ukiyo@rekindle.ink' || root.child('moderators').child(auth.uid).val() === true)"
             }
         },
         "banned_ips": {

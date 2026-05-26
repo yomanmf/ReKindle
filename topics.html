@@ -1092,6 +1092,34 @@
             currentUser = user;
             document.getElementById('login-overlay').style.display = 'none';
 
+            // Check active timeout and show banner
+            db.ref('timeouts/' + user.uid).once('value').then(function(snap) {
+                var t = snap.val();
+                if (t && t.until > Date.now()) {
+                    var remaining = Math.ceil((t.until - Date.now()) / 60000);
+                    var banner = document.getElementById('timeout-banner');
+                    if (!banner) {
+                        banner = document.createElement('div');
+                        banner.id = 'timeout-banner';
+                        banner.style.cssText = 'background:#8a4800;color:white;text-align:center;padding:8px;font-size:0.85rem;font-family:inherit;position:fixed;top:0;left:0;width:100%;z-index:99999;box-sizing:border-box;border-bottom:2px solid #000;';
+                        document.body.style.paddingTop = (parseInt(getComputedStyle(document.body).paddingTop || 0) + 36) + 'px';
+                        document.body.insertBefore(banner, document.body.firstChild);
+                    }
+                    banner.textContent = 'You are timed out. Please wait ' + remaining + ' minute(s) before posting.';
+                    // Grey out the page content
+                    var overlay = document.getElementById('timeout-overlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.id = 'timeout-overlay';
+                        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(128,128,128,0.35);z-index:99998;pointer-events:none;';
+                        document.body.appendChild(overlay);
+                    }
+                    // Disconnect from Firebase to stop reads/writes while timed out
+                    db.goOffline();
+                    if (socialDb) socialDb.disableNetwork();
+                }
+            });
+
             // Check Rules Acceptance
             if (rulesListenerRef) rulesListenerRef.off();
             rulesListenerRef = db.ref('users_private/' + user.uid + '/accepted_rules/topics');
@@ -2241,13 +2269,17 @@
                 // Timeout check
                 db.ref('timeouts/' + currentUser.uid).once('value').then(function(snap) {
                     var t = snap.val();
+                    console.log('[Timeout check] Data:', t);
                     if (t && t.until > Date.now()) {
                         var remaining = Math.ceil((t.until - Date.now()) / 60000);
                         showAlertModal('You are timed out. Please wait ' + remaining + ' minute(s) before posting.');
                         return;
                     }
                     doPostComment(input, text);
-                }).catch(function() { doPostComment(input, text); });
+                }).catch(function(err) {
+                    console.error('[Timeout check] Error reading timeout:', err && err.code ? err.code : err);
+                    doPostComment(input, text);
+                });
             });
         }
 
@@ -2266,7 +2298,7 @@
             input.value = '';
 
             var postingTopicId = currentTopicId;
-            var tokenSource = socialAuth.currentUser || currentUser;
+            var tokenSource = currentUser || socialAuth.currentUser;
             tokenSource.getIdToken(true).then(function (token) {
                     return fetch(MODERATION_WORKER_URL, {
                         method: 'POST',
@@ -2516,25 +2548,53 @@
 
             var doSubmit = function() {
                 checkRules(function () {
-                    if (editingTopicId) {
-                        // UPDATING EXISTING
-                        socialDb.collection('topics').doc(editingTopicId).update({
-                            title: title,
-                            subheading: subheading,
-                            icon: selectedIconSvg
-                        }).then(function () {
-                            closeCreateModal();
-                        }).catch(function(err) {
-                            if (err && err.code === 'PERMISSION_DENIED') {
-                                showAlertModal("You are temporarily restricted from posting.");
-                            } else {
-                                console.error("Error updating topic:", err);
-                            }
-                        });
-                    } else {
-                        // CREATING NEW
-                        executeCreation();
-                    }
+                    db.ref('timeouts/' + currentUser.uid).once('value').then(function(snap) {
+                        var t = snap.val();
+                        console.log('[Timeout check] Data:', t);
+                        if (t && t.until > Date.now()) {
+                            var remaining = Math.ceil((t.until - Date.now()) / 60000);
+                            showAlertModal('You are timed out. Please wait ' + remaining + ' minute(s) before posting.');
+                            return;
+                        }
+                        if (editingTopicId) {
+                            // UPDATING EXISTING
+                            socialDb.collection('topics').doc(editingTopicId).update({
+                                title: title,
+                                subheading: subheading,
+                                icon: selectedIconSvg
+                            }).then(function () {
+                                closeCreateModal();
+                            }).catch(function(err) {
+                                if (err && err.code === 'PERMISSION_DENIED') {
+                                    showAlertModal("You are temporarily restricted from posting.");
+                                } else {
+                                    console.error("Error updating topic:", err);
+                                }
+                            });
+                        } else {
+                            // CREATING NEW
+                            executeCreation();
+                        }
+                    }).catch(function(err) {
+                        console.error('[Timeout check] Error reading timeout:', err && err.code ? err.code : err);
+                        if (editingTopicId) {
+                            socialDb.collection('topics').doc(editingTopicId).update({
+                                title: title,
+                                subheading: subheading,
+                                icon: selectedIconSvg
+                            }).then(function () {
+                                closeCreateModal();
+                            }).catch(function(err) {
+                                if (err && err.code === 'PERMISSION_DENIED') {
+                                    showAlertModal("You are temporarily restricted from posting.");
+                                } else {
+                                    console.error("Error updating topic:", err);
+                                }
+                            });
+                        } else {
+                            executeCreation();
+                        }
+                    });
                 });
             };
 
@@ -2565,7 +2625,7 @@
                     submitBtn.innerText = window.t ? window.t('topics.btn.creating', 'Creating...') : 'Creating...';
                 }
 
-                var tokenSource = socialAuth.currentUser || currentUser;
+                var tokenSource = currentUser || socialAuth.currentUser;
                 tokenSource.getIdToken(true).then(function (token) {
                     return fetch(MODERATION_WORKER_URL, {
                         method: 'POST',
