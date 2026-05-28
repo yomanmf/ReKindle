@@ -3370,13 +3370,13 @@
                 var safeOriginal = escapeHtml(originalText);
                 bubble.innerHTML = tagify(linkify(safeOriginal), msgId);
                 bubble.setAttribute('data-state', 'original');
-                toggleBtn.textContent = "Show Translated";
+                toggleBtn.textContent = window.t('kindlechat.msg.show_translated', 'Show Translated');
             } else {
                 // Switch back to Translated
                 var safeTranslated = escapeHtml(translatedText);
                 bubble.innerHTML = tagify(linkify(safeTranslated), msgId);
                 bubble.setAttribute('data-state', 'translated');
-                toggleBtn.textContent = "Show Original";
+                toggleBtn.textContent = window.t('kindlechat.msg.show_original', 'Show Original');
             }
         }
 

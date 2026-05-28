@@ -11,6 +11,15 @@
                     ".write": "auth.token.email === 'ukiyo@rekindle.ink'"
                 }
             },
+            "translations_by_lang": {
+                "$lang": {
+                    "$msgId": {
+                        ".read": "auth != null && (auth.token.ageVerified == true || auth.token.email === 'ukiyo@rekindle.ink')",
+                        ".write": "(auth != null && (auth.token.ageVerified == true || auth.token.email === 'ukiyo@rekindle.ink') && root.child('kindlechat/messages/' + $msgId + '/uid').val() === auth.uid) || auth.token.email === 'ukiyo@rekindle.ink'",
+                        ".validate": "newData.isString() && newData.val().length <= 2000"
+                    }
+                }
+            },
             "messages": {
                 ".read": "auth != null && (auth.token.ageVerified == true || auth.token.email === 'ukiyo@rekindle.ink')",
                 ".write": "auth.token.email === 'ukiyo@rekindle.ink'",
