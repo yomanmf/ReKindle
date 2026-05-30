@@ -2873,11 +2873,11 @@
                 input.disabled = false;
             }).catch(err => {
                 if (err && err.code === 'PERMISSION_DENIED') {
-                    showAlertModal("You are temporarily restricted from posting.");
+                    showAlertModal("Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.");
                 } else if (err && err.message && err.message.toLowerCase().indexOf('moderation') !== -1) {
                     showAlertModal(err.message);
                 } else {
-                    showAlertModal("Error posting comment: " + err.message);
+                    showAlertModal("Unable to post: " + (err && err.message ? err.message : 'Unknown error') + ". Please try again.");
                 }
                 input.disabled = false;
             });
@@ -3216,11 +3216,11 @@
                 }
             }).catch(function (err) {
                 if (err && err.code === 'PERMISSION_DENIED') {
-                    showAlertModal("You are temporarily restricted from posting.");
+                    showAlertModal("Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.");
                 } else if (err && err.message && err.message.toLowerCase().indexOf('moderation') !== -1) {
                     showAlertModal(err.message);
                 } else {
-                    showAlertModal("Error posting: " + err.message);
+                    showAlertModal("Unable to post: " + (err && err.message ? err.message : 'Unknown error') + ". Please try again.");
                 }
                 if (btn) btn.disabled = false;
             });

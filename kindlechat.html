@@ -2740,11 +2740,10 @@
                 }).catch(function (e) {
                     resetSendState();
                     console.error('Error posting message:', e);
-                    var msg = e.message || 'Error sending message. Please try again.';
-                    if (msg.includes('PERMISSION_DENIED') || msg.includes('restricted')) {
-                        showModal('You are temporarily restricted from posting.', false);
+                    if (e && e.code === 'PERMISSION_DENIED') {
+                        showModal('Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.', false);
                     } else {
-                        showModal(msg, false);
+                        showModal('Unable to post: ' + (e && e.message ? e.message : 'Unknown error') + '. Please try again.', false);
                     }
                 });
         }
@@ -3153,7 +3152,9 @@
                 resetSendState();
                 console.error("Error sending general message:", e);
                 if (e && e.code === 'PERMISSION_DENIED') {
-                    showModal("You are temporarily restricted from posting.", false);
+                    showModal('Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.', false);
+                } else {
+                    showModal('Unable to post: ' + (e && e.message ? e.message : 'Unknown error') + '. Please try again.', false);
                 }
             });
         }
@@ -3172,7 +3173,9 @@
                 resetSendState();
                 console.error("Error sending general message:", e);
                 if (e && e.code === 'PERMISSION_DENIED') {
-                    showModal("You are temporarily restricted from posting.", false);
+                    showModal('Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.', false);
+                } else {
+                    showModal('Unable to post: ' + (e && e.message ? e.message : 'Unknown error') + '. Please try again.', false);
                 }
             });
         }

@@ -2328,11 +2328,12 @@
                         btnSend.style.opacity = '1';
                     }
                     if (err && err.code === 'PERMISSION_DENIED') {
-                        showAlertModal("You are temporarily restricted from posting.");
+                        showAlertModal("Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.");
                     } else if (err && err.message && err.message.toLowerCase().indexOf('moderation') !== -1) {
                         showAlertModal(err.message);
                     } else {
                         console.error("Error posting comment:", err);
+                        showAlertModal("Unable to post: " + (err && err.message ? err.message : 'Unknown error') + ". Please try again.");
                     }
                 });
         }
@@ -2561,9 +2562,10 @@
                                 closeCreateModal();
                             }).catch(function(err) {
                                 if (err && err.code === 'PERMISSION_DENIED') {
-                                    showAlertModal("You are temporarily restricted from posting.");
+                                    showAlertModal("Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.");
                                 } else {
                                     console.error("Error updating topic:", err);
+                                    showAlertModal("Unable to post: " + (err && err.message ? err.message : 'Unknown error') + ". Please try again.");
                                 }
                             });
                         } else {
@@ -2581,9 +2583,10 @@
                                 closeCreateModal();
                             }).catch(function(err) {
                                 if (err && err.code === 'PERMISSION_DENIED') {
-                                    showAlertModal("You are temporarily restricted from posting.");
+                                    showAlertModal("Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.");
                                 } else {
                                     console.error("Error updating topic:", err);
+                                    showAlertModal("Unable to post: " + (err && err.message ? err.message : 'Unknown error') + ". Please try again.");
                                 }
                             });
                         } else {
@@ -2652,12 +2655,12 @@
                         submitBtn.innerText = window.t ? window.t('topics.btn.new', 'Create') : 'Create';
                     }
                     if (err && err.code === 'PERMISSION_DENIED') {
-                        showAlertModal("You are temporarily restricted from posting.");
+                        showAlertModal("Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.");
                     } else if (err && err.message && err.message.toLowerCase().indexOf('moderation') !== -1) {
                         showAlertModal(err.message);
                     } else {
                         console.error("Error creating topic:", err);
-                        showAlertModal(err.message || "Error creating topic. Please try again.");
+                        showAlertModal("Unable to post: " + (err && err.message ? err.message : 'Unknown error') + ". Please try again.");
                     }
                 });
             }
