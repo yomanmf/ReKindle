@@ -377,15 +377,16 @@ const APPS = [
         cat: 'lifestyle',
         icon: '<circle cx="16" cy="16" r="14"/><ellipse cx="16" cy="18" rx="10" ry="7"/><circle cx="12" cy="17" r="2" fill="black"/><circle cx="20" cy="17" r="2" fill="black"/><path d="M16 11 L20 6"/>'
     },
-    /*     {
-            id: 'pinterest',
-            name: 'Pinterest',
-            cat: 'lifestyle',
-            plus: true,
-            beta: true,
-            desc: 'Browse and save ideas.',
-            icon: '<circle cx="16" cy="16" r="12" fill="white" stroke="black" stroke-width="2"/><path d="M10 6 C10 6 14 4 18 6 C22 8 22 14 20 18 C18 22 16 26 16 26 L14 20 C14 20 10 20 8 16 C6 12 10 6 10 6 Z" fill="black"/><circle cx="16" cy="14" r="3" fill="white"/>'
-        }, */
+    {
+        id: 'pinterest',
+        name: 'Pinterest',
+        cat: 'lifestyle',
+        plus: true,
+        beta: true,
+        filled: true,
+        desc: 'Browse and save ideas.',
+        icon: '<g transform="scale(0.2222)"><path d="M71.9,5.4C35.1,5.4,5.3,35.2,5.3,72c0,28.2,17.5,52.3,42.3,62c-0.6-5.3-1.1-13.3,0.2-19.1c1.2-5.2,7.8-33.1,7.8-33.1s-2-4-2-9.9c0-9.3,5.4-16.2,12-16.2c5.7,0,8.4,4.3,8.4,9.4c0,5.7-3.6,14.3-5.5,22.2c-1.6,6.6,3.3,12,9.9,12c11.8,0,20.9-12.5,20.9-30.5c0-15.9-11.5-27.1-27.8-27.1c-18.9,0-30.1,14.2-30.1,28.9c0,5.7,2.2,11.9,5,15.2c0.5,0.7,0.6,1.2,0.5,1.9c-0.5,2.1-1.6,6.6-1.8,7.5c-0.3,1.2-1,1.5-2.2,0.9c-8.3-3.9-13.5-16-13.5-25.8c0-21,15.3-40.3,44-40.3c23.1,0,41,16.5,41,38.4c0,22.9-14.5,41.4-34.5,41.4c-6.7,0-13.1-3.5-15.3-7.6c0,0-3.3,12.7-4.1,15.8c-1.5,5.8-5.6,13-8.3,17.5c6.2,1.9,12.8,3,19.7,3c36.8,0,66.6-29.8,66.6-66.6C138.5,35.2,108.7,5.4,71.9,5.4z" fill="black"/></g>'
+    },
     {
         id: 'rssreader',
         name: 'RSS Reader',

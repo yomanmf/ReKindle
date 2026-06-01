@@ -2005,7 +2005,7 @@
   "pinterest.login.title": "Pinterest",
   "pinterest.login.desc": "Connect your Pinterest account to browse ideas, search pins, and view your boards.",
   "pinterest.login.btn": "Connect Pinterest",
-  "pinterest.search.placeholder": "Search for ideas...",
+  "pinterest.search.placeholder": "Search your pins...",
   "pinterest.search.btn": "Search",
   "pinterest.boards.empty": "No boards found.",
   "pinterest.saved.empty": "No saved pins found.",
@@ -2016,10 +2016,14 @@
   "pinterest.error.auth": "Authentication failed. Please reconnect.",
   "pinterest.tab.search": "Search",
   "pinterest.tab.boards": "Boards",
-  "pinterest.tab.profile": "Profile",
+  "pinterest.tab.profile": "Boards",
   "pinterest.tab.saved": "Saved",
   "pinterest.pin.detail.title": "Pin",
   "pinterest.loadmore": "Load More",
+  "pinterest.pin.save": "Save",
+  "pinterest.pin.unsave": "Unsave",
+  "pinterest.save.title": "Save to Board",
+  "pinterest.save.cancel": "Cancel",
   "rss.btn.add": "Add",
   "rss.btn.back": "Back",
   "rss.btn.web": "Web",
@@ -2724,5 +2728,6 @@
   "yahtzee.status.loading": "Loading...",
   "yahtzee.status.login_required": "Log in to see global scores.",
   "yahtzee.status.no_scores": "No scores yet!",
-  "yahtzee.title": "Yahtzee"
+  "yahtzee.title": "Yahtzee",
+  "pinterest.search.clear": "Clear"
 }
