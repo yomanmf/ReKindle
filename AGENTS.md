@@ -246,6 +246,37 @@ Icons are stored as raw SVG strings in `icons.js`.
     *   Use a **Manual Offset** strategy: Store a numeric offset (e.g., `+11`) and mathematically shift the timestamp before displaying.
     *   Use the `time.js` helper `rekindleGetZonedDate()` which handles this shim.
 
+### 6. Firebase Architecture
+The project uses **two separate Firebase projects**. You must know which one your feature targets and update the correct rules file.
+
+#### Project 1: Primary (`rekindle-dd1fa`)
+*   **Used by:** Most apps (games, tools, personal data). Any HTML file using `projectId: "rekindle-dd1fa"`.
+*   **Config:** `firebase.json`
+*   **Firestore Rules:** `firestore.rules` — user data, leaderboards, app-specific collections.
+*   **Storage Rules:** `storage.rules` — user files and photos (Pro-only).
+*   **RTDB Rules:** `rtdb-rules.json` — presence, freewrite sessions, moderator lists, pro gate.
+*   **Cloud Functions:** `firebase-functions/index.js`
+
+#### Project 2: Social (`rekindle-socials`)
+*   **Used by:** Social apps — KindleChat, Neighbourhood, Topics, Flipbook, Pixel, Moderation. Any HTML file using `projectId: "rekindle-socials"`.
+*   **Config:** `firebase-social.json`
+*   **Firestore Rules:** `firestore-social.rules` — topics, neighbourhood posts/comments.
+*   **RTDB Rules:** `rtdb-social-rules.json` — KindleChat messages, translations, user limits.
+*   **Cloud Functions:** Same `firebase-functions/index.js` (initialized as secondary `socialAdminApp`).
+
+#### Rule Update Checklist
+When adding a new feature that writes to Firebase, you **must** update the corresponding rules:
+
+| If your feature writes to... | Update this file |
+| :--- | :--- |
+| Primary Firestore (leaderboards, user collections) | `firestore.rules` |
+| Social Firestore (topics, posts, comments) | `firestore-social.rules` |
+| Primary Storage (user files/photos) | `storage.rules` |
+| Primary RTDB (presence, sessions) | `rtdb-rules.json` |
+| Social RTDB (chat messages) | `rtdb-social-rules.json` |
+
+Without matching rules, writes will be **silently rejected** by security rules. Always follow the existing patterns in the target file for authenticated-user-only collections.
+
 ## ✅ Best Practices
 -   **Images:** Use **WebP** or **SVG**. They are fully supported and perform best.
 -   **Modals:** Always stick to the `.modal-overlay` / `.modal-box` DOM structure found in `weather.html`.

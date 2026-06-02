@@ -840,6 +840,12 @@ const APPS = [
         name: 'Yahtzee',
         cat: 'games',
         icon: '<rect x="3" y="3" width="16" height="16" rx="2" fill="white" stroke="black" stroke-width="2"/><circle cx="7" cy="7" r="1.5" fill="black"/><circle cx="15" cy="15" r="1.5" fill="black"/><circle cx="7" cy="15" r="1.5" fill="black"/><circle cx="15" cy="7" r="1.5" fill="black"/><circle cx="11" cy="11" r="1.5" fill="black"/><rect x="13" y="13" width="16" height="16" rx="2" fill="white" stroke="black" stroke-width="2"/><circle cx="17" cy="17" r="1.5" fill="black"/><circle cx="25" cy="17" r="1.5" fill="black"/><circle cx="17" cy="21" r="1.5" fill="black"/><circle cx="25" cy="21" r="1.5" fill="black"/><circle cx="17" cy="25" r="1.5" fill="black"/><circle cx="25" cy="25" r="1.5" fill="black"/>'
+    },
+    {
+        id: 'circle',
+        name: 'Perfect Circle',
+        cat: 'games',
+        icon: '<circle cx="16" cy="16" r="12" fill="none" stroke="black" stroke-width="2"/><circle cx="16" cy="16" r="2" fill="black"/><line x1="16" y1="2" x2="16" y2="6" stroke="black" stroke-width="2"/><line x1="16" y1="26" x2="16" y2="30" stroke="black" stroke-width="2"/><line x1="2" y1="16" x2="6" y2="16" stroke="black" stroke-width="2"/><line x1="26" y1="16" x2="30" y2="16" stroke="black" stroke-width="2"/>'
     }
 ];
 
