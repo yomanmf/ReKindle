@@ -1475,6 +1475,38 @@
             oauthSignIn();
         }
 
+        async function fetchCalendarEventsWithPagination(calId) {
+            const allItems = [];
+            let pageToken = null;
+
+            const now = getZonedDate();
+            const oneMonthAgo = new Date(now);
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+            const oneYearFuture = new Date(now);
+            oneYearFuture.setFullYear(oneYearFuture.getFullYear() + 1);
+
+            do {
+                const params = {
+                    'calendarId': calId,
+                    'timeMin': oneMonthAgo.toISOString(),
+                    'timeMax': oneYearFuture.toISOString(),
+                    'showDeleted': false,
+                    'singleEvents': true,
+                    'maxResults': 250,
+                    'orderBy': 'startTime'
+                };
+                if (pageToken) params.pageToken = pageToken;
+
+                const res = await gapi.client.calendar.events.list(params);
+                const items = res.result.items || [];
+                allItems.push.apply(allItems, items);
+                pageToken = res.result.nextPageToken || null;
+            } while (pageToken);
+
+            return allItems;
+        }
+
         async function loadGoogleEvents() {
             document.getElementById('status-msg').innerText = "Syncing...";
 
@@ -1491,35 +1523,39 @@
                 // Fetch from all selected calendars in parallel
                 const promises = selectedCalendarIds.map(async (calId) => {
                     try {
-                        const res = await gapi.client.calendar.events.list({
-                            'calendarId': calId,
-                            'timeMin': (new Date(getZonedDate().setMonth(getZonedDate().getMonth() - 1))).toISOString(), // 1 month ago
-                            'showDeleted': false,
-                            'singleEvents': true,
-                            'maxResults': 100, // Reduced per calendar to avoid huge lists
-                            'orderBy': 'startTime'
-                        });
+                        const items = await fetchCalendarEventsWithPagination(calId);
 
-                        return (res.result.items || []).map(i => {
+                        return items.map(i => {
                             let start;
+                            let end = null;
                             if (i.start.date) {
                                 // All-day event (YYYY-MM-DD). Use target zone midnight.
                                 start = getUTCFromWallClock(i.start.date, '00:00');
+                                if (i.end && i.end.date) {
+                                    end = getUTCFromWallClock(i.end.date, '00:00');
+                                }
                             } else {
                                 // Timed event (ISO string)
                                 start = i.start.dateTime;
+                                if (i.end && i.end.dateTime) {
+                                    end = i.end.dateTime;
+                                }
                             }
 
                             return {
                                 id: i.id,
                                 title: i.summary,
                                 start: start,
+                                end: end,
                                 isAllDay: !!i.start.date,
                                 calendarId: calId // Store origin calendar
                             };
                         });
                     } catch (err) {
                         console.warn(`Failed to fetch for ${calId}`, err);
+                        if (err.status === 401 || err.status === 403) {
+                            throw err; // Let outer catch handle auth
+                        }
                         return [];
                     }
                 });
@@ -1535,7 +1571,7 @@
             } catch (e) {
                 console.error(e);
                 document.getElementById('status-msg').innerText = "Error.";
-                if (e.status === 401) {
+                if (e.status === 401 || e.status === 403) {
                     // Token expired during use -> Re-auth
                     handleUnauthorized();
                 }

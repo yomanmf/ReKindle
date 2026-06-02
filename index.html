@@ -2599,38 +2599,47 @@
                         let queryEnd = new Date(y, m, d + 2);
                         for (let calId of sel) {
                             if (hasAuthError) break;
-                            let res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?timeMin=${queryStart.toISOString()}&timeMax=${queryEnd.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=250`, {
-                                headers: { 'Authorization': 'Bearer ' + token }
-                            });
-                            if (res.ok) {
-                                let data = await res.json();
-                                (data.items || []).forEach(i => {
-                                    let start = i.start.dateTime || i.start.date;
-                                    let eventYear, eventMonth, eventDay;
-                                    if (i.start.date) {
-                                        // All-day event: parse YYYY-MM-DD directly to avoid timezone shifts
-                                        const parts = i.start.date.split('-').map(Number);
-                                        eventYear = parts[0];
-                                        eventMonth = parts[1] - 1;
-                                        eventDay = parts[2];
-                                    } else {
-                                        let dObj = new Date(start);
-                                        if (typeof window.rekindleGetZonedDate === 'function') dObj = window.rekindleGetZonedDate(dObj);
-                                        eventYear = dObj.getFullYear();
-                                        eventMonth = dObj.getMonth();
-                                        eventDay = dObj.getDate();
-                                    }
-                                    if (eventYear === y && eventMonth === m && eventDay === d) {
-                                        events.push({
-                                            title: i.summary,
-                                            start: start,
-                                            isAllDay: !!i.start.date
-                                        });
-                                    }
+                            let pageToken = null;
+                            do {
+                                let url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?timeMin=${queryStart.toISOString()}&timeMax=${queryEnd.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=250`;
+                                if (pageToken) url += `&pageToken=${encodeURIComponent(pageToken)}`;
+                                let res = await fetch(url, {
+                                    headers: { 'Authorization': 'Bearer ' + token }
                                 });
-                            } else if (res.status === 401 || res.status === 403) {
-                                hasAuthError = true;
-                            }
+                                if (res.ok) {
+                                    let data = await res.json();
+                                    (data.items || []).forEach(i => {
+                                        let start = i.start.dateTime || i.start.date;
+                                        let eventYear, eventMonth, eventDay;
+                                        if (i.start.date) {
+                                            // All-day event: parse YYYY-MM-DD directly to avoid timezone shifts
+                                            const parts = i.start.date.split('-').map(Number);
+                                            eventYear = parts[0];
+                                            eventMonth = parts[1] - 1;
+                                            eventDay = parts[2];
+                                        } else {
+                                            let dObj = new Date(start);
+                                            if (typeof window.rekindleGetZonedDate === 'function') dObj = window.rekindleGetZonedDate(dObj);
+                                            eventYear = dObj.getFullYear();
+                                            eventMonth = dObj.getMonth();
+                                            eventDay = dObj.getDate();
+                                        }
+                                        if (eventYear === y && eventMonth === m && eventDay === d) {
+                                            events.push({
+                                                title: i.summary,
+                                                start: start,
+                                                isAllDay: !!i.start.date
+                                            });
+                                        }
+                                    });
+                                    pageToken = data.nextPageToken || null;
+                                } else if (res.status === 401 || res.status === 403) {
+                                    hasAuthError = true;
+                                    break;
+                                } else {
+                                    break;
+                                }
+                            } while (pageToken);
                         }
                         if (hasAuthError) {
                             listEl.innerHTML = '<div style="text-align:center; color:#555; padding: 10px; font-size:0.8rem;">Session expired.<br>Please open the Calendar app to reconnect.</div>';
