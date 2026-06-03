@@ -80,6 +80,10 @@
             font-weight: bold;
             z-index: 1;
             font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            height: 100%;
+            box-sizing: border-box;
         }
 
         .close-box {
@@ -327,6 +331,23 @@
         .lb-row.me {
             background: black;
             color: white;
+        }
+
+        /* Override global scaling - only scale title-bar */
+        .window {
+            zoom: 1 !important;
+            transform: none !important;
+        }
+
+        .title-bar {
+            zoom: var(--rekindle-scale, 1);
+        }
+
+        @supports not (zoom: 1) {
+            .title-bar {
+                transform: scale(var(--rekindle-scale, 1));
+                transform-origin: top center;
+            }
         }
     </style>
     <script src="theme.js?v=18"></script>

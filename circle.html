@@ -90,6 +90,10 @@
             font-weight: bold;
             z-index: 1;
             font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            height: 100%;
+            box-sizing: border-box;
         }
 
         .close-box {
@@ -247,6 +251,23 @@
             background: black;
             color: white;
         }
+
+        /* Override global scaling - only scale title-bar */
+        .window {
+            zoom: 1 !important;
+            transform: none !important;
+        }
+
+        .title-bar {
+            zoom: var(--rekindle-scale, 1);
+        }
+
+        @supports not (zoom: 1) {
+            .title-bar {
+                transform: scale(var(--rekindle-scale, 1));
+                transform-origin: top center;
+            }
+        }
     </style>
     <script src="theme.js?v=18"></script>
 </head>
@@ -317,7 +338,7 @@
 
         // --- GAME CONFIG ---
         const CANVAS_SIZE = 320;
-        const MIN_POINTS = 40;
+        const MIN_POINTS = 15;
         const MIN_RADIUS = 30;
         const CLOSE_THRESHOLD = 0.18; // 18% of mean radius
 
@@ -441,7 +462,7 @@
             const pos = getCanvasPos(evt);
             const last = points[points.length - 1];
             const dist = Math.sqrt(Math.pow(pos.x - last.x, 2) + Math.pow(pos.y - last.y, 2));
-            if (dist < 3) return; // Skip very close points
+            if (dist < 1) return; // Skip very close points
             points.push(pos);
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
@@ -454,13 +475,6 @@
         }
 
         function evaluateCircle() {
-            if (points.length < MIN_POINTS) {
-                document.getElementById('result-text').innerText = window.t ? window.t('circle.msg.too_small') : 'Draw a bigger circle!';
-                document.getElementById('retry-btn').style.display = 'inline-block';
-                hasResult = true;
-                return;
-            }
-
             // Compute centroid
             let sumX = 0, sumY = 0;
             for (let i = 0; i < points.length; i++) {
@@ -482,6 +496,13 @@
 
             if (meanR < MIN_RADIUS) {
                 document.getElementById('result-text').innerText = window.t ? window.t('circle.msg.too_small') : 'Draw a bigger circle!';
+                document.getElementById('retry-btn').style.display = 'inline-block';
+                hasResult = true;
+                return;
+            }
+
+            if (points.length < MIN_POINTS) {
+                document.getElementById('result-text').innerText = window.t ? window.t('circle.msg.slow_down') : 'Slow down!';
                 document.getElementById('retry-btn').style.display = 'inline-block';
                 hasResult = true;
                 return;
