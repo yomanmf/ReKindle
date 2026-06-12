@@ -1679,24 +1679,29 @@
         var filter = document.getElementById('reports-filter').value;
 
         try {
-            var query = socialDb.collection('reports').orderBy('createdAt', 'desc').limit(50);
-            
+            var snap = await socialRtdb.ref('reports').orderByChild('createdAt').once('value');
+            var val = snap.val() || {};
+            var list = [];
+            for (var key in val) {
+                if (!val.hasOwnProperty(key)) continue;
+                list.push({ id: key, data: val[key] });
+            }
+            list.sort(function (a, b) { return (b.data.createdAt || 0) - (a.data.createdAt || 0); });
+
             if (filter !== 'all') {
-                query = query.where('status', '==', filter);
+                list = list.filter(function (r) { return r.data.status === filter; });
             }
 
-            var snapshot = await query.get();
-
-            if (snapshot.empty) {
+            if (list.length === 0) {
                 entriesEl.innerHTML = '<div class="no-data">No reports found.</div>';
                 statusEl.textContent = 'No reports found.';
                 return;
             }
 
             var html = '';
-            snapshot.forEach(function(doc) {
-                var r = doc.data();
-                var date = r.createdAt ? formatDate(r.createdAt.toDate ? r.createdAt.toDate() : r.createdAt) : 'Unknown';
+            list.forEach(function (doc) {
+                var r = doc.data;
+                var date = r.createdAt ? formatDate(new Date(r.createdAt)) : 'Unknown';
                 var reasonLabel = REPORT_REASON_LABELS[r.reason] || r.reason || '?';
                 var statusBadge = '';
                 if (r.status === 'pending') statusBadge = '<span class="badge badge-timeout-mod">PENDING</span>';
@@ -1727,7 +1732,7 @@
             });
 
             entriesEl.innerHTML = html;
-            statusEl.textContent = snapshot.size + ' report(s) loaded.';
+            statusEl.textContent = list.length + ' report(s) loaded.';
         } catch (err) {
             console.error(err);
             statusEl.textContent = 'Error: ' + (err.message || err);
@@ -1741,9 +1746,9 @@
         }
         
         try {
-            await socialDb.collection('reports').doc(reportId).update({
+            await socialRtdb.ref('reports/' + reportId).update({
                 status: status,
-                resolvedAt: new Date(),
+                resolvedAt: firebase.database.ServerValue.TIMESTAMP,
                 resolvedBy: currentUser ? currentUser.uid : '',
                 resolutionNote: ''
             });

@@ -442,10 +442,11 @@ Users can report content across all social apps. Reports are stored in Firestore
 ### Architecture
 - **Client Module:** `js/reports.js` — provides `rekindleOpenReportModal()` with System 7 styling
 - **Backend Handler:** `workers/rekindle-moderate/worker.js` handles `type: "report"` requests
-- **Storage:** Firestore `reports` collection (social project: `rekindle-socials`)
+- **Storage:** RTDB `/reports` on the **social** project (`rekindle-socials`)
 - **Notifications:** Discord bot via `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` environment variables. Fires on every report submission. Includes action buttons (Delete, Timeout, Dismiss) for manual moderation.
 
-### Data Model (`reports` collection)
+### Data Model (`/reports` RTDB)
+Each entry is keyed by a Firebase push ID and contains:
 ```javascript
 {
   reporterId, reporterName,
@@ -457,11 +458,24 @@ Users can report content across all social apps. Reports are stored in Firestore
 }
 ```
 
+### RTDB Rules
+Reports live under `/reports` in `rtdb-social-rules.json`:
+- `.read`: `ukiyo@rekindle.ink` or moderators
+- `.write`: `ukiyo@rekindle.ink` or the social service account
+- `.indexOn`: `["contentId", "contentType", "status", "createdAt"]`
+
+### RTDB Indexes Required
+Add this index in the Firebase Console under the social RTDB for the `/reports` node:
+- `contentId`
+- `contentType`
+- `status`
+- `createdAt`
+
 ### Rate Limits
 - 5 reports per hour per user (enforced in moderation worker)
 
 ### Adding Report Buttons to New Social Apps
-1. Include `\u003cscript src="js/reports.js"\u003e\u003c/script\u003e` in the HTML `\u003chead\u003e`
+1. Include `<script src="js/reports.js"></script>` in the HTML `<head>`
 2. Call `rekindleOpenReportModal({contentType, contentId, contentPath, reportedUserId, contentSnapshot})`
 
 ### Files Modified
@@ -494,16 +508,15 @@ To enable buttons, you must set up Discord Interactions:
 2. Go to "General Information" → Set "Interactions Endpoint URL" to: `https://rekindle-moderate.timjarnott.workers.dev/discord-interaction`
 3. Set `DISCORD_PUBLIC_KEY` as a Cloudflare Worker environment variable (found in Discord Developer Portal under "General Information")
 
-### Firestore Indexes Required
-The moderation dashboard and auto-deletion both require composite indexes. Create these in the Firebase Console:
+### RTDB Indexes Required
+Reports live under `/reports` in the social RTDB. The dashboard reads from RTDB and filters/sorts in memory, but the worker query for existing reports uses `orderByChild('contentId').equalTo(...)`, so an index on `contentId` is required for performance at scale.
 
-1. **Dashboard queries:**
-   - **Collection:** `reports`
-   - **Fields:** `status` (Ascending), `createdAt` (Descending)
+1. **Reports node:**
+    - **Path:** `/reports`
+    - **Index fields:** `contentId`
 
-2. **Auto-deletion (worker checks for existing reports):**
-   - **Collection:** `reports`
-   - **Fields:** `contentType` (Ascending), `contentId` (Ascending), `status` (Ascending), `createdAt` (Descending)
+### Auto-Delete Behaviour
+When 2 different users report the same content (same `contentType` + `contentId`), the worker attempts to automatically delete the content. If deletion succeeds, both reports are marked as `resolved`. If deletion fails (e.g. RTDB permission issue), both reports remain `pending` so moderators can review them manually. The Discord notification will indicate whether the auto-delete succeeded or failed.
 
 ### Security: Escaping for JS String Literals
 When passing user-generated text into `onclick` HTML attributes, **never rely solely on `escapeHtml()`**. HTML entity decoding happens before JS execution, so `&#039;` becomes `'` and breaks out of the string literal.

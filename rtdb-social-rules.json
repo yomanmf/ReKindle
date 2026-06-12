@@ -47,6 +47,11 @@
                 }
             }
         },
+        "reports": {
+            ".read": "auth.token.email === 'ukiyo@rekindle.ink' || auth.token.moderator === true",
+            ".write": "auth.token.email === 'ukiyo@rekindle.ink' || auth.token.email.matches(/^.*@rekindle-socials\\.iam\\.gserviceaccount\\.com$/)",
+            ".indexOn": ["contentId", "contentType", "status", "createdAt"]
+        },
         "users_public": {
             ".read": "auth != null && (auth.token.ageVerified == true || auth.token.email === 'ukiyo@rekindle.ink')",
             ".indexOn": ["lastActive", "email"],

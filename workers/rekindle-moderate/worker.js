@@ -203,6 +203,11 @@ async function rtdbPushWithAccessToken(path, data, accessToken) {
     return await resp.json();
 }
 
+async function rtdbPushWithAccessTokenAndReturnKey(path, data, accessToken) {
+    const result = await rtdbPushWithAccessToken(path, data, accessToken);
+    return result.name;
+}
+
 async function rtdbGetWithUserToken(path, env, userToken) {
     const projectId = env.FIREBASE_PROJECT_ID || "rekindle-dd1fa";
     const url = `https://${projectId}-default-rtdb.firebaseio.com/${path}.json?auth=${encodeURIComponent(userToken)}`;
@@ -235,53 +240,50 @@ async function rtdbDeleteWithAccessToken(path, accessToken) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  FIRESTORE QUERY HELPERS                                            */
+/*  REPORTS STORAGE (RTDB)                                             */
 /* ------------------------------------------------------------------ */
+const REPORTS_PATH = "reports";
+
 async function getExistingPendingReport(contentType, contentId, accessToken) {
     try {
-        const url = `https://firestore.googleapis.com/v1/projects/rekindle-socials/databases/(default)/documents:runQuery`;
-        const resp = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${accessToken}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                structuredQuery: {
-                    from: [{ collectionId: "reports" }],
-                    where: {
-                        compositeFilter: {
-                            op: "AND",
-                            filters: [
-                                { fieldFilter: { field: { fieldPath: "contentType" }, op: "EQUAL", value: { stringValue: contentType } } },
-                                { fieldFilter: { field: { fieldPath: "contentId" }, op: "EQUAL", value: { stringValue: contentId } } },
-                                { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "pending" } } }
-                            ]
-                        }
-                    },
-                    orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }],
-                    limit: 1
-                }
-            })
-        });
+        const url = `https://rekindle-socials-default-rtdb.firebaseio.com/${REPORTS_PATH}.json?orderBy="contentId"&equalTo="${encodeURIComponent(contentId)}"&access_token=${encodeURIComponent(accessToken)}`;
+        const resp = await fetch(url);
         if (!resp.ok) {
             console.error("[REPORT] Failed to query existing reports:", resp.status);
             return null;
         }
         const data = await resp.json();
-        if (Array.isArray(data) && data.length > 0 && data[0].document) {
-            const doc = data[0].document;
-            const fields = doc.fields || {};
-            return {
-                reportId: doc.name.split("/").pop(),
-                reporterId: fields.reporterId?.stringValue || "",
-                reporterName: fields.reporterName?.stringValue || ""
-            };
-        }
-        return null;
+        if (!data || typeof data !== "object") return null;
+
+        const matching = Object.entries(data)
+            .map(([key, value]) => ({
+                reportId: key,
+                reporterId: value.reporterId || "",
+                reporterName: value.reporterName || "",
+                itemContentType: value.contentType || "",
+                status: value.status || "",
+                createdAt: value.createdAt || 0
+            }))
+            .filter(r => r.itemContentType === contentType && r.status === "pending")
+            .sort((a, b) => b.createdAt - a.createdAt);
+
+        return matching.length > 0 ? matching[0] : null;
     } catch (e) {
         console.error("[REPORT] Error querying existing reports:", e.message);
         return null;
+    }
+}
+
+async function rtdbUpdateReport(reportId, updates, accessToken) {
+    const url = `https://rekindle-socials-default-rtdb.firebaseio.com/${REPORTS_PATH}/${reportId}.json?access_token=${encodeURIComponent(accessToken)}`;
+    const resp = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates)
+    });
+    if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(`RTDB report update failed (${resp.status}): ${errText}`);
     }
 }
 
@@ -1733,7 +1735,7 @@ export default {
                 const existingReport = await getExistingPendingReport(contentType, contentId, accessToken);
                 const isSecondReport = existingReport && existingReport.reporterId !== uid;
                 
-                // Create report in Firestore
+                // Create report in RTDB (always pending until auto-delete succeeds)
                 const reportData = {
                     reporterId: uid,
                     reporterName: username,
@@ -1745,30 +1747,40 @@ export default {
                     reason,
                     comment: (comment || "").substring(0, 500),
                     contentSnapshot: (contentSnapshot || "").substring(0, 2000),
-                    status: isSecondReport ? "resolved" : "pending",
-                    createdAt: new Date(),
-                    resolvedAt: isSecondReport ? new Date() : null,
-                    resolvedBy: isSecondReport ? "system" : "",
-                    resolutionNote: isSecondReport ? "Auto-deleted after 2 reports" : ""
+                    status: "pending",
+                    createdAt: Date.now()
                 };
                 
-                const reportId = await firestoreCreate("reports", reportData, accessToken);
+                const reportId = await rtdbPushWithAccessToken(REPORTS_PATH, reportData, accessToken);
+                reportData.reportId = reportId;
                 
                 // If second report from different user, auto-delete content
                 if (isSecondReport) {
                     console.log(`[REPORT] Second report on ${contentType}/${contentId}. Auto-deleting...`);
                     const deleted = await autoDeleteContent(contentType, contentId, contentPath, accessToken);
                     
-                    // Update original report to resolved too
-                    try {
-                        await firestorePatch(`reports/${existingReport.reportId}`, {
-                            status: "resolved",
-                            resolvedAt: new Date(),
-                            resolvedBy: "system",
-                            resolutionNote: "Auto-deleted after 2 reports"
-                        }, accessToken);
-                    } catch (e) {
-                        console.error("[REPORT] Failed to update original report:", e.message);
+                    if (deleted) {
+                        // Mark both reports as resolved only when deletion succeeds
+                        try {
+                            await rtdbUpdateReport(existingReport.reportId, {
+                                status: "resolved",
+                                resolvedAt: Date.now(),
+                                resolvedBy: "system",
+                                resolutionNote: "Auto-deleted after 2 reports"
+                            }, accessToken);
+                            await rtdbUpdateReport(reportId, {
+                                status: "resolved",
+                                resolvedAt: Date.now(),
+                                resolvedBy: "system",
+                                resolutionNote: "Auto-deleted after 2 reports"
+                            }, accessToken);
+                            reportData.status = "resolved";
+                        } catch (e) {
+                            console.error("[REPORT] Failed to update reports after auto-delete:", e.message);
+                        }
+                    } else {
+                        // Deletion failed — keep reports pending so moderators can act
+                        reportData.resolutionNote = "Auto-delete failed";
                     }
                     
                     // Send Discord notification about auto-deletion
