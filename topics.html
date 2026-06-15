@@ -2940,6 +2940,7 @@
             // Duplicate Check
             var isDuplicate = allTopicsCache.some(function (t) {
                 if (editingTopicId && t.id === editingTopicId) return false;
+                if (!t || !t.title) return false;
                 return t.title.toLowerCase() === title.toLowerCase();
             });
 
@@ -3034,6 +3035,7 @@
                 var similarTopics = [];
                 if (titleWords.length > 0) {
                     similarTopics = allTopicsCache.filter(function(t) {
+                        if (!t || !t.title) return false;
                         var tTitle = t.title.toLowerCase();
                         return titleWords.some(function(w) { return tTitle.indexOf(w) !== -1; });
                     });
