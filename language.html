@@ -1431,6 +1431,13 @@
             return array.sort(() => .5 - Math.random());
         }
 
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
         // --- GAME LOOP ---
         function showQuestion() {
             if (qIndex >= questions.length && currentMode !== 'sentences') {
