@@ -493,6 +493,9 @@
         let afkTimer = null;
         const BOT_DELAY_MS = 1500;
         const AFK_TIMEOUT_MS = 30000;
+        let serverTimeOffset = 0;
+        rtdb.ref('.info/serverTimeOffset').on('value', snap => { serverTimeOffset = snap.val() || 0; });
+        function serverTime() { return Date.now() + serverTimeOffset; }
         
         function goHome() {
             window.location.href = 'index.html';
@@ -1328,7 +1331,7 @@
             const turnStartedAt = gameState.turnStartedAt;
             if (typeof turnStartedAt !== 'number') return; // Wait for server timestamp to resolve
 
-            const elapsed = Date.now() - turnStartedAt;
+            const elapsed = serverTime() - turnStartedAt;
             const remaining = Math.max(1000, AFK_TIMEOUT_MS - elapsed);
 
             afkTimer = setTimeout(function() {

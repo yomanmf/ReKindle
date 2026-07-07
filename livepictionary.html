@@ -556,6 +556,9 @@ let tickHandle = null;
 let roundEndTimer = null;
 let chooseTimerHandle = null;
 let choosingCountdown = 15;
+let serverTimeOffset = 0;
+rtdb.ref('.info/serverTimeOffset').on('value', function(snap) { serverTimeOffset = snap.val() || 0; });
+function serverTime() { return Date.now() + serverTimeOffset; }
 
 function tfmt(key, def, args) {
     var s = (window.t ? window.t(key, def) : def) || def || '';
@@ -867,7 +870,7 @@ async function startMatch() {
         round: 1,
         drawerIdx: 0,
         drawOrder: order,
-        chooseEndsAt: Date.now() + 15000,
+        chooseEndsAt: serverTime() + 15000,
         wordChoices: pickWords(3),
         currentWord: null,
         wordLength: null,
@@ -952,7 +955,7 @@ function updateChoosingModal() {
         if (chooseTimerHandle) clearInterval(chooseTimerHandle);
         chooseTimerHandle = setInterval(() => {
             if (!gameState || gameState.status !== 'choosing') { clearInterval(chooseTimerHandle); return; }
-            const left = Math.max(0, Math.ceil(((gameState.chooseEndsAt || 0) - Date.now()) / 1000));
+            const left = Math.max(0, Math.ceil(((gameState.chooseEndsAt || 0) - serverTime()) / 1000));
             document.getElementById('choose-sub').innerText = tfmt('pictionary.choose.sub_timer', 'Pick one to draw (${n}s)', { n: left });
             if (left <= 0 && isHost) {
                 clearInterval(chooseTimerHandle);
@@ -981,7 +984,7 @@ async function pickWord(i) {
         wordLength: word.length,
         wordChoices: null,
         chooseEndsAt: null,
-        roundEndsAt: Date.now() + (gameState.drawTime || 80) * 1000,
+        roundEndsAt: serverTime() + (gameState.drawTime || 80) * 1000,
         strokes: null
     });
 }
@@ -1078,7 +1081,7 @@ async function advanceTurn() {
         status: 'choosing',
         round: nextRound,
         drawerIdx: nextIdx,
-        chooseEndsAt: Date.now() + 15000,
+        chooseEndsAt: serverTime() + 15000,
         wordChoices: pickWords(3),
         currentWord: null,
         wordLength: null,
@@ -1123,14 +1126,14 @@ function tickTimer() {
     if (!gameState) return;
     const tEl = document.getElementById('timer');
     if (gameState.status === 'drawing' && gameState.roundEndsAt) {
-        const left = Math.max(0, Math.ceil((gameState.roundEndsAt - Date.now()) / 1000));
+        const left = Math.max(0, Math.ceil((gameState.roundEndsAt - serverTime()) / 1000));
         tEl.innerText = left + 's';
         tEl.classList.toggle('low', left <= 10);
         if (left <= 0 && isHost && gameState.status === 'drawing') {
             endRound();
         }
     } else if (gameState.status === 'choosing') {
-        const left = Math.max(0, Math.ceil(((gameState.chooseEndsAt || 0) - Date.now()) / 1000));
+        const left = Math.max(0, Math.ceil(((gameState.chooseEndsAt || 0) - serverTime()) / 1000));
         tEl.innerText = left + 's';
         tEl.classList.remove('low');
     } else {
@@ -1418,7 +1421,7 @@ async function handleCorrectGuess() {
 
     const drawerUid = gameState.drawOrder[gameState.drawerIdx];
     const drawTime = gameState.drawTime || 80;
-    const timeLeft = Math.max(0, Math.ceil((gameState.roundEndsAt - Date.now()) / 1000));
+    const timeLeft = Math.max(0, Math.ceil((gameState.roundEndsAt - serverTime()) / 1000));
 
     // Points: faster = more; decline by order
     const basePts = Math.round(100 + (timeLeft / drawTime) * 200);
