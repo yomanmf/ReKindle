@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <meta charset="UTF-8">
+    <title data-i18n="akinator.title">Akinator</title>
+    <script src="theme.js?v=18"></script>
+    <script src="js/i18n.js"></script>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --border: 2px solid #000000;
+            --shadow: 4px 4px 0px #000000;
+            --stripe-pattern: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px, #000 4px);
+        }
+
+        *,
+        *::before,
+        *::after {
+            transition: none !important;
+            animation: none !important;
+        }
+
+        body {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            font-family: "Geneva", "Verdana", sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-color: #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        .window {
+            background: white;
+            border: 2px solid black;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 500px;
+            height: 90vh;
+            position: relative;
+        }
+
+        .title-bar {
+            height: 35px;
+            border-bottom: 2px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .title-stripes {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            right: 4px;
+            background-image: var(--stripe-pattern);
+            z-index: 0;
+        }
+
+        .title-text {
+            background: white;
+            padding: 0 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .close-box {
+            position: absolute;
+            left: 10px;
+            width: 18px;
+            height: 18px;
+            border: 2px solid black;
+            background: white;
+            z-index: 2;
+            box-shadow: 2px 2px 0 black;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-family: sans-serif;
+            font-size: 0.9rem;
+            line-height: 1;
+        }
+
+        .close-box:active {
+            background: black;
+            color: white;
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .window-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .view {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        .intro-text {
+            font-size: 1rem;
+            line-height: 1.4;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        select,
+        button,
+        .btn {
+            font-size: 1rem;
+            font-family: inherit;
+            padding: 8px 12px;
+            border: 2px solid black;
+            background: white;
+            color: black;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 0;
+            appearance: none;
+        }
+
+        select {
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+        }
+
+        button,
+        .btn {
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 2px 2px 0 black;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        button:active,
+        .btn:active {
+            background: black;
+            color: white;
+            box-shadow: none;
+            transform: translate(2px, 2px);
+        }
+
+        button:disabled,
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            border-style: dotted;
+            box-shadow: none;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            margin: 15px 0 25px 0;
+        }
+
+        .checkbox-row input {
+            width: 20px;
+            height: 20px;
+            border: 2px solid black;
+            margin-right: 10px;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            line-height: 1.4;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0 20px 0;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .answer-btn {
+            text-align: center;
+            padding: 12px;
+        }
+
+        .back-btn {
+            margin-top: auto;
+        }
+
+        .result-card {
+            border: 2px solid black;
+            box-shadow: 2px 2px 0 black;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .result-card img {
+            max-width: 150px;
+            max-height: 150px;
+            border: 2px solid black;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .result-card img.visible {
+            display: inline-block;
+        }
+
+        .result-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result-desc {
+            font-size: 0.9rem;
+            line-height: 1.3;
+            font-style: italic;
+            color: #333;
+        }
+
+        .result-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            font-weight: bold;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-box {
+            background: white;
+            border: 2px solid black;
+            box-shadow: 8px 8px 0 black;
+            padding: 25px;
+            width: 85%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .modal-text {
+            margin-bottom: 20px;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+
+        @media (min-width: 600px) {
+            .answers-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="window">
+        <div class="title-bar">
+            <div class="title-stripes"></div>
+            <div class="close-box" onclick="window.location.href='index'">X</div>
+            <span class="title-text" data-i18n="akinator.title">Akinator</span>
+        </div>
+
+        <div class="window-content">
+            <div id="start-view" class="view active">
+                <p class="intro-text" data-i18n="akinator.intro">Think of a character, real or fictional. The genie will try to guess it in 20 questions.</p>
+
+                <div>
+                    <label for="region-select" data-i18n="akinator.label.region">Region</label>
+                    <select id="region-select">
+                        <option value="en">English</option>
+                        <option value="en_objects">English (Objects)</option>
+                        <option value="en_animals">English (Animals)</option>
+                        <option value="ar">Arabic</option>
+                        <option value="cn">Chinese</option>
+                        <option value="de">German</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="il">Hebrew</option>
+                        <option value="it">Italian</option>
+                        <option value="jp">Japanese</option>
+                        <option value="kr">Korean</option>
+                        <option value="nl">Dutch</option>
+                        <option value="pl">Polish</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="tr">Turkish</option>
+                        <option value="id">Indonesian</option>
+                    </select>
+                </div>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" id="child-mode">
+                    <span data-i18n="akinator.label.child">Child mode</span>
+                </label>
+
+                <button id="start-btn" onclick="startGame()" data-i18n="akinator.btn.start">Start Game</button>
+            </div>
+
+            <div id="game-view" class="view">
+                <div class="hud">
+                    <span id="step-text">Q 1</span>
+                    <span id="progress-text">Confidence: 0%</span>
+                </div>
+
+                <div id="question-text" class="question-text" data-i18n="akinator.msg.loading">Loading...</div>
+
+                <div id="answers-grid" class="answers-grid">
+                    <button class="answer-btn" onclick="answer(0)" data-i18n="akinator.btn.yes">Yes</button>
+                    <button class="answer-btn" onclick="answer(1)" data-i18n="akinator.btn.no">No</button>
+                    <button class="answer-btn" onclick="answer(2)" data-i18n="akinator.btn.dont_know">Don't know</button>
+                    <button class="answer-btn" onclick="answer(3)" data-i18n="akinator.btn.probably">Probably</button>
+                    <button class="answer-btn" onclick="answer(4)" data-i18n="akinator.btn.probably_not">Probably not</button>
+                </div>
+
+                <button id="back-btn" class="back-btn" onclick="goBack()" data-i18n="akinator.btn.back">Back</button>
+            </div>
+
+            <div id="result-view" class="view">
+                <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <h2 style="text-align: center; margin-top: 0;" data-i18n="akinator.result.thinking">Is it...</h2>
+                    <div class="result-card">
+                        <div id="result-name" class="result-name"></div>
+                        <img id="result-photo" alt="">
+                        <div id="result-desc" class="result-desc"></div>
+                    </div>
+                </div>
+
+                <div class="result-actions">
+                    <button onclick="confirmCorrect()" data-i18n="akinator.btn.correct">Yes, that's it!</button>
+                    <button onclick="continueGame()" data-i18n="akinator.btn.wrong">No, continue</button>
+                </div>
+                <button onclick="resetGame()" data-i18n="akinator.btn.play_again">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div id="error-text" class="modal-text"></div>
+            <button onclick="closeError()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        var state = {
+            region: 'en',
+            childMode: false,
+            session: '',
+            signature: '',
+            baseUrl: '',
+            sid: 1,
+            step: 0,
+            progression: 0,
+            question: '',
+            stepLast: '',
+            answers: []
+        };
+
+        var isLoading = false;
+
+        var views = {
+            start: document.getElementById('start-view'),
+            game: document.getElementById('game-view'),
+            result: document.getElementById('result-view')
+        };
+
+        var answerButtons = document.querySelectorAll('.answer-btn');
+        var startButton = document.getElementById('start-btn');
+        var backButton = document.getElementById('back-btn');
+        var resultPhoto = document.getElementById('result-photo');
+
+        function showView(name) {
+            views.start.classList.remove('active');
+            views.game.classList.remove('active');
+            views.result.classList.remove('active');
+            views[name].classList.add('active');
+        }
+
+        function setLoading(loading) {
+            isLoading = loading;
+            startButton.disabled = loading;
+            for (var i = 0; i < answerButtons.length; i++) {
+                answerButtons[i].disabled = loading;
+            }
+            backButton.disabled = loading || state.step <= 0;
+        }
+
+        function decodeHtml(text) {
+            if (!text) return '';
+            var el = document.createElement('textarea');
+            el.innerHTML = text;
+            return el.value;
+        }
+
+        function translate(key, fallback) {
+            if (typeof window.t === 'function') {
+                return window.t(key, fallback || key);
+            }
+            return fallback || key;
+        }
+
+        function showError(message) {
+            document.getElementById('error-text').textContent = message;
+            document.getElementById('error-modal').style.display = 'flex';
+        }
+
+        function closeError() {
+            document.getElementById('error-modal').style.display = 'none';
+        }
+
+        async function startGame() {
+            state.region = document.getElementById('region-select').value;
+            state.childMode = document.getElementById('child-mode').checked;
+            setLoading(true);
+
+            try {
+                var res = await fetch('/api/akinator/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        region: state.region,
+                        childMode: state.childMode
+                    })
+                });
+
+                var data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || translate('akinator.error.network', 'Network error. Please try again.'));
+                }
+
+                state.session = data.session;
+                state.signature = data.signature;
+                state.baseUrl = data.baseUrl;
+                state.sid = data.sid;
+                state.step = 0;
+                state.progression = 0;
+                state.stepLast = '';
+                state.question = data.question;
+                state.answers = data.answers || [];
+
+                renderGame();
+            } catch (e) {
+                console.error('Start error:', e);
+                showError(translate('akinator.error.start', 'Could not start Akinator.') + ' ' + e.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function renderGame() {
+            showView('game');
+            document.getElementById('question-text').textContent = decodeHtml(state.question);
+            document.getElementById('step-text').textContent = translate('akinator.hud.step', 'Question {n}').replace('{n}', state.step + 1);
+            document.getElementById('progress-text').textContent = translate('akinator.hud.progress', 'Confidence: {p}%').replace('{p}', Math.round(parseFloat(state.progression) || 0));
+
+            for (var i = 0; i < answerButtons.length; i++) {
+                if (state.answers && state.answers[i]) {
+                    answerButtons[i].textContent = decodeHtml(state.answers[i]);
+                } else {
+                    answerButtons[i].textContent = defaultAnswerLabel(i);
+                }
+            }
+
+            backButton.disabled = state.step <= 0;
+        }
+
+        function defaultAnswerLabel(index) {
+            var keys = [
+                'akinator.btn.yes',
+                'akinator.btn.no',
+                'akinator.btn.dont_know',
+                'akinator.btn.probably',
+                'akinator.btn.probably_not'
+            ];
+            var fallbacks = ['Yes', 'No', "Don't know", 'Probably', 'Probably not'];
+            return translate(keys[index], fallbacks[index]);
+        }
+
+        async function answer(index) {
+            if (isLoading) return;
+            setLoading(true);
+
+            try {
+                var res = await fetch('/api/akinator/answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        region: state.region,
+                        childMode: state.childMode,
+                        step: state.step,
+                        progression: state.progression,
+                        answer: index,
+                        stepLast: state.stepLast,
+                        session: state.session,
+                        signature: state.signature
+                    })
+                });
+
+                var data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || translate('akinator.error.network', 'Network error. Please try again.'));
+                }
+
+                await handleResponse(data);
+            } catch (e) {
+                console.error('Answer error:', e);
+                showError(e.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function goBack() {
+            if (isLoading || state.step <= 0) return;
+            setLoading(true);
+
+            try {
+                var res = await fetch('/api/akinator/back', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        region: state.region,
+                        childMode: state.childMode,
+                        step: state.step,
+                        progression: state.progression,
+                        session: state.session,
+                        signature: state.signature
+                    })
+                });
+
+                var data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || translate('akinator.error.network', 'Network error. Please try again.'));
+                }
+
+                updateFromStep(data);
+            } catch (e) {
+                console.error('Back error:', e);
+                showError(e.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function updateFromStep(data) {
+            state.step = parseInt(data.step, 10) || 0;
+            state.progression = parseFloat(data.progression) || 0;
+            state.question = data.question || state.question;
+            renderGame();
+        }
+
+        async function handleResponse(data) {
+            if (data.id_proposition || data.id_base_proposition || data.name_proposition) {
+                showResult(data);
+            } else {
+                updateFromStep(data);
+            }
+        }
+
+        function showResult(data) {
+            showView('result');
+            document.getElementById('result-name').textContent = decodeHtml(data.name_proposition || data.name || '');
+            document.getElementById('result-desc').textContent = decodeHtml(data.description_proposition || data.description || '');
+
+            var photo = data.photo || data.sugestion_photo || '';
+            if (photo) {
+                resultPhoto.src = photo;
+                resultPhoto.classList.add('visible');
+            } else {
+                resultPhoto.src = '';
+                resultPhoto.classList.remove('visible');
+            }
+
+            if (typeof data.step !== 'undefined') {
+                state.step = parseInt(data.step, 10) || state.step;
+            }
+            if (typeof data.progression !== 'undefined') {
+                state.progression = parseFloat(data.progression) || state.progression;
+            }
+            state.stepLast = data.id_proposition || data.id_base_proposition || '';
+        }
+
+        async function continueGame() {
+            if (isLoading) return;
+            setLoading(true);
+
+            try {
+                var res = await fetch('/api/akinator/answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        region: state.region,
+                        childMode: state.childMode,
+                        step: state.step,
+                        progression: state.progression,
+                        answer: 1,
+                        stepLast: state.stepLast,
+                        session: state.session,
+                        signature: state.signature
+                    })
+                });
+
+                var data = await res.json();
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || translate('akinator.error.network', 'Network error. Please try again.'));
+                }
+
+                await handleResponse(data);
+            } catch (e) {
+                console.error('Continue error:', e);
+                showError(e.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function confirmCorrect() {
+            resetGame();
+        }
+
+        function resetGame() {
+            state = {
+                region: 'en',
+                childMode: false,
+                session: '',
+                signature: '',
+                baseUrl: '',
+                sid: 1,
+                step: 0,
+                progression: 0,
+                question: '',
+                stepLast: '',
+                answers: []
+            };
+            showView('start');
+            setLoading(false);
+        }
+
+        window.addEventListener('DOMContentLoaded', function () {
+            if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
+        });
+    </script>
+</body>
+
+</html>

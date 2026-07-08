@@ -264,6 +264,48 @@ Icons are stored as raw SVG strings in `icons.js`.
 *   **Stroke:** `stroke-width="2"` (Standard) or `"1.5"` for detail.
 *   **Style:** `fill="none"` `stroke="black"` OR `fill="black"` `stroke="none"`.
 
+## JavaScript Global `t` Naming Conflict
+
+Do **not** define a global `function t(key, fallback)` in page scripts. `js/i18n.js` already exposes the translation helper as `window.t`. Because a global `function t` declaration also attaches itself to `window.t`, it overwrites the i18n helper and calls itself recursively, causing a `RangeError: Maximum call stack size exceeded`.
+
+**Example of broken code (`akinator.html` before fix):**
+```javascript
+function t(key, fallback) {
+    if (typeof window.t === 'function') {
+        return window.t(key, fallback || key); // window.t is itself, infinite loop
+    }
+    return fallback || key;
+}
+```
+
+**Fix:** Use a different local name (e.g., `translate`) and call `window.t` inside it, or use `window.t` directly with a fallback guard.
+```javascript
+function translate(key, fallback) {
+    if (typeof window.t === 'function') {
+        return window.t(key, fallback || key);
+    }
+    return fallback || key;
+}
+```
+
+## Cloudflare Pages Functions Routing for Subpaths
+
+Cloudflare Pages Functions uses **file-based routing**. A function file at `functions/api/foo.js` only handles:
+
+- `/api/foo`
+- `/api/foo/`
+
+It **does not** automatically handle subpaths like `/api/foo/bar` or `/api/foo/start`.
+
+To handle subpaths under a function route, use a catch-all file inside a folder:
+
+```
+functions/api/foo/[[path]].js   → handles /api/foo and /api/foo/*
+```
+
+**Real bug fixed:** `functions/api/akinator.js` was deployed and the root `/api/akinator` worked, but `POST /api/akinator/start` returned 405 because the subpath fell through to the static asset handler. The fix was moving the function to `functions/api/akinator/[[path]].js`.
+
+
 ## 🏗 System Architecture
 
 ### 1. JavaScript Execution (JIT-less)
