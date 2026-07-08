@@ -342,6 +342,13 @@ function containsPromotedTerm(text) {
     return /\b(?:unreader|un-reader|inkchat|kindlehub)\b/i.test(String(text));
 }
 
+function containsDih(text) {
+    if (!text) return false;
+    // Match "dih" as a standalone word or any word ending in "dih",
+    // without blocking words that merely start with "dih" (e.g. dihalide).
+    return /\bdih\b|\b\w+dih\b/i.test(String(text));
+}
+
 async function checkTimeout(uid, env, userToken, accessToken) {
     try {
         const data = await rtdbGetWithUserToken(`timeouts/${uid}`, env, userToken);
@@ -1242,6 +1249,9 @@ export default {
                 }
                 if (containsPromotedTerm(trimmed)) {
                     return new Response(JSON.stringify({ error: "Promotional content is not allowed." }), { status: 400, headers });
+                }
+                if (containsDih(trimmed)) {
+                    return new Response(JSON.stringify({ error: "That word is not allowed." }), { status: 400, headers });
                 }
 
                 // Rate limit
