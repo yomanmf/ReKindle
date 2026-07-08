@@ -199,11 +199,15 @@
         /* Icon visibility logic */
         .card-icon {
             display: none;
+            visibility: hidden;
+            opacity: 0;
         }
 
         .card.revealed .card-icon,
         .card.matched .card-icon {
             display: block;
+            visibility: visible;
+            opacity: 1;
         }
 
         /* CONTROLS */
@@ -351,6 +355,7 @@
 
                     flippedCards = [];
                     isLocked = false;
+                    flashRefresh();
                 }, 300);
             } else {
                 // No Match
@@ -360,6 +365,7 @@
 
                     flippedCards = [];
                     isLocked = false;
+                    flashRefresh();
                 }, 1000);
             }
         }
@@ -376,6 +382,29 @@
                     content.style.filter = "invert(0)";
                 }, 500);
             }
+        }
+
+        function flashRefresh() {
+            const mode = (window.rekindleGetDisplayMode ? window.rekindleGetDisplayMode() : localStorage.getItem('rekindle_display_mode')) || 'led';
+            if (mode !== 'eink') return;
+
+            const flash = document.createElement('div');
+            flash.style.position = 'fixed';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.width = '100%';
+            flash.style.height = '100%';
+            flash.style.backgroundColor = 'black';
+            flash.style.zIndex = '9999';
+            flash.style.pointerEvents = 'none';
+            flash.style.opacity = '1';
+
+            document.body.appendChild(flash);
+            void flash.offsetWidth;
+
+            setTimeout(() => {
+                if (flash.parentNode) flash.parentNode.removeChild(flash);
+            }, 150);
         }
 
         // --- UTILS ---
