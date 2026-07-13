@@ -802,7 +802,8 @@ After successfully completing any task that changes code:
 
 1. Review the changes and run the relevant tests.
 2. Stage only the files that belong to the current task. Never include unrelated user changes.
-3. Create a concise, descriptive commit.
-4. Push the commit to GitHub automatically without asking for additional confirmation.
-5. If the work is not already on a dedicated branch, create a `codex/<short-task-name>` branch, push it, and create a Pull Request.
+3. Create a concise, descriptive commit directly on the `main` branch.
+4. Run `git push origin main` automatically without asking for additional confirmation.
+5. Do not create a separate branch or Pull Request unless the user explicitly requests one.
 6. Do not push if tests fail, secrets are detected, GitHub authentication is unavailable, or the intended changes cannot be safely separated from unrelated work. Report the blocker instead.
+7. If GitHub rejects a direct push because `main` is protected, create a `codex/<short-task-name>` branch and a Pull Request, then report the restriction.
