@@ -566,6 +566,19 @@ Important notes:
 -   **Dark mode chrome:** `theme.js` applies a global `invert(1) hue-rotate(180deg)` filter in dark mode. Because `color-scheme: dark` changes the default canvas text color to white, the filter would invert that text back to black-on-black, so `theme.js` now also sets explicit `color: #000` on the dark root so the filter produces white text. White buttons, close boxes, and borders on light System 7 UI can also become black-on-black and disappear; add the `no-invert` helper class (re-inverted by `theme.js`) to any control that must stay visible in dark mode, e.g. `<div class="controls no-invert">` or `<button class="sys-btn no-invert">`. Note that `.no-invert` restores the original light colors, so text inside a `.no-invert` element with a transparent background may end up black-on-black; add a dark-mode `color: #fff` rule for that text (see `pet.html` `.btn-label`). **Note:** Dark mode is currently temporarily disabled — `theme.js` forces `light` mode and `settings.html` greys out/disables the theme dropdown.
 
 ## 🌐 External API Proxies (Rate-limiting)
+
+### Static Yandex hosting does not run Cloudflare Pages Functions
+
+The production site at `https://rekindle.website.yandexcloud.net` is static hosting. It serves HTML/assets but does **not** execute handlers from `functions/api/`. A frontend request to a relative Pages Function URL such as `/api/reddit?url=...` therefore falls through to the static-site error/index document and returns `404`; receiving ReKindle HTML instead of the expected API payload is a useful diagnostic signal.
+
+For apps served from the Yandex hostname, deploy the proxy as a standalone Worker/function and use its absolute HTTPS URL in the frontend (with CORS enabled), or configure a real API Gateway/reverse-proxy route for `/api/*`. Do not assume that a `functions/api/*.js` file is available on every static deployment target. `reddit.html` currently references `/api/reddit` for both feed requests and proxied images, so both call sites must be updated together if the Reddit proxy moves.
+
+**Reddit's current Yandex deployment:** `yandex/reddit-function/index.js` runs as the public Node.js 22 Cloud Function `rekindle-reddit` (`d4egfe65qmv2774tec7m`). The `rekindle-api` API Gateway (`d5dmoqrf9kg552lo4g69`) exposes it at `https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net/api/reddit`. `reddit.html` uses this absolute endpoint for both feeds and images. The checked-in Gateway specification is `yandex/reddit-api-gateway.yaml`.
+
+**Yandex console Monaco gotcha:** Calling automation-style `fill()` on the Cloud Functions or API Gateway Monaco editor can insert the new source without deleting the generated sample. If the sample contains a second `module.exports.handler`, it silently overrides the intended handler. Focus the `textarea[aria-label="Editor content"]`, send `ControlOrMeta+A`, then type the complete source. Before saving, verify that `Hello World` is absent and that the visible final line number matches the source file.
+
+**Extensionless Yandex Object Storage URLs:** The static website does not rewrite `/reddit` to `/reddit.html`. If only `reddit.html` exists, `/reddit` returns the configured error document with HTTP `404`, even though the browser may display ReKindle HTML. The production deployment therefore stores the same Reddit page under both object keys: `reddit.html` and `reddit`. Whenever `reddit.html` changes, upload both objects. This was verified on July 13, 2026: `/reddit` returns HTTP `200` and loads 25 posts through the Yandex Gateway.
+
 External APIs such as Reddit aggressively rate-limit shared cloud egress IPs (e.g., Cloudflare Pages/Workers). Any proxy under `functions/api/` or `workers/` that calls an external API should:
 
 - Cache successful GET responses using `caches.default` so all users share the same cached copy.
@@ -783,3 +796,13 @@ Single-player entries that have a multiplayer counterpart (e.g. `chess`, `checke
 
 **Important:** Do **not** add `single: true` to games that are single-player-only and have no multiplayer variant in the project (e.g. `crossy`, `dino`). That flag is only for the folder-grouping badge system. For solid pixel-art icons, use `filled: true` instead.
 
+## Git Workflow
+
+After successfully completing any task that changes code:
+
+1. Review the changes and run the relevant tests.
+2. Stage only the files that belong to the current task. Never include unrelated user changes.
+3. Create a concise, descriptive commit.
+4. Push the commit to GitHub automatically without asking for additional confirmation.
+5. If the work is not already on a dedicated branch, create a `codex/<short-task-name>` branch, push it, and create a Pull Request.
+6. Do not push if tests fail, secrets are detected, GitHub authentication is unavailable, or the intended changes cannot be safely separated from unrelated work. Report the blocker instead.

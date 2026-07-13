@@ -1,0 +1,50 @@
+openapi: 3.0.0
+info:
+  title: ReKindle Reddit API
+  version: 1.0.0
+
+x-yc-apigateway:
+  cors:
+    origin: '*'
+    methods:
+      - GET
+      - HEAD
+      - OPTIONS
+    allowedHeaders:
+      - Content-Type
+    maxAge: 3600
+
+paths:
+  /api/reddit:
+    get:
+      operationId: proxyReddit
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Proxied Reddit response
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4egfe65qmv2774tec7m
+        tag: '$latest'
+        payload_format_version: '1.0'
+    head:
+      operationId: proxyRedditHead
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Proxied Reddit response headers
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4egfe65qmv2774tec7m
+        tag: '$latest'
+        payload_format_version: '1.0'

@@ -556,9 +556,10 @@
             }
         }
 
-        // --- PROXY LIST ---
+        // --- YANDEX CLOUD REDDIT PROXY ---
+        const REDDIT_PROXY_ENDPOINT = "https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net/api/reddit";
         const PROXIES = [
-            "/api/reddit?url=" // Internal Cloudflare Function (Most Reliable)
+            REDDIT_PROXY_ENDPOINT + "?url="
         ];
 
         // --- API CLIENT ---
@@ -664,7 +665,8 @@
                                 continue;
                             }
 
-                            throw new Error('Status ' + res.status);
+                            lastError = new Error('Status ' + res.status);
+                            break;
                         } catch (e) {
                             lastError = e;
                             if (e.message && e.message.indexOf('superseded') !== -1) {
@@ -677,7 +679,14 @@
                 }
 
                 document.getElementById('loading-indicator').style.display = 'none';
-                let msg = "Connection Failed: All proxies blocked.";
+                let msg = "Connection failed.";
+                if (lastStatus === 404) {
+                    msg = "Reddit proxy endpoint was not found. Check the Yandex API Gateway configuration.";
+                } else if (lastStatus === 429) {
+                    msg = "Reddit is rate limiting requests. Please try again shortly.";
+                } else if (lastStatus && lastStatus >= 500) {
+                    msg = "The Reddit proxy is temporarily unavailable.";
+                }
                 if (lastStatus) msg += " (last status " + lastStatus + ")";
                 if (lastError) msg += " - " + lastError.message;
                 throw new Error(msg);
@@ -1258,7 +1267,7 @@
 
                         const img = document.createElement('img');
                         // Proxy the image source!
-                        img.src = "/api/reddit?url=" + encodeURIComponent(h);
+                        img.src = REDDIT_PROXY_ENDPOINT + "?url=" + encodeURIComponent(h);
                         img.className = "comment-img"; // for CSS styling if needed
                         img.style.maxWidth = '100%';
                         img.style.display = 'block';
