@@ -49,13 +49,10 @@
         },
 
         async checkOnLogin() {
-            if (typeof firebase === 'undefined' || !firebase.functions) {
-                console.warn('Firebase Functions not available, skipping server-side IP check');
-                return { banned: false };
+            if (!window.RekindleCloud || typeof window.RekindleCloud.checkIp !== 'function') {
+                throw new Error('ReKindle security service is not available.');
             }
-            const checkIP = firebase.functions().httpsCallable('checkIPOnLogin');
-            const result = await checkIP({});
-            return result.data;
+            return window.RekindleCloud.checkIp();
         },
 
         showBanMessage(title, message) {

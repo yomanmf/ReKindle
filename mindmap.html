@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="js/i18n.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <script src="js/rekindle-cloud.js?v=1"></script>
     <style>
         /* SYSTEM 7 AESTHETICS */
         :root {
@@ -525,12 +525,12 @@
     <script>
         // --- Firebase Config ---
         const firebaseConfig = {
-            apiKey: "AIzaSyDY7x7vVmlYUyVZNLuCCmIQYa6PWFVfZqQ",
-            authDomain: "rekindle-dd1fa.firebaseapp.com",
-            projectId: "rekindle-dd1fa",
-            storageBucket: "rekindle-dd1fa.firebasestorage.app",
-            messagingSenderId: "748026882518",
-            appId: "1:748026882518:web:6877dd4329318070c11c77"
+            apiKey: "AIzaSyCCL6Z5DFTm-pZ_1EZJ_9Ukk9rWDIZky-U",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork",
+            storageBucket: "rekindle-fork.firebasestorage.app",
+            messagingSenderId: "136525921771",
+            appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -967,10 +967,7 @@
         async function uploadToFiles(blob, filename) {
             if (!currentUser) throw new Error("Must be logged in to save to Files.");
 
-            const storageRef = firebase.storage().ref();
-            const fileRef = storageRef.child(`users/${currentUser.uid}/files/${filename}`);
-
-            await fileRef.put(blob);
+            await RekindleCloud.storage.upload(`users/${currentUser.uid}/files/${filename}`, blob, blob.type);
             return true;
         }
 

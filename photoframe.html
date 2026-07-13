@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <script src="js/rekindle-cloud.js?v=1"></script>
     <script src="pro-gate.js"></script>
 
     <style>
@@ -452,12 +452,12 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyDY7x7vVmlYUyVZNLuCCmIQYa6PWFVfZqQ",
-            authDomain: "rekindle-dd1fa.firebaseapp.com",
-            projectId: "rekindle-dd1fa",
-            storageBucket: "rekindle-dd1fa.firebasestorage.app",
-            messagingSenderId: "748026882518",
-            appId: "1:748026882518:web:6877dd4329318070c11c77"
+            apiKey: "AIzaSyCCL6Z5DFTm-pZ_1EZJ_9Ukk9rWDIZky-U",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork",
+            storageBucket: "rekindle-fork.firebasestorage.app",
+            messagingSenderId: "136525921771",
+            appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
         };
 
         if (!firebase.apps.length) {
@@ -528,50 +528,39 @@
 
             try {
                 statusEl.innerText = window.t('photoframe.status.loading', "Loading photos...");
-                const listRef = firebase.storage().ref(`users/${currentUser.uid}/photos`);
-                const filesRef = firebase.storage().ref(`users/${currentUser.uid}/files`);
-
-                const res = await listRef.listAll();
+                const res = await RekindleCloud.storage.list('photos');
 
                 let filesRes = { items: [] };
                 try {
-                    filesRes = await filesRef.listAll();
+                    filesRes = await RekindleCloud.storage.list('files');
                 } catch (e) { /* Ignore if dir is missing */ }
 
                 totalUsage = 0;
-
-                // Get Metadata for Sizes
-                const photoMetaPromises = res.items.map(itemRef => {
-                    return itemRef.getMetadata();
-                });
-                const fileMetaPromises = filesRes.items.map(itemRef => itemRef.getMetadata());
-
-                const photoMetaList = await Promise.all(photoMetaPromises);
-                const fileMetaList = await Promise.all(fileMetaPromises);
-
-                photoMetaList.forEach(meta => { if (meta && meta.size) totalUsage += meta.size; });
-                fileMetaList.forEach(meta => { if (meta && meta.size) totalUsage += meta.size; });
+                const photoMetaList = res.items || [];
+                const fileMetaList = filesRes.items || [];
+                photoMetaList.forEach(meta => { if (meta && meta.size) totalUsage += Number(meta.size); });
+                fileMetaList.forEach(meta => { if (meta && meta.size) totalUsage += Number(meta.size); });
 
                 updateStorageUI();
 
                 let tempPhotos = [];
                 let orderedNames = [];
 
-                for (let i = 0; i < res.items.length; i++) {
-                    const itemRef = res.items[i];
-                    if (itemRef.name === '_ORDER.json') {
+                for (let i = 0; i < photoMetaList.length; i++) {
+                    const item = photoMetaList[i];
+                    if (item.name === '_ORDER.json') {
                         try {
-                            const url = await itemRef.getDownloadURL();
+                            const url = await RekindleCloud.storage.getDownloadUrl(item.fullPath, false);
                             const orderRes = await fetch(url);
                             orderedNames = await orderRes.json();
                         } catch (e) { console.warn("Order list fetch failed"); }
                         continue;
                     }
                     try {
-                        const url = await itemRef.getDownloadURL();
-                        tempPhotos.push({ name: itemRef.name, url: url, size: photoMetaList[i].size });
+                        const url = await RekindleCloud.storage.getDownloadUrl(item.fullPath, false);
+                        tempPhotos.push({ name: item.name, url: url, size: item.size });
                     } catch (e) {
-                        console.error("Failed to get URL for", itemRef.name);
+                        console.error("Failed to get URL for", item.name);
                     }
                 }
 
@@ -630,9 +619,8 @@
             if (!currentUser || photoData.length === 0) return;
             const justNames = photoData.map(p => p.name);
             const blob = new Blob([JSON.stringify(justNames)], { type: 'application/json' });
-            const storageRef = firebase.storage().ref(`users/${currentUser.uid}/photos/_ORDER.json`);
             try {
-                await storageRef.put(blob);
+                await RekindleCloud.storage.upload(`users/${currentUser.uid}/photos/_ORDER.json`, blob, 'application/json');
             } catch (err) { console.log("Failed to save order"); }
         }
 
@@ -687,8 +675,7 @@
             document.getElementById('upload-status').innerText = window.t('photoframe.status.deleting', "Deleting...");
             try {
                 if (p.url) {
-                    const storageRef = firebase.storage().ref(`users/${currentUser.uid}/photos/${p.name}`);
-                    await storageRef.delete();
+                    await RekindleCloud.storage.delete(`users/${currentUser.uid}/photos/${p.name}`);
                 }
             } catch (e) { console.log(e); }
 
@@ -782,9 +769,9 @@
                     const ext = "jpg";
                     const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1000) + '.' + ext;
 
-                    const regRef = firebase.storage().ref(`users/${currentUser.uid}/photos/${uniqueName}`);
-                    await regRef.put(regBlob, { contentType: 'image/jpeg' });
-                    const regUrl = await regRef.getDownloadURL();
+                    const photoPath = `users/${currentUser.uid}/photos/${uniqueName}`;
+                    await RekindleCloud.storage.upload(photoPath, regBlob, 'image/jpeg');
+                    const regUrl = await RekindleCloud.storage.getDownloadUrl(photoPath, false);
 
                     photoData.push({ name: uniqueName, url: regUrl, size: regBlob.size });
                     totalUsage += regBlob.size;

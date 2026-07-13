@@ -4,7 +4,7 @@ const path = require('path');
 
 // --- CONFIGURATION ---
 const SERVICE_ACCOUNT_PATH = path.resolve(__dirname, '..', 'service-account.json');
-const DATABASE_URL = 'https://rekindle-dd1fa-default-rtdb.firebaseio.com/';
+const DATABASE_URL = 'https://rekindle-fork-default-rtdb.europe-west1.firebasedatabase.app/';
 const SCRIPT_PATH = path.relative(process.cwd(), __filename) || path.basename(__filename);
 
 // --- ARGS ---

@@ -1,0 +1,9 @@
+[
+  {
+    "AllowedHeaders": ["Content-Type"],
+    "AllowedMethods": ["GET", "HEAD", "PUT"],
+    "AllowedOrigins": ["https://rekindle.website.yandexcloud.net"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]

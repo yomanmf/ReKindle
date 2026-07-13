@@ -3,7 +3,7 @@ const fs = require('fs');
 
 // --- CONFIGURATION ---
 const SERVICE_ACCOUNT_PATH = '../service-account.json';
-const DATABASE_URL = 'https://rekindle-dd1fa-default-rtdb.firebaseio.com/';
+const DATABASE_URL = 'https://rekindle-fork-default-rtdb.europe-west1.firebasedatabase.app/';
 
 // Fields written by registerUser — anything beyond these indicates user has edited their profile
 const AUTO_CREATED_KEYS = new Set(['displayName', 'username', 'email', 'createdAt', 'lastActive']);

@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <script src="js/rekindle-cloud.js?v=1"></script>
     <script src="pro-gate.js"></script>
 
     <style>
@@ -617,12 +617,12 @@
 
         // --- Firebase Config & Init ---
         const firebaseConfig = {
-            apiKey: "AIzaSyDY7x7vVmlYUyVZNLuCCmIQYa6PWFVfZqQ",
-            authDomain: "rekindle-dd1fa.firebaseapp.com",
-            projectId: "rekindle-dd1fa",
-            storageBucket: "rekindle-dd1fa.firebasestorage.app",
-            messagingSenderId: "748026882518",
-            appId: "1:748026882518:web:6877dd4329318070c11c77"
+            apiKey: "AIzaSyCCL6Z5DFTm-pZ_1EZJ_9Ukk9rWDIZky-U",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork",
+            storageBucket: "rekindle-fork.firebasestorage.app",
+            messagingSenderId: "136525921771",
+            appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
         };
 
         if (!firebase.apps.length) {
@@ -693,37 +693,24 @@
         async function loadFiles(isRetry = false) {
             if (!currentUser) return;
 
-            const listRef = firebase.storage().ref(`users/${currentUser.uid}/files`);
-            const photosRef = firebase.storage().ref(`users/${currentUser.uid}/photos`);
             const fileListEl = document.getElementById('file-list');
 
             try {
                 if (!isRetry) fileListEl.innerHTML = '<div class="empty-state">Loading...</div>';
-                const fileRes = await listRef.listAll();
+                const fileRes = await RekindleCloud.storage.list('files');
 
                 let photoRes = { items: [] };
                 try {
-                    photoRes = await photosRef.listAll();
+                    photoRes = await RekindleCloud.storage.list('photos');
                 } catch (e) { /* ignore if dir missing */ }
 
-                currentFiles = [];
+                currentFiles = fileRes.items || [];
                 totalUsage = 0;
-
-                const fileMetaPromises = fileRes.items.map(itemRef => itemRef.getMetadata());
-                const photoMetaPromises = photoRes.items.map(itemRef => {
-                    return itemRef.name !== '_ORDER.json' ? itemRef.getMetadata() : Promise.resolve({ size: 0 });
+                currentFiles.forEach(file => {
+                    totalUsage += Number(file.size || 0);
                 });
-
-                const metadataList = await Promise.all(fileMetaPromises);
-                const photoMetaList = await Promise.all(photoMetaPromises);
-
-                metadataList.forEach(meta => {
-                    currentFiles.push(meta);
-                    totalUsage += meta.size;
-                });
-
-                photoMetaList.forEach(meta => {
-                    if (meta && meta.size) totalUsage += meta.size;
+                (photoRes.items || []).forEach(file => {
+                    if (file.name !== '_ORDER.json') totalUsage += Number(file.size || 0);
                 });
 
                 updateStorageUI();
@@ -734,7 +721,7 @@
                 
                 // If unauthorized and we haven't retried yet, try refreshing the token
                 // This handles cases where the user just became Pro and has a stale token.
-                if (error.code === 'storage/unauthorized' && !isRetry && window.rekindleProGate && rekindleProGate.isPro()) {
+                if (error.code === 'pro-required' && !isRetry && window.rekindleProGate && rekindleProGate.isPro()) {
                     console.log("Storage unauthorized but user is Pro. Attempting token refresh...");
                     try {
                         await firebase.auth().currentUser.getIdToken(true);
@@ -841,8 +828,7 @@
         async function downloadFile(e, path) {
             e.stopPropagation();
             closeAllMenus();
-            const ref = firebase.storage().ref(path);
-            const url = await ref.getDownloadURL();
+            const url = await RekindleCloud.storage.getDownloadUrl(path, true);
 
             // Create a temporary link to force download
             const a = document.createElement('a');
@@ -894,8 +880,7 @@
 
                 // Get URL
                 try {
-                    const ref = firebase.storage().ref(file.fullPath);
-                    const url = await ref.getDownloadURL();
+                    const url = await RekindleCloud.storage.getDownloadUrl(file.fullPath, false);
 
                     img.onload = () => {
                         loading.style.display = 'none';
@@ -989,14 +974,12 @@
             }
 
             // 2. Upload
-            const ref = firebase.storage().ref(`users/${currentUser.uid}/files/${file.name}`);
-
             // UI Feedback (simple)
             const originalText = document.querySelector('.toolbar button').innerHTML;
             document.querySelector('.toolbar button').textContent = 'Uploading...';
 
             try {
-                await ref.put(file);
+                await RekindleCloud.storage.upload(`users/${currentUser.uid}/files/${file.name}`, file, file.type);
                 // Reload list
                 loadFiles();
             } catch (err) {
@@ -1020,9 +1003,8 @@
         async function confirmDelete() {
             if (!selectedFile) return;
 
-            const ref = firebase.storage().ref(selectedFile.fullPath);
             try {
-                await ref.delete();
+                await RekindleCloud.storage.delete(selectedFile.fullPath);
                 closeDeleteModal();
                 selectedFile = null;
                 document.getElementById('delete-btn').style.display = 'none';

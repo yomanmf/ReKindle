@@ -47,7 +47,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions-compat.js" defer></script>
 
     <script src="time.js" defer></script>
     <script src="icons.js?v=2" defer></script>
@@ -55,6 +54,7 @@
     <script src="theme.js?v=18" defer></script>
     <script src="bad_words.js?v=4" defer></script>
     <script src="js/i18n.js" defer></script>
+    <script src="js/rekindle-cloud.js?v=1" defer></script>
     <script src="js/ip-ban.js" defer></script>
 
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -1368,12 +1368,12 @@
         updateTopClock();
         syncWithServer();
         const firebaseConfig = {
-            apiKey: "AIzaSyDY7x7vVmlYUyVZNLuCCmIQYa6PWFVfZqQ",
-            authDomain: "rekindle-dd1fa.firebaseapp.com",
-            projectId: "rekindle-dd1fa",
-            storageBucket: "rekindle-dd1fa.firebasestorage.app",
-            messagingSenderId: "748026882518",
-            appId: "1:748026882518:web:6877dd4329318070c11c77"
+            apiKey: "AIzaSyCCL6Z5DFTm-pZ_1EZJ_9Ukk9rWDIZky-U",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork",
+            storageBucket: "rekindle-fork.firebasestorage.app",
+            messagingSenderId: "136525921771",
+            appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
         };
 
         window.onload = () => {
@@ -2301,9 +2301,11 @@
             if (!u || !p) { document.getElementById('login-msg').innerText = "Error: Please enter a valid username and password."; return; }
 
             document.getElementById('login-msg').innerText = "Connecting...";
+            let signedInThisAttempt = false;
             try {
                 const email = u.includes('@') ? u : u + "@rekindle.ink";
                 await auth.signInWithEmailAndPassword(email, p);
+                signedInThisAttempt = true;
                 // After sign-in, call the server to verify the IP. The function uses
                 // the real server-side IP (not spoofable) and revokes the session if banned.
                 const ipResult = await RekindleIpBan.checkOnLogin();
@@ -2312,6 +2314,11 @@
                     document.getElementById('login-msg').innerText = "Error: Your IP address has been banned from this network.";
                 }
             } catch (e) {
+                // Fail closed if Firebase accepted the credentials but the trusted
+                // server-side IP check could not be completed.
+                if (signedInThisAttempt && auth.currentUser) {
+                    await auth.signOut().catch(() => {});
+                }
                 const msg = (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found')
                     ? "Invalid username or password."
                     : (e.message || "Login failed.");
@@ -2336,11 +2343,10 @@
 
             document.getElementById('login-msg').innerText = "Registering...";
             try {
-                // Registration goes through a Cloud Function so the IP ban check
-                // runs server-side — it cannot be bypassed via browser dev tools.
-                const registerUser = firebase.functions().httpsCallable('registerUser');
-                const result = await registerUser({ username: u, password: p });
-                await auth.signInWithCustomToken(result.data.customToken);
+                // Registration goes through the Yandex backend so the IP ban
+                // check still runs server-side without Firebase Blaze.
+                const result = await RekindleCloud.register(u, p);
+                await auth.signInWithCustomToken(result.customToken);
             } catch (e) {
                 const msg = e.message || "";
                 // Fallback: if the account was created but custom-token generation failed

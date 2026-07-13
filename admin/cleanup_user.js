@@ -5,7 +5,7 @@ const readline = require('readline');
 // --- CONFIGURATION ---
 const SERVICE_ACCOUNT_PATH = '../service-account.json';
 const SOCIAL_SERVICE_ACCOUNT_PATH = '../service-account-social.json';
-const DATABASE_URL = 'https://rekindle-dd1fa-default-rtdb.firebaseio.com/';
+const DATABASE_URL = 'https://rekindle-fork-default-rtdb.europe-west1.firebasedatabase.app/';
 const SOCIAL_DATABASE_URL = 'https://rekindle-socials-default-rtdb.firebaseio.com/';
 
 // --- ARGS ---

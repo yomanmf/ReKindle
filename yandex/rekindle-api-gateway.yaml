@@ -1,0 +1,156 @@
+openapi: 3.0.0
+info:
+  title: ReKindle API
+  version: 2.0.0
+
+servers:
+  - url: https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net
+
+x-yc-apigateway:
+  cors:
+    # Keep the existing public Reddit image proxy usable from embedded readers.
+    # The ReKindle backend separately enforces its own origin allowlist.
+    origin: '*'
+    methods:
+      - GET
+      - HEAD
+      - POST
+      - DELETE
+      - OPTIONS
+    allowedHeaders:
+      - Content-Type
+      - X-Firebase-Token
+    maxAge: 3600
+
+paths:
+  /api/reddit:
+    get:
+      operationId: proxyReddit
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Proxied Reddit response
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4egfe65qmv2774tec7m
+        tag: '$latest'
+        payload_format_version: '1.0'
+    head:
+      operationId: proxyRedditHead
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Proxied Reddit response headers
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4egfe65qmv2774tec7m
+        tag: '$latest'
+        payload_format_version: '1.0'
+
+  /api/rekindle/health:
+    get:
+      operationId: rekindleHealth
+      responses:
+        '200':
+          description: Backend health
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
+  /api/rekindle/auth/register:
+    post:
+      operationId: registerUser
+      responses:
+        '200':
+          description: Firebase custom token
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
+  /api/rekindle/auth/check-ip:
+    post:
+      operationId: checkIpOnLogin
+      responses:
+        '200':
+          description: IP ban result
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
+  /api/rekindle/storage/list:
+    get:
+      operationId: listUserObjects
+      parameters:
+        - name: folder
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [files, photos]
+      responses:
+        '200':
+          description: User objects
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
+  /api/rekindle/storage/upload-url:
+    post:
+      operationId: createUploadUrl
+      responses:
+        '200':
+          description: Signed S3 upload URL
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
+  /api/rekindle/storage/download-url:
+    post:
+      operationId: createDownloadUrl
+      responses:
+        '200':
+          description: Signed S3 download URL
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
+  /api/rekindle/storage/object:
+    delete:
+      operationId: deleteUserObject
+      responses:
+        '200':
+          description: Object deletion result
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'

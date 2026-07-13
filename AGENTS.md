@@ -378,13 +378,28 @@ Add this CSS block **after** your existing `.window` / `.title-bar` rules and **
 ### 7. Firebase Architecture
 The project uses **two separate Firebase projects**. You must know which one your feature targets and update the correct rules file.
 
-#### Project 1: Primary (`rekindle-dd1fa`)
-*   **Used by:** Most apps (games, tools, personal data). Any HTML file using `projectId: "rekindle-dd1fa"`.
+#### Project 1: Primary (`rekindle-fork`)
+*   **Used by:** Most apps (games, tools, personal data). Any HTML file using `projectId: "rekindle-fork"`. The upstream project ID was `rekindle-dd1fa`; do not reintroduce it in this fork.
 *   **Config:** `firebase.json`
 *   **Firestore Rules:** `firestore.rules` — user data, leaderboards, app-specific collections.
 *   **Storage Rules:** `storage.rules` — user files and photos (Pro-only).
 *   **RTDB Rules:** `rtdb-rules.json` — presence, freewrite sessions, moderator lists, pro gate.
 *   **Cloud Functions:** `firebase-functions/index.js`
+
+The primary RTDB is hosted in Belgium (`europe-west1`). Its canonical URL is
+`https://rekindle-fork-default-rtdb.europe-west1.firebasedatabase.app`. A
+regional RTDB does not use the legacy `PROJECT-default-rtdb.firebaseio.com`
+hostname. Always copy the URL shown in the Firebase console into every explicit
+`databaseURL`; changing only the project ID produces a valid-looking but wrong
+hostname.
+
+**Firebase console rules editor gotcha:** Calling an automation-style `fill()`
+on the Firestore or RTDB code editor can append the new rules after the existing
+rules. Firestore then reports an error such as `Unexpected 'rules_version'` on
+the first line after the intended file. Focus the editor textbox, send
+`ControlOrMeta+A`, send `Backspace`, and only then fill the complete rules file.
+Before publishing, verify that `rules_version = '2';` appears exactly once (for
+Firestore) and that the default deny-all starter block is gone.
 
 #### Project 2: Social (`rekindle-socials`)
 *   **Used by:** Social apps — KindleChat, Neighbourhood, Topics, Flipbook, Pixel, Moderation. Any HTML file using `projectId: "rekindle-socials"`.
@@ -405,6 +420,10 @@ When adding a new feature that writes to Firebase, you **must** update the corre
 | Social RTDB (chat messages) | `rtdb-social-rules.json` |
 
 Without matching rules, writes will be **silently rejected** by security rules. Always follow the existing patterns in the target file for authenticated-user-only collections.
+
+**Firestore overlapping-match gotcha:** Security-rule `match` blocks are ORed, not ordered by specificity. A restrictive exact match does not override a broader permissive match. For example, both `match /privateSettings/ai` and `match /privateSettings/{docId}` match the `ai` document; if the wildcard rule allows the owner unconditionally, the intended ReKindle+ check in the exact rule is ineffective. Put the conditional in the wildcard rule (for example, branch on `docId == 'ai'`) or exclude the sensitive document from the broad allow. Audit other exact-plus-wildcard pairs the same way.
+
+**Removing a client paywall does not create backend access control:** As of July 2026, `workers/rekindle-oracle/worker.js` and `workers/rekindle-ocr/worker.js` restrict browser origins with CORS but do not authenticate a Firebase user or enforce a server-side per-user quota. The IMAP/SMTP callable functions in `firebase-functions/index.js` likewise do not check `request.auth` or a Pro claim. CORS is not authentication and can be bypassed by non-browser clients. Before making AI, OCR, or mail generally available, require a verified Firebase ID token and add server-side per-user rate limits. Files, Docs, and Photo Frame currently use the Yandex backend in `yandex/rekindle-backend/index.js`; it verifies the Firebase ID token, enforces Pro access, and enforces 100 MB per user plus 25 MB per object. When opening those apps, remove only the Pro entitlement check and retain authentication, path ownership, MIME/type validation, and both quotas. The legacy `storage.rules` path has no byte quota, so do not reopen direct Firebase Storage access as a shortcut.
 
 ### 9. Server-Side Rate Limiting & Duplicate Detection (`rekindle-moderate` Worker)
 
@@ -578,6 +597,50 @@ For apps served from the Yandex hostname, deploy the proxy as a standalone Worke
 **Yandex console Monaco gotcha:** Calling automation-style `fill()` on the Cloud Functions or API Gateway Monaco editor can insert the new source without deleting the generated sample. If the sample contains a second `module.exports.handler`, it silently overrides the intended handler. Focus the `textarea[aria-label="Editor content"]`, send `ControlOrMeta+A`, then type the complete source. Before saving, verify that `Hello World` is absent and that the visible final line number matches the source file.
 
 **Extensionless Yandex Object Storage URLs:** The static website does not rewrite `/reddit` to `/reddit.html`. If only `reddit.html` exists, `/reddit` returns the configured error document with HTTP `404`, even though the browser may display ReKindle HTML. The production deployment therefore stores the same Reddit page under both object keys: `reddit.html` and `reddit`. Whenever `reddit.html` changes, upload both objects. This was verified on July 13, 2026: `/reddit` returns HTTP `200` and loads 25 posts through the Yandex Gateway.
+
+**Safe bulk Firebase-config rollout:** Never upload every dirty local HTML file
+just to change Firebase projects; that can publish unrelated unfinished work.
+`yandex/prepare-firebase-config-release.js` downloads the live production HTML
+and `pro-gate.js`, performs only the exact old-to-fork Firebase substitutions,
+creates the required extensionless aliases, and emits a SHA-256 manifest in
+`/private/tmp/rekindle-firebase-config-release`. Publish only those generated
+objects after explicit approval for the broad production change, then audit
+both `.html` and extensionless URLs for any remaining upstream project ID.
+
+### Firebase Auth on new deployment domains
+
+The primary Firebase web API key is restricted by HTTP referrer. When a new production hostname is introduced, login and registration can fail before credentials are checked with an error such as `auth/requests-from-referer-https://HOST-are-blocked`. This is an API-key website-restriction error, not a bad-password error and not something that can be fixed in the page JavaScript.
+
+For `https://rekindle.website.yandexcloud.net`, add both `https://rekindle.website.yandexcloud.net` and `https://rekindle.website.yandexcloud.net/*` to the key's Website/HTTP-referrer allowlist in Google Cloud Console. Preserve all existing referrers and API restrictions. Also add the hostname-only value `rekindle.website.yandexcloud.net` to Firebase Authentication's Authorized domains list so future redirect-based auth flows work. Apply this checklist to every new deployment hostname.
+
+For an independent fork that cannot change the original project's allowlists, a new Firebase project and web-app configuration are required. Replacing only `apiKey` is insufficient: replace the complete config (`apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`, and every explicit `databaseURL`). Login then calls the callable function `checkIPOnLogin`, while registration calls `registerUser`; either deploy the fork's `firebase-functions/` and add the fork's origin to `allowedOrigins` in `firebase-functions/index.js`, or deliberately replace/remove these calls and accept the loss of server-side IP-ban enforcement. The full application also requires the matching Firestore, RTDB, and Storage rules. A second Firebase project is only necessary if the fork keeps the separate social-app architecture.
+
+**This fork's no-Blaze backend:** `rekindle-fork` keeps Firebase Authentication,
+Firestore, and RTDB on Spark. Registration, login IP checks, and private cloud
+files are handled by `yandex/rekindle-backend/index.js` through the routes in
+`yandex/rekindle-api-gateway.yaml`; files live in a private Yandex Object
+Storage bucket and are transferred with five-minute signed URLs. Secrets are
+in Yandex Lockbox, never browser code. `js/rekindle-cloud.js` is the shared
+browser client. Login must fail closed: if Firebase accepts credentials but
+the Yandex IP-check request fails, sign the new session out instead of allowing
+an unchecked login. The combined Gateway specification must retain the Reddit
+proxy's `GET` and `HEAD` methods and public CORS behavior; the backend itself
+enforces the stricter ReKindle-origin allowlist.
+
+Do not reuse the Firebase browser API key for unrelated Google APIs. The fork's
+key is intentionally restricted to Firebase APIs and the production HTTP
+referrer. For example, `books.html` calls the public Google Books endpoint
+without a key; a dedicated Books API key or server-side proxy is required if
+higher quotas become necessary.
+
+**Production Auth E2E gotcha:** the restricted Firebase web API key rejects
+server-side Identity Toolkit calls that do not contain the allowed website
+referrer, even when the custom token is valid. The production test at
+`yandex/rekindle-backend/e2e-production.js` therefore sends
+`Referer: https://rekindle.website.yandexcloud.net/` when exchanging a custom
+token. This mirrors the browser request and tests the referrer restriction
+instead of weakening it. The Identity Toolkit custom-token response may omit
+`localId`; derive the UID from the returned ID token's `user_id`/`sub` claim.
 
 External APIs such as Reddit aggressively rate-limit shared cloud egress IPs (e.g., Cloudflare Pages/Workers). Any proxy under `functions/api/` or `workers/` that calls an external API should:
 

@@ -41,6 +41,7 @@ const allowedOrigins = [
     "https://rekindle.ink",
     "https://lite.rekindle.ink",
     "https://legacy.rekindle.ink",
+    "https://rekindle.website.yandexcloud.net",
 ];
 
 // Common options for all functions
@@ -1138,4 +1139,3 @@ exports.createRssFeed = onCall(callOptions, async (request) => {
     logger.info(`createRssFeed: uid=${uid} feed=${docRef.id} pro=${userIsPro}`);
     return { success: true, id: docRef.id };
 });
-

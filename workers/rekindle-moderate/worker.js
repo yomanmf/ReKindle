@@ -227,7 +227,7 @@ async function rtdbPushWithAccessTokenAndReturnKey(path, data, accessToken) {
 }
 
 async function rtdbGetWithUserToken(path, env, userToken) {
-    const projectId = env.FIREBASE_PROJECT_ID || "rekindle-dd1fa";
+    const projectId = env.FIREBASE_PROJECT_ID || "rekindle-fork";
     const url = `https://${projectId}-default-rtdb.firebaseio.com/${path}.json?auth=${encodeURIComponent(userToken)}`;
     const resp = await fetch(url);
     if (!resp.ok) {
@@ -238,7 +238,7 @@ async function rtdbGetWithUserToken(path, env, userToken) {
 }
 
 async function rtdbGetWithAccessToken(path, env, accessToken) {
-    const projectId = env.FIREBASE_PROJECT_ID || "rekindle-dd1fa";
+    const projectId = env.FIREBASE_PROJECT_ID || "rekindle-fork";
     const url = `https://${projectId}-default-rtdb.firebaseio.com/${path}.json?access_token=${encodeURIComponent(accessToken)}`;
     const resp = await fetch(url);
     if (!resp.ok) {
@@ -258,7 +258,7 @@ async function rtdbDeleteWithAccessToken(path, accessToken) {
 }
 
 async function rtdbDeletePrimaryWithAccessToken(path, accessToken) {
-    const url = `https://rekindle-dd1fa-default-rtdb.firebaseio.com/${path}.json?access_token=${encodeURIComponent(accessToken)}`;
+    const url = `https://rekindle-fork-default-rtdb.europe-west1.firebasedatabase.app/${path}.json?access_token=${encodeURIComponent(accessToken)}`;
     const resp = await fetch(url, { method: "DELETE" });
     if (!resp.ok && resp.status !== 404) {
         const errText = await resp.text();

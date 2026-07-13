@@ -3,7 +3,7 @@ const fs = require('fs');
 
 // --- CONFIGURATION ---
 const SERVICE_ACCOUNT_PATH = '../service-account.json';
-const DATABASE_URL = 'https://rekindle-dd1fa-default-rtdb.firebaseio.com/';
+const DATABASE_URL = 'https://rekindle-fork-default-rtdb.europe-west1.firebasedatabase.app/';
 
 // --- ARGS ---
 const args = process.argv.slice(2);
