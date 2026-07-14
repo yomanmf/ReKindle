@@ -228,6 +228,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
     <script src="time.js"></script>
 </head>
@@ -346,7 +347,7 @@
                 console.error('Direct fetch failed, trying proxy...', e);
 
                 // Fallback to internal Cloudflare proxy
-                const proxyUrl = `/api/proxy?url=${encodeURIComponent(wikiUrl)}`;
+                const proxyUrl = RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(wikiUrl);
 
                 try {
                     const proxyRes = await fetch(proxyUrl);

@@ -64,11 +64,11 @@
         body.appendChild(btnRow);
     }
 
-    function getWorkerUrl() {
-        if (typeof MODERATION_WORKER_URL !== 'undefined' && MODERATION_WORKER_URL) {
-            return MODERATION_WORKER_URL;
+    function getModerationApiUrl() {
+        if (typeof MODERATION_API_URL !== 'undefined' && MODERATION_API_URL) {
+            return MODERATION_API_URL;
         }
-        return 'https://rekindle-moderate.timjarnott.workers.dev';
+        return window.RekindleCloud ? window.RekindleCloud.apiBase + '/social/moderate' : '';
     }
 
     function getAuthToken() {
@@ -116,29 +116,39 @@
             return;
         }
 
-        getAuthToken().then(function (token) {
-            var reportData = {
-                type: 'report',
-                contentType: data.contentType,
-                contentId: data.contentId,
-                contentPath: data.contentPath,
-                reportedUserId: data.reportedUserId,
-                reason: reason,
-                comment: comment,
-                contentSnapshot: data.contentSnapshot
-            };
+        var reportData = {
+            type: 'report',
+            contentType: data.contentType,
+            contentId: data.contentId,
+            contentPath: data.contentPath,
+            reportedUserId: data.reportedUserId,
+            reason: reason,
+            comment: comment,
+            contentSnapshot: data.contentSnapshot
+        };
 
-            return fetch(getWorkerUrl(), {
+        var request;
+        if ((data.contentType === 'suggestion' || data.contentType === 'suggestion_comment') && window.RekindleCloud) {
+            request = window.RekindleCloud.request('/reports/submit', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify(reportData)
+                body: reportData
             });
-        }).then(function (resp) {
-            return resp.json();
-        }).then(function (result) {
+        } else {
+            request = getAuthToken().then(function (token) {
+                return fetch(getModerationApiUrl(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(reportData)
+                });
+            }).then(function (resp) {
+                return resp.json();
+            });
+        }
+
+        request.then(function (result) {
             if (result.error) {
                 throw new Error(result.error);
             }

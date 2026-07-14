@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/rekindle-cloud.js"></script>
 
     <style>
         /* SYSTEM 7 AESTHETICS */
@@ -253,9 +254,9 @@
         <div class="window-content" id="main-content">
             <!-- REMOVED HEADER AS REQUESTED -->
 
-            <p class="desc" data-i18n-html="pay.desc">
-                Support ReKindle and unlock exclusive apps like <strong>Mail</strong>, <strong>Substack</strong>,
-                <strong>AI</strong>, <strong>Dropbox</strong> & more.
+            <p class="desc" data-i18n="pay.desc">
+                All ReKindle apps are available without a subscription. ReKindle+ is an optional supporter membership
+                that helps pay for AI, storage, mail proxying, and continued development.
             </p>
 
             <!-- PAYMENT SECTION (Hidden for Guests) -->
@@ -303,7 +304,7 @@
             <div id="verifying-section" style="display:none; width:100%; text-align:center;">
                 <h2 style="margin-top:0;" data-i18n="pay.status.verifying">Verifying...</h2>
                 <p data-i18n="pay.status.syncing">Syncing your membership status...</p>
-                <div style="font-size:2rem;">⏳</div>
+                <div style="font-size:2rem;">...</div>
             </div>
 
             <!-- SUBSCRIBED SECTION (Shown if user has active subscription) -->
@@ -347,7 +348,7 @@
 
     <script>
         // CONFIG
-        const STRIPE_WORKER_URL = 'https://rekindle-stripe.timjarnott.workers.dev';
+        const BILLING_API_PATH = '/billing/checkout';
         let currentPlan = 'monthly';
         const sessionUrlCache = {}; // plan -> url, pre-fetched to survive guest checkout
 
@@ -546,19 +547,15 @@
             fallbackContainer.style.display = 'block';
 
             try {
-                const idToken = await currentUser.getIdToken();
                 const base = window.location.href.split('?')[0];
-                const res = await fetch(`${STRIPE_WORKER_URL}/create-checkout`, {
+                const data = await RekindleCloud.request(BILLING_API_PATH, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        idToken,
+                    body: {
                         plan,
                         success_url: `${base}?success=true`,
                         cancel_url: base
-                    })
+                    }
                 });
-                const data = await res.json();
                 if (!data.url) throw new Error(data.error || 'No URL returned');
 
                 sessionUrlCache[plan] = data.url;

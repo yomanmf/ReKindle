@@ -1,0 +1,6 @@
+# Verified 2026-07-15 under /private/tmp/rekindle-yandex-release
+eb4cb2d3c860bbdd210d267a2f1d12e0b42b0a63366f904d1c9f2890ef9bfa98  rekindle-backend.zip
+0b0126d3745e01e64209b9f072b8d8181ef93f64f93fe76c834392a986a7aaad  rekindle-reddit.zip
+b6d68c8c040ccb9899e4b2766f61331148c72e0d7efe31ae73b335d78766abd4  rekindle-story.zip
+6a1dd9e59aefc2364f18279e9c26b7296ecc44e8f2554557c12ce72a3f7c3956  rekindle-config.zip
+2450aeb57f2cd0195b9dde5f393582af84e8ee189a2c805bb3203bb94efd8e96  rekindle-frontend.zip

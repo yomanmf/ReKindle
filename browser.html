@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" defer></script>
+    <script src="js/rekindle-cloud.js" defer></script>
     <script src="theme.js?v=18" defer></script>
     <script src="js/i18n.js" defer></script>
     <style>
@@ -638,7 +639,7 @@
     </div>
 
     <script>
-        const READER_WORKER_URL = "https://rekindle-reader.timjarnott.workers.dev";
+        const READER_API_PATH = "/content/reader";
         let history = JSON.parse(localStorage.getItem('netlite_history')) || [];
         let tabs = []; let activeTabId = null; let tabCounter = 0;
         const MAX_TABS = 5; // Reduced for Kindle RAM
@@ -792,19 +793,15 @@
         async function loadArticle(tab, targetUrl, skipNavPush) {
             showTabLoading(tab, 'Extracting article...');
             try {
-                const workerUrl = `${READER_WORKER_URL}/?url=${encodeURIComponent(targetUrl)}`;
-                const res = await fetchWithTimeout(workerUrl, 20000);
-                if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || `HTTP ${res.status}`); }
-                const article = await res.json(); renderArticle(tab, article, targetUrl);
+                const article = await RekindleCloud.request(`${READER_API_PATH}?url=${encodeURIComponent(targetUrl)}`);
+                renderArticle(tab, article, targetUrl);
             } catch (e) { showTabError(tab, 'Failed to extract article.', e.message); }
         }
         async function loadSearch(tab, query, skipNavPush) {
             showTabLoading(tab, 'Searching...');
             try {
-                const searchUrl = `${READER_WORKER_URL}/search?q=${encodeURIComponent(query)}`;
-                const res = await fetchWithTimeout(searchUrl, 15000);
-                if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || `HTTP ${res.status}`); }
-                const data = await res.json(); renderSearchResults(tab, data);
+                const data = await RekindleCloud.request(`${READER_API_PATH}/search?q=${encodeURIComponent(query)}`);
+                renderSearchResults(tab, data);
             } catch (e) { showTabError(tab, 'Search failed.', e.message); }
         }
         function renderSearchResults(tab, data) {

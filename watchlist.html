@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="js/rekindle-cloud.js"></script>
 
     <style>
         /* SYSTEM 7 AESTHETICS */
@@ -692,12 +693,7 @@
                 }
                 // 2. Fallback to Proxy
                 else {
-                    // Update this URL to match your deployed worker
-                    const PROXY_URL = "https://rekindle-tmdb.timjarnott.workers.dev/search/multi";
-                    const url = `${PROXY_URL}?query=${encodeURIComponent(query)}`;
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error("Proxy error");
-                    data = await res.json();
+                    data = await RekindleCloud.request(`/content/tmdb/search/multi?query=${encodeURIComponent(query)}`);
                 }
 
                 list.innerHTML = '';
@@ -759,12 +755,9 @@
             if (tmdbKey) {
                 url = `https://api.themoviedb.org/3${path}?api_key=${tmdbKey}&${qs}`;
             } else {
-                // Proxy
-                // Base: https://rekindle-tmdb.timjarnott.workers.dev
-                const PROXY_BASE = "https://rekindle-tmdb.timjarnott.workers.dev";
-                url = `${PROXY_BASE}${path}?${qs}`;
+                url = `/content/tmdb${path}?${qs}`;
             }
-
+            if (!tmdbKey) return await RekindleCloud.request(url);
             const res = await fetch(url);
             if (!res.ok) throw new Error(`TMDB Error: ${res.status}`);
             return await res.json();

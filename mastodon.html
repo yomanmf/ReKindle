@@ -577,7 +577,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="time.js"></script>
     <script src="theme.js?v=18"></script>
-    <script src="pro-gate.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/custom-select.js"></script>
 </head>
@@ -737,14 +736,7 @@
 
             document.getElementById('compose-input').addEventListener('input', updateCharCount);
 
-            rekindleProGate.check((isPro) => {
-                if (isPro) {
-                    initApp();
-                } else {
-                    // Not pro, maybe show generic login or limit access
-                    showLogin();
-                }
-            });
+            initApp();
         };
 
         function toggleFullScreen() {

@@ -411,6 +411,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -838,7 +839,7 @@
         async function loadCardDAVContacts() {
             document.getElementById('status-bar').innerText = "Fetching CardDAV...";
             // Use proxy to fetch VCF file
-            const proxyUrl = `/api/proxy?url=${encodeURIComponent(cardDavUrl)}`;
+            const proxyUrl = RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(cardDavUrl);
 
             try {
                 const res = await fetch(proxyUrl);

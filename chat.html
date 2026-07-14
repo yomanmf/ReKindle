@@ -307,7 +307,7 @@
     <link rel="stylesheet" href="css/custom-select.css">
     <script src="time.js"></script>
     <script src="theme.js?v=18"></script>
-    <script src="pro-gate.js"></script>
+    <script src="js/rekindle-cloud.js?v=2"></script>
     <script src="js/i18n.js"></script>
     <script src="js/custom-select.js"></script>
 </head>
@@ -348,17 +348,6 @@
             Loading quota...
         </div>
 
-        <!-- PAYWALL OVERLAY -->
-        <div id="paywall-overlay"
-            style="display:none; position:absolute; top:35px; left:0; width:100%; height:calc(100% - 35px); background:rgba(255,255,255,0.98); z-index:500; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box;">
-            <h2 style="margin-top:0;" data-i18n="paywall.title">ReKindle+</h2>
-            <p data-i18n-html="paywall.desc">Support ReKindle development and get<br>access to exclusive apps.</p>
-            <button class="sys-btn" onclick="window.location.href='pay.html'" data-i18n="btn.subscribe">Subscribe /
-                Login</button>
-            <p style="font-size:0.8rem; margin-top:20px; color:#666;" id="paywall-status" data-i18n="status.checking">
-                Checking subscription...</p>
-        </div>
-
         <!-- SETTINGS MODAL -->
         <div id="settings-modal">
             <div class="modal-box">
@@ -377,18 +366,6 @@
                     <div class="modal-box">
                         <p id="alert-message" style="margin:20px 0;">Message</p>
                         <button class="sys-btn" onclick="closeAlert()">OK</button>
-                    </div>
-                </div>
-
-                <!-- PRO REQUIRED MODAL -->
-                <div id="pro-required-modal"
-                    style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:2001; align-items:center; justify-content:center; flex-direction:column;">
-                    <div class="modal-box" style="text-align:center;">
-                        <h3 style="margin-top:0;" data-i18n="settings.pro_required">Pro Required</h3>
-                        <p style="margin:20px 0;" data-i18n="settings.pro_msg">Saving custom API keys requires a
-                            ReKindle+ subscription.</p>
-                        <button class="sys-btn"
-                            onclick="document.getElementById('pro-required-modal').style.display='none'">OK</button>
                     </div>
                 </div>
 
@@ -473,8 +450,7 @@
         function setSecureItem(key, value) { localStorage.setItem(key, obfuscate(value)); }
         function getSecureItem(key) { return deobfuscate(localStorage.getItem(key)); }
         // --- CONFIGURATION ---
-        // TODO: Replace with your Cloudflare Worker URL
-        const WORKER_URL = "https://rekindle-oracle.timjarnott.workers.dev";
+        const AI_API_PATH = "/ai/chat";
         const DAILY_MESSAGE_LIMIT = 10;
 
         // Firebase Configuration
@@ -487,7 +463,6 @@
             appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
         };
 
-        let isPro = false;
         let dailyMessageCount = null; // Loading state (null = loading, -1 = error, >=0 = count)
         let currentUserId = null;
 
@@ -661,18 +636,15 @@
             }
 
             try {
-                const response = await fetch(WORKER_URL, {
+                const data = await RekindleCloud.request(AI_API_PATH, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                    body: {
                         action: 'list_models',
                         provider: preset.type,
                         endpoint: endpoint,
                         apiKey: key
-                    })
+                    }
                 });
-
-                const data = await response.json();
 
                 if (data.models && data.models.length > 0) {
                     customModels[presetId] = data.models;
@@ -872,109 +844,27 @@
             }
         }
 
-        function checkSubscription() {
-            const overlay = document.getElementById('paywall-overlay');
-            const status = document.getElementById('paywall-status');
+        function checkAccess() {
             const sendBtn = document.getElementById('send-btn');
-
-            // 1. CACHE CHECK (Instant)
-            try {
-                const cachedExpiry = localStorage.getItem('rekindle_pro_expiry');
-                if (cachedExpiry && parseInt(cachedExpiry) > Date.now()) {
-                    isPro = true;
-                    // Optimistically hide overlay / unlock features
-                    overlay.style.display = 'none';
-                } else {
-                    // If no cache or expired, maybe show overlay? 
-                    // For now, we wait for Firebase to confirm unless we want to be strict.
-                    // But user asked for "instant verification".
-                }
-            } catch (e) { console.warn("Cache error", e); }
-
             if (typeof firebase !== 'undefined') {
                 if (!firebase.apps.length) {
                     firebase.initializeApp(firebaseConfig);
                 }
-                const db = firebase.firestore();
-
                 const auth = firebase.auth();
-
                 auth.onAuthStateChanged(user => {
                     if (user) {
                         currentUserId = user.uid;
-
-                        // Load AI Settings
                         loadSettingsFromFirebase();
-
-                        // Timeout fallback in case Firestore query hangs
-                        const timeoutId = setTimeout(() => {
-                            // Only warn if we haven't already verified via cache
-                            if (!isPro) {
-                                console.warn("Subscription check timed out");
-                                status.innerText = "Verification timed out. Please refresh.";
-                                overlay.style.display = 'flex';
-                            }
-                        }, 10000);
-
-                        db.collection('users').doc(user.uid).get()
-                            .then(doc => {
-                                clearTimeout(timeoutId);
-                                if (doc.exists) {
-                                    const data = doc.data();
-                                    const now = Date.now();
-                                    let expires = 0;
-                                    if (data.proExpiresAt) {
-                                        expires = typeof data.proExpiresAt.toMillis === 'function'
-                                            ? data.proExpiresAt.toMillis()
-                                            : new Date(data.proExpiresAt).getTime();
-                                    }
-
-                                    // UPDATE CACHE
-                                    if (expires > now) {
-                                        localStorage.setItem('rekindle_pro_expiry', expires.toString());
-                                    } else {
-                                        localStorage.removeItem('rekindle_pro_expiry');
-                                    }
-
-                                    if (expires > now) {
-                                        // UNLOCKED - Pro
-                                        isPro = true;
-                                        overlay.style.display = 'none';
-                                    } else {
-                                        // LOCKED - Expired
-                                        isPro = false;
-                                        status.innerText = expires > 0 ? "Subscription expired." : "Subscription required.";
-                                        overlay.style.display = 'flex';
-                                    }
-
-                                    // Load daily message count for the user
-                                    loadDailyMessageCount();
-                                } else {
-                                    // User exists but no data? Locked.
-                                    isPro = false;
-                                    status.innerText = "Subscription required.";
-                                    overlay.style.display = 'flex';
-                                }
-                            })
-                            .catch(e => {
-                                clearTimeout(timeoutId);
-                                if (!isPro) {
-                                    console.error("Error checking sub", e);
-                                    status.innerText = "Error verifying. Try again.";
-                                    overlay.style.display = 'flex';
-                                }
-                            });
+                        loadDailyMessageCount();
                     } else {
-                        // Not logged in
-                        status.innerText = "Please log in.";
-                        overlay.style.display = 'flex';
+                        currentUserId = null;
+                        dailyMessageCount = -1;
+                        document.getElementById('message-counter').innerText = "Please sign in to use AI Assistant.";
                         if (sendBtn) sendBtn.disabled = true;
-                        localStorage.removeItem('rekindle_pro_expiry');
                     }
                 });
             } else {
-                status.innerText = "Error: Firebase not loaded.";
-                overlay.style.display = 'flex';
+                showAlert("Error: Firebase not loaded.");
             }
         }
 
@@ -987,11 +877,7 @@
                 // Retry every 100ms for up to 5 seconds
                 setTimeout(() => waitForFirebase(callback, attempts + 1), 100);
             } else {
-                // Give up after 5 seconds
-                const overlay = document.getElementById('paywall-overlay');
-                const status = document.getElementById('paywall-status');
-                status.innerText = "Error: Firebase failed to load.";
-                overlay.style.display = 'flex';
+                showAlert("Error: Firebase failed to load.");
             }
         }
 
@@ -1018,7 +904,7 @@
         window.onload = () => {
             initSettings();
             if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
-            waitForFirebase(checkSubscription);
+            waitForFirebase(checkAccess);
 
             // Enter key to send
             document.getElementById('user-input').addEventListener('keypress', function (e) {
@@ -1044,12 +930,6 @@
                 return;
             }
 
-            // Validation Check
-            if (WORKER_URL.includes("your-worker-name")) {
-                addMessage("System Error: Worker URL not configured in code.", 'ai');
-                return;
-            }
-
             // 1. Add User Message
             addMessage(text, 'user');
             inputEl.value = '';
@@ -1068,20 +948,17 @@
                     payload.endpoint = getActiveEndpoint();
                 }
 
-                const response = await fetch(WORKER_URL, {
+                const data = await RekindleCloud.request(AI_API_PATH, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: payload
                 });
-
-                const data = await response.json();
 
                 // Remove loading message
                 const loadingEl = document.getElementById(loadingId);
                 if (loadingEl) loadingEl.remove();
 
                 if (data.error) {
-                    addMessage("Error: " + (data.error.message || "Unknown worker error"), 'ai');
+                    addMessage("Error: " + (data.error.message || "Unknown AI service error"), 'ai');
                 } else if (data.text) {
                     addMessage(data.text, 'ai');
                     // Increment message count only if NOT using BYO Key

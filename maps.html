@@ -508,6 +508,7 @@
 
     <script src="js/i18n.js"></script>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
 </head>
 
 <body>
@@ -613,7 +614,7 @@
 
     <script>
         // --- INTERNAL PROXY (Cloudflare Function) ---
-        const PROXY_ENDPOINT = "/api/maps?url=";
+        const PROXY_ENDPOINT = RekindleCloud.apiBase + "/content/proxy?url=";
 
         async function fetchWithProxyFallback(targetUrl, options = {}) {
             try {

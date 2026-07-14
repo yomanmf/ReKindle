@@ -277,6 +277,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -460,7 +461,7 @@
                 let blob = null;
                 // Proxy Strategy
                 try {
-                    const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+                    const proxyUrl = RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(url);
                     const res = await fetch(proxyUrl);
                     if (!res.ok) throw new Error("Status " + res.status);
                     blob = await res.blob();

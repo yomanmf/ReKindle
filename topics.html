@@ -7,6 +7,7 @@
     <meta charset="UTF-8">
 
     <title>Topics</title>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/reports.js"></script>
     <style>
         /* SYSTEM 7 AESTHETICS */
@@ -1060,7 +1061,7 @@
         var mainDb = firebase.firestore();
         var socialDb = socialApp.firestore();
         var socialAuth = socialApp.auth();
-        var MODERATION_WORKER_URL = "https://rekindle-moderate.timjarnott.workers.dev";
+        var MODERATION_API_URL = RekindleCloud.apiBase + "/social/moderate";
         var ADMIN_EMAIL = 'ukiyo@rekindle.ink';
         var supporterUsers = {};
 
@@ -2612,7 +2613,7 @@
             var postingTopicId = currentTopicId;
             var tokenSource = socialAuth.currentUser || currentUser;
             tokenSource.getIdToken(true).then(function (token) {
-                    return fetch(MODERATION_WORKER_URL, {
+                    return fetch(MODERATION_API_URL, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -2975,6 +2976,32 @@
                 }
             }
 
+            function executeEdit() {
+                var tokenSource = socialAuth.currentUser || currentUser;
+                tokenSource.getIdToken(true).then(function (token) {
+                    return fetch(MODERATION_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({
+                            type: 'topic_edit',
+                            topicId: editingTopicId,
+                            title: title,
+                            subheading: subheading,
+                            icon: selectedIconSvg
+                        })
+                    }).then(function (resp) { return resp.json(); });
+                }).then(function (result) {
+                    if (result.error) {
+                        showAlertModal(result.error);
+                        return;
+                    }
+                    closeCreateModal();
+                }).catch(function (err) {
+                    console.error("Error updating topic:", err);
+                    showAlertModal("Unable to update: " + (err && err.message ? err.message : 'Unknown error') + ". Please try again.");
+                });
+            }
+
             var doSubmit = function() {
                 checkRules(function () {
                     db.ref('timeouts/' + currentUser.uid).once('value').then(function(snap) {
@@ -2986,21 +3013,7 @@
                             return;
                         }
                         if (editingTopicId) {
-                            // UPDATING EXISTING
-                            socialDb.collection('topics').doc(editingTopicId).update({
-                                title: title,
-                                subheading: subheading,
-                                icon: selectedIconSvg
-                            }).then(function () {
-                                closeCreateModal();
-                            }).catch(function(err) {
-                                if (err && err.code === 'PERMISSION_DENIED') {
-                                    showAlertModal("Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.");
-                                } else {
-                                    console.error("Error updating topic:", err);
-                                    showAlertModal("Unable to post: " + (err && err.message ? err.message : 'Unknown error') + ". Please try again.");
-                                }
-                            });
+                            executeEdit();
                         } else {
                             // CREATING NEW
                             executeCreation();
@@ -3008,20 +3021,7 @@
                     }).catch(function(err) {
                         console.error('[Timeout check] Error reading timeout:', err && err.code ? err.code : err);
                         if (editingTopicId) {
-                            socialDb.collection('topics').doc(editingTopicId).update({
-                                title: title,
-                                subheading: subheading,
-                                icon: selectedIconSvg
-                            }).then(function () {
-                                closeCreateModal();
-                            }).catch(function(err) {
-                                if (err && err.code === 'PERMISSION_DENIED') {
-                                    showAlertModal("Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.");
-                                } else {
-                                    console.error("Error updating topic:", err);
-                                    showAlertModal("Unable to post: " + (err && err.message ? err.message : 'Unknown error') + ". Please try again.");
-                                }
-                            });
+                            executeEdit();
                         } else {
                             executeCreation();
                         }
@@ -3059,7 +3059,7 @@
 
                 var tokenSource = socialAuth.currentUser || currentUser;
                 tokenSource.getIdToken(true).then(function (token) {
-                    return fetch(MODERATION_WORKER_URL, {
+                    return fetch(MODERATION_API_URL, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

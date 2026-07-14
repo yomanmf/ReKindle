@@ -12,7 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="js/rekindle-cloud.js?v=1"></script>
-    <script src="pro-gate.js"></script>
 
     <style>
         /* SYSTEM 7 AESTHETICS */
@@ -690,13 +689,13 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
 
-        async function loadFiles(isRetry = false) {
+        async function loadFiles() {
             if (!currentUser) return;
 
             const fileListEl = document.getElementById('file-list');
 
             try {
-                if (!isRetry) fileListEl.innerHTML = '<div class="empty-state">Loading...</div>';
+                fileListEl.innerHTML = '<div class="empty-state">Loading...</div>';
                 const fileRes = await RekindleCloud.storage.list('files');
 
                 let photoRes = { items: [] };
@@ -719,18 +718,6 @@
             } catch (error) {
                 console.error("Error loading files:", error);
                 
-                // If unauthorized and we haven't retried yet, try refreshing the token
-                // This handles cases where the user just became Pro and has a stale token.
-                if (error.code === 'pro-required' && !isRetry && window.rekindleProGate && rekindleProGate.isPro()) {
-                    console.log("Storage unauthorized but user is Pro. Attempting token refresh...");
-                    try {
-                        await firebase.auth().currentUser.getIdToken(true);
-                        return loadFiles(true); // Retry once
-                    } catch (refreshError) {
-                        console.error("Token refresh failed:", refreshError);
-                    }
-                }
-
                 fileListEl.innerHTML = `<div class="empty-state">Error: ${error.message}</div>`;
             }
         }

@@ -11,7 +11,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" integrity="sha384-+OubPIxtsLCp2uUuSsvWDuBB9oSIEDIYt2qQfYki+vDmSxc6GQsBbBPH6Z6x5wrq" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" integrity="sha384-6A4YFdmYPT5gmyRp8KegTqUol1Ff3navFf6eyVLErDtdSrikTwa1MQpVhFtubVlq" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js" integrity="sha384-wgWsmYYQHit2pRy7gDddz6mH+S1x+rzuEL8DgPIg7lyJjm7pw3v6woxnm/0ULf9p" crossorigin="anonymous"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions-compat.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js" integrity="sha384-4RMW82CWFobXY+HRHXe5go/V5acBhiIVGCT+2k7TEoxi7AiWKw8WoWb9qMU+FAFu" crossorigin="anonymous"></script>
 
     <style>
@@ -523,7 +522,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
-    <script src="pro-gate.js"></script>
+    <script src="js/rekindle-cloud.js?v=2"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -697,15 +696,6 @@
             </div>
         </div>
 
-        <div id="paywall-overlay"
-            style="display:none; position:absolute; top:35px; left:0; width:100%; height:calc(100% - 35px); background:rgba(255,255,255,0.98); z-index:500; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box;">
-            <h2 style="margin-top:0;" data-i18n="paywall.title">ReKindle+</h2>
-            <p data-i18n-html="paywall.desc">Support ReKindle development and get<br>access to exclusive apps.</p>
-            <button class="sys-btn" onclick="window.location.href='pay.html'" data-i18n="btn.subscribe">Subscribe /
-                Login</button>
-            <p style="font-size:0.8rem; margin-top:20px; color:#666;" id="paywall-status" data-i18n="status.checking">
-                Checking subscription...</p>
-        </div>
     </div>
 
     <script>
@@ -726,7 +716,7 @@
         let autoSaveTimer = null;
 
         let manifest = [];
-        let db, auth, rtdb, socialAuth, currentUser = null;
+        let db, auth, rtdb, currentUser = null;
 
         const firebaseConfig = {
             apiKey: "__REKINDLE_FIREBASE_API_KEY__",
@@ -754,28 +744,14 @@
         window.onload = () => {
             if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
 
-            firebase.initializeApp(firebaseConfig);
-            const socialApp = firebase.initializeApp({
-                apiKey: "AIzaSyBy_n32McwWZidFn28-1eHYBTYjvVDH_Wk",
-                authDomain: "rekindle-socials.firebaseapp.com",
-                projectId: "rekindle-socials",
-                storageBucket: "rekindle-socials.firebasestorage.app",
-                messagingSenderId: "804518808624",
-                appId: "1:804518808624:web:3be3521173526c92d0f9e5",
-                databaseURL: "https://rekindle-socials-default-rtdb.firebaseio.com/"
-            }, 'social');
-            socialAuth = socialApp.auth();
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             auth = firebase.auth();
             db = firebase.firestore();
             rtdb = firebase.database();
 
             auth.onAuthStateChanged(user => {
                 currentUser = user;
-                checkSubscription(user);
                 initApp();
-                if (user) {
-                    getSocialAuthToken().catch(() => {});
-                }
             });
 
             // Canvas Events
@@ -879,12 +855,6 @@
 
         // --- DRAWING / EDITOR LOGIC ---
         function createNew() {
-            if (!isPro) {
-                document.getElementById('paywall-overlay').style.display = 'flex';
-                document.getElementById('paywall-status').innerText = "Pro subscription required to create animations.";
-                return;
-            }
-
             if (!isManifestLoaded) {
                 showInfoModal(window.t ? window.t('flipbook.status.loading') : "Please wait, loading...");
                 return;
@@ -928,11 +898,6 @@
         }
 
         async function openAnimation(id) {
-            if (!isPro) {
-                document.getElementById('paywall-overlay').style.display = 'flex';
-                document.getElementById('paywall-status').innerText = "Pro subscription required to open animations.";
-                return;
-            }
             const item = manifest.find(m => m.id === id);
             if (!item) return;
             currentAnimationId = id;
@@ -1427,15 +1392,6 @@
             gif.render();
         }
 
-        async function getSocialAuthToken() {
-            if (!socialAuth.currentUser) {
-                const getSocialToken = firebase.functions().httpsCallable('getSocialToken');
-                const result = await getSocialToken({});
-                await socialAuth.signInWithCustomToken(result.data.token);
-            }
-            return socialAuth.currentUser.getIdToken(true);
-        }
-
         // --- POSTING ---
         async function confirmPost() {
             closeModal('post-confirm-modal');
@@ -1452,23 +1408,13 @@
                 frames: await Promise.all(frames.map((_, i) => createThumbnail(i)))
             };
 
-            const MODERATION_WORKER_URL = "https://rekindle-moderate.timjarnott.workers.dev";
             try {
-                const token = await getSocialAuthToken();
-                const resp = await fetch(MODERATION_WORKER_URL, {
+                const result = await RekindleCloud.request('/social/flipbook', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
-                    },
-                    body: JSON.stringify({
-                        type: 'kindlechat',
-                        text: '',
-                        is_flipnote: true,
+                    body: {
                         flipnote_data: animData
-                    })
+                    }
                 });
-                const result = await resp.json();
                 if (result.allowed === false) {
                     const waitSec = Math.ceil((result.retryAfter || 20000) / 1000);
                     const slowDownMsg = 'Please wait ' + waitSec + ' seconds before posting again.';
@@ -1482,6 +1428,10 @@
                 showInfoModal("Posted to KindleChat!");
             } catch (e) {
                 console.error(e);
+                if (e.code === 'rate-limited') {
+                    showInfoModal('Please wait before posting again.');
+                    return;
+                }
                 showInfoModal("Error posting.");
             }
         }
@@ -1530,82 +1480,6 @@
             }
         }
 
-    </script>
-    <script>
-        function checkSubscription(user) {
-            const overlay = document.getElementById('paywall-overlay');
-            const status = document.getElementById('paywall-status');
-
-            // 1. CACHE CHECK (Instant)
-            try {
-                const cachedExpiry = localStorage.getItem('rekindle_pro_expiry');
-                if (cachedExpiry && parseInt(cachedExpiry) > Date.now()) {
-                    isPro = true;
-                    if (overlay) overlay.style.display = 'none';
-                    // We don't return early here because we might want to refresh the cache in background
-                    // but we ensure UI is unlocked.
-                }
-            } catch (e) { }
-
-            if (user) {
-                // Timeout fallback
-                const timeoutId = setTimeout(() => {
-                    console.warn("Subscription check timed out");
-                    status.innerText = "Verification timed out. Please refresh.";
-                    // If not already pro by cache, show overlay
-                    if (!isPro) overlay.style.display = 'flex';
-                }, 10000);
-
-                db.collection('users').doc(user.uid).get()
-                    .then(doc => {
-                        clearTimeout(timeoutId);
-                        if (doc.exists) {
-                            const data = doc.data();
-                            const now = Date.now();
-                            let expires = 0;
-                            if (data.proExpiresAt) {
-                                expires = typeof data.proExpiresAt.toMillis === 'function'
-                                    ? data.proExpiresAt.toMillis()
-                                    : new Date(data.proExpiresAt).getTime();
-                            }
-
-                            // UPDATE CACHE
-                            if (expires > now) {
-                                localStorage.setItem('rekindle_pro_expiry', expires.toString());
-                            } else {
-                                localStorage.removeItem('rekindle_pro_expiry');
-                            }
-
-                            if (expires > now) {
-                                isPro = true;
-                                // Update UI if needed
-                            } else {
-                                isPro = false;
-                            }
-                        } else {
-                            isPro = false;
-                        }
-                        // We don't force overlay here, we let actions trigger it or checks elsewhere
-                        // But if we want to mimic other apps behavior of hiding overlay if pro:
-                        if (isPro) {
-                            if (overlay) overlay.style.display = 'none';
-                        } else {
-                            status.innerText = expires > 0 ? "Subscription expired." : "Subscription required.";
-                            overlay.style.display = 'flex';
-                        }
-                    })
-                    .catch(e => {
-                        clearTimeout(timeoutId);
-                        console.error("Error checking sub", e);
-                        status.innerText = "Error verifying. Try again.";
-                        overlay.style.display = 'flex';
-                    });
-            } else {
-                // NOT LOGGED IN
-                status.innerText = "Please log in.";
-                overlay.style.display = 'flex';
-            }
-        }
     </script>
     <script src="time.js"></script>
 

@@ -475,22 +475,11 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
-    <script src="pro-gate.js"></script>
 </head>
 
 <body>
 
     <div class="window" id="main-window">
-        <!-- PAYWALL OVERLAY -->
-        <div id="paywall-overlay"
-            style="display:none; position:absolute; top:35px; left:0; width:100%; height:calc(100% - 35px); background:rgba(255,255,255,0.98); z-index:9000; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box;">
-            <h2 style="margin-top:0;" data-i18n="airtype.paywall.title">ReKindle+</h2>
-            <p data-i18n="airtype.paywall.body">Support ReKindle development and get<br>access to exclusive apps.</p>
-            <button class="sys-btn" onclick="window.location.href='pay.html'" data-i18n="airtype.paywall.btn">Subscribe
-                / Login</button>
-            <p style="font-size:0.8rem; margin-top:20px; color:#666;" id="paywall-status"
-                data-i18n="airtype.paywall.status">Checking subscription...</p>
-        </div>
         <!-- TITLE BAR -->
         <div class="title-bar" id="app-title-bar">
             <div class="title-stripes"></div>
@@ -635,92 +624,11 @@
         let selectedNoteData = null; // Store note data when clicked
         let userDeviceType = null;   // 'Phone' or 'Tablet'
         let initialJoinAttempted = false;
-        let isPro = false;
-
-        function checkSubscription() {
-            const overlay = document.getElementById('paywall-overlay');
-            const status = document.getElementById('paywall-status');
-
-            // Buttons to update
+        function enableAuthenticatedFeatures() {
             const btnDisplay = document.getElementById('btn-startup-display');
             const btnInput = document.getElementById('btn-startup-input');
-
-            function updateButtons(pro) {
-                if (btnDisplay) btnDisplay.disabled = !pro;
-                if (btnInput) btnInput.disabled = !pro;
-            }
-
-            // 1. CACHE CHECK (Instant)
-            try {
-                const cachedExpiry = localStorage.getItem('rekindle_pro_expiry');
-                if (cachedExpiry && parseInt(cachedExpiry) > Date.now()) {
-                    isPro = true;
-                    updateButtons(true);
-                    overlay.style.display = 'none';
-                }
-            } catch (e) { }
-
-            if (typeof firebase === 'undefined') {
-                status.innerText = window.t('airtype.modal.error.firebase', "Error: Firebase not loaded.");
-                overlay.style.display = 'flex';
-                return;
-            }
-
-            if (!currentUser) {
-                // Not logged in is handled by guest overlay usually
-                overlay.style.display = 'none';
-                return;
-            }
-
-            // Timeout fallback
-            const timeoutId = setTimeout(() => {
-                if (!isPro) {
-                    console.warn("Subscription check timed out");
-                    // Don't block, just leave disabled
-                    overlay.style.display = 'none';
-                }
-            }, 10000);
-
-            db.collection('users').doc(currentUser.uid).get()
-                .then(doc => {
-                    clearTimeout(timeoutId);
-                    if (doc.exists) {
-                        const data = doc.data();
-                        const now = Date.now();
-                        let expires = 0;
-                        if (data.proExpiresAt) {
-                            expires = typeof data.proExpiresAt.toMillis === 'function'
-                                ? data.proExpiresAt.toMillis()
-                                : new Date(data.proExpiresAt).getTime();
-                        }
-
-                        // UPDATE CACHE
-                        if (expires > now) {
-                            localStorage.setItem('rekindle_pro_expiry', expires.toString());
-                        } else {
-                            localStorage.removeItem('rekindle_pro_expiry');
-                        }
-
-                        if (expires > now) {
-                            isPro = true;
-                            updateButtons(true);
-                        } else {
-                            isPro = false;
-                            updateButtons(false);
-                        }
-                    } else {
-                        isPro = false;
-                        updateButtons(false);
-                    }
-                    // Hide overlay regardless, access controlled by buttons
-                    overlay.style.display = 'none';
-                })
-                .catch(e => {
-                    clearTimeout(timeoutId);
-                    console.error("Error checking sub", e);
-                    // Hide overlay, features disabled
-                    overlay.style.display = 'none';
-                });
+            if (btnDisplay) btnDisplay.disabled = false;
+            if (btnInput) btnInput.disabled = false;
         }
 
         // --- AUTH & INIT ---
@@ -736,7 +644,7 @@
             if (user) {
                 document.getElementById('guest-overlay').style.display = 'none';
                 loadCloudNotes();
-                checkSubscription();
+                enableAuthenticatedFeatures();
 
                 // If we are joining via URL and haven't done so yet
                 if (isJoining && !initialJoinAttempted) {
@@ -810,12 +718,10 @@
             }
 
             // Map internal values: Display -> 'Tablet', Input Device -> 'Phone'
-            // Added IDs and initial disabled state rooted in isPro logic
-            const disabledAttr = isPro ? '' : 'disabled';
             const displayLabel = window.t('airtype.modal.setup.display', "Display");
             const inputLabel = window.t('airtype.modal.setup.input', "Input Device");
-            const btnDisplay = `<button id="btn-startup-display" class="sys-btn" onclick="onStartupConfirmed('Tablet')" ${disabledAttr}>${displayLabel}</button>`;
-            const btnInput = `<button id="btn-startup-input" class="sys-btn" onclick="onStartupConfirmed('Phone')" ${disabledAttr}>${inputLabel}</button>`;
+            const btnDisplay = `<button id="btn-startup-display" class="sys-btn" onclick="onStartupConfirmed('Tablet')">${displayLabel}</button>`;
+            const btnInput = `<button id="btn-startup-input" class="sys-btn" onclick="onStartupConfirmed('Phone')">${inputLabel}</button>`;
 
             const setupTitle = window.t('airtype.modal.setup_title', "Device Setup");
             const setupBody = window.t('airtype.modal.setup_body', "Will you use this device as a display or as an input device?");

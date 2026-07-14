@@ -14,6 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js" integrity="sha384-+KqYOH8TSu3FKjN3ld86eZMYqq6lk+y2GjV1hyOW+1hT3Pk/aD8JFueZP1W3bPh1" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" integrity="sha384-6A4YFdmYPT5gmyRp8KegTqUol1Ff3navFf6eyVLErDtdSrikTwa1MQpVhFtubVlq" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" integrity="sha384-+OubPIxtsLCp2uUuSsvWDuBB9oSIEDIYt2qQfYki+vDmSxc6GQsBbBPH6Z6x5wrq" crossorigin="anonymous"></script>
+    <script src="js/rekindle-cloud.js"></script>
 
     <style>
         /* SYSTEM 7 STYLE - Consistent with Reader */
@@ -661,8 +662,7 @@
         const auth = firebase.auth();
 
         // --- CONFIG ---
-        // Story Server URL - Deploy the Cloudflare Worker and update this URL
-        const STORY_SERVER_URL = 'https://story.timjarnott.workers.dev';
+        const STORY_SERVER_URL = RekindleCloud.apiBase + '/story';
 
         // --- STATE ---
         let currentGame = null;
@@ -1078,7 +1078,7 @@
                 // Proxy Fallback Helper
                 const fetchProxy = async (targetUrl) => {
                     const proxies = [
-                        (url) => `/api/proxy?url=${encodeURIComponent(url)}`
+                        (url) => RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(url)
                     ];
                     for (const proxy of proxies) {
                         try {
@@ -1363,7 +1363,7 @@
                     return;
                 }
 
-                // Download story file and upload to Worker
+                // Download the story file and upload it to the Yandex Story Function.
                 try {
                     if (buttonElement) buttonElement.innerText = 'Downloading...';
 
@@ -1544,7 +1544,7 @@
             const targetUrl = `https://ifdb.org/search?json&searchfor=${encodeURIComponent(finalQuery)}&searchgo=${startPos}&sortby=ratu&pgsize=${RESULTS_PER_PAGE}`;
 
             const proxies = [
-                (url) => `/api/proxy?url=${encodeURIComponent(url)}`
+                (url) => RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(url)
             ];
 
             for (const proxy of proxies) {
@@ -1870,7 +1870,7 @@
         // --- UPLOAD HELPERS ---
         async function fetchUploadMetadata(title) {
             try {
-                const proxyUrl = "/api/proxy?url=";
+                const proxyUrl = RekindleCloud.apiBase + "/content/proxy?url=";
                 // Use sortby=rel (Relevance)
                 const targetUrl = `https://ifdb.org/search?json&searchfor=${encodeURIComponent(title)}&sortby=rel`;
 
@@ -2089,7 +2089,7 @@
         async function fetchIFDBRating(title) {
             if (!title) return null;
             try {
-                const proxyUrl = "/api/proxy?url=";
+                const proxyUrl = RekindleCloud.apiBase + "/content/proxy?url=";
                 // Simple search for the title (no "title:" prefix as API doesn't support it reliably)
                 const query = title;
                 const targetUrl = `https://ifdb.org/search?json&searchfor=${encodeURIComponent(query)}&searchgo=1&pgsize=50`; // Increase fetch size to find match
@@ -2202,25 +2202,15 @@
                 // Generate filename
                 let filename = "story.z" + zVersion;
 
-                // Upload to Story Server Worker
                 if (buttonElement) buttonElement.innerText = 'Processing...';
-
-                // NOTE: Using the same story server worker path
-                const uploadRes = await fetch(`${STORY_SERVER_URL}/upload`, {
+                const uploadData = await RekindleCloud.request('/story/upload', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: base64, filename: filename })
+                    body: { data: base64, filename: filename }
                 });
 
-                if (!uploadRes.ok) {
-                    throw new Error('Worker processing failed');
-                }
-
-                const uploadData = await uploadRes.json();
-
                 // Update Meta
-                gameMeta.storyWorkerUrl = uploadData.url;
-                gameMeta.hasWorkerStory = true;
+                gameMeta.storyServiceUrl = uploadData.url;
+                gameMeta.hasServerStory = true;
 
                 // Save to library
                 let index = await localforage.getItem('interactive_library_index') || [];
@@ -2328,17 +2318,20 @@
 
                     renderScene(startScene);
                 } else {
-                    // Not a JSON-based game - check for storyWorkerUrl (Z3 games)
-                    if (gameMeta.storyWorkerUrl && gameMeta.hasWorkerStory) {
-                        // Z3 game - load via worker's server-side interpreter
+                    // Not a JSON-based game - check the Yandex server-side Z3 interpreter.
+                    // Keep the old metadata keys as a read-only migration fallback.
+                    var storyServiceUrl = gameMeta.storyServiceUrl || gameMeta.storyWorkerUrl;
+                    var hasServerStory = gameMeta.hasServerStory || gameMeta.hasWorkerStory;
+                    if (storyServiceUrl && hasServerStory) {
+                        // Z3 game - load via the server-side interpreter
                         container.innerHTML = '<div style="text-align:center; padding:40px;">Loading game...</div>';
 
                         const iframe = document.createElement('iframe');
                         iframe.style.width = '100%';
                         iframe.style.height = '100%';
                         iframe.style.border = 'none';
-                        // Worker serves a simple HTML page with the game
-                        let targetUrl = gameMeta.storyWorkerUrl;
+                        // The Yandex Story Function serves a simple HTML game page.
+                        let targetUrl = storyServiceUrl;
                         if (reset) {
                             targetUrl += '?restart=true';
                         }

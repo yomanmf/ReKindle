@@ -548,6 +548,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -1049,7 +1050,7 @@
             try {
                 let blob = null;
                 const proxies = [
-                    (u) => `/api/proxy?url=${encodeURIComponent(u)}`
+                    (u) => RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(u)
                 ];
 
                 for (const proxy of proxies) {
@@ -1196,7 +1197,7 @@
 
         const fetchViaProxy = async (targetUrl) => {
             const proxies = [
-                (url) => `/api/proxy?url=${encodeURIComponent(url)}`
+                (url) => RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(url)
             ];
 
             let lastError = null;

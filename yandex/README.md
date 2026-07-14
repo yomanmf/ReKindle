@@ -20,7 +20,8 @@ service account with `functions.functionInvoker` to the Gateway integration.
 To publish an update, replace the function's `index.js` with
 `reddit-function/index.js`, create a new function version, and keep the
 `$latest` tag. The Gateway specification already contains the deployed function
-ID. If the Gateway is recreated, update `REDDIT_PROXY_ENDPOINT` in `reddit.html`.
+ID. If the Gateway is recreated with a different hostname, update the single
+base URL in `js/rekindle-cloud.js`; `reddit.html` derives `/api/reddit` from it.
 
 When publishing the frontend to the `rekindle` Object Storage bucket, upload
 the page under both `reddit.html` and `reddit`. Object Storage does not perform
@@ -38,31 +39,48 @@ cross-instance cache is required later.
 - server-side Firebase registration and IP-ban checks;
 - Firebase ID-token verification;
 - signed upload/download URLs for the private user-files Object Storage bucket;
-- listing and deleting objects owned by the authenticated user.
+- listing and deleting objects owned by the authenticated user;
+- authenticated AI, OCR, mail, content proxies, social services, and billing.
+- a public GET/HEAD content proxy with SSRF protection, IP rate limits and a
+  5 MB response cap, plus the NRL scoreboard route used by local apps.
 
 The function requires these secret-backed environment variables:
 
 - `FIREBASE_SERVICE_ACCOUNT_JSON`
 - `S3_ACCESS_KEY_ID`
 - `S3_SECRET_ACCESS_KEY`
+- `SOCIAL_FIREBASE_SERVICE_ACCOUNT_JSON`
+- `PINTEREST_CLIENT_ID`
+- `PINTEREST_CLIENT_SECRET`
+- `OPENAI_API_KEY`
+- `TMDB_API_KEY`
+- `STRIPE_KEY`
+- `STRIPE_WEBHOOK_SECRET`
 
-It also requires the non-secret variables `S3_BUCKET` and `ALLOWED_ORIGINS`.
+It also requires the non-secret variables `S3_BUCKET`, `ALLOWED_ORIGINS`,
+`YANDEX_FOLDER_ID`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, and
+`STRIPE_PRICE_LIFETIME`. `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` are
+optional; without them, social reports are still stored but no Discord embed is
+sent. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
+use the IAM token supplied to the function through its attached service account.
 Secrets must be supplied from Yandex Lockbox; never paste them into source files
 or ordinary checked-in configuration.
 
 The runtime service account needs only these folder roles:
 
 - `functions.functionInvoker` so API Gateway can invoke the function;
-- `lockbox.payloadViewer` so the function can load its three secrets;
+- `lockbox.payloadViewer` so the function can load its secrets;
 - `storage.editor` so it can list, sign, and delete objects in the private bucket.
+- the minimal Foundation Models and Vision OCR invocation permissions required
+  by the AI and OCR routes.
 
 Do not leave `editor` or a deployment authorized key attached after publishing.
 
 The private bucket stores only keys under `users/{firebaseUid}/files/` and
 `users/{firebaseUid}/photos/`. Its CORS policy is checked in as
 `user-files-cors.json`. The backend derives the UID from a verified Firebase ID
-token and rejects paths belonging to another user. Cloud files remain Pro-only
-and are limited to 100 MB per user and 25 MB per object.
+token and rejects paths belonging to another user. Cloud files are available to
+every authenticated user and are limited to 100 MB per user and 25 MB per object.
 
 `rekindle-api-gateway.yaml` is the combined API Gateway specification for the
 deployed `rekindle-backend` function and the existing Reddit proxy. Preserve the
@@ -70,17 +88,44 @@ Reddit `GET`/`HEAD` routes and its public CORS behavior when changing the file;
 the ReKindle function enforces its own stricter origin allowlist. The browser
 client uses `/api/rekindle/*` through the existing `rekindle-api` gateway.
 
+Primary Suggestions reports use `/api/rekindle/reports/submit`. This route is
+independent of the `rekindle-socials` project and writes only to the primary
+Firebase RTDB after validating the stored content owner and canonical path.
+
+The former relative `/api/proxy`, `/api/maps`, `/api/price`, and
+`/api/nrl-scores` Pages Functions have been removed. Frontend pages call
+`/api/rekindle/content/proxy` or `/api/rekindle/content/nrl-scores` through
+`RekindleCloud.apiBase`. Static Object Storage does not execute relative API
+routes, so never reintroduce those paths.
+
 Run the non-mutating unit suite with `npm test`. The production E2E suite is
 `npm run test:e2e`; it requires `FIREBASE_WEB_API_KEY` and
 `FIREBASE_SERVICE_ACCOUNT_FILE`. It creates a unique temporary account, verifies
-registration, custom-token login, IP checking, Pro enforcement, signed upload,
+registration, custom-token login, IP checking, signed upload,
 browser CORS, list, download, and delete, then removes the test object, RTDB
 profile nodes, and Firebase Auth user in a `finally` cleanup.
 
 For a full-fork Firebase migration, do not bulk-upload a dirty local worktree.
 Run `node yandex/prepare-firebase-config-release.js` instead. It downloads the
-currently deployed root HTML files and `pro-gate.js`, applies only the seven
+currently deployed root HTML files, applies only the seven
 exact primary-project config substitutions, creates matching extensionless
 HTML aliases, and writes a SHA-256 manifest under
 `/private/tmp/rekindle-firebase-config-release`. Review the manifest before any
 production upload.
+
+## Interactive Story function
+
+`rekindle-story/` is a separate Node.js 22 Yandex Function. It keeps the existing
+Z-machine interpreter but replaces Cloudflare KV with Yandex Object Storage
+under `story-runtime/`. Uploads require a primary Firebase ID token.
+
+Production uses function `d4ehvm01ga7mfo9vuas6`. Its upload and play paths are
+already present in both `rekindle-story/gateway-paths.template.yaml` and the
+main Gateway spec. Keep the two specs synchronized if the function is replaced.
+
+The Story function requires `FIREBASE_SERVICE_ACCOUNT_JSON`, `S3_BUCKET`,
+`S3_ACCESS_KEY_ID`, and `S3_SECRET_ACCESS_KEY`. `API_GATEWAY_HOST` is an optional
+fallback because normal gateway requests provide the host header. Use the same
+private bucket as the main backend; its objects are isolated under
+`story-runtime/`. The upload route requires Firebase authentication, accepts
+only Z-code versions 1-3, and rejects decoded story files larger than 2 MB.

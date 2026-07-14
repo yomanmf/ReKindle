@@ -13,10 +13,6 @@
                 ".write": "auth != null"
             }
         },
-        "pro_gate": {
-            ".read": "auth != null",
-            ".write": "auth.token.email === 'ukiyo@rekindle.ink'"
-        },
         "presence": {
             "$uid": {
                 ".read": "auth != null",
@@ -138,7 +134,12 @@
                 ".validate": "newData.hasChildren(['title', 'description', 'authorUid', 'authorName', 'createdAt'])",
                 "title": {
                     ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 1000"
-                },
+        },
+        "suggestion_reports": {
+            ".read": "auth.token.email === 'ukiyo@rekindle.ink' || (auth != null && root.child('moderators').child(auth.uid).val() === true)",
+            ".write": false,
+            ".indexOn": ["contentId", "status", "reporterId"]
+        },
                 "description": {
                     ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 5000"
                 },

@@ -12,7 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="js/rekindle-cloud.js?v=1"></script>
-    <script src="pro-gate.js"></script>
 
     <style>
         /* SYSTEM 7 AESTHETICS */
@@ -475,9 +474,8 @@
             if (window.rekindleAutoDetectScale) window.rekindleAutoDetectScale();
             if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
 
-            rekindleProGate.check(async (isPro) => {
-                if (!isPro) return;
-                currentUser = rekindleProGate.getUser();
+            firebase.auth().onAuthStateChanged(function (user) {
+                currentUser = user;
                 if (currentUser) {
                     loadPrefs();
                     loadPhotos();

@@ -105,16 +105,9 @@ async function run() {
         if (ipCheck.data.banned !== false) throw new Error("Fresh E2E account was unexpectedly IP-banned.");
         console.log("PASS server-side IP check");
 
-        await backend("/storage/list?folder=files", "GET", undefined, 403);
-        console.log("PASS storage rejects non-Pro account");
-
-        await app.auth().setCustomUserClaims(uid, { pro: true });
-        var proCustomToken = await app.auth().createCustomToken(uid);
-        await exchangeCustomToken(proCustomToken);
-
         var initialList = await backend("/storage/list?folder=files", "GET", undefined, 200);
         if (!Array.isArray(initialList.data.items)) throw new Error("Storage list response is malformed.");
-        console.log("PASS authenticated Pro storage list");
+        console.log("PASS authenticated storage list without a Pro entitlement");
 
         var payload = "ReKindle production E2E";
         objectPath = "users/" + uid + "/files/e2e.txt";

@@ -1,0 +1,34 @@
+# These paths are merged into yandex/rekindle-api-gateway.yaml. The function ID
+# below is the production rekindle-story Yandex Cloud Function.
+paths:
+  /api/rekindle/story/upload:
+    post:
+      operationId: uploadInteractiveStory
+      responses:
+        '200':
+          description: Uploaded Z-code story
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ehvm01ga7mfo9vuas6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
+  /api/rekindle/story/play/{id}:
+    x-yc-apigateway-any-method:
+      operationId: playInteractiveStory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Interactive Z-code game page
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ehvm01ga7mfo9vuas6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'

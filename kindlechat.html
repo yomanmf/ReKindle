@@ -7,6 +7,7 @@
     <meta charset="UTF-8">
 
     <title>KindleChat</title>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/reports.js"></script>
     <style>
         /* SYSTEM 7 AESTHETICS */
@@ -1532,12 +1533,9 @@
         var currentUser = null;
         var currentUsername = "";
 
-        // TODO: START HERE - User must deploy cloudflare-worker.js and paste URL here
-        var TRANSLATION_WORKER_URL = "https://rekindle-translate.timjarnott.workers.dev";
-        var MODERATION_WORKER_URL = "https://rekindle-moderate.timjarnott.workers.dev";
-        // Example: "https://rekindle-chat-worker.timothyarnott.workers.dev"
+        var TRANSLATION_API_URL = RekindleCloud.apiBase + "/social/translate";
+        var MODERATION_API_URL = RekindleCloud.apiBase + "/social/moderate";
         var currentRoomId = 'general';
-        var isPro = false; // Pro Status
         var unsubscribeMsg = null;
         var oldestGeneralTimestamp = null; // For RTDB pagination
         var isLoadingMore = false; // For pagination
@@ -1630,7 +1628,7 @@
 
         // --- SPAM PROTECTION FOR GENERAL CHANNEL ---
         // Server-side RTDB token-bucket rate limiting and per-user duplicate
-        // detection now enforced in the moderation worker (rekindle-moderate).
+        // detection is also enforced by the Yandex moderation API.
 
         // --- Rules Logic ---
         var RULES_VERSION = 1; // Current Rules Version
@@ -1698,13 +1696,6 @@
                 rulesListenerRef.on('value', function (snap) {
                     currentUserRulesVersion = snap.val() || 0;
                 });
-
-                // Check Pro Status (shared with other apps)
-                isPro = (localStorage.getItem('rekindle_is_pro') !== 'false');
-                var cachedExpiry = localStorage.getItem('rekindle_pro_expiry');
-                if (cachedExpiry && parseInt(cachedExpiry) > Date.now()) {
-                    isPro = true;
-                }
 
                 document.getElementById('active-input').style.display = 'flex';
                 document.getElementById('locked-input').style.display = 'none';
@@ -1779,19 +1770,6 @@
                             handleKindlechatGuest();
                         }
                     }, 2500);
-                }
-            });
-
-            // Listen for Pro status changes from other tabs (e.g. after subscribing)
-            window.addEventListener('storage', function (e) {
-                if (e.key === 'rekindle_is_pro') {
-                    var newIsPro = (e.newValue !== 'false');
-                    if (newIsPro !== isPro) {
-                        isPro = newIsPro;
-                        console.log("Pro Status Sync: ", isPro);
-                        // Re-render recent messages to update styling
-                        reRenderRecentMessages();
-                    }
                 }
             });
 
@@ -3343,7 +3321,7 @@
 
                     // Reprocess Button
                     if (currentRoomId === 'general') {
-                        adminControlsHtml += '<div class="del-btn" style="color: blue; border-color: blue;" onclick="reprocessMessage(\'' + msgId + '\', \'' + safeText + '\')" title="Reprocess Translation">Rp</div>';
+                        adminControlsHtml += '<div class="del-btn" style="color: blue; border-color: blue;" onclick="reprocessMessage(\'' + msgId + '\')" title="Reprocess Translation">Rp</div>';
                     }
 
                     // Standard Delete Button
@@ -3702,7 +3680,7 @@
             markSendBusy();
             setTimeout(function () { isSendingMessage = false; }, 3000); // failsafe unlock
 
-            // SPAM PROTECTION + MODERATION: Enforced via Cloudflare Worker
+            // SPAM PROTECTION + MODERATION: Enforced by the Yandex backend
             var tokenSource = socialAuth.currentUser || currentUser;
             console.log('[KindleChat] Post token source:', tokenSource === socialAuth.currentUser ? 'social' : 'main', 'socialAuth.currentUser:', !!socialAuth.currentUser, 'currentUser:', !!currentUser);
             tokenSource.getIdToken(true).then(function (token) {
@@ -3715,7 +3693,7 @@
                         text: (replyTarget.text || '').substring(0, 120)
                     };
                 }
-                return fetch(MODERATION_WORKER_URL, {
+                return fetch(MODERATION_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3738,8 +3716,8 @@
                 inputEl.value = '';
                 replyTarget = null;
                 resetSendState();
-                if (TRANSLATION_WORKER_URL) {
-                    fireTranslationRequest(currentUser.uid, text, result.key, 1);
+                if (TRANSLATION_API_URL) {
+                    fireTranslationRequest(result.key, 1);
                 }
             }).catch(function (e) {
                 resetSendState();
@@ -3801,7 +3779,7 @@
         }
 
         // --- ADMIN ACTIONS ---
-        function reprocessMessage(msgId, text) {
+        function reprocessMessage(msgId) {
             if (!currentUser) return;
 
             // Visual feedback?
@@ -3809,17 +3787,14 @@
 
             var tokenSource = socialAuth.currentUser || currentUser;
             tokenSource.getIdToken(true).then(function (token) {
-                fetch(TRANSLATION_WORKER_URL, {
+                fetch(TRANSLATION_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify({
-                        uid: currentUser.uid,
-                        text: text,
-                        msgId: msgId,
-                        reprocess: true
+                        msgId: msgId
                     })
                 })
                     .then(function (resp) { return resp.json(); })
@@ -4093,36 +4068,33 @@
         var TRANSLATION_RETRY_DELAY_MS = 8000;
         var TRANSLATION_MAX_RETRIES = 3;
 
-        function fireTranslationRequest(uid, text, msgId, attempt) {
+        function fireTranslationRequest(msgId, attempt) {
             if (!currentUser) return;
             attempt = attempt || 1;
 
             var tokenSource = socialAuth.currentUser || currentUser;
             tokenSource.getIdToken(true).then(function (token) {
-                fetch(TRANSLATION_WORKER_URL, {
+                fetch(TRANSLATION_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify({
-                        uid: uid,
-                        text: text,
-                        msgId: msgId,
-                        translateOnly: true
+                        msgId: msgId
                     })
                 }).then(function (resp) {
                     if (!resp.ok && attempt < TRANSLATION_MAX_RETRIES) {
-                        console.warn("Translation worker returned " + resp.status + ", retrying in " + (TRANSLATION_RETRY_DELAY_MS / 1000) + "s (attempt " + attempt + ")");
+                        console.warn("Translation API returned " + resp.status + ", retrying in " + (TRANSLATION_RETRY_DELAY_MS / 1000) + "s (attempt " + attempt + ")");
                         setTimeout(function () {
-                            fireTranslationRequest(uid, text, msgId, attempt + 1);
+                            fireTranslationRequest(msgId, attempt + 1);
                         }, TRANSLATION_RETRY_DELAY_MS);
                     }
                 })['catch'](function (err) {
                     if (attempt < TRANSLATION_MAX_RETRIES) {
                         console.warn("Translation request failed (attempt " + attempt + "), retrying in " + (TRANSLATION_RETRY_DELAY_MS / 1000) + "s:", err);
                         setTimeout(function () {
-                            fireTranslationRequest(uid, text, msgId, attempt + 1);
+                            fireTranslationRequest(msgId, attempt + 1);
                         }, TRANSLATION_RETRY_DELAY_MS);
                     } else {
                         console.warn("Translation failed after " + TRANSLATION_MAX_RETRIES + " attempts:", err);
@@ -4132,66 +4104,10 @@
                 if (attempt < TRANSLATION_MAX_RETRIES) {
                     console.warn("Could not get auth token for translation (attempt " + attempt + "), retrying in " + (TRANSLATION_RETRY_DELAY_MS / 1000) + "s:", err);
                     setTimeout(function () {
-                        fireTranslationRequest(uid, text, msgId, attempt + 1);
+                        fireTranslationRequest(msgId, attempt + 1);
                     }, TRANSLATION_RETRY_DELAY_MS);
                 } else {
                     console.warn("Could not get auth token for translation after " + TRANSLATION_MAX_RETRIES + " attempts:", err);
-                }
-            });
-        }
-
-        // --- GENERAL CHANNEL: Send via Worker ---
-        function sendGeneralMessageViaWorker(text) {
-            if (!currentUser) {
-                console.error("Cannot send message: Not authenticated");
-                sendGeneralMessageToRTDB(text);
-                return;
-            }
-            if (containsUrl(text)) { showModal('Links and URLs are not allowed.'); return; }
-            if (containsPromotedTerm(text)) { showModal('Promotional content is not allowed.'); return; }
-
-            // Write message immediately so it appears at once, then translate in background
-            var messageData = {
-                uid: currentUser.uid,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                text: text
-            };
-
-            generalChatRef.push(messageData).then(function (ref) {
-                var msgId = ref.key;
-
-                resetSendState();
-
-                // Fire translation in background with retry — child_changed will update the bubble when done
-                fireTranslationRequest(currentUser.uid, text, msgId, 1);
-            })['catch'](function (e) {
-                resetSendState();
-                console.error("Error sending general message:", e);
-                if (e && e.code === 'PERMISSION_DENIED') {
-                    showModal('Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.', false);
-                } else {
-                    showModal('Unable to post: ' + (e && e.message ? e.message : 'Unknown error') + '. Please try again.', false);
-                }
-            });
-        }
-
-        // --- GENERAL CHANNEL: Send to Realtime Database (Direct/Fallback) ---
-        function sendGeneralMessageToRTDB(text) {
-            var messageData = {
-                uid: currentUser.uid,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                text: text
-            };
-
-            generalChatRef.push(messageData).then(function () {
-                resetSendState();
-            })['catch'](function (e) {
-                resetSendState();
-                console.error("Error sending general message:", e);
-                if (e && e.code === 'PERMISSION_DENIED') {
-                    showModal('Unable to post. This may be due to a missing age-verification or account restriction. Please sign out and back in, or contact support.', false);
-                } else {
-                    showModal('Unable to post: ' + (e && e.message ? e.message : 'Unknown error') + '. Please try again.', false);
                 }
             });
         }

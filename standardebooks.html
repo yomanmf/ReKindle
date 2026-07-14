@@ -244,6 +244,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -292,9 +293,9 @@
         // Feed URLs
         const RSS_FEED_URL = "https://standardebooks.org/feeds/rss/new-releases";
 
-        // Use the internal Cloudflare worker CORS proxy
+        // Legacy relative proxy route: migrate to the Yandex Gateway before production use.
         const PROXIES = [
-            "/api/proxy?url="
+            RekindleCloud.apiBase + "/content/proxy?url="
         ];
 
         // --- INIT ---

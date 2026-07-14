@@ -8,6 +8,10 @@
 
     <title>Readwise</title>
 
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="js/rekindle-cloud.js"></script>
+
     <style>
         /* SYSTEM 7 AESTHETICS */
         :root {
@@ -733,9 +737,18 @@
 
     <script>
         // --- CONFIG ---
-        const WORKER_URL = "https://rekindle-readwise.timjarnott.workers.dev";
-        const READER_WORKER_URL = "https://rekindle-reader.timjarnott.workers.dev";
+        const READWISE_API_PATH = "/integrations/readwise";
+        const READER_API_PATH = "/content/reader";
         const LS_TOKEN_KEY = "rekindle_readwise_token";
+        const firebaseConfig = {
+            apiKey: "__REKINDLE_FIREBASE_API_KEY__",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork",
+            messagingSenderId: "136525921771",
+            appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
         // --- STATE ---
         let state = {
@@ -764,44 +777,33 @@
             if (window.rekindleAutoDetectScale) window.rekindleAutoDetectScale();
             if (window.rekindleApplyDefaultFullscreen) window.rekindleApplyDefaultFullscreen();
 
-            if (state.token) {
-                validateToken().then(valid => {
-                    if (valid) refreshData();
-                    else showTokenError();
-                });
-            }
+            auth.onAuthStateChanged(function (user) {
+                if (!user) return;
+                if (state.token) {
+                    validateToken().then(valid => {
+                        if (valid) refreshData();
+                        else showTokenError();
+                    });
+                }
+            });
         };
 
         // --- API ---
         async function apiCall(endpoint, queryParams = {}) {
-            const url = new URL(WORKER_URL + endpoint);
+            const url = new URL(RekindleCloud.apiBase + READWISE_API_PATH + endpoint);
             Object.entries(queryParams).forEach(([k, v]) => {
                 if (v !== null && v !== undefined && v !== "") url.searchParams.set(k, v);
             });
 
-            const res = await fetch(url.toString(), {
-                headers: {
-                    "X-Readwise-Token": state.token,
-                }
+            return await RekindleCloud.request(url.toString().slice(RekindleCloud.apiBase.length), {
+                headers: { "X-Readwise-Token": state.token }
             });
-
-            if (res.status === 401 || res.status === 403) {
-                throw new Error("Invalid token. Please check your Readwise API token.");
-            }
-            if (!res.ok) {
-                throw new Error(`API Error ${res.status}`);
-            }
-            // Handle 204 No Content (e.g. auth check)
-            if (res.status === 204) return null;
-            return await res.json();
         }
 
         async function validateToken() {
             try {
-                const res = await fetch(WORKER_URL + "/auth", {
-                    headers: { "X-Readwise-Token": state.token }
-                });
-                return res.status === 204;
+                await apiCall('/auth');
+                return true;
             } catch (e) {
                 return false;
             }
@@ -980,17 +982,10 @@
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 20000);
 
-                const res = await fetch(`${READER_WORKER_URL}/?url=${encodeURIComponent(doc.source_url)}`, {
+                const article = await RekindleCloud.request(`${READER_API_PATH}?url=${encodeURIComponent(doc.source_url)}`, {
                     signal: controller.signal
                 });
                 clearTimeout(timeout);
-
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || `HTTP ${res.status}`);
-                }
-
-                const article = await res.json();
 
                 let html = '';
                 if (article.title) html += `<h1>${escapeHtml(article.title)}</h1>`;

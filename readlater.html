@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" defer></script>
+    <script src="js/rekindle-cloud.js" defer></script>
 
     <style>
         /* SYSTEM 7 AESTHETICS */
@@ -645,7 +646,7 @@
                 });
         }
 
-        const READER_WORKER_URL = "https://rekindle-reader.timjarnott.workers.dev";
+        const READER_API_PATH = "/content/reader";
 
         function timeoutPromise(ms, promise) {
             return new Promise((resolve, reject) => {
@@ -676,10 +677,8 @@
             };
 
             try {
-                const workerUrl = `${READER_WORKER_URL}/?url=${encodeURIComponent(urlVal)}`;
-                const res = await timeoutPromise(15000, fetch(workerUrl));
-                if (res.ok) {
-                    const article = await res.json();
+                const article = await timeoutPromise(15000, RekindleCloud.request(`${READER_API_PATH}?url=${encodeURIComponent(urlVal)}`));
+                if (article) {
                     meta.title = article.title || urlVal;
                     meta.siteName = article.siteName || new URL(urlVal).hostname;
                     meta.excerpt = article.excerpt || '';

@@ -100,7 +100,7 @@ function fixJs() {
         }
     }
 
-    // Process root-level JS files (e.g. pro-gate.js)
+    // Process root-level JavaScript files.
     const rootJsFiles = fs.readdirSync(LEGACY_DIR).filter(f => f.endsWith('.js'));
     for (const file of rootJsFiles) {
         const filePath = path.join(LEGACY_DIR, file);

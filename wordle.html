@@ -435,6 +435,7 @@
     </style>
     <script src="js/i18n.js"></script>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
 </head>
 
 <body>
@@ -850,7 +851,7 @@
 
         async function fetchWithProxy(targetUrl) {
             const proxies = [
-                (url) => `/api/proxy?url=${encodeURIComponent(url)}`
+                (url) => RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(url)
             ];
 
             // Helper for timeout

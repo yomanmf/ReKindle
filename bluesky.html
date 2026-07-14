@@ -418,7 +418,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <script src="theme.js?v=18"></script>
-    <script src="pro-gate.js"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -577,15 +576,7 @@
             if (window.rekindleAutoDetectScale) window.rekindleAutoDetectScale();
             if (window.rekindleApplyDefaultFullscreen) window.rekindleApplyDefaultFullscreen();
 
-            if (window.rekindleProGate) {
-                window.rekindleProGate.check(isPro => {
-                    if (isPro) {
-                        app.init();
-                    }
-                });
-            } else {
-                app.init();
-            }
+            app.init();
         };
 
         const app = {

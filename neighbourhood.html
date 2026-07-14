@@ -7,6 +7,7 @@
     <meta charset="UTF-8">
 
     <title>Neighbourhood</title>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/reports.js"></script>
     <style>
         /* SYSTEM 7 AESTHETICS */
@@ -1166,16 +1167,7 @@
         const mainDb = firebase.firestore();
         const socialDb = socialApp.firestore();
         const socialAuth = socialApp.auth();
-        const MODERATION_WORKER_URL = "https://rekindle-moderate.timjarnott.workers.dev";
-
-        // Mock Kindle+ check (In real app, check claims or subscription status)
-        // For now, let's treat everyone as potentially plus if they have the flag, 
-        // or we could auto-grant for testing.
-        function isKindlePlus(user) {
-            // Placeholder: Check specific UID or custom claim if available.
-            // For this demo, let's assume it's stored in the public profile for display.
-            return false;
-        }
+        const MODERATION_API_URL = RekindleCloud.apiBase + "/social/moderate";
 
         // Init Standard Features
         if (window.rekindleApplyTheme) window.rekindleApplyTheme();
@@ -1184,10 +1176,9 @@
         if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
 
         let currentUser = null;
-        let isPlus = false;
         let myProfile = {};
 
-        var TRANSLATION_WORKER_URL = "https://rekindle-translate.timjarnott.workers.dev";
+        var TRANSLATION_API_URL = RekindleCloud.apiBase + "/social/translate";
         function resolveUserLanguage() {
             var lang = localStorage.getItem('rekindle_language') || 'auto';
             if (lang === 'auto') {
@@ -1329,9 +1320,6 @@
                 }
             });
 
-            // Initial Pro check from storage
-            isPlus = localStorage.getItem('rekindle_is_pro') !== 'false';
-
             // Age verification check (server-side enforced)
             ensureAgeVerified(auth, { closable: false }).then(function () {
                 // Authenticate with social project before loading social data
@@ -1407,56 +1395,6 @@
             }
         });
 
-        // Sync Pro Status across tabs
-        window.addEventListener('storage', function (e) {
-            if (e.key === 'rekindle_is_pro') {
-                const newIsPlus = (e.newValue !== 'false');
-                if (newIsPlus !== isPlus) {
-                    isPlus = newIsPlus;
-                    console.log("Pro Status Sync (Neighbourhood): ", isPlus);
-                    reRenderRecentPosts();
-                }
-            }
-        });
-
-        function reRenderRecentPosts() {
-            const feed = document.getElementById('posts-feed');
-            if (!feed) return;
-            const cards = feed.querySelectorAll('.post-card');
-            cards.forEach(card => {
-                const uid = card.dataset.uid;
-                if (!uid) return;
-
-                window.rekindleFetchUserCard(db, uid, function (card) {
-                    if (!card) return;
-                    const username = card.username || '';
-                    const isDev = username === 'ukiyo';
-                    const isPro = supporterUsers[username] || false;
-                    card.classList.remove('developer', 'supporter');
-                    if (isDev) card.classList.add('developer');
-                    else if (isPro) card.classList.add('supporter');
-                });
-
-                const commentLists = card.querySelectorAll('.comments-list');
-                commentLists.forEach(list => {
-                    const items = list.querySelectorAll('.comment-item');
-                    items.forEach(item => {
-                        const cUid = item.dataset.uid;
-                        if (!cUid) return;
-                        window.rekindleFetchUserCard(db, cUid, function (card) {
-                            if (!card) return;
-                            const username = card.username || '';
-                            const isDev = username === 'ukiyo';
-                            const isPro = supporterUsers[username] || false;
-                            item.classList.remove('developer', 'supporter');
-                            if (isDev) item.classList.add('developer');
-                            else if (isPro) item.classList.add('supporter');
-                        });
-                    });
-                });
-            });
-        }
-
         // UI TABS
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1495,10 +1433,6 @@
             // Generate avatar seed if not set
             if (!myProfile.avatarSeed) myProfile.avatarSeed = Math.floor(Math.random() * 10000);
 
-            // Preserve existing plus status if any (or set based on logic)
-            // Ideally backend sets this, but for the "vibe" lets allow it to persist
-            const isPlus = myProfile.kindlePlus || false;
-
             const socialLinks = {
                 goodreads: document.getElementById('input-goodreads').value.trim(),
                 instagram: document.getElementById('input-instagram').value.trim(),
@@ -1531,7 +1465,6 @@
                 avatarSeed: myProfile.avatarSeed,
                 customAvatar: myProfile.customAvatar || null,
                 socialLinks: socialLinks,
-                kindlePlus: isPlus,
                 isPrivate: myProfile.isPrivate || false,
                 lastActive: firebase.database.ServerValue.TIMESTAMP
             };
@@ -1774,7 +1707,7 @@
             // Badge Logic
             let badgeHtml = '';
             const isDev = (profile.uid === 'ukiyo' || profile.email === 'ukiyo@rekindle.ink' || kName === 'ukiyo' || kName === 'ukiyo@rekindle.ink') || (isMe && currentUser.email === 'ukiyo@rekindle.ink');
-            const isPro = profile.kindlePlus || supporterUsers[kName] || (profile.email && supporterUsers[profile.email]);
+            const isPro = supporterUsers[kName] || (profile.email && supporterUsers[profile.email]);
 
             if (isDev) {
                 badgeHtml = '<span class="dev-tag">DEV</span>';
@@ -2400,7 +2333,7 @@
             // Badge Logic
             let badgeHtml = '';
             const isDev = (user.uid === 'ukiyo' || user.email === 'ukiyo@rekindle.ink' || dName === 'ukiyo' || dName === 'ukiyo@rekindle.ink');
-            const isPro = user.kindlePlus || supporterUsers[dName] || (user.email && supporterUsers[user.email]);
+            const isPro = supporterUsers[dName] || (user.email && supporterUsers[user.email]);
 
             if (isDev) {
                 badgeHtml = '<span class="dev-tag">DEV</span>';
@@ -3173,7 +3106,7 @@
 
             var tokenSource = socialAuth.currentUser || currentUser;
             tokenSource.getIdToken(true).then(function (token) {
-                return fetch(MODERATION_WORKER_URL, {
+                return fetch(MODERATION_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3490,7 +3423,7 @@
 
             var tokenSource = socialAuth.currentUser || currentUser;
             tokenSource.getIdToken(true).then(function (token) {
-                return fetch(MODERATION_WORKER_URL, {
+                return fetch(MODERATION_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3508,22 +3441,19 @@
                 input.value = '';
                 if (btn) btn.disabled = false;
 
-                // Request translations asynchronously via worker
-                if (typeof TRANSLATION_WORKER_URL !== 'undefined' && TRANSLATION_WORKER_URL) {
+                // Request translations asynchronously via the Yandex API
+                if (typeof TRANSLATION_API_URL !== 'undefined' && TRANSLATION_API_URL) {
                     var tokenSource = socialAuth.currentUser || currentUser;
                     tokenSource.getIdToken(true).then(function (token) {
-                        fetch(TRANSLATION_WORKER_URL, {
+                        fetch(TRANSLATION_API_URL, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': 'Bearer ' + token
                             },
                             body: JSON.stringify({
-                                uid: currentUser.uid,
-                                text: text,
                                 msgId: docRef.id,
-                                app: 'neighbourhood',
-                                translateOnly: true
+                                app: 'neighbourhood'
                             })
                         }).catch(function (err) {
                             console.warn('Translation request failed:', err);
@@ -3577,34 +3507,24 @@
 
         function reprocessPost(postId) {
             if (!currentUser) return;
-            if (typeof TRANSLATION_WORKER_URL === 'undefined' || !TRANSLATION_WORKER_URL) {
-                showAlertModal("Translation worker not configured.");
+            if (typeof TRANSLATION_API_URL === 'undefined' || !TRANSLATION_API_URL) {
+                showAlertModal("Translation API is not configured.");
                 return;
             }
-
-            const textDiv = document.getElementById('post-text-' + postId);
-            if (!textDiv) return;
-
-            // Read from DOM attribute instead of parameter to bypass HTML string escaping issues
-            const text = textDiv.getAttribute('data-original');
-            if (!text) return;
 
             console.log("Reprocessing post:", postId);
 
             var tokenSource = socialAuth.currentUser || currentUser;
             tokenSource.getIdToken(true).then(function (token) {
-                fetch(TRANSLATION_WORKER_URL, {
+                fetch(TRANSLATION_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify({
-                        uid: currentUser.uid,
-                        text: text,
                         msgId: postId,
-                        app: 'neighbourhood',
-                        reprocess: true
+                        app: 'neighbourhood'
                     })
                 })
                     .then(function (resp) { return resp.json(); })
@@ -3665,8 +3585,22 @@
 
             showPromptModal("Edit Post Content:", post.text, (newText) => {
                 if (newText !== null && newText.trim() !== "") {
-                    socialDb.collection('neighbourhood_posts').doc(id).update({ text: newText.trim() })
-                        .catch(e => showAlertModal("Update failed: " + e.message, "Error"));
+                    var text = newText.trim();
+                    if (text.length > 280) { showAlertModal("Post too long (max 280 characters)."); return; }
+                    if (containsUrl(text)) { showAlertModal("Links and URLs are not allowed."); return; }
+                    if (containsPromotedTerm(text)) { showAlertModal("Promotional content is not allowed."); return; }
+                    var tokenSource = socialAuth.currentUser || currentUser;
+                    tokenSource.getIdToken(true).then(function (token) {
+                        return fetch(MODERATION_API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                            body: JSON.stringify({ type: 'neighbourhood_edit', postId: id, text: text })
+                        }).then(function (resp) { return resp.json(); });
+                    }).then(function (result) {
+                        if (result.error) showAlertModal(result.error, "Error");
+                    }).catch(function (e) {
+                        showAlertModal("Update failed: " + (e && e.message ? e.message : "Unknown error"), "Error");
+                    });
                 }
             });
         }

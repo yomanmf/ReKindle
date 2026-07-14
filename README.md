@@ -88,13 +88,13 @@ ReKindle operates in two modes: **Guest Mode** (all data stored locally on your 
 *   **Flipbook⁺:** Create pixel animations directly on your e-ink device.
 *   **Music:** Sheet Music library and Guitar Chords/Tabs search.
 
-*⁺ Features marked with a plus require a **ReKindle+** subscription.*
+All applications are available without a paid subscription.
 
 ---
 
 ## ⚡ ReKindle+
 
-Support the development of ReKindle and unlock premium features, including Mail integration, AI-powered handwriting recognition, and advanced productivity tools.
+ReKindle+ is an optional supporter membership. It helps cover AI, storage, mail proxying, and development costs; it does not control access to applications or features.
 
 **Pricing:**
 *   **Monthly:** $2/mo
@@ -134,15 +134,8 @@ ReKindle uses Google Firebase for user authentication and storing app data.
 ### 2. Google API Setup (Optional for Google Sync)
 Enable the **Google Tasks**, **Calendar**, and **People** APIs in the [Google Cloud Console](https://console.cloud.google.com/). Create an OAuth 2.0 Client ID for a Web Application and add your domain to the authorized origins.
 
-### 3. Cloudflare Workers (Backend Proxies)
-ReKindle uses specialized Cloudflare Workers to handle sensitive API requests and bypass CORS:
-*   **Oracle AI:** Proxies requests to the Google Gemini API.
-*   **Quick ToDo OCR:** Handles image processing and OCR for handwritten tasks.
-*   **Watchlist (TMDB):** Securely fetches movie and show data.
-*   **Chords:** Fetches song tabs and lyrics.
-*   **Story (IFDB):** Serves interactive fiction stories.
-*   **Stripe:** Manages supporter status and donations.
-*   **Translate:** Proxies translation requests.
+### 3. Yandex Cloud backend
+ReKindle routes authenticated AI, OCR, storage, mail, social moderation/translation, billing, and third-party API proxy requests through Yandex API Gateway and Yandex Cloud Functions. Interactive Z-code stories use a dedicated Yandex Function backed by Yandex Object Storage. Cloudflare Worker sources and Wrangler manifests have been removed; the frontend must not call `workers.dev`.
 
 ## 🛠️ Building & Deployment
 

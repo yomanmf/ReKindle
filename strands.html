@@ -366,6 +366,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
 </head>
 
 <body>
@@ -457,7 +458,7 @@
         // --- PROXY FETCH ---
         async function fetchWithProxy(targetUrl) {
             const proxies = [
-                function (url) { return '/api/proxy?url=' + encodeURIComponent(url); }
+                function (url) { return RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(url); }
             ];
 
             function fetchWithTimeout(url, ms) {

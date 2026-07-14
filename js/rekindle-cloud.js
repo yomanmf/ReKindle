@@ -2,6 +2,7 @@
     "use strict";
 
     var API_BASE = "https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net/api/rekindle";
+    var GATEWAY_BASE = API_BASE.slice(0, API_BASE.length - "/api/rekindle".length);
 
     async function request(path, options) {
         options = options || {};
@@ -19,7 +20,8 @@
         var response = await fetch(API_BASE + path, {
             method: options.method || "GET",
             headers: headers,
-            body: options.body === undefined ? undefined : JSON.stringify(options.body)
+            body: options.body === undefined ? undefined : JSON.stringify(options.body),
+            signal: options.signal
         });
         var data = {};
         try {
@@ -31,6 +33,7 @@
             var error = new Error(data.error || "Cloud request failed (" + response.status + ").");
             error.code = data.code || "cloud/error";
             error.status = response.status;
+            error.retryAfter = data.retryAfter || 0;
             throw error;
         }
         return data;
@@ -55,6 +58,8 @@
 
     window.RekindleCloud = {
         apiBase: API_BASE,
+        gatewayBase: GATEWAY_BASE,
+        request: request,
         register: function (username, password) {
             return request("/auth/register", {
                 method: "POST",

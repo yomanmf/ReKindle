@@ -7,6 +7,9 @@
     <meta charset="UTF-8">
 
     <title>News</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="time.js"></script>
     <script src="js/i18n.js"></script>
     <style>
@@ -584,8 +587,15 @@
             }
         }
 
-        // --- READABILITY WORKER ---
-        const READER_WORKER_URL = "https://rekindle-reader.timjarnott.workers.dev";
+        const READER_API_PATH = "/content/reader";
+        const readerFirebaseConfig = {
+            apiKey: "__REKINDLE_FIREBASE_API_KEY__",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork",
+            messagingSenderId: "136525921771",
+            appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(readerFirebaseConfig);
 
         // --- MODAL READER LOGIC ---
         async function openArticle(url) {
@@ -603,21 +613,12 @@
                 </html>`;
 
             try {
-                // Fetch from Readability worker
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 20000);
-
-                const res = await fetch(`${READER_WORKER_URL}/?url=${encodeURIComponent(url)}`, {
+                const article = await RekindleCloud.request(`${READER_API_PATH}?url=${encodeURIComponent(url)}`, {
                     signal: controller.signal
                 });
                 clearTimeout(timeout);
-
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || `HTTP ${res.status}`);
-                }
-
-                const article = await res.json();
 
                 // Build clean HTML from Readability output
                 let articleHtml = '';

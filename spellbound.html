@@ -496,6 +496,7 @@
     </style>
     <script src="time.js"></script>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
 </head>
 
 <body>
@@ -682,7 +683,7 @@
         // db.enablePersistence({ synchronizeTabs: true }) ...
 
         // --- DICTIONARY URL ---
-        const CORS_PROXY = '/api/proxy'; // ReKindle CORS proxy
+        const CORS_PROXY = RekindleCloud.apiBase + '/content/proxy';
         const NYT_URL = 'https://www.nytimes.com/puzzles/spelling-bee';
         const DICT_URL = 'https://raw.githubusercontent.com/dolph/dictionary/master/popular.txt'; // Fallback
 

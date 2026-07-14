@@ -3,34 +3,12 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
   
-    // Helper function to check auth
-    function isAuth() {
-      return request.auth != null;
-    }
-    
-    // Helper to check if user owns the path
-    function isOwner(userId) {
-      return isAuth() && request.auth.uid == userId;
-    }
-
-    // Helper to check if user has pro custom claim
-    function isPro() {
-      return isAuth() && (request.auth.token.pro == true || isDeveloper());
-    }
-
-    // Helper to check if user is a developer
-    function isDeveloper() {
-      return isAuth() && (
-        request.auth.uid == 'ukiyo' || 
-        request.auth.token.email == 'ukiyo@rekindle.ink'
-      );
-    }
-
-    // Allow read/write for the user's files and photos recursively (PRO ONLY)
+    // Direct Firebase Storage is retired. Files and Photo Frame use the Yandex
+    // backend, which preserves authentication, ownership, MIME and byte quotas.
     match /users/{userId}/{folder} {
-      allow read, write: if isOwner(userId) && isPro() && (folder == 'files' || folder == 'photos');
+      allow read, write: if false;
       match /{allPaths=**} {
-        allow read, write: if isOwner(userId) && isPro() && (folder == 'files' || folder == 'photos');
+        allow read, write: if false;
       }
     }
     

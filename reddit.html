@@ -458,6 +458,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="theme.js?v=18"></script>
     <script src="js/i18n.js"></script>
+    <script src="js/rekindle-cloud.js"></script>
 </head>
 
 <body>
@@ -557,7 +558,7 @@
         }
 
         // --- YANDEX CLOUD REDDIT PROXY ---
-        const REDDIT_PROXY_ENDPOINT = "https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net/api/reddit";
+        const REDDIT_PROXY_ENDPOINT = RekindleCloud.gatewayBase + "/api/reddit";
         const PROXIES = [
             REDDIT_PROXY_ENDPOINT + "?url="
         ];

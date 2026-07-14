@@ -50,9 +50,6 @@ async function verifyManifestObject(expected) {
     if (expected.html && actual.contentType.toLowerCase().indexOf("text/html") === -1) {
         throw new Error(expected.objectName + " has incorrect Content-Type " + actual.contentType + ".");
     }
-    if (!expected.html && expected.objectName === "pro-gate.js" && !/javascript/i.test(actual.contentType)) {
-        throw new Error("pro-gate.js has incorrect Content-Type " + actual.contentType + ".");
-    }
 }
 
 async function auditSiteFile(name) {
@@ -85,7 +82,6 @@ async function run() {
         siteObjects.push(name);
         siteObjects.push(name.slice(0, -5));
     });
-    siteObjects.push("pro-gate.js");
     var audited = await mapWithConcurrency(siteObjects, auditSiteFile);
     var existingCount = audited.filter(Boolean).length;
     var missingAliases = audited.length - existingCount;

@@ -399,6 +399,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/custom-select.js"></script>
     <link rel="stylesheet" href="css/custom-select.css">
@@ -562,7 +563,7 @@
                                         // but safely re-wrapping it via our new proxy format.
                                         // Note: split[1] leaves it encoded if it was encoded.
                                         const cleanUrl = decodeURIComponent(rawUrl);
-                                        item.cover = `/api/proxy?url=${encodeURIComponent(cleanUrl)}`;
+                                        item.cover = RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(cleanUrl);
                                         needsMigration = true;
                                         break;
                                     }
@@ -630,7 +631,7 @@
 
         async function fetchCORS(url) {
             const PROXIES = [
-                "/api/proxy?url="
+                RekindleCloud.apiBase + "/content/proxy?url="
             ];
 
             let lastError = null;
@@ -706,7 +707,7 @@
                     let coverUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450"><rect width="300" height="450" fill="%23ccc"/></svg>';
                     if (coverFileName) {
                         const rawUrl = `https://uploads.mangadex.org/covers/${manga.id}/${coverFileName}.256.jpg`;
-                        coverUrl = `/api/proxy?url=${encodeURIComponent(rawUrl)}`;
+                        coverUrl = RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(rawUrl);
                     }
 
                     const isAdded = library.some(libItem => libItem.id === manga.id);
@@ -1123,7 +1124,7 @@
 
                 var imageUrls = pages.map(function (file) {
                     var rawUrl = baseUrl + '/data/' + hash + '/' + file;
-                    return '/api/proxy?url=' + encodeURIComponent(rawUrl);
+                    return RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(rawUrl);
                 });
 
                 currentReading.pages = imageUrls;

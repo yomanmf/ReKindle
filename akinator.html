@@ -6,6 +6,9 @@
         content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <meta charset="UTF-8">
     <title data-i18n="akinator.title">Akinator</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="theme.js?v=18"></script>
     <script src="js/i18n.js"></script>
     <style>
@@ -448,7 +451,15 @@
         var backButton = document.getElementById('back-btn');
         var resultPhoto = document.getElementById('result-photo');
 
-        var API_BASE = 'https://rekindle-akinator.timjarnott.workers.dev';
+        var AKINATOR_API_PATH = '/games/akinator';
+        var firebaseConfig = {
+            apiKey: "__REKINDLE_FIREBASE_API_KEY__",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork",
+            messagingSenderId: "136525921771",
+            appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
+        };
+        firebase.initializeApp(firebaseConfig);
 
         function showView(name) {
             views.start.classList.remove('active');
@@ -495,19 +506,13 @@
             setLoading(true);
 
             try {
-                var res = await fetch('${API_BASE}/start', {
+                var data = await RekindleCloud.request(AKINATOR_API_PATH + '/start', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                    body: {
                         region: state.region,
                         childMode: state.childMode
-                    })
+                    }
                 });
-
-                var data = await res.json();
-                if (!res.ok || data.error) {
-                    throw new Error(data.error || translate('akinator.error.network', 'Network error. Please try again.'));
-                }
 
                 state.session = data.session;
                 state.signature = data.signature;
@@ -562,10 +567,9 @@
             setLoading(true);
 
             try {
-                var res = await fetch('${API_BASE}/answer', {
+                var data = await RekindleCloud.request(AKINATOR_API_PATH + '/answer', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                    body: {
                         region: state.region,
                         childMode: state.childMode,
                         step: state.step,
@@ -574,13 +578,8 @@
                         stepLast: state.stepLast,
                         session: state.session,
                         signature: state.signature
-                    })
+                    }
                 });
-
-                var data = await res.json();
-                if (!res.ok || data.error) {
-                    throw new Error(data.error || translate('akinator.error.network', 'Network error. Please try again.'));
-                }
 
                 await handleResponse(data);
             } catch (e) {
@@ -596,23 +595,17 @@
             setLoading(true);
 
             try {
-                var res = await fetch('${API_BASE}/back', {
+                var data = await RekindleCloud.request(AKINATOR_API_PATH + '/back', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                    body: {
                         region: state.region,
                         childMode: state.childMode,
                         step: state.step,
                         progression: state.progression,
                         session: state.session,
                         signature: state.signature
-                    })
+                    }
                 });
-
-                var data = await res.json();
-                if (!res.ok || data.error) {
-                    throw new Error(data.error || translate('akinator.error.network', 'Network error. Please try again.'));
-                }
 
                 updateFromStep(data);
             } catch (e) {
@@ -666,23 +659,17 @@
             setLoading(true);
 
             try {
-                var res = await fetch('${API_BASE}/continue', {
+                var data = await RekindleCloud.request(AKINATOR_API_PATH + '/continue', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                    body: {
                         region: state.region,
                         childMode: state.childMode,
                         step: state.step,
                         progression: state.progression,
                         session: state.session,
                         signature: state.signature
-                    })
+                    }
                 });
-
-                var data = await res.json();
-                if (!res.ok || data.error) {
-                    throw new Error(data.error || translate('akinator.error.network', 'Network error. Please try again.'));
-                }
 
                 await handleResponse(data);
             } catch (e) {

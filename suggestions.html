@@ -587,6 +587,7 @@
     <script src="theme.js?v=18"></script>
     <script src="js/i18n.js"></script>
     <script src="js/custom-select.js"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/reports.js"></script>
     <script src="bad_words.js?v=4"></script>
 </head>
@@ -865,19 +866,12 @@
             let currentUser = null;
             let currentSuggestionId = null;
             let commentsRefListener = null;
-            let isPro = false;
             let supporterUsers = {};
 
             // AUTH LISTENER
             auth.onAuthStateChanged(function (user) {
                 if (user) {
                     currentUser = user;
-                    // Check Pro Status
-                    isPro = (localStorage.getItem('rekindle_is_pro') !== 'false');
-                    if (currentUser.email === 'ukiyo@rekindle.ink') {
-                        isPro = true;
-                    }
-
                     document.getElementById('login-overlay').style.display = 'none';
                     fetchSupporters(loadSuggestions);
                 } else {
@@ -931,11 +925,6 @@
                                 }
                             }
                         }
-                    }
-                    // Re-evaluate isPro for the current user against live supporter data
-                    if (currentUser) {
-                        var displayName = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : '');
-                        isPro = !!supporterUsers[displayName] || (currentUser.email === 'ukiyo@rekindle.ink');
                     }
                     if (callback) callback();
                 }).catch(function (error) {
@@ -1771,7 +1760,6 @@
                         authorName: currentUser.displayName || currentUser.email.split('@')[0],
                         authorUid: currentUser.uid,
                         authorEmail: currentUser.email,
-                        isPro: isPro,
                         createdAt: firebase.database.ServerValue.TIMESTAMP
                     });
                     inp.value = '';
@@ -1915,7 +1903,6 @@
                     app: (type === 'translation') ? app : null,
                     authorUid: currentUser.uid,
                     authorName: currentUser.displayName || currentUser.email.split('@')[0],
-                    isPro: isPro,
                     upvotes: {},
                     createdAt: firebase.database.ServerValue.TIMESTAMP
                 }).then(function () {

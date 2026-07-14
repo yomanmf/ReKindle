@@ -1,7 +1,7 @@
 /**
- * Cloudflare Worker - Interactive Fiction Story Server
+ * Interactive Fiction Story Server
  * 
- * Runs Z-code version 3 games server-side using JSZM.
+ * Runs Z-code version 3 games server-side using JSZM in Yandex Cloud Functions.
  * Provides a stateless HTTP interface for Kindle devices.
  */
 
@@ -458,10 +458,11 @@ JSZM.prototype = {
 
 
 // ============================================================================
-// Worker Implementation
+// Server Route Implementation
 // ============================================================================
 
 const ALLOWED_ORIGINS = [
+  'https://rekindle.website.yandexcloud.net',
   'https://beta.rekindle.ink',
   'https://rekindle.ink',
   'https://lite.rekindle.ink',
@@ -474,7 +475,7 @@ function getCorsHeaders(request) {
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Firebase-Token',
   };
 }
 
@@ -483,7 +484,7 @@ function generateId() {
 }
 
 // Generate the game HTML page
-function renderGamePage(gameId, output, location, score, moves, error = null) {
+function renderGamePage(gameId, output, location, score, moves, error = null, routePrefix = '') {
   const escapedOutput = (output || ''); // Output is already HTML-safe or contains HTML tags we want to preserve?
   // Wait, if output comes from Z-machine text decoder, it has \n. We replace \n with <br>.
   // But if we store the *accumulated* HTML in KV, we shouldn't double-escape.
@@ -535,7 +536,6 @@ function renderGamePage(gameId, output, location, score, moves, error = null) {
     }
     #input-form {
       display: flex;
-      gap: 8px;
     }
     #cmd {
       flex-grow: 1;
@@ -543,6 +543,9 @@ function renderGamePage(gameId, output, location, score, moves, error = null) {
       font-size: 16px;
       font-family: inherit;
       border: 2px solid #000;
+    }
+    #input-form button {
+      margin-left: 8px;
     }
     button {
       padding: 12px 20px;
@@ -591,22 +594,12 @@ function renderGamePage(gameId, output, location, score, moves, error = null) {
       transform: translateY(2px);
     }
     
-    /* Sticky Controls Area */
+    /* Static controls avoid Kindle e-ink checkerboarding. */
     #controls-area {
-        position: sticky;
-        bottom: 0;
-        left: 0;
         width: 100%;
         background: #ffffff;
         border-top: 2px solid #000;
         padding: 10px 0;
-        z-index: 100;
-        box-shadow: 0 -4px 10px rgba(0,0,0,0.1); /* Subtle shadow implies overlay */
-    }
-    
-    /* Ensure content isn't hidden behind sticky footer */
-    body {
-        padding-bottom: 0; /* Handled by spacer or intrinsic flow if sticky */
     }
   </style>
 </head>
@@ -622,7 +615,7 @@ function renderGamePage(gameId, output, location, score, moves, error = null) {
     ${content}
   </div>
   
-  <!-- Container for sticky elements -->
+  <!-- Static controls container for Kindle e-ink compatibility. -->
   <div id="controls-area">
       <div id="quick-actions">
         <!-- onmousedown="event.preventDefault()" prevents the button from stealing focus, keeping the keyboard open -->
@@ -640,7 +633,7 @@ function renderGamePage(gameId, output, location, score, moves, error = null) {
         <button class="action-btn clear-btn" onmousedown="event.preventDefault()" onclick="clearCmd()">Clear</button>
       </div>
 
-      <form id="input-form" method="POST" action="/play/${gameId}">
+      <form id="input-form" method="POST" action="${routePrefix}/play/${gameId}">
         <input type="text" id="cmd" name="cmd" placeholder="What do you want to do?" autocomplete="off">
         <button type="submit">Go</button>
       </form>
@@ -736,6 +729,8 @@ function renderGamePage(gameId, output, location, score, moves, error = null) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const routePrefix = env.ROUTE_PREFIX || '';
+    const routePath = routePrefix && url.pathname.indexOf(routePrefix) === 0 ? url.pathname.slice(routePrefix.length) || '/' : url.pathname;
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: getCorsHeaders(request) });
@@ -744,7 +739,7 @@ export default {
     // ========================================================================
     // POST /upload
     // ========================================================================
-    if (request.method === 'POST' && url.pathname === '/upload') {
+    if (request.method === 'POST' && routePath === '/upload') {
       // (Unchanged from original code)
       // Retrieves base64 data, decodes, checks version, stores to KV
       try {
@@ -756,6 +751,11 @@ export default {
         if (data.includes(',')) base64Data = data.split(',')[1];
 
         const binaryString = atob(base64Data);
+        if (binaryString.length > 2 * 1024 * 1024) {
+          return new Response(JSON.stringify({ error: 'Story file is too large. Maximum size is 2 MB.' }), {
+            status: 413, headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
+          });
+        }
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
 
@@ -768,7 +768,7 @@ export default {
         await env.STORIES.put(`game:${id}`, bytes.buffer);
 
         return new Response(JSON.stringify({
-          url: `${url.origin}/play/${id}`,
+          url: `${url.origin}${routePrefix}/play/${id}`,
           id: id
         }), { headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' } });
 
@@ -780,14 +780,14 @@ export default {
     // ========================================================================
     // GET/POST /play/:id
     // ========================================================================
-    if (url.pathname.startsWith('/play/')) {
-      const id = url.pathname.replace('/play/', '');
+    if (routePath.startsWith('/play/')) {
+      const id = routePath.replace('/play/', '');
       if (!id) return new Response('Game ID required', { status: 400 });
 
       // Load Game Code
       const gameData = await env.STORIES.get(`game:${id}`, { type: 'arrayBuffer' });
       if (!gameData) {
-        return new Response(renderGamePage(id, '', '', 0, 0, 'Game not found / expired.'), {
+        return new Response(renderGamePage(id, '', '', 0, 0, 'Game not found / expired.', routePrefix), {
           status: 404, headers: { 'Content-Type': 'text/html' }
         });
       }
@@ -963,7 +963,7 @@ export default {
         await env.STORIES.put(logKey, historyLog);
       }
 
-      return new Response(renderGamePage(id, historyLog, 'Interactive Reader', 0, 0), {
+      return new Response(renderGamePage(id, historyLog, 'Interactive Reader', 0, 0, null, routePrefix), {
         headers: { 'Content-Type': 'text/html; charset=utf-8' }
       });
     }

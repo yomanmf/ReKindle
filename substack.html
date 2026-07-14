@@ -12,7 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions-compat.js"></script>
     <script src="js/ip-ban.js"></script>
 
     <style>
@@ -543,7 +542,7 @@
     </style>
     <script src="theme.js?v=18"></script>
     <script src="time.js"></script>
-    <script src="pro-gate.js"></script>
+    <script src="js/rekindle-cloud.js?v=2"></script>
     <script src="js/i18n.js"></script>
     <script src="js/emoji-render.js"></script>
 </head>
@@ -551,16 +550,6 @@
 <body>
 
     <div class="window">
-        <!-- PAYWALL OVERLAY -->
-        <div id="paywall-overlay"
-            style="display:none; position:absolute; top:35px; left:0; width:100%; height:calc(100% - 35px); background:rgba(255,255,255,0.98); z-index:9000; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box;">
-            <h2 style="margin-top:0;" data-i18n="paywall.title">ReKindle+</h2>
-            <p data-i18n-html="paywall.desc">Support ReKindle development and get<br>access to exclusive apps.</p>
-            <button class="sys-btn" onclick="window.location.href='pay.html'" data-i18n="btn.subscribe">Subscribe /
-                Login</button>
-            <p style="font-size:0.8rem; margin-top:20px; color:#666;" id="paywall-status" data-i18n="status.checking">
-                Checking subscription...</p>
-        </div>
         <div class="title-bar">
             <div class="title-stripes"></div>
             <div class="close-box" onclick="window.location.href='index'">X</div>
@@ -705,19 +694,10 @@
         </div>
     </div>
 
-    <!-- PRO REQUIRED MODAL -->
-    <div id="pro-required-modal" class="modal-overlay">
-        <div class="modal-box" style="text-align:center;">
-            <h2 style="margin-top:0;" data-i18n="settings.pro_required">Pro Required</h2>
-            <p>A ReKindle+ subscription is required to use this app.</p>
-            <button class="sys-btn" onclick="location.reload()">OK</button>
-        </div>
-    </div>
-
 
     <script>
         // --- CONFIG ---
-        const API_PATH = "/api"; // Sub-path handled by worker
+        const API_PATH = "/integrations/substack/api";
 
         const firebaseConfig = {
             apiKey: "__REKINDLE_FIREBASE_API_KEY__",
@@ -784,12 +764,8 @@
         }
 
         // --- STATE ---
-        // Hardcoded Worker URL as requested
-        const WORKER_URL = "https://rekindle-substack.timjarnott.workers.dev";
-
         let state = {
-            sid: '', // Only loaded from Firestore (Pro-protected)
-            workerUrl: WORKER_URL,
+            sid: '',
             user: null, // ReKindle User
             subs: [],
             inbox: [],
@@ -814,7 +790,7 @@
             if (window.rekindleAutoDetectScale) window.rekindleAutoDetectScale();
             if (window.rekindleApplyDefaultFullscreen) window.rekindleApplyDefaultFullscreen();
 
-            // Initialize Firebase first, then pro-gate handles the paywall
+            // Initialize Firebase before using the authenticated Yandex API.
             initializeApp();
         };
 
@@ -831,15 +807,7 @@
                     if (u) RekindleIpBan.enforceOnAuthStateChanged(u);
                     updateUI();
 
-                    // Use pro-gate check callback to ensure we have the latest status
-                    // Only sync SID if user is pro
-                    if (u && window.rekindleProGate) {
-                        window.rekindleProGate.check(isPro => {
-                            if (isPro) {
-                                syncSID();
-                            }
-                        });
-                    }
+                    if (u) syncSID();
                 });
             } catch (e) { console.warn("Firebase Error", e); }
 
@@ -855,10 +823,6 @@
         // --- API CLIENT ---
         async function apiCall(endpoint, options = {}) {
             if (!state.sid) throw new Error("No SID provided");
-            // Always use the constant since input is removed
-            const baseUrl = WORKER_URL.replace(/\/$/, "");
-            const target = `${baseUrl}${API_PATH}${endpoint}`;
-
             try {
                 // Merge headers
                 const headers = {
@@ -869,19 +833,11 @@
 
 
 
-                const res = await fetch(target, {
-                    headers: headers
+                return await RekindleCloud.request(`${API_PATH}${endpoint}`, {
+                    method: options.method || 'GET',
+                    headers: headers,
+                    body: options.body
                 });
-
-                if (res.ok) {
-                    return await res.json();
-                }
-
-                if (res.status === 403 || res.status === 401) {
-                    throw new Error(`Access Denied (${res.status}). Check your SID.`);
-                }
-
-                throw new Error(`Worker/API Error ${res.status}`);
 
             } catch (e) {
                 console.error("API failed:", e.message);
@@ -959,7 +915,7 @@
 
             if (!sid) { showAlertModal("Please enter a valid SID"); return; }
 
-            // Must save to Pro-only subcollection first - will fail for non-Pro users
+            // Store the private session identifier in the owner-only subcollection.
             if (state.user && db) {
                 try {
                     // Encrypt SID before saving
@@ -979,8 +935,8 @@
                     refreshData();
                     console.log("Substack SID saved (encrypted).");
                 } catch (e) {
-                    console.error("Failed to save SID (Pro required):", e);
-                    document.getElementById('pro-required-modal').style.display = 'flex';
+                    console.error("Failed to save SID:", e);
+                    showAlertModal("Could not save the Substack session.");
                 }
             } else {
                 showAlertModal("Please log in first.");
@@ -1022,7 +978,7 @@
                 }
             } catch (e) {
                 // Expected for non-Pro users - suppress console clutter
-                // console.log("Could not sync SID (Pro required):", e.code);
+                // console.log("Could not sync SID:", e.code);
             }
         }
 
@@ -1469,9 +1425,8 @@
                 }
             } else {
                 try {
-                    const registerUser = firebase.functions().httpsCallable('registerUser');
-                    const result = await registerUser({ username: u, password: p });
-                    await auth.signInWithCustomToken(result.data.customToken);
+                    const result = await RekindleCloud.register(u, p);
+                    await auth.signInWithCustomToken(result.customToken);
                     closeModal('login-modal');
                 } catch (e) {
                     showAlertModal(e.message || "Registration failed.");

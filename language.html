@@ -643,6 +643,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -1064,7 +1065,7 @@
             const tatoebaUrl = `https://tatoeba.org/en/api_v0/search/display?from=eng&to=${lang}&sort=random&limit=15&t=${Date.now()}`;
 
             const proxies = [
-                (url) => `/api/proxy?url=${encodeURIComponent(url)}`
+                (url) => RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(url)
             ];
 
             for (const proxy of proxies) {

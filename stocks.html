@@ -355,6 +355,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -632,14 +633,9 @@
 
                 const yahooUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${currentRange}`;
 
-                // Priority 1: Internal Cloudflare Function (No CORS, Server-side proxy)
-                // We use a relative path so it works on the deployed site
-                const internalApiUrl = `/api/price?symbol=${symbol}&interval=${interval}&range=${currentRange}`;
-
-                // Proxy Fallback Strategy
+                // Fetch Yahoo Finance through the size-bounded Yandex Gateway proxy.
                 const proxies = [
-                    (url) => internalApiUrl, // Try our own backend first!
-                    (url) => `/api/proxy?url=${encodeURIComponent(url)}`
+                    (url) => RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(url)
                 ];
 
                 let json = null;

@@ -889,6 +889,7 @@
     <link rel="stylesheet" href="css/custom-select.css">
     <script src="time.js"></script>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/custom-select.js"></script>
 </head>
@@ -1988,7 +1989,7 @@
         async function loadCalDAVEvents() {
             document.getElementById('status-msg').innerText = "Fetching CalDAV...";
             // We use the same proxy pattern as other apps to bypass CORS
-            const proxyUrl = `/api/proxy?url=${encodeURIComponent(calDavUrl)}`;
+            const proxyUrl = RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(calDavUrl);
 
             try {
                 const res = await fetch(proxyUrl);

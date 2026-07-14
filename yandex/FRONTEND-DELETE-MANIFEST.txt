@@ -1,0 +1,4 @@
+# Remove these obsolete objects from the production static bucket after the
+# updated HTML has been published and verified.
+pro-gate.js
+js/anti-tamper.js

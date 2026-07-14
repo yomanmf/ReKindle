@@ -344,6 +344,7 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
+    <script src="js/rekindle-cloud.js"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -600,7 +601,7 @@
             const league = LEAGUES.find(l => l.slug === leagueSlug);
 
             if (league && league.source === 'nrl-scores') {
-                const res = await fetch('/api/nrl-scores');
+                const res = await fetch(RekindleCloud.apiBase + '/content/nrl-scores');
                 if (!res.ok) {
                     throw new Error("Network error " + res.status);
                 }
@@ -609,8 +610,8 @@
 
             const apiUrl = `https://site.api.espn.com/apis/site/v2/sports/${leagueSlug}/scoreboard`;
 
-            // Using internal Cloudflare worker proxy
-            const proxyUrl = `/api/proxy?url=${encodeURIComponent(apiUrl)}`;
+            // Legacy relative proxy route: migrate to the Yandex Gateway before production use.
+            const proxyUrl = RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(apiUrl);
 
             const res = await fetch(proxyUrl);
 

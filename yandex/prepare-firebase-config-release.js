@@ -107,8 +107,6 @@ async function run() {
     var files = fs.readdirSync(PROJECT_ROOT).filter(function (name) {
         return /\.html$/.test(name);
     }).sort();
-    files.push("pro-gate.js");
-
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
     var prepared = (await mapWithConcurrency(files, prepareFile)).filter(Boolean);
     var manifest = {

@@ -5,7 +5,10 @@
 // temporary upstream rate limit. No Cloudflare-specific APIs are used.
 var responseCache = new Map();
 var CACHE_MAX_ENTRIES = 80;
+var CACHE_MAX_BYTES = 20 * 1024 * 1024;
+var MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 var STALE_TTL_MS = 24 * 60 * 60 * 1000;
+var cacheBytes = 0;
 
 var ALLOWED_HOSTS = [
     "reddit.com",
@@ -52,9 +55,11 @@ module.exports.handler = async function (event) {
         return makeResponse(400, "Invalid URL", "text/plain; charset=utf-8", false, 0);
     }
 
-    if (target.protocol !== "https:" || !isAllowedHost(target.hostname)) {
+    if (target.protocol !== "https:" || target.username || target.password || !isAllowedHost(target.hostname)) {
         return makeResponse(403, "Forbidden: Domain not allowed", "text/plain; charset=utf-8", false, 0);
     }
+    target.hash = "";
+    targetUrl = target.toString();
 
     var now = Date.now();
     var cached = responseCache.get(targetUrl);
@@ -86,11 +91,7 @@ module.exports.handler = async function (event) {
             }
 
             try {
-                var upstream = await fetch(urlToFetch, {
-                    method: "GET",
-                    headers: BROWSER_HEADERS,
-                    redirect: "follow"
-                });
+                var upstream = await fetchAllowedUrl(urlToFetch, method);
                 lastStatus = upstream.status;
 
                 if (upstream.status === 200) {
@@ -100,13 +101,17 @@ module.exports.handler = async function (event) {
                         break;
                     }
 
-                    var buffer = Buffer.from(await upstream.arrayBuffer());
+                    if (method === "HEAD") {
+                        return makeResponse(200, "", contentType, false, maxAge);
+                    }
+                    var buffer = await readLimitedBytes(upstream, MAX_RESPONSE_BYTES);
                     var binary = isBinaryContent(contentType, isImage);
                     var body = binary ? buffer.toString("base64") : buffer.toString("utf8");
                     var entry = {
                         body: body,
                         contentType: contentType,
                         isBase64Encoded: binary,
+                        byteLength: buffer.length,
                         maxAge: maxAge,
                         expiresAt: Date.now() + maxAge * 1000,
                         staleUntil: Date.now() + STALE_TTL_MS
@@ -121,6 +126,7 @@ module.exports.handler = async function (event) {
                 }
             } catch (e) {
                 lastError = e;
+                if (e && e.nonRetryable === true) attempt = 3;
             }
         }
     }
@@ -142,17 +148,86 @@ function isAllowedHost(hostname) {
     return false;
 }
 
+async function fetchAllowedUrl(value, method) {
+    var current = validateAllowedUrl(value);
+    for (var redirect = 0; redirect < 5; redirect++) {
+        var controller = new AbortController();
+        var timer = setTimeout(function () { controller.abort(); }, 15000);
+        var upstream;
+        try {
+            upstream = await fetch(current.toString(), {
+                method: method,
+                headers: BROWSER_HEADERS,
+                redirect: "manual",
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timer);
+        }
+        if (upstream.status < 300 || upstream.status >= 400) return upstream;
+        var location = upstream.headers.get("location");
+        if (!location) throw terminalError("Reddit returned an invalid redirect");
+        current = validateAllowedUrl(new URL(location, current).toString());
+    }
+    throw terminalError("Reddit redirected too many times");
+}
+
+function validateAllowedUrl(value) {
+    var parsed = new URL(String(value || ""));
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password || !isAllowedHost(parsed.hostname)) {
+        throw terminalError("Redirect target is not allowed");
+    }
+    parsed.hash = "";
+    return parsed;
+}
+
+async function readLimitedBytes(upstream, maxBytes) {
+    var length = Number(upstream.headers.get("content-length") || 0);
+    if (length > maxBytes) throw terminalError("Reddit response exceeds the 5 MB limit");
+    if (!upstream.body) return Buffer.alloc(0);
+    var reader = upstream.body.getReader();
+    var chunks = [];
+    var total = 0;
+    while (true) {
+        var part = await reader.read();
+        if (part.done) break;
+        total += part.value.byteLength;
+        if (total > maxBytes) {
+            await reader.cancel();
+            throw terminalError("Reddit response exceeds the 5 MB limit");
+        }
+        chunks.push(Buffer.from(part.value));
+    }
+    return Buffer.concat(chunks, total);
+}
+
+function terminalError(message) {
+    var error = new Error(message);
+    error.nonRetryable = true;
+    return error;
+}
+
 function isBinaryContent(contentType, isImage) {
     var type = String(contentType || "").toLowerCase();
     return isImage || type.indexOf("image/") === 0 || type.indexOf("video/") === 0 || type.indexOf("application/octet-stream") === 0;
 }
 
 function putCache(key, value) {
-    if (responseCache.size >= CACHE_MAX_ENTRIES) {
-        var oldestKey = responseCache.keys().next().value;
-        if (oldestKey) responseCache.delete(oldestKey);
+    var previous = responseCache.get(key);
+    if (previous) {
+        cacheBytes -= Number(previous.byteLength || 0);
+        responseCache.delete(key);
     }
+    while (responseCache.size >= CACHE_MAX_ENTRIES || (responseCache.size && cacheBytes + value.byteLength > CACHE_MAX_BYTES)) {
+        var oldestKey = responseCache.keys().next().value;
+        if (!oldestKey) break;
+        var oldest = responseCache.get(oldestKey);
+        cacheBytes -= Number(oldest && oldest.byteLength || 0);
+        responseCache.delete(oldestKey);
+    }
+    if (value.byteLength > CACHE_MAX_BYTES) return;
     responseCache.set(key, value);
+    cacheBytes += value.byteLength;
 }
 
 function responseFromCache(entry, method, stale) {

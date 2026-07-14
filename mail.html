@@ -590,11 +590,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-functions-compat.js"></script>
     <script src="time.js"></script>
     <script src="theme.js?v=18"></script>
-    <script src="pro-gate.js"></script>
-    <script src="pro-gate.js"></script>
+    <script src="js/rekindle-cloud.js?v=2"></script>
     <script src="js/i18n.js"></script>
     <script src="js/custom-select.js"></script>
     <style>
@@ -668,16 +666,6 @@
         </div>
 
         <div id="status-bar" data-i18n="mail.status.loading">Loading...</div>
-
-        <div id="paywall-overlay"
-            style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.98); z-index:10002; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; box-sizing:border-box;">
-            <h2 style="margin-top:0;" data-i18n="mail.paywall.title">ReKindle+</h2>
-            <p data-i18n-html="mail.paywall.desc">Support ReKindle development and get<br>access to exclusive apps.</p>
-            <button class="sys-btn" onclick="window.location.href='pay.html'" data-i18n="mail.paywall.btn">Subscribe /
-                Login</button>
-            <p style="font-size:0.8rem; margin-top:20px; color:#666;" id="paywall-status"
-                data-i18n="mail.paywall.checking">Checking subscription...</p>
-        </div>
 
         <div id="auth-overlay">
             <h2 style="margin-bottom:10px;" data-i18n="mail.auth.title">Email Client</h2>
@@ -772,15 +760,6 @@
         </div>
     </div>
 
-    <!-- PRO REQUIRED MODAL -->
-    <div id="pro-required-modal" class="modal-overlay" style="display:none;">
-        <div class="modal-box" style="text-align:center;">
-            <h3 style="margin-top:0;" data-i18n="mail.pro.title">Pro Required</h3>
-            <p data-i18n="mail.pro.desc">A ReKindle+ subscription is required to use this app.</p>
-            <button class="toolbar-btn primary" onclick="location.reload()">OK</button>
-        </div>
-    </div>
-
     <script>
         // IMAP/SMTP Config
         let imapConfig = null;
@@ -791,7 +770,6 @@
         let currentFolder = 'INBOX';
         let currentEmail = null;
         let userEmail = '';
-        let functions;
 
         function waitForFirebase(callback, attempts = 0) {
             if (typeof firebase !== 'undefined') {
@@ -799,17 +777,14 @@
             } else if (attempts < 50) {
                 setTimeout(() => waitForFirebase(callback, attempts + 1), 100);
             } else {
-                const overlay = document.getElementById('paywall-overlay');
-                const status = document.getElementById('paywall-status');
-                status.innerText = "Error: Firebase failed to load.";
-                overlay.style.display = 'flex';
+                showModal("Error: Firebase failed to load.");
             }
         }
 
         window.onload = function () {
             if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
             if (window.rekindleApplyDefaultFullscreen) window.rekindleApplyDefaultFullscreen();
-            waitForFirebase(checkSubscription);
+            waitForFirebase(checkAccess);
         };
 
         // FIREBASE SETUP
@@ -824,101 +799,29 @@
         };
 
         let auth, db;
-        let isPro = false;
 
-        function checkSubscription() {
-            const overlay = document.getElementById('paywall-overlay');
-            const status = document.getElementById('paywall-status');
+        function checkAccess() {
             const btnLogin = document.getElementById('btn-login');
-
-            // 1. CACHE CHECK (Instant)
-            try {
-                const cachedExpiry = localStorage.getItem('rekindle_pro_expiry');
-                if (cachedExpiry && parseInt(cachedExpiry) > Date.now()) {
-                    isPro = true;
-                    if (btnLogin) btnLogin.disabled = false;
-                    // Optimistically hide overlay / unlock features
-                    overlay.style.display = 'none';
-                    // REMOVED: initGmailMode(); return; 
-                    // We must fall through to init Firebase so 'db' is defined for initGmailMode later.
-                }
-            } catch (e) { console.warn("Cache error", e); }
-
-            if (typeof firebase !== 'undefined') {
-                if (!auth) {
-                    firebase.initializeApp(firebaseConfig);
-                    auth = firebase.auth();
-                    db = firebase.firestore();
-                }
-
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        // Timeout fallback in case Firestore query hangs
-                        const timeoutId = setTimeout(() => {
-                            if (!isPro) {
-                                console.warn("Subscription check timed out");
-                                status.innerText = "Verification timed out. Please refresh.";
-                                overlay.style.display = 'flex';
-                            }
-                        }, 10000);
-
-                        db.collection('users').doc(user.uid).get()
-                            .then(doc => {
-                                clearTimeout(timeoutId);
-                                if (doc.exists) {
-                                    const data = doc.data();
-                                    const now = Date.now();
-                                    let expires = 0;
-                                    if (data.proExpiresAt) {
-                                        expires = typeof data.proExpiresAt.toMillis === 'function'
-                                            ? data.proExpiresAt.toMillis()
-                                            : new Date(data.proExpiresAt).getTime();
-                                    }
-
-                                    // UPDATE CACHE
-                                    if (expires > now) {
-                                        localStorage.setItem('rekindle_pro_expiry', expires.toString());
-                                    } else {
-                                        localStorage.removeItem('rekindle_pro_expiry');
-                                    }
-
-                                    if (expires > now) {
-                                        // UNLOCKED - overlay stays hidden
-                                        isPro = true;
-                                        if (btnLogin) btnLogin.disabled = false;
-                                        // Load settings from cloud
-                                        loadSettingsFromFirebase(user.uid).then(() => {
-                                            initGmailMode();
-                                        });
-                                    } else {
-                                        // LOCKED
-                                        status.innerText = expires > 0 ? "Subscription expired." : "Subscription required.";
-                                        overlay.style.display = 'flex';
-                                    }
-                                } else {
-                                    status.innerText = "Subscription required.";
-                                    overlay.style.display = 'flex';
-                                }
-                            })
-                            .catch(e => {
-                                clearTimeout(timeoutId);
-                                if (!isPro) {
-                                    console.error("Error checking sub", e);
-                                    status.innerText = "Error verifying. Try again.";
-                                    overlay.style.display = 'flex';
-                                }
-                            });
-                    } else {
-                        // NOT LOGGED IN
-                        status.innerText = "Please log in.";
-                        overlay.style.display = 'flex';
-                        localStorage.removeItem('rekindle_pro_expiry');
-                    }
-                });
-            } else {
-                status.innerText = "System Error";
-                overlay.style.display = 'flex';
+            if (typeof firebase === 'undefined') {
+                showModal("System Error");
+                return;
             }
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    if (btnLogin) btnLogin.disabled = false;
+                    loadSettingsFromFirebase(user.uid).then(initGmailMode);
+                } else {
+                    if (btnLogin) btnLogin.disabled = true;
+                    showModal("Please sign in to ReKindle first.");
+                }
+            });
+        }
+
+        function mailRequest(action, body) {
+            return RekindleCloud.request('/mail/' + action, { method: 'POST', body: body });
         }
 
         const PROVIDERS = {
@@ -955,8 +858,6 @@
         };
 
         async function initGmailMode() {
-            functions = firebase.functions();
-
             const savedUser = localStorage.getItem('rekindle_imap_user');
             const encryptedPass = localStorage.getItem('rekindle_imap_pass');
             const savedUid = localStorage.getItem('rekindle_imap_uid');
@@ -1112,13 +1013,11 @@
                 return;
             }
             console.log("Loading folders with config", imapConfig); // DEBUG
-            const getFoldersFn = functions.httpsCallable('getFolders');
-
             try {
-                const result = await getFoldersFn({ imap: imapConfig });
+                const result = await mailRequest('folders', { imap: imapConfig });
                 console.log("getFolders result:", result); // DEBUG
-                if (result.data.success) {
-                    const folders = result.data.folders;
+                if (result.success) {
+                    const folders = result.folders;
                     allFolders = folders; // Store globally
                     const select = document.getElementById('folder-select');
                     select.innerHTML = '';
@@ -1177,21 +1076,19 @@
                 if (btn) btn.innerText = "Loading...";
             }
 
-            const fetchEmailsFn = functions.httpsCallable('fetchEmails');
-
             try {
-                const result = await fetchEmailsFn({
+                const result = await mailRequest('messages', {
                     imap: imapConfig,
                     path: currentFolder,
                     cursor: currentCursor,
                     limit: 20
                 });
 
-                if (result.data.success) {
+                if (result.success) {
                     if (reset) {
-                        emails = result.data.messages;
+                        emails = result.messages;
                     } else {
-                        emails = emails.concat(result.data.messages);
+                        emails = emails.concat(result.messages);
                         isLoadingMore = false;
                     }
 
@@ -1202,11 +1099,11 @@
                         return dateB - dateA; // Descending order
                     });
 
-                    currentCursor = result.data.nextCursor;
+                    currentCursor = result.nextCursor;
                     renderEmailList();
                     document.getElementById('status-bar').innerText = `Loaded ${emails.length} emails.`;
                 } else {
-                    throw new Error(result.data.error);
+                    throw new Error(result.error);
                 }
             } catch (e) {
                 console.error("Load error", e);
@@ -1296,7 +1193,7 @@
                 email.flags.push('\\Seen');
                 renderEmailList(); // Update UI
                 // Call modifyFlags backend
-                functions.httpsCallable('modifyFlags')({
+                mailRequest('flags', {
                     imap: imapConfig,
                     path: currentFolder,
                     uid: email.uid,
@@ -1307,17 +1204,15 @@
             const detailsPane = document.getElementById('details-pane');
             detailsPane.innerHTML = '<div style="padding:20px; text-align:center;">Loading body...</div>';
 
-            const fetchBodyFn = functions.httpsCallable('fetchEmailBody');
-
             try {
-                const result = await fetchBodyFn({
+                const result = await mailRequest('body', {
                     imap: imapConfig,
                     path: currentFolder,
                     uid: email.uid
                 });
 
-                if (result.data.success) {
-                    const fullEmail = result.data.email;
+                if (result.success) {
+                    const fullEmail = result.email;
 
                     // Reduce padding on container
                     detailsPane.innerHTML = `
@@ -1447,7 +1342,7 @@
                     }
 
                 } else {
-                    detailsPane.innerHTML = `< div style = "padding:20px; color:red;" > Error loading body: ${result.data.error}</div > `;
+                    detailsPane.innerHTML = `< div style = "padding:20px; color:red;" > Error loading body: ${result.error}</div > `;
                 }
 
             } catch (e) {
@@ -1463,7 +1358,7 @@
             renderEmailList();
 
             try {
-                await functions.httpsCallable('modifyFlags')({
+                await mailRequest('flags', {
                     imap: imapConfig,
                     path: currentFolder,
                     uid: currentEmail.uid,
@@ -1491,8 +1386,6 @@
                 return;
             }
 
-            const moveEmailFn = functions.httpsCallable('moveEmail');
-
             // Optimistic UI update
             const uid = currentEmail.uid;
             emails = emails.filter(e => e.uid !== uid);
@@ -1501,7 +1394,7 @@
             currentEmail = null;
 
             try {
-                await moveEmailFn({
+                await mailRequest('move', {
                     imap: imapConfig,
                     path: currentFolder,
                     uid: uid,
@@ -1530,8 +1423,6 @@
                 return;
             }
 
-            const moveEmailFn = functions.httpsCallable('moveEmail');
-
             // Optimistic UI update
             const uid = currentEmail.uid;
             emails = emails.filter(e => e.uid !== uid);
@@ -1540,7 +1431,7 @@
             currentEmail = null;
 
             try {
-                await moveEmailFn({
+                await mailRequest('move', {
                     imap: imapConfig,
                     path: currentFolder,
                     uid: uid,
@@ -1595,10 +1486,8 @@
             sendBtn.innerText = "Sending...";
             sendBtn.disabled = true;
 
-            const sendEmailFn = functions.httpsCallable('sendEmail');
-
             try {
-                const result = await sendEmailFn({
+                const result = await mailRequest('send', {
                     smtp: smtpConfig,
                     message: {
                         to,
@@ -1608,11 +1497,11 @@
                     }
                 });
 
-                if (result.data.success) {
+                if (result.success) {
                     closeComposeModal();
                     showModal("Email sent!");
                 } else {
-                    showModal("Error sending: " + result.data.error);
+                    showModal("Error sending: " + result.error);
                 }
             } catch (e) {
                 console.error("Send error", e);
