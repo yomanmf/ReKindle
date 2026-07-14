@@ -859,6 +859,21 @@ Single-player entries that have a multiplayer counterpart (e.g. `chess`, `checke
 
 **Important:** Do **not** add `single: true` to games that are single-player-only and have no multiplayer variant in the project (e.g. `crossy`, `dino`). That flag is only for the folder-grouping badge system. For solid pixel-art icons, use `filled: true` instead.
 
+## Firebase web API key rotation
+
+Firebase web API keys are public project identifiers, not authorization
+secrets; Firebase Security Rules and App Check protect data. Generic GitHub
+secret scanning may still flag a literal `AIza...` value. Source files therefore
+use the placeholder `__REKINDLE_FIREBASE_API_KEY__`. `build-automation.js`
+requires `REKINDLE_FIREBASE_API_KEY` and injects it only into build artifacts.
+Never commit the concrete value or replace the placeholder in source files.
+
+For a Yandex config-only rotation, run
+`yandex/prepare-firebase-config-release.js` with both
+`REKINDLE_CURRENT_FIREBASE_API_KEY` and `REKINDLE_FIREBASE_API_KEY` supplied
+outside Git. Publish and verify the generated production objects before deleting
+the old Google Cloud API key; deleting it first breaks Firebase Auth immediately.
+
 ## Git Workflow
 
 After successfully completing any task that changes code:

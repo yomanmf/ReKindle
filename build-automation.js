@@ -13,6 +13,16 @@ const BUILD_DIR = './_deploy';
 const LITE_DIR = './_deploy/lite';
 const LEGACY_DIR = './_deploy/legacy';
 const MAIN_DIR = './_deploy/main';
+const FIREBASE_API_KEY_PLACEHOLDER = '__REKINDLE_FIREBASE_API_KEY__';
+
+function injectFirebaseApiKey(content, filename) {
+    if (!content.includes(FIREBASE_API_KEY_PLACEHOLDER)) return content;
+    const apiKey = process.env.REKINDLE_FIREBASE_API_KEY;
+    if (!apiKey || !/^AIza[0-9A-Za-z_-]{30,}$/.test(apiKey)) {
+        throw new Error(`REKINDLE_FIREBASE_API_KEY is required to build ${filename}.`);
+    }
+    return content.split(FIREBASE_API_KEY_PLACEHOLDER).join(apiKey);
+}
 
 // Ensure clean start for libs to guarantee re-transpilation
 fs.removeSync('./_deploy/lite/libs');
@@ -1462,6 +1472,16 @@ async function run() {
         console.log("📄 Replaced index.html with index_old.html for Lite and Legacy builds.");
     } else {
         console.warn("⚠️  index_old.html not found — Lite/Legacy will use default index.html.");
+    }
+
+    // Firebase browser keys are public identifiers, but keeping the concrete
+    // value out of Git history prevents generic secret scanners from treating
+    // the client configuration as a leaked server credential.
+    const runtimeConfigFiles = glob.sync(`${BUILD_DIR}/**/*.{html,js}`, { nodir: true });
+    for (const file of runtimeConfigFiles) {
+        const content = await fs.readFile(file, 'utf8');
+        const injected = injectFirebaseApiKey(content, file);
+        if (injected !== content) await fs.outputFile(file, injected);
     }
 
     // 2.7 Process Main Files (Minify Only)

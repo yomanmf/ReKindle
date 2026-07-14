@@ -14,7 +14,7 @@
     const CACHE_DURATION = 1000 * 60 * 60; // 1 hour max cache
 
     const firebaseConfig = {
-        apiKey: "AIzaSyCCL6Z5DFTm-pZ_1EZJ_9Ukk9rWDIZky-U",
+        apiKey: "__REKINDLE_FIREBASE_API_KEY__",
         authDomain: "rekindle-fork.firebaseapp.com",
         projectId: "rekindle-fork",
         storageBucket: "rekindle-fork.firebasestorage.app",

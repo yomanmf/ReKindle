@@ -8,9 +8,16 @@ var SITE_BASE = "https://rekindle.website.yandexcloud.net";
 var PROJECT_ROOT = path.resolve(__dirname, "..");
 var OUTPUT_DIR = process.env.REKINDLE_CONFIG_RELEASE_DIR || "/private/tmp/rekindle-firebase-config-release";
 var CONCURRENCY = 8;
+var CURRENT_FIREBASE_API_KEY = process.env.REKINDLE_CURRENT_FIREBASE_API_KEY;
+var TARGET_FIREBASE_API_KEY = process.env.REKINDLE_FIREBASE_API_KEY;
+
+if (!/^AIza[0-9A-Za-z_-]{30,}$/.test(CURRENT_FIREBASE_API_KEY || "") ||
+    !/^AIza[0-9A-Za-z_-]{30,}$/.test(TARGET_FIREBASE_API_KEY || "")) {
+    throw new Error("REKINDLE_CURRENT_FIREBASE_API_KEY and REKINDLE_FIREBASE_API_KEY are required.");
+}
 
 var REPLACEMENTS = [
-    ["AIzaSyDY7x7vVmlYUyVZNLuCCmIQYa6PWFVfZqQ", "AIzaSyCCL6Z5DFTm-pZ_1EZJ_9Ukk9rWDIZky-U"],
+    [CURRENT_FIREBASE_API_KEY, TARGET_FIREBASE_API_KEY],
     ["rekindle-dd1fa.firebaseapp.com", "rekindle-fork.firebaseapp.com"],
     ["rekindle-dd1fa.firebasestorage.app", "rekindle-fork.firebasestorage.app"],
     ["1:748026882518:web:6877dd4329318070c11c77", "1:136525921771:web:1ab69288e786dbfd9e2dae"],

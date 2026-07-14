@@ -9,7 +9,7 @@ var PROJECT_ROOT = path.resolve(__dirname, "..");
 var RELEASE_DIR = process.env.REKINDLE_CONFIG_RELEASE_DIR || "/private/tmp/rekindle-firebase-config-release";
 var MANIFEST = JSON.parse(fs.readFileSync(path.join(RELEASE_DIR, "manifest.json"), "utf8"));
 var CONCURRENCY = 10;
-var OLD_CONFIG = /rekindle-dd1fa|AIzaSyDY7x7vVmlYUyVZNLuCCmIQYa6PWFVfZqQ|748026882518|1:748026882518:web:6877dd4329318070c11c77/;
+var OLD_CONFIG = /rekindle-dd1fa|748026882518|1:748026882518:web:6877dd4329318070c11c77/;
 
 function sha256(value) {
     return crypto.createHash("sha256").update(value).digest("hex");
