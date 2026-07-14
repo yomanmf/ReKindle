@@ -8,6 +8,16 @@
 
 Future agents (including yourself in a new session) will not have access to your working context. If you don't write it down, the knowledge is lost. Be generous with details, code snippets, and file paths. A few minutes of documentation now saves hours of re-discovery later.
 
+## Mandatory GitHub Delivery Rule
+
+**A task is not finished until its completed, verified changes are committed and pushed directly to `origin/main`.** Do this automatically at the end of every task; do not leave the result only in the working tree, a local commit, or a separate remote branch, and do not wait for an additional reminder to push.
+
+* Include every change that belongs to the task, including deletions, migrations, rules, documentation, and related application changes. Exclude something only when the user explicitly asks for that exclusion.
+* Run the relevant tests and `git diff --check` before committing.
+* Fetch `origin/main` before publishing and use a normal fast-forward push. Never force-push or discard unrelated user changes. If upstream changes prevent a safe fast-forward, integrate them without data loss, rerun verification, and then push.
+* After pushing, verify that `origin/main` points to the new commit and that the working tree contains no uncommitted task changes.
+* If authentication, branch protection, a merge conflict, or another external restriction prevents the push, report that blocker explicitly; a local or feature-branch commit does not count as delivery.
+
 ## 🚫 Restrictions (Target: Chromium 75)
 
 ### 1. No Flexbox Gap (`gap`)
