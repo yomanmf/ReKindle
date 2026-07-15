@@ -43,9 +43,8 @@ AI, OCR, mail, export, feeds or categories.
 ## Functionality without a paywall
 
 Applications no longer require ReKindle+ in production. The
-preceding Yandex Functions, Gateway, primary Firebase rules and 113-object
-frontend release are deployed. The 117-object internal-social removal release
-is prepared but still pending in `DEPLOYMENT-CHECKLIST.md`. Pixel and Flipbook
+preceding Yandex Functions, Gateway, primary Firebase rules and 118-object
+internal-social removal frontend release are deployed. Pixel and Flipbook
 remain standalone creative applications in that release.
 The following are operational requirements, not subscription gates:
 

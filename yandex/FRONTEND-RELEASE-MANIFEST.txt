@@ -15,6 +15,7 @@ files.html
 flipbook.html
 history.html
 icons.js
+sw.js
 index.html
 index_old.html
 interactive.html

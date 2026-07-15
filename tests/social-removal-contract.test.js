@@ -97,6 +97,7 @@ test("release publishes editors and deletes stale social page objects", function
 
     assert.ok(release.includes("pixel.html"));
     assert.ok(release.includes("flipbook.html"));
+    assert.ok(release.includes("sw.js"));
     ["kindlechat", "neighbourhood", "topics", "moderation"].forEach(function (name) {
         assert.ok(deleted.includes(name));
         assert.ok(deleted.includes(name + ".html"));

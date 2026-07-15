@@ -4,8 +4,8 @@ Publish backend infrastructure before any changed HTML. The checked-in frontend
 already points at the new Gateway routes and will fail if it is uploaded first.
 Prepared archives are under `/private/tmp/rekindle-yandex-release`; verify all
 five release archives against `RELEASE-SHA256.txt` before upload. The current
-frontend manifest contains 70 source files plus 47 byte-identical extensionless
-HTML aliases, for 117 production objects. Pixel and Flipbook are standalone
+frontend manifest contains 71 source files plus 47 byte-identical extensionless
+HTML aliases, for 118 production objects. Pixel and Flipbook are standalone
 primary-project applications; retired internal-social pages are delete-only.
 
 ## Production rollout status (15 July 2026)
@@ -33,13 +33,20 @@ primary-project applications; retired internal-social pages are delete-only.
 - [ ] Stripe webhook migration and authenticated integration E2E checks remain.
 - [x] All 113 objects from the previous frontend archive are published to
   Yandex Object Storage.
-- [ ] Publish the social-removal release: deploy the backend and Gateway first,
-  run the public-profile migration, publish primary rules and all 117 frontend
-  objects, then delete the eight HTML/extensionless internal-social objects
-  listed in `FRONTEND-DELETE-MANIFEST.txt`.
+- [x] Social-removal release published on 15 July 2026: the backend and Gateway
+  no longer expose social routes, the public-profile migration completed,
+  primary Firestore/RTDB rules were published, all 118 frontend objects were
+  verified, and the eight HTML/extensionless internal-social objects were
+  deleted. The full delete manifest removed ten objects including the already
+  retired `pro-gate.js` and `js/anti-tamper.js`.
 - [x] Local social-removal verification passed: contract 5/5, backend 28/28,
   Reddit 3/3, changed inline scripts, YAML, locale/rules JSON, and the complete
-  117-object release archive.
+  118-object release archive.
+- [x] Production social-removal verification passed: `/index`, `/pixel` and
+  `/flipbook` return HTTP 200; KindleChat, Neighbourhood, Topics and Moderation
+  HTML/extensionless routes return HTTP 404; the retired social Gateway route
+  returns HTTP 404; `icons.js` contains no retired catalog IDs; and `sw.js`
+  serves `rekindle-cache-v22` with cache revalidation enabled.
 - [x] Local verification passed: backend 28/28, Reddit 3/3, Story syntax,
   changed inline scripts (50 HTML files), release checksums and locale/rules JSON.
 - [x] Production comparison reports 113/113 byte-identical objects, with no
