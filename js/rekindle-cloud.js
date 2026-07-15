@@ -3,6 +3,65 @@
 
     var API_BASE = "https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net/api/rekindle";
     var GATEWAY_BASE = API_BASE.slice(0, API_BASE.length - "/api/rekindle".length);
+    var authReadyPromise = null;
+    var authReadyInstance = null;
+
+    function authError(message, code) {
+        var error = new Error(message);
+        error.code = code;
+        return error;
+    }
+
+    function waitForFirebaseAuth() {
+        if (typeof firebase === "undefined" || !firebase.auth) {
+            return Promise.reject(authError("Please sign in first.", "auth/unavailable"));
+        }
+
+        var auth;
+        try {
+            auth = firebase.auth();
+        } catch (error) {
+            return Promise.reject(authError("Please sign in first.", "auth/unavailable"));
+        }
+
+        if (auth.currentUser) return Promise.resolve(auth.currentUser);
+        if (authReadyPromise && authReadyInstance === auth) return authReadyPromise;
+
+        authReadyInstance = auth;
+        authReadyPromise = new Promise(function (resolve, reject) {
+            var settled = false;
+            var unsubscribe = null;
+            var timer = setTimeout(function () {
+                finish(null, authError("Authentication initialization timed out.", "auth/timeout"));
+            }, 10000);
+
+            function finish(user, error) {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                if (typeof unsubscribe === "function") unsubscribe();
+                if (error) {
+                    authReadyPromise = null;
+                    reject(error);
+                    return;
+                }
+                resolve(user || null);
+            }
+
+            try {
+                unsubscribe = auth.onAuthStateChanged(function (user) {
+                    finish(user, null);
+                }, function () {
+                    finish(null, authError("Could not restore the Firebase session.", "auth/restore-failed"));
+                });
+                if (settled && typeof unsubscribe === "function") unsubscribe();
+            } catch (error) {
+                finish(null, authError("Could not restore the Firebase session.", "auth/restore-failed"));
+            }
+        });
+
+        return authReadyPromise;
+    }
 
     async function request(path, options) {
         options = options || {};
@@ -11,10 +70,11 @@
         if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
         if (options.auth !== false) {
-            if (typeof firebase === "undefined" || !firebase.auth || !firebase.auth().currentUser) {
+            var user = await waitForFirebaseAuth();
+            if (!user) {
                 throw new Error("Please sign in first.");
             }
-            headers["X-Firebase-Token"] = await firebase.auth().currentUser.getIdToken();
+            headers["X-Firebase-Token"] = await user.getIdToken();
         }
 
         var response = await fetch(API_BASE + path, {

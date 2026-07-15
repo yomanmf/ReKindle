@@ -576,6 +576,24 @@ The production site at `https://rekindle.website.yandexcloud.net` is static host
 
 The shared public GET/HEAD proxy is `/api/rekindle/content/proxy?url=...`. It validates public DNS destinations, rejects credentials/private networks, follows at most five validated redirects, applies an IP rate limit, strips browser credentials and cookies, and caps responses at 5 MB. Do not weaken it into an unrestricted header-forwarding proxy. `reddit.html` continues to use its dedicated Yandex route because Reddit needs its own allowlist/cache behavior.
 
+**Remote RSS image gotcha:** `rss2json` can return valid BBC thumbnail URLs on
+`ichef.bbci.co.uk` even when that CDN is unreachable from the user's network.
+Do not put those URLs directly into `<img src>`. `newspaper.html` sends remote
+HTTP(S) thumbnails through `RekindleCloud.apiBase + '/content/proxy?url='` and
+keeps `.article-img` hidden until `onload`, hiding it again on `onerror`. The
+same upstream image was verified to time out directly while the deployed
+Yandex proxy returned `200 image/jpeg`.
+
+**Firebase Auth restoration race:** On a cold page load,
+`firebase.auth().currentUser` can still be `null` while the compat SDK restores
+the persisted session. A synchronous null check incorrectly reports “Please
+sign in first”; a second click then works after restoration finishes.
+`js/rekindle-cloud.js` therefore waits for the first `onAuthStateChanged`
+result before rejecting an authenticated request. Keep the immediate
+`currentUser` fast path, the bounded initialization timeout, and the true
+signed-out rejection. The regression contract is
+`tests/newspaper-reliability.test.js`.
+
 **Reddit's current Yandex deployment:** `yandex/reddit-function/index.js` runs as the public Node.js 22 Cloud Function `rekindle-reddit` (`d4egfe65qmv2774tec7m`). The `rekindle-api` API Gateway (`d5dmoqrf9kg552lo4g69`) exposes it at `https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net/api/reddit`. `reddit.html` uses this absolute endpoint for both feeds and images. The checked-in Gateway specification is `yandex/reddit-api-gateway.yaml`.
 
 **Yandex console Monaco gotcha:** Calling automation-style `fill()` on the Cloud Functions or API Gateway Monaco editor can insert the new source without deleting the generated sample. If the sample contains a second `module.exports.handler`, it silently overrides the intended handler. Focus the `textarea[aria-label="Editor content"]`, send `ControlOrMeta+A`, then type the complete source. Before saving, verify that `Hello World` is absent and that the visible final line number matches the source file.

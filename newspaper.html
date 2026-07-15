@@ -506,6 +506,18 @@
             return div.innerHTML;
         }
 
+        function getProxiedImageUrl(value) {
+            if (!value) return '';
+            try {
+                const url = new URL(String(value), window.location.href);
+                if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+                if (!window.RekindleCloud || !RekindleCloud.apiBase) return url.href;
+                return RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(url.href);
+            } catch (e) {
+                return '';
+            }
+        }
+
 
 
         // --- WALLPAPER LOADER ---
@@ -566,19 +578,28 @@
                     // Try to find an image
                     let imgUrl = item.thumbnail || (item.enclosure ? item.enclosure.link : null);
 
-                    let imgHtml = '';
-                    if (imgUrl) {
-                        imgHtml = `<img src="${imgUrl}" class="article-img" style="display:block;">`;
-                    }
-
                     // Changed <a> to <span> to avoid default link behavior
                     div.innerHTML = `
                         <div class="article-content">
                             <span class="headline">${item.title}</span>
                             <div class="summary">${cleanDesc}</div>
                         </div>
-                        ${imgHtml}
                     `;
+
+                    const proxiedImageUrl = getProxiedImageUrl(imgUrl);
+                    if (proxiedImageUrl) {
+                        const image = document.createElement('img');
+                        image.className = 'article-img';
+                        image.alt = '';
+                        image.onload = function () {
+                            image.style.display = 'block';
+                        };
+                        image.onerror = function () {
+                            image.style.display = 'none';
+                        };
+                        image.src = proxiedImageUrl;
+                        div.appendChild(image);
+                    }
                     container.appendChild(div);
                 });
 

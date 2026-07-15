@@ -5,6 +5,7 @@
         "build": "node build-automation.js",
         "build:badwords": "node scripts/build-bad-words.js",
         "test:chat-ai": "node --test tests/chat-ai-contract.test.js",
+        "test:newspaper": "node --test tests/newspaper-reliability.test.js",
         "test:social-removal": "node --test tests/social-removal-contract.test.js",
         "deploy:beta": "npx wrangler pages deploy . --project-name=rekindle --branch=beta",
         "deploy:rules:firestore": "firebase deploy --only firestore:rules",
