@@ -675,7 +675,10 @@
                 if (indicator) indicator.innerText = 'Retrying in ' + Math.ceil(ms / 1000) + 's...';
             },
 
-            async request(endpoint) {
+            async request(endpoint, options) {
+                options = options || {};
+                const silent = options.silent === true;
+                const requestId = ++this.currentRequestId;
                 var now = Date.now();
                 var timeSinceLast = now - this.lastRequestTime;
                 if (timeSinceLast < this.minRequestInterval) {
@@ -683,12 +686,11 @@
                 }
                 this.lastRequestTime = Date.now();
 
-                if (typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
+                if (!silent && typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
                     ui.hideRateLimitMessage();
                 }
 
-                document.getElementById('loading-indicator').innerText = 'Loading...';
-                const requestId = ++this.currentRequestId;
+                if (!silent) document.getElementById('loading-indicator').innerText = 'Loading...';
                 let path = endpoint;
                 let query = "";
 
@@ -712,7 +714,7 @@
                     for (let attempt = 0; attempt < 3; attempt++) {
                         if (attempt > 0) {
                             const delay = this.retryDelay(lastProxyResponse, attempt);
-                            this.showRetryStatus(delay);
+                            if (!silent) this.showRetryStatus(delay);
                             await this.sleep(delay);
                         }
 
@@ -723,16 +725,16 @@
                                 throw new Error('Request superseded');
                             }
 
-                            document.getElementById('loading-indicator').style.display = 'inline';
+                            if (!silent) document.getElementById('loading-indicator').style.display = 'inline';
                             const res = await fetch(target);
-                            document.getElementById('loading-indicator').style.display = 'none';
+                            if (!silent) document.getElementById('loading-indicator').style.display = 'none';
 
                             if (requestId !== this.currentRequestId) {
                                 throw new Error('Request superseded');
                             }
 
                             if (res.ok) {
-                                if (typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
+                                if (!silent && typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
                                     ui.hideRateLimitMessage();
                                 }
                                 return await res.text();
@@ -743,7 +745,7 @@
 
                             if (res.status === 429 || res.status >= 500) {
                                 console.warn('Proxy returned ' + res.status + ', retrying...');
-                                if (res.status === 429 && typeof ui !== 'undefined' && ui.showRateLimitMessage) {
+                                if (!silent && res.status === 429 && typeof ui !== 'undefined' && ui.showRateLimitMessage) {
                                     ui.showRateLimitMessage();
                                 }
                                 continue;
@@ -754,7 +756,7 @@
                         } catch (e) {
                             lastError = e;
                             if (e.message && e.message.indexOf('superseded') !== -1) {
-                                document.getElementById('loading-indicator').style.display = 'none';
+                                if (!silent) document.getElementById('loading-indicator').style.display = 'none';
                                 throw e;
                             }
                             console.warn('Proxy ' + proxy + ' attempt ' + (attempt + 1) + ' failed:', e);
@@ -762,7 +764,7 @@
                     }
                 }
 
-                document.getElementById('loading-indicator').style.display = 'none';
+                if (!silent) document.getElementById('loading-indicator').style.display = 'none';
                 let msg = "Connection failed.";
                 if (lastStatus === 404) {
                     msg = "Reddit proxy endpoint was not found. Check the Yandex API Gateway configuration.";
@@ -795,9 +797,9 @@
                 return this.request(cleanLink);
             },
 
-            async getThreadRoots(permalink) {
+            async getThreadRoots(permalink, options) {
                 const cleanLink = permalink.replace(/\/$/, "");
-                return this.request(cleanLink + '.rss?depth=1');
+                return this.request(cleanLink + '.rss?depth=1', options);
             },
 
             async getThreadJson(permalink) {
@@ -1233,6 +1235,66 @@
                 this.updateCommentNavigation();
             },
 
+            rootCommentIconHtml() {
+                return `
+                    <span class="root-comment-icon" data-i18n-title="reddit.comment.top_level" title="Top-level comment">
+                        <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="black" stroke-width="2">
+                            <path d="M5 5 H27 V21 H15 L8 27 V21 H5 Z"></path>
+                            <circle cx="11" cy="13" r="1.5" fill="black" stroke="none"></circle>
+                            <circle cx="16" cy="13" r="1.5" fill="black" stroke="none"></circle>
+                            <circle cx="21" cy="13" r="1.5" fill="black" stroke="none"></circle>
+                        </svg>
+                    </span>`;
+            },
+
+            applyRootCommentMarkers(permalink, comments) {
+                if (this.currentThread !== permalink) return;
+
+                const content = document.getElementById('content-area');
+                if (!content) return;
+
+                const commentElements = content.querySelectorAll('[data-comment-index]');
+                for (let i = 0; i < commentElements.length; i++) {
+                    const element = commentElements[i];
+                    const commentIndex = parseInt(element.getAttribute('data-comment-index'), 10);
+                    const comment = comments[commentIndex];
+                    if (!comment || comment.isTopLevel !== true) continue;
+
+                    element.className = 'comment comment-depth-0 comment-root';
+                    element.setAttribute('data-comment-depth', '0');
+                    element.setAttribute('data-root-comment', 'true');
+
+                    const meta = element.querySelector('.comment-meta');
+                    if (meta && !meta.querySelector('.root-comment-icon')) {
+                        meta.insertAdjacentHTML('afterbegin', this.rootCommentIconHtml());
+                    }
+                }
+
+                this.commentNavIndex = -1;
+                this.commentNavLastScrollTop = content.scrollTop;
+                this.updateCommentNavigation();
+            },
+
+            loadThreadRootsInBackground(permalink, comments) {
+                api.getThreadRoots(permalink, { silent: true }).then(rootsResponse => {
+                    if (this.currentThread !== permalink) return;
+
+                    const rootsData = parseRssThread(rootsResponse);
+                    const rootIds = rootsData.comments.map(function(comment) { return comment.id; });
+                    const markedRoots = window.RekindleRedditComments.markTopLevelComments(comments, rootIds);
+                    console.log('Thread RSS top-level comments:', markedRoots);
+                    this.applyRootCommentMarkers(permalink, comments);
+                }).catch(rootsError => {
+                    if (rootsError.message && rootsError.message.indexOf('superseded') !== -1) return;
+                    if (this.currentThread !== permalink) return;
+
+                    console.warn('Root-only RSS failed; marking only the first comment as top-level:', rootsError);
+                    const firstRootIds = comments.length > 0 ? [comments[0].id] : [];
+                    window.RekindleRedditComments.markTopLevelComments(comments, firstRootIds);
+                    this.applyRootCommentMarkers(permalink, comments);
+                });
+            },
+
             async loadMorePosts() {
                 if (this.currentThread || this.isLoadingMore || !this.afterToken) return;
                 this.isLoadingMore = true;
@@ -1345,25 +1407,14 @@
                     let responseText = '';
                     let data = { post: null, comments: [] };
                     let rssFailure = null;
+                    let shouldLoadRoots = false;
 
                     try {
                         responseText = await api.getThread(permalink);
                         console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
                         data = parseRssThread(responseText);
                         console.log('Thread RSS has post:', !!data.post, 'comments:', data.comments.length);
-
-                        try {
-                            const rootsResponse = await api.getThreadRoots(permalink);
-                            const rootsData = parseRssThread(rootsResponse);
-                            const rootIds = rootsData.comments.map(function(comment) { return comment.id; });
-                            const markedRoots = window.RekindleRedditComments.markTopLevelComments(data.comments, rootIds);
-                            console.log('Thread RSS top-level comments:', markedRoots);
-                        } catch (rootsError) {
-                            if (rootsError.message && rootsError.message.indexOf('superseded') !== -1) throw rootsError;
-                            console.warn('Root-only RSS failed; marking only the first comment as top-level:', rootsError);
-                            const firstRootIds = data.comments.length > 0 ? [data.comments[0].id] : [];
-                            window.RekindleRedditComments.markTopLevelComments(data.comments, firstRootIds);
-                        }
+                        shouldLoadRoots = !!data.post;
                     } catch (rssError) {
                         if (rssError.message && rssError.message.indexOf('superseded') !== -1) throw rssError;
                         rssFailure = rssError;
@@ -1417,7 +1468,7 @@
 
                     html += `<h3 data-i18n="reddit.comments">Comments</h3>`;
 
-                    comments.forEach(function(c) {
+                    comments.forEach(function(c, commentIndex) {
                         let body = c.bodyHtml ? ui.decodeHtml(c.bodyHtml) : '';
                         body = ui.processCommentHtml(body);
                         const actualDepth = Math.max(Number(c.depth) || 0, 0);
@@ -1425,18 +1476,10 @@
                         const isTopLevel = c.isTopLevel === true || actualDepth === 0;
                         const commentClass = 'comment comment-depth-' + depth + (isTopLevel ? ' comment-root' : '');
                         const rootAttribute = isTopLevel ? ' data-root-comment="true"' : '';
-                        const rootIcon = isTopLevel ? `
-                            <span class="root-comment-icon" data-i18n-title="reddit.comment.top_level" title="Top-level comment">
-                                <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="black" stroke-width="2">
-                                    <path d="M5 5 H27 V21 H15 L8 27 V21 H5 Z"></path>
-                                    <circle cx="11" cy="13" r="1.5" fill="black" stroke="none"></circle>
-                                    <circle cx="16" cy="13" r="1.5" fill="black" stroke="none"></circle>
-                                    <circle cx="21" cy="13" r="1.5" fill="black" stroke="none"></circle>
-                                </svg>
-                            </span>` : '';
+                        const rootIcon = isTopLevel ? ui.rootCommentIconHtml() : '';
 
                         html += `
-                            <div class="${commentClass}" data-comment-depth="${actualDepth}"${rootAttribute}>
+                            <div class="${commentClass}" data-comment-index="${commentIndex}" data-comment-depth="${actualDepth}"${rootAttribute}>
                                 <div class="comment-meta">${rootIcon}${escapeHtml(c.author)}</div>
                                 <div class="comment-body">${body}</div>
                             </div>
@@ -1449,6 +1492,9 @@
                     this.commentNavIndex = -1;
                     this.commentNavLastScrollTop = 0;
                     this.updateCommentNavigation();
+                    if (shouldLoadRoots) {
+                        this.loadThreadRootsInBackground(permalink, comments);
+                    }
 
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;

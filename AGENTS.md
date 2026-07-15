@@ -909,9 +909,19 @@ the old Google Cloud API key; deleting it first breaks Firebase Auth immediately
 
 `reddit.html` uses two RSS requests for a Reddit thread: the normal feed supplies
 all displayed comments, while the same `.rss` URL with `depth=1` supplies only
-top-level comments. Match the Atom `<id>` values from the depth-one feed against
-the full feed before setting `isTopLevel` or `data-root-comment="true"`. A normal
-RSS entry does not expose its parent ID, so never treat every entry as top-level.
+top-level comments. The normal feed is the critical path and must be rendered
+immediately; fetch `depth=1` in the background and add root markers/navigation
+after it resolves. Never block the first thread render on this metadata request.
+The background request must use the Reddit API client's silent mode so it does
+not keep the global loading indicator visible or race with foreground status UI.
+Match the Atom `<id>` values from the depth-one feed against the full feed before
+setting `isTopLevel` or `data-root-comment="true"`. A normal RSS entry does not
+expose its parent ID, so never treat every entry as top-level.
+
+The Reddit API client's request ID must be allocated before its 1.5-second
+throttle wait. This lets a later foreground navigation supersede a sleeping
+background root request; allocating the ID after the wait can make the old
+background request cancel the user's newer subreddit or thread request.
 
 Thread JSON remains a fallback and `js/reddit-comments.js` parses its reply tree
 recursively. Keep `raw_json=1` on the JSON request so comment HTML does not arrive
