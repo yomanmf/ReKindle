@@ -93,8 +93,9 @@ Optional report notifications:
 - `DISCORD_CHANNEL_ID`
 
 Attach the minimal permissions needed for Object Storage, Lockbox, Foundation
-Models and Vision OCR. Do not set a long-lived `YANDEX_IAM_TOKEN` in production;
-the function should receive a service-account token in its invocation context.
+Models (`ai.languageModels.user`) and Vision OCR (`ai.vision.user`). Do not set a
+long-lived `YANDEX_IAM_TOKEN` in production; the function should receive a
+service-account token in its invocation context.
 
 ## 2. Reddit function
 
@@ -193,7 +194,10 @@ ReKindle+ is supporter status only and must never gate app functionality.
 1. `GET /api/rekindle/health` returns HTTP 200.
 2. Authenticated storage E2E can upload, list, download and delete a non-Pro
    user's object.
-3. AI, OCR and Reader return a controlled response for an authenticated user.
+3. Authenticated `POST /ai/chat` with `{ "action": "quota" }` returns a quota,
+   a shared prompt returns non-empty text and decrements that quota exactly once,
+   and a failed provider request releases its reservation. OCR and Reader return
+   a controlled response for an authenticated user.
 4. A primary Suggestions report rejects mismatched content ownership/path and
    does not require `rekindle-socials` credentials.
 5. `/content/proxy` rejects localhost/private destinations and returns a public

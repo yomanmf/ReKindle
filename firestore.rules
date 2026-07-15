@@ -164,9 +164,6 @@ service cloud.firestore {
       match /watchlist/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      match /chatLimits/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
       match /topic_states/{topicId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }

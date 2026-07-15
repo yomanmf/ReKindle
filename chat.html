@@ -452,6 +452,7 @@
         // --- CONFIGURATION ---
         const AI_API_PATH = "/ai/chat";
         const DAILY_MESSAGE_LIMIT = 10;
+        const AI_REQUEST_TIMEOUT_MS = 35000;
 
         // Firebase Configuration
         const firebaseConfig = {
@@ -464,12 +465,22 @@
         };
 
         let dailyMessageCount = null; // Loading state (null = loading, -1 = error, >=0 = count)
+        let dailyMessageLimit = DAILY_MESSAGE_LIMIT;
         let currentUserId = null;
+        let authStateReady = false;
+        let isSendingMessage = false;
 
-        // Get today's date string for tracking (YYYY-MM-DD)
-        function getTodayString() {
-            const now = window.rekindleGetZonedDate ? window.rekindleGetZonedDate() : new Date();
-            return now.toISOString().split('T')[0];
+        function translate(key, fallback) {
+            if (typeof window.t === 'function') return window.t(key, fallback);
+            return fallback;
+        }
+
+        function formatTemplate(template, values) {
+            let result = String(template || '');
+            Object.keys(values || {}).forEach(function (key) {
+                result = result.split('${' + key + '}').join(String(values[key]));
+            });
+            return result;
         }
 
         // --- SETTINGS LOGIC ---
@@ -766,53 +777,27 @@
             }
         }
 
-        // Load daily message count from Firestore
-        async function loadDailyMessageCount() {
-            if (!currentUserId) return;
-            const db = firebase.firestore();
-            const today = getTodayString();
-
-            try {
-                const doc = await db.collection('users').doc(currentUserId)
-                    .collection('chatLimits').doc(today).get();
-
-                if (doc.exists) {
-                    dailyMessageCount = doc.data().count || 0;
-                } else {
-                    dailyMessageCount = 0;
-                }
-                updateMessageCounter();
-            } catch (e) {
-                if (e.code === 'permission-denied') {
-                    console.warn("Permission denied loading message count; treating as 0");
-                    dailyMessageCount = 0;
-                } else {
-                    console.error("Error loading message count:", e);
-                    dailyMessageCount = -1; // Error marker
-                }
-                updateMessageCounter();
-            }
+        function applyQuota(quota) {
+            if (!quota || typeof quota.used !== 'number' || typeof quota.limit !== 'number') return false;
+            dailyMessageLimit = Math.max(1, quota.limit);
+            dailyMessageCount = Math.max(0, Math.min(dailyMessageLimit, quota.used));
+            updateMessageCounter();
+            return true;
         }
 
-        // Increment and save message count
-        async function incrementMessageCount() {
-            if (!currentUserId) return false;
-            const db = firebase.firestore();
-            const today = getTodayString();
-
+        // Load the server-authoritative daily quota.
+        async function loadDailyMessageCount() {
+            if (!currentUserId) return;
             try {
-                await db.collection('users').doc(currentUserId)
-                    .collection('chatLimits').doc(today).set({
-                        count: firebase.firestore.FieldValue.increment(1),
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true });
-
-                dailyMessageCount++;
-                updateMessageCounter();
-                return true;
+                const data = await RekindleCloud.request(AI_API_PATH, {
+                    method: 'POST',
+                    body: { action: 'quota' }
+                });
+                if (!applyQuota(data.quota)) throw new Error('Invalid quota response.');
             } catch (e) {
-                console.error("Error saving message count:", e);
-                return false;
+                console.error("Error loading message count:", e);
+                dailyMessageCount = -1;
+                updateMessageCounter();
             }
         }
 
@@ -821,46 +806,61 @@
             const counterEl = document.getElementById('message-counter');
             const sendBtn = document.getElementById('send-btn');
             if (counterEl) {
-                if (useByoKey) {
+                if (!authStateReady) {
+                    counterEl.style.display = 'block';
+                    counterEl.innerText = translate('chat.quota.loading', 'Loading quota...');
+                    counterEl.style.color = '#666';
+                    if (sendBtn) sendBtn.disabled = true;
+                } else if (!currentUserId) {
+                    counterEl.style.display = 'block';
+                    counterEl.innerText = translate('chat.auth.required', 'Please sign in to use AI Assistant.');
+                    counterEl.style.color = '#cc0000';
+                    if (sendBtn) sendBtn.disabled = true;
+                } else if (useByoKey && apiKey) {
                     counterEl.style.display = 'none';
-                    if (sendBtn) sendBtn.disabled = false;
+                    if (sendBtn) sendBtn.disabled = isSendingMessage;
                 } else {
                     counterEl.style.display = 'block';
                     if (dailyMessageCount === null) {
-                        counterEl.innerText = "Loading quota...";
+                        counterEl.innerText = translate('chat.quota.loading', 'Loading quota...');
                         counterEl.style.color = '#666';
                         if (sendBtn) sendBtn.disabled = true;
                     } else if (dailyMessageCount === -1) {
-                        counterEl.innerText = "Error loading quota. Refresh to try again.";
+                        counterEl.innerText = translate('chat.quota.error', 'Error loading quota. Refresh to try again.');
                         counterEl.style.color = '#cc0000';
                         if (sendBtn) sendBtn.disabled = true;
                     } else {
-                        const remaining = DAILY_MESSAGE_LIMIT - dailyMessageCount;
-                        counterEl.innerText = `${remaining}/${DAILY_MESSAGE_LIMIT} messages left today`;
+                        const remaining = dailyMessageLimit - dailyMessageCount;
+                        counterEl.innerText = formatTemplate(
+                            translate('chat.quota.remaining', '${remaining}/${limit} messages left today'),
+                            { remaining: remaining, limit: dailyMessageLimit }
+                        );
                         counterEl.style.color = remaining <= 3 ? '#cc0000' : '#666';
-                        if (sendBtn) sendBtn.disabled = remaining <= 0;
+                        if (sendBtn) sendBtn.disabled = isSendingMessage || remaining <= 0;
                     }
                 }
             }
         }
 
         function checkAccess() {
-            const sendBtn = document.getElementById('send-btn');
             if (typeof firebase !== 'undefined') {
                 if (!firebase.apps.length) {
                     firebase.initializeApp(firebaseConfig);
                 }
                 const auth = firebase.auth();
                 auth.onAuthStateChanged(user => {
+                    authStateReady = true;
                     if (user) {
                         currentUserId = user.uid;
+                        dailyMessageCount = null;
+                        dailyMessageLimit = DAILY_MESSAGE_LIMIT;
+                        updateMessageCounter();
                         loadSettingsFromFirebase();
                         loadDailyMessageCount();
                     } else {
                         currentUserId = null;
                         dailyMessageCount = -1;
-                        document.getElementById('message-counter').innerText = "Please sign in to use AI Assistant.";
-                        if (sendBtn) sendBtn.disabled = true;
+                        updateMessageCounter();
                     }
                 });
             } else {
@@ -915,6 +915,10 @@
             });
         };
 
+        document.addEventListener('rekindle:i18n:ready', function () {
+            updateMessageCounter();
+        });
+
         // --- WALLPAPER LOADER ---
 
         // --- CHAT LOGIC ---
@@ -922,59 +926,111 @@
             const inputEl = document.getElementById('user-input');
             const text = inputEl.value.trim();
 
-            if (!text) return;
-
-            // Check daily message limit (Skip if Custom Key)
-            if (!useByoKey && dailyMessageCount >= DAILY_MESSAGE_LIMIT) {
-                addMessage("You've reached your daily limit of " + DAILY_MESSAGE_LIMIT + " messages. Please try again tomorrow.", 'ai');
+            if (!text || isSendingMessage) return;
+            if (!authStateReady || !currentUserId) {
+                if (authStateReady) addMessage(translate('chat.auth.required', 'Please sign in to use AI Assistant.'), 'ai');
                 return;
             }
+
+            const hasCustomProvider = useByoKey && Boolean(apiKey);
+
+            // Check daily message limit (Skip if Custom Key)
+            if (!hasCustomProvider && dailyMessageCount >= dailyMessageLimit) {
+                addMessage(translate('chat.error.daily_limit', 'You have reached today\'s AI message limit. Please try again tomorrow.'), 'ai');
+                return;
+            }
+
+            isSendingMessage = true;
+            updateMessageCounter();
 
             // 1. Add User Message
             addMessage(text, 'user');
             inputEl.value = '';
 
             // 2. Show Loading
-            const loadingId = addMessage("Thinking...", 'ai');
+            const loadingId = addMessage(translate('chat.status.thinking', 'Thinking...'), 'ai', true);
 
             // 3. API Call via Proxy
             try {
                 const payload = { prompt: text };
+                const controller = new AbortController();
+                const timeoutId = setTimeout(function () { controller.abort(); }, AI_REQUEST_TIMEOUT_MS);
 
-                if (useByoKey) {
+                if (hasCustomProvider) {
                     payload.provider = aiProvider;
                     payload.model = aiModel;
                     payload.apiKey = apiKey;
                     payload.endpoint = getActiveEndpoint();
                 }
 
-                const data = await RekindleCloud.request(AI_API_PATH, {
-                    method: 'POST',
-                    body: payload
-                });
+                let data;
+                try {
+                    data = await RekindleCloud.request(AI_API_PATH, {
+                        method: 'POST',
+                        body: payload,
+                        signal: controller.signal
+                    });
+                } finally {
+                    clearTimeout(timeoutId);
+                }
 
                 // Remove loading message
                 const loadingEl = document.getElementById(loadingId);
                 if (loadingEl) loadingEl.remove();
 
                 if (data.error) {
-                    addMessage("Error: " + (data.error.message || "Unknown AI service error"), 'ai');
+                    addMessage(translate('chat.error.unknown', 'The AI request failed.'), 'ai');
                 } else if (data.text) {
                     addMessage(data.text, 'ai');
-                    // Increment message count only if NOT using BYO Key
-                    if (!useByoKey) {
-                        await incrementMessageCount();
-                    }
+                    if (!hasCustomProvider) applyQuota(data.quota);
                 } else {
-                    addMessage("Error: Empty response from Oracle.", 'ai');
+                    addMessage(translate('chat.error.empty', 'The AI provider returned an empty response.'), 'ai');
                 }
 
             } catch (e) {
                 const loadingEl = document.getElementById(loadingId);
                 if (loadingEl) loadingEl.remove();
-                addMessage("Network Error. Check connection.", 'ai');
+                if (e.quota) applyQuota(e.quota);
+                addMessage(getAiErrorMessage(e), 'ai');
                 console.error(e);
+            } finally {
+                isSendingMessage = false;
+                updateMessageCounter();
             }
+        }
+
+        function getAiErrorMessage(error) {
+            const code = error && error.code ? String(error.code) : '';
+            let message;
+            if (code === 'unauthenticated') {
+                message = translate('chat.error.session', 'Your session expired. Sign in again and retry.');
+            } else if (code === 'daily-limit') {
+                message = translate('chat.error.daily_limit', 'You have reached today\'s AI message limit. Please try again tomorrow.');
+            } else if (code === 'provider-authorization') {
+                message = translate('chat.error.provider_auth', 'The selected AI provider rejected the API key.');
+            } else if (code === 'provider-rate-limit') {
+                message = translate('chat.error.provider_rate_limit', 'The selected AI provider rate limit was reached.');
+            } else if (code === 'provider-request') {
+                message = error.message || translate('chat.error.provider_request', 'The selected AI provider rejected the request.');
+            } else if (code === 'ai-timeout' || (error && error.name === 'AbortError')) {
+                message = translate('chat.error.timeout', 'The AI request timed out. Please try again.');
+            } else if (code === 'ai-configuration') {
+                message = translate('chat.error.configuration', 'The shared AI service is not configured correctly.');
+            } else if (code === 'ai-capacity' || code === 'ai-unavailable' || code === 'ai-network') {
+                message = translate('chat.error.unavailable', 'The AI service is temporarily unavailable. Please try again later.');
+            } else if ((!error || !error.status) && (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+                message = translate('chat.error.network', 'Network error. Check your connection.');
+            } else if ((!error || !error.status) && error && error.name === 'TypeError') {
+                message = translate('chat.error.network', 'Network error. Check your connection.');
+            } else {
+                message = error && error.message ? error.message : translate('chat.error.unknown', 'The AI request failed.');
+            }
+            if (error && error.requestId) {
+                message += ' ' + formatTemplate(translate('chat.error.request_id', '(Request ID: ${requestId})'), {
+                    requestId: error.requestId
+                });
+            }
+            return message;
         }
 
         function copyToNote(text) {
@@ -982,14 +1038,14 @@
             window.location.href = 'notes.html?action=new_note';
         }
 
-        function addMessage(text, sender) {
+        function addMessage(text, sender, isTemporary) {
             const history = document.getElementById('chat-history');
             const msgDiv = document.createElement('div');
             const id = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             msgDiv.id = id;
             msgDiv.className = `message ${sender}`;
 
-            if (sender === 'ai' && text !== "Thinking...") {
+            if (sender === 'ai' && !isTemporary) {
                 try {
                     msgDiv.innerHTML = marked.parse(text);
                 } catch (e) {

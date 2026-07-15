@@ -16,6 +16,8 @@ var nrlParser = require("./nrl");
 var MAX_USER_STORAGE_BYTES = 100 * 1024 * 1024;
 var MAX_OBJECT_BYTES = 25 * 1024 * 1024;
 var SIGNED_URL_TTL_SECONDS = 300;
+var AI_SHARED_DAILY_LIMIT = 10;
+var AI_UPSTREAM_TIMEOUT_MS = 25000;
 var FIREBASE_DATABASE_URL = "https://rekindle-fork-default-rtdb.europe-west1.firebasedatabase.app";
 var DEFAULT_ALLOWED_ORIGINS = [
     "https://rekindle.website.yandexcloud.net",
@@ -34,6 +36,7 @@ module.exports.handler = async function (event, context) {
     var method = String(event.httpMethod || (event.requestContext && event.requestContext.httpMethod) || "GET").toUpperCase();
     var path = normalizeRoute(event.path || (event.requestContext && event.requestContext.path) || "");
     var origin = getHeader(event, "origin");
+    var requestId = getRequestId(event);
 
     if (method === "OPTIONS") return response(204, "", origin);
     if (!isAllowedOrigin(origin)) return response(403, { error: "Origin is not allowed." }, origin);
@@ -102,7 +105,7 @@ module.exports.handler = async function (event, context) {
             return response(200, await handleStripeWebhook(event), origin);
         }
         if (method === "POST" && endsWith(path, "/ai/chat")) {
-            return response(200, await aiChat(event, context || {}), origin);
+            return response(200, await aiChat(event, context || {}, requestId), origin);
         }
         if (method === "POST" && endsWith(path, "/ai/ocr")) {
             return response(200, await recognizeImageText(event, context || {}), origin);
@@ -126,13 +129,16 @@ module.exports.handler = async function (event, context) {
     } catch (error) {
         var normalized = normalizeError(error);
         console.error("ReKindle backend request failed", {
+            requestId: requestId,
             path: path,
             status: normalized.status,
             code: normalized.code,
-            message: normalized.message
+            message: normalized.message,
+            upstreamStatus: normalized.upstreamStatus || undefined
         });
-        var errorBody = { error: normalized.message, code: normalized.code };
+        var errorBody = { error: normalized.message, code: normalized.code, requestId: requestId };
         if (normalized.retryAfter) errorBody.retryAfter = normalized.retryAfter;
+        if (normalized.quota) errorBody.quota = normalized.quota;
         return response(normalized.status, errorBody, origin);
     }
 };
@@ -375,11 +381,16 @@ async function substackApiProxy(event, path, method) {
     return readUpstreamResponse(await fetch(url.toString(), options));
 }
 
-async function aiChat(event, context) {
+async function aiChat(event, context, requestId) {
+    var startedAt = Date.now();
     var user = await requireFirebaseUser(event, false);
     var body = parseJsonBody(event);
     var action = String(body.action || "chat");
-    var hasUserKey = Boolean(body.apiKey);
+    var hasUserKey = Boolean(String(body.apiKey || "").trim());
+
+    if (action === "quota") {
+        return { quota: await getDailyLimitState(user.uid, "ai_shared", AI_SHARED_DAILY_LIMIT) };
+    }
 
     if (action === "list_models") {
         await enforceUserWindowRateLimit(user.uid, "ai_models", 30, 60 * 1000);
@@ -393,18 +404,25 @@ async function aiChat(event, context) {
 
     if (hasUserKey) {
         await enforceUserWindowRateLimit(user.uid, "ai_byok", 60, 60 * 1000);
-        return generateWithUserProvider(body, prompt);
+        var providerResult = await generateWithUserProvider(body, prompt);
+        logAiSuccess(requestId, "byok:" + String(body.provider || "openai"), startedAt);
+        return providerResult;
     }
 
-    await enforceDailyLimit(user.uid, "ai_shared", 10);
-    return generateWithYandex(context, prompt);
+    var sharedResult = await withReservedDailyLimit(
+        function () { return reserveDailyLimit(user.uid, "ai_shared", AI_SHARED_DAILY_LIMIT); },
+        function (reservation) { return releaseDailyLimit(user.uid, "ai_shared", reservation.day); },
+        function () { return generateWithYandex(context, prompt); }
+    );
+    logAiSuccess(requestId, "shared:yandex", startedAt);
+    return sharedResult;
 }
 
 async function generateWithYandex(context, prompt) {
     var token = getYandexIamToken(context);
     var folderId = String(process.env.YANDEX_FOLDER_ID || context.functionFolderId || "");
-    if (!folderId) throw new Error("YANDEX_FOLDER_ID is not configured.");
-    var upstream = await fetch("https://llm.api.cloud.yandex.net/foundationModels/v1/completion", {
+    if (!folderId) throw httpError(503, "ai-configuration", "AI service folder is not configured.");
+    var upstream = await fetchWithTimeout("https://llm.api.cloud.yandex.net/foundationModels/v1/completion", {
         method: "POST",
         headers: {
             "Authorization": "Bearer " + token,
@@ -417,9 +435,9 @@ async function generateWithYandex(context, prompt) {
             completionOptions: { stream: false, temperature: 0.3, maxTokens: "500" },
             messages: [{ role: "user", text: prompt }]
         })
-    });
+    }, AI_UPSTREAM_TIMEOUT_MS);
     var result = await readUpstreamResponse(upstream);
-    if (result.status < 200 || result.status >= 300) throw upstreamError(result, "Yandex AI request failed.");
+    if (result.status < 200 || result.status >= 300) throw aiUpstreamError(result, "shared", "Yandex AI request failed.");
     var alternatives = result.body && result.body.result && result.body.result.alternatives;
     var text = alternatives && alternatives[0] && alternatives[0].message && alternatives[0].message.text;
     if (!text) throw httpError(502, "empty-ai-response", "AI provider returned an empty response.");
@@ -431,10 +449,12 @@ async function listProviderModels(body) {
     var apiKey = String(body.apiKey || "");
     if (provider === "gemini") {
         var geminiBase = validateProviderEndpoint(body.endpoint, "gemini");
-        var geminiResult = await readUpstreamResponse(await fetch(
-            geminiBase + "/v1beta/models?key=" + encodeURIComponent(apiKey)
+        var geminiResult = await readUpstreamResponse(await fetchWithTimeout(
+            geminiBase + "/v1beta/models?key=" + encodeURIComponent(apiKey),
+            {},
+            AI_UPSTREAM_TIMEOUT_MS
         ));
-        if (geminiResult.status < 200 || geminiResult.status >= 300) throw upstreamError(geminiResult, "Gemini model request failed.");
+        if (geminiResult.status < 200 || geminiResult.status >= 300) throw aiUpstreamError(geminiResult, "byok", "Gemini model request failed.");
         return {
             models: (geminiResult.body.models || []).filter(function (model) {
                 return model.supportedGenerationMethods && model.supportedGenerationMethods.indexOf("generateContent") !== -1;
@@ -446,10 +466,10 @@ async function listProviderModels(body) {
     }
 
     var base = validateProviderEndpoint(body.endpoint, "openai");
-    var result = await readUpstreamResponse(await fetch(openAiApiUrl(base, "/models"), {
+    var result = await readUpstreamResponse(await fetchWithTimeout(openAiApiUrl(base, "/models"), {
         headers: { "Authorization": "Bearer " + apiKey, "Accept": "application/json" }
-    }));
-    if (result.status < 200 || result.status >= 300) throw upstreamError(result, "Model request failed.");
+    }, AI_UPSTREAM_TIMEOUT_MS));
+    if (result.status < 200 || result.status >= 300) throw aiUpstreamError(result, "byok", "Model request failed.");
     return {
         models: (result.body.data || []).map(function (model) {
             return { id: model.id, name: model.id };
@@ -465,15 +485,16 @@ async function generateWithUserProvider(body, prompt) {
         var geminiBase = validateProviderEndpoint(body.endpoint, "gemini");
         var geminiModel = model || "gemini-2.5-flash";
         if (!/^[a-zA-Z0-9._-]+$/.test(geminiModel)) throw httpError(400, "invalid-model", "Invalid model name.");
-        var geminiResult = await readUpstreamResponse(await fetch(
+        var geminiResult = await readUpstreamResponse(await fetchWithTimeout(
             geminiBase + "/v1beta/models/" + encodeURIComponent(geminiModel) + ":generateContent?key=" + encodeURIComponent(apiKey),
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            }
+            },
+            AI_UPSTREAM_TIMEOUT_MS
         ));
-        if (geminiResult.status < 200 || geminiResult.status >= 300) throw upstreamError(geminiResult, "Gemini request failed.");
+        if (geminiResult.status < 200 || geminiResult.status >= 300) throw aiUpstreamError(geminiResult, "byok", "Gemini request failed.");
         var candidate = geminiResult.body.candidates && geminiResult.body.candidates[0];
         var parts = candidate && candidate.content && candidate.content.parts;
         var geminiText = parts && parts[0] && parts[0].text;
@@ -492,12 +513,12 @@ async function generateWithUserProvider(body, prompt) {
         delete requestBody.max_tokens;
         requestBody.max_completion_tokens = 2000;
     }
-    var result = await readUpstreamResponse(await fetch(openAiApiUrl(base, "/chat/completions"), {
+    var result = await readUpstreamResponse(await fetchWithTimeout(openAiApiUrl(base, "/chat/completions"), {
         method: "POST",
         headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
-    }));
-    if (result.status < 200 || result.status >= 300) throw upstreamError(result, "AI provider request failed.");
+    }, AI_UPSTREAM_TIMEOUT_MS));
+    if (result.status < 200 || result.status >= 300) throw aiUpstreamError(result, "byok", "AI provider request failed.");
     var choice = result.body.choices && result.body.choices[0];
     var text = choice && choice.message && choice.message.content;
     if (!text) throw httpError(502, "empty-ai-response", "AI provider returned an empty response.");
@@ -1915,21 +1936,96 @@ function validateMailFlags(value, allowed) {
     return flags;
 }
 
-async function enforceDailyLimit(uid, bucket, limit) {
-    var now = new Date();
-    var day = now.getUTCFullYear() + "-" + padTwo(now.getUTCMonth() + 1) + "-" + padTwo(now.getUTCDate());
-    var allowed = false;
-    var ref = getFirebaseApp().database().ref("api_daily_limits/" + uid + "/" + bucket + "/" + day);
-    await ref.transaction(function (current) {
-        allowed = false;
+function getUtcDay(now) {
+    now = now || new Date();
+    return now.getUTCFullYear() + "-" + padTwo(now.getUTCMonth() + 1) + "-" + padTwo(now.getUTCDate());
+}
+
+function getDailyResetAt(now) {
+    now = now || new Date();
+    return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+}
+
+function buildDailyQuota(count, limit, day, now) {
+    count = Math.max(0, Math.min(limit, Number(count || 0)));
+    return {
+        limit: limit,
+        used: count,
+        remaining: Math.max(0, limit - count),
+        day: day,
+        resetAt: getDailyResetAt(now)
+    };
+}
+
+function getDailyLimitRef(uid, bucket, day) {
+    return getFirebaseApp().database().ref("api_daily_limits/" + uid + "/" + bucket + "/" + day);
+}
+
+async function getDailyLimitState(uid, bucket, limit, now) {
+    now = now || new Date();
+    var day = getUtcDay(now);
+    var snapshot = await getDailyLimitRef(uid, bucket, day).once("value");
+    var current = snapshot.val() || {};
+    return buildDailyQuota(current.count, limit, day, now);
+}
+
+async function reserveDailyLimit(uid, bucket, limit, now) {
+    now = now || new Date();
+    var day = getUtcDay(now);
+    var ref = getDailyLimitRef(uid, bucket, day);
+    return reserveDailyLimitRef(ref, limit, day, now);
+}
+
+async function reserveDailyLimitRef(ref, limit, day, now) {
+    now = now || new Date();
+    var transaction = await ref.transaction(function (current) {
         current = current || { count: 0 };
-        if (current.count >= limit) return;
-        allowed = true;
-        current.count += 1;
+        var count = Number(current.count || 0);
+        if (count >= limit) return;
+        current.count = count + 1;
         current.updatedAt = Date.now();
         return current;
     });
-    if (!allowed) throw httpError(429, "daily-limit", "Daily AI message limit reached.");
+    if (!transaction.committed) {
+        var limitError = httpError(429, "daily-limit", "Daily AI message limit reached.");
+        limitError.quota = buildDailyQuota(limit, limit, day, now);
+        throw limitError;
+    }
+    var value = transaction.snapshot.val() || {};
+    return { day: day, quota: buildDailyQuota(value.count, limit, day, now) };
+}
+
+async function releaseDailyLimit(uid, bucket, day) {
+    var ref = getDailyLimitRef(uid, bucket, day);
+    return releaseDailyLimitRef(ref);
+}
+
+async function releaseDailyLimitRef(ref) {
+    await ref.transaction(function (current) {
+        if (!current) return current;
+        current.count = Math.max(0, Number(current.count || 0) - 1);
+        current.updatedAt = Date.now();
+        return current;
+    });
+}
+
+async function withReservedDailyLimit(reserve, release, generate) {
+    var reservation = await reserve();
+    try {
+        var result = await generate();
+        result.quota = reservation.quota;
+        return result;
+    } catch (error) {
+        try {
+            await release(reservation);
+        } catch (releaseError) {
+            console.error("Failed to release AI quota reservation", {
+                code: releaseError.code || "quota-release-failed",
+                message: releaseError.message
+            });
+        }
+        throw error;
+    }
 }
 
 function validateProviderEndpoint(value, provider) {
@@ -1970,8 +2066,65 @@ function openAiApiUrl(base, suffix) {
 function getYandexIamToken(context) {
     var token = context && context.token && context.token.access_token;
     token = token || process.env.YANDEX_IAM_TOKEN;
-    if (!token) throw new Error("Yandex IAM token is unavailable. Attach a service account to the function.");
+    if (!token) throw httpError(503, "ai-configuration", "AI service authentication is not configured.");
     return token;
+}
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+    options = options || {};
+    timeoutMs = Number(timeoutMs || AI_UPSTREAM_TIMEOUT_MS);
+    var controller = new AbortController();
+    var timeout = setTimeout(function () { controller.abort(); }, timeoutMs);
+    var requestOptions = Object.assign({}, options, { signal: controller.signal });
+    try {
+        return await fetch(url, requestOptions);
+    } catch (error) {
+        if (error && error.name === "AbortError") {
+            throw httpError(504, "ai-timeout", "AI provider timed out.");
+        }
+        throw httpError(502, "ai-network", "Could not reach the AI provider.");
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+function getUpstreamMessage(result, fallback) {
+    var message = result.body && result.body.error;
+    if (message && typeof message === "object") message = message.message || message.code;
+    message = String(message || fallback || "AI provider request failed.");
+    return message.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 300);
+}
+
+function aiUpstreamError(result, mode, fallback) {
+    var status = Number(result.status || 502);
+    var error;
+    if (status === 401 || status === 403) {
+        error = mode === "byok"
+            ? httpError(422, "provider-authorization", getUpstreamMessage(result, "AI provider rejected the API key."))
+            : httpError(503, "ai-configuration", "AI service authentication or permissions are not configured correctly.");
+    } else if (status === 429) {
+        error = mode === "byok"
+            ? httpError(429, "provider-rate-limit", "The selected AI provider rate limit was reached.")
+            : httpError(503, "ai-capacity", "The shared AI service is temporarily at capacity.");
+    } else if (status >= 500) {
+        error = httpError(503, "ai-unavailable", "The AI provider is temporarily unavailable.");
+    } else if (mode === "byok") {
+        error = httpError(422, "provider-request", getUpstreamMessage(result, fallback));
+    } else {
+        error = httpError(503, "ai-configuration", "The shared AI service request is not configured correctly.");
+    }
+    error.upstreamStatus = status;
+    if (result.retryAfter) error.retryAfter = result.retryAfter;
+    return error;
+}
+
+function logAiSuccess(requestId, mode, startedAt) {
+    console.info("AI request completed", {
+        requestId: requestId,
+        mode: mode,
+        status: 200,
+        latencyMs: Date.now() - startedAt
+    });
 }
 
 function upstreamError(result, fallback) {
@@ -2070,7 +2223,12 @@ async function readUpstreamResponse(upstream) {
     } catch (error) {
         body = { error: text || "Upstream returned an invalid response." };
     }
-    return { status: upstream.status, body: body };
+    var retryAfter = 0;
+    if (upstream.headers && typeof upstream.headers.get === "function") {
+        var retryHeader = upstream.headers.get("retry-after");
+        if (/^\d+$/.test(String(retryHeader || ""))) retryAfter = Number(retryHeader);
+    }
+    return { status: upstream.status, body: body, retryAfter: retryAfter };
 }
 
 function upstreamResponse(result, origin) {
@@ -2274,6 +2432,13 @@ function getHeader(event, name) {
     return "";
 }
 
+function getRequestId(event) {
+    var contextId = event.requestContext && (event.requestContext.requestId || event.requestContext.request_id);
+    var headerId = getHeader(event, "x-request-id");
+    var requestId = String(contextId || headerId || "").replace(/[^a-zA-Z0-9._:-]/g, "").slice(0, 100);
+    return requestId || crypto.randomUUID();
+}
+
 function getAllowedOrigins() {
     var configured = String(process.env.ALLOWED_ORIGINS || "").split(",").map(function (value) {
         return value.trim();
@@ -2357,5 +2522,12 @@ module.exports.testHooks = {
     validateNoLinksOrPromotion: validateNoLinksOrPromotion,
     validateFlipbookPayload: validateFlipbookPayload,
     validatePrimarySuggestionReport: validatePrimarySuggestionReport,
-    primarySuggestionReportSnapshot: primarySuggestionReportSnapshot
+    primarySuggestionReportSnapshot: primarySuggestionReportSnapshot,
+    buildDailyQuota: buildDailyQuota,
+    reserveDailyLimitRef: reserveDailyLimitRef,
+    releaseDailyLimitRef: releaseDailyLimitRef,
+    withReservedDailyLimit: withReservedDailyLimit,
+    fetchWithTimeout: fetchWithTimeout,
+    generateWithYandex: generateWithYandex,
+    aiUpstreamError: aiUpstreamError
 };

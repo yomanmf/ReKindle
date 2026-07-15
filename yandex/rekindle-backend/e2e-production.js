@@ -83,7 +83,9 @@ async function cleanup() {
     await app.database().ref().update({
         ["users_private/" + uid]: null,
         ["users_public/" + uid]: null,
-        ["user_cards/" + uid]: null
+        ["user_cards/" + uid]: null,
+        ["api_daily_limits/" + uid]: null,
+        ["api_rate_limits/" + uid]: null
     }).catch(function () {});
     await app.auth().deleteUser(uid).catch(function () {});
 }
@@ -104,6 +106,25 @@ async function run() {
         var ipCheck = await backend("/auth/check-ip", "POST", {}, 200);
         if (ipCheck.data.banned !== false) throw new Error("Fresh E2E account was unexpectedly IP-banned.");
         console.log("PASS server-side IP check");
+
+        var quotaBefore = await backend("/ai/chat", "POST", { action: "quota" }, 200);
+        if (!quotaBefore.data.quota || typeof quotaBefore.data.quota.remaining !== "number") {
+            throw new Error("AI quota response is malformed.");
+        }
+        var aiReply = await backend("/ai/chat", "POST", {
+            prompt: "Reply with the single word OK."
+        }, 200);
+        if (!aiReply.data.text || !aiReply.data.quota) {
+            throw new Error("Shared AI response is malformed.");
+        }
+        if (aiReply.data.quota.remaining !== quotaBefore.data.quota.remaining - 1) {
+            throw new Error("Shared AI quota did not decrement after a successful response.");
+        }
+        var quotaAfter = await backend("/ai/chat", "POST", { action: "quota" }, 200);
+        if (quotaAfter.data.quota.remaining !== aiReply.data.quota.remaining) {
+            throw new Error("AI quota readback does not match the successful response.");
+        }
+        console.log("PASS authenticated shared AI and server-authoritative quota");
 
         var initialList = await backend("/storage/list?folder=files", "GET", undefined, 200);
         if (!Array.isArray(initialList.data.items)) throw new Error("Storage list response is malformed.");

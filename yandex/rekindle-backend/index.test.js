@@ -16,6 +16,24 @@ function event(method, path, origin, body) {
     };
 }
 
+function transactionRef(initialValue) {
+    var value = initialValue;
+    return {
+        transaction: async function (update) {
+            var current = value === null || value === undefined
+                ? value
+                : JSON.parse(JSON.stringify(value));
+            var next = update(current);
+            if (next === undefined) {
+                return { committed: false, snapshot: { val: function () { return value; } } };
+            }
+            value = next;
+            return { committed: true, snapshot: { val: function () { return value; } } };
+        },
+        value: function () { return value; }
+    };
+}
+
 test("health endpoint is available from the production origin", async function () {
     var result = await backend.handler(event(
         "GET",
@@ -183,7 +201,121 @@ test("AI chat requires a Firebase ID token", async function () {
         { prompt: "hello" }
     ));
     assert.equal(result.statusCode, 401);
-    assert.equal(JSON.parse(result.body).code, "unauthenticated");
+    var body = JSON.parse(result.body);
+    assert.equal(body.code, "unauthenticated");
+    assert.match(body.requestId, /^[a-zA-Z0-9._:-]+$/);
+});
+
+test("Yandex AI returns text through the service-account token", async function () {
+    var originalFetch = global.fetch;
+    var originalFolder = process.env.YANDEX_FOLDER_ID;
+    process.env.YANDEX_FOLDER_ID = "folder-test";
+    global.fetch = async function (url, options) {
+        assert.equal(url, "https://llm.api.cloud.yandex.net/foundationModels/v1/completion");
+        assert.equal(options.headers.Authorization, "Bearer iam-test-token");
+        assert.equal(options.headers["x-folder-id"], "folder-test");
+        var request = JSON.parse(options.body);
+        assert.equal(request.modelUri, "gpt://folder-test/yandexgpt-lite/latest");
+        return new Response(JSON.stringify({
+            result: { alternatives: [{ message: { text: "Hello from YandexGPT" } }] }
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    try {
+        var result = await backend.testHooks.generateWithYandex({ token: { access_token: "iam-test-token" } }, "hello");
+        assert.deepEqual(result, { text: "Hello from YandexGPT" });
+    } finally {
+        global.fetch = originalFetch;
+        if (originalFolder === undefined) delete process.env.YANDEX_FOLDER_ID;
+        else process.env.YANDEX_FOLDER_ID = originalFolder;
+    }
+});
+
+test("Yandex AI maps permission and capacity failures to stable error codes", async function () {
+    var originalFetch = global.fetch;
+    var originalFolder = process.env.YANDEX_FOLDER_ID;
+    process.env.YANDEX_FOLDER_ID = "folder-test";
+    try {
+        global.fetch = async function () {
+            return new Response(JSON.stringify({ error: { message: "Permission denied" } }), { status: 403 });
+        };
+        await assert.rejects(
+            backend.testHooks.generateWithYandex({ token: { access_token: "iam-test-token" } }, "hello"),
+            function (error) {
+                return error.status === 503 && error.code === "ai-configuration" && error.upstreamStatus === 403;
+            }
+        );
+
+        global.fetch = async function () {
+            return new Response(JSON.stringify({ error: { message: "Too many requests" } }), {
+                status: 429,
+                headers: { "Retry-After": "7" }
+            });
+        };
+        await assert.rejects(
+            backend.testHooks.generateWithYandex({ token: { access_token: "iam-test-token" } }, "hello"),
+            function (error) {
+                return error.status === 503 && error.code === "ai-capacity" && error.retryAfter === 7;
+            }
+        );
+    } finally {
+        global.fetch = originalFetch;
+        if (originalFolder === undefined) delete process.env.YANDEX_FOLDER_ID;
+        else process.env.YANDEX_FOLDER_ID = originalFolder;
+    }
+});
+
+test("AI upstream requests have a bounded timeout", async function () {
+    var originalFetch = global.fetch;
+    global.fetch = function (url, options) {
+        return new Promise(function (resolve, reject) {
+            options.signal.addEventListener("abort", function () {
+                var error = new Error("aborted");
+                error.name = "AbortError";
+                reject(error);
+            });
+        });
+    };
+    try {
+        await assert.rejects(
+            backend.testHooks.fetchWithTimeout("https://example.com", {}, 5),
+            function (error) { return error.status === 504 && error.code === "ai-timeout"; }
+        );
+    } finally {
+        global.fetch = originalFetch;
+    }
+});
+
+test("AI quota reservation is atomic and can be released", async function () {
+    var now = new Date("2026-07-15T12:00:00Z");
+    var ref = transactionRef(null);
+    var reservation = await backend.testHooks.reserveDailyLimitRef(ref, 10, "2026-07-15", now);
+    assert.equal(reservation.quota.used, 1);
+    assert.equal(reservation.quota.remaining, 9);
+    assert.equal(ref.value().count, 1);
+
+    await backend.testHooks.releaseDailyLimitRef(ref);
+    assert.equal(ref.value().count, 0);
+
+    var exhausted = transactionRef({ count: 10 });
+    await assert.rejects(
+        backend.testHooks.reserveDailyLimitRef(exhausted, 10, "2026-07-15", now),
+        function (error) {
+            return error.status === 429 && error.code === "daily-limit" && error.quota.remaining === 0;
+        }
+    );
+});
+
+test("failed AI generation releases its reserved quota", async function () {
+    var releases = 0;
+    await assert.rejects(
+        backend.testHooks.withReservedDailyLimit(
+            async function () { return { day: "2026-07-15", quota: { limit: 10, used: 1, remaining: 9 } }; },
+            async function () { releases += 1; },
+            async function () { throw Object.assign(new Error("provider failed"), { code: "ai-unavailable" }); }
+        ),
+        function (error) { return error.code === "ai-unavailable"; }
+    );
+    assert.equal(releases, 1);
 });
 
 test("OCR requires a Firebase ID token", async function () {

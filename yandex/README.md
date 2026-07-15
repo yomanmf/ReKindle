@@ -78,8 +78,8 @@ The runtime service account needs only these folder roles:
 - `functions.functionInvoker` so API Gateway can invoke the function;
 - `lockbox.payloadViewer` so the function can load its secrets;
 - `storage.editor` so it can list, sign, and delete objects in the private bucket.
-- the minimal Foundation Models and Vision OCR invocation permissions required
-  by the AI and OCR routes.
+- `ai.languageModels.user` for the shared YandexGPT route;
+- `ai.vision.user` for Vision OCR.
 
 Do not leave `editor` or a deployment authorized key attached after publishing.
 
@@ -108,9 +108,10 @@ routes, so never reintroduce those paths.
 Run the non-mutating unit suite with `npm test`. The production E2E suite is
 `npm run test:e2e`; it requires `FIREBASE_WEB_API_KEY` and
 `FIREBASE_SERVICE_ACCOUNT_FILE`. It creates a unique temporary account, verifies
-registration, custom-token login, IP checking, signed upload,
+registration, custom-token login, IP checking, an authenticated shared
+YandexGPT response with server-authoritative quota readback, signed upload,
 browser CORS, list, download, and delete, then removes the test object, RTDB
-profile nodes, and Firebase Auth user in a `finally` cleanup.
+profile/quota/rate-limit nodes, and Firebase Auth user in a `finally` cleanup.
 
 For a full-fork Firebase migration, do not bulk-upload a dirty local worktree.
 Run `REKINDLE_FIREBASE_API_KEY=... node yandex/prepare-firebase-config-release.js`

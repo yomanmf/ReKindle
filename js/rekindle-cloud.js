@@ -34,6 +34,8 @@
             error.code = data.code || "cloud/error";
             error.status = response.status;
             error.retryAfter = data.retryAfter || 0;
+            error.requestId = data.requestId || "";
+            error.quota = data.quota || null;
             throw error;
         }
         return data;

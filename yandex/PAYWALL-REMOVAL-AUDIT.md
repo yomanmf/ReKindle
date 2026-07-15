@@ -58,8 +58,11 @@ The following are operational requirements, not subscription gates:
 
 ## Evidence
 
-- Yandex backend unit tests cover CORS, authentication gates, proxy target
-  validation, private-target rejection, binary proxy responses and NRL parsing.
+- Yandex backend unit tests cover CORS, authentication gates, shared YandexGPT
+  success/error mapping, bounded AI timeouts, atomic quota reservation/refund,
+  proxy target validation, private-target rejection, binary proxy responses and
+  NRL parsing. A separate frontend contract suite verifies the AI error and
+  server-quota paths plus ES2019 parsing.
 - Dedicated Reddit Function tests cover its hostname allowlist, redirect
   revalidation and oversized-response rejection.
 - Main locale bundles contain no ReKindle application-paywall keys or text;
