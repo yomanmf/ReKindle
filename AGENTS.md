@@ -907,11 +907,18 @@ the old Google Cloud API key; deleting it first breaks Firebase Auth immediately
 
 ## Reddit comment-tree navigation
 
-`reddit.html` uses `js/reddit-comments.js` to parse a Reddit thread's JSON comment
-listing recursively. Thread JSON must remain the primary source because RSS does
-not reliably expose reply depth; RSS is only a fallback and its comments are
-treated as top-level. Keep `raw_json=1` on the JSON request so comment HTML does
-not arrive with an unnecessary extra escaping layer.
+`reddit.html` uses two RSS requests for a Reddit thread: the normal feed supplies
+all displayed comments, while the same `.rss` URL with `depth=1` supplies only
+top-level comments. Match the Atom `<id>` values from the depth-one feed against
+the full feed before setting `isTopLevel` or `data-root-comment="true"`. A normal
+RSS entry does not expose its parent ID, so never treat every entry as top-level.
+
+Thread JSON remains a fallback and `js/reddit-comments.js` parses its reply tree
+recursively. Keep `raw_json=1` on the JSON request so comment HTML does not arrive
+with an unnecessary extra escaping layer. Unauthenticated Reddit JSON currently
+returns `403` through the production proxy, while both RSS variants remain
+available; do not make JSON the primary thread source without verifying the
+deployed proxy first.
 
 The page flattens the reply tree in document order and stores `depth` plus
 `isTopLevel` on each parsed comment. Rendered top-level comments have

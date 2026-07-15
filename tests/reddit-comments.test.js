@@ -110,3 +110,18 @@ test('keeps a navigated root selected while it remains visible during an upward 
     assert.equal(commentsParser.resolveNavigationIndex(rootTops, 650, 500, 700, 2), 2);
     assert.equal(commentsParser.resolveNavigationIndex(rootTops, 500, 500, 650, 2), 0);
 });
+
+test('marks only IDs returned by the depth-one RSS feed as top-level comments', function () {
+    var comments = [
+        { id: 't1_root1', depth: 0, isTopLevel: true },
+        { id: 't1_reply1', depth: 0, isTopLevel: true },
+        { id: 't1_root2', depth: 0, isTopLevel: true },
+        { id: 't1_reply2', depth: 0, isTopLevel: true }
+    ];
+
+    var markedCount = commentsParser.markTopLevelComments(comments, ['t1_root1', 't1_root2']);
+
+    assert.equal(markedCount, 2);
+    assert.deepEqual(comments.map(function (comment) { return comment.isTopLevel; }), [true, false, true, false]);
+    assert.deepEqual(comments.map(function (comment) { return comment.depth; }), [0, 1, 0, 1]);
+});

@@ -107,9 +107,28 @@
         return nextIndex >= 0 && nextIndex < rootCount ? nextIndex : -1;
     }
 
+    function markTopLevelComments(comments, rootIds) {
+        var rootLookup = Object.create(null);
+        var markedCount = 0;
+
+        for (var i = 0; i < rootIds.length; i++) {
+            if (rootIds[i]) rootLookup[rootIds[i]] = true;
+        }
+
+        for (var j = 0; j < comments.length; j++) {
+            var isTopLevel = !!rootLookup[comments[j].id];
+            comments[j].isTopLevel = isTopLevel;
+            comments[j].depth = isTopLevel ? 0 : 1;
+            if (isTopLevel) markedCount++;
+        }
+
+        return markedCount;
+    }
+
     return {
         parseThread: parseThread,
         resolveNavigationIndex: resolveNavigationIndex,
-        getNextRootIndex: getNextRootIndex
+        getNextRootIndex: getNextRootIndex,
+        markTopLevelComments: markTopLevelComments
     };
 }));

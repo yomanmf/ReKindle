@@ -795,6 +795,11 @@
                 return this.request(cleanLink);
             },
 
+            async getThreadRoots(permalink) {
+                const cleanLink = permalink.replace(/\/$/, "");
+                return this.request(cleanLink + '.rss?depth=1');
+            },
+
             async getThreadJson(permalink) {
                 const cleanLink = permalink.replace(/\/$/, "");
                 return this.request(cleanLink + '.json?raw_json=1&limit=200&depth=10');
@@ -923,8 +928,8 @@
                     author: c.author,
                     bodyHtml: c.contentHtml,
                     permalink: c.permalink,
-                    depth: 0,
-                    isTopLevel: true
+                    depth: 1,
+                    isTopLevel: false
                 });
             }
             return { post: post, comments: comments };
@@ -1339,28 +1344,41 @@
                 try {
                     let responseText = '';
                     let data = { post: null, comments: [] };
-                    let jsonFailure = null;
+                    let rssFailure = null;
 
                     try {
-                        responseText = await api.getThreadJson(permalink);
-                        console.log('Thread JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                        if (!window.RekindleRedditComments) throw new Error('Reddit comment parser is unavailable');
-                        data = window.RekindleRedditComments.parseThread(responseText);
-                        console.log('Thread JSON has post:', !!data.post, 'comments:', data.comments.length);
-                    } catch (jsonError) {
-                        if (jsonError.message && jsonError.message.indexOf('superseded') !== -1) throw jsonError;
-                        jsonFailure = jsonError;
-                        console.warn('Thread JSON failed, trying RSS:', jsonError);
+                        responseText = await api.getThread(permalink);
+                        console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                        data = parseRssThread(responseText);
+                        console.log('Thread RSS has post:', !!data.post, 'comments:', data.comments.length);
+
+                        try {
+                            const rootsResponse = await api.getThreadRoots(permalink);
+                            const rootsData = parseRssThread(rootsResponse);
+                            const rootIds = rootsData.comments.map(function(comment) { return comment.id; });
+                            const markedRoots = window.RekindleRedditComments.markTopLevelComments(data.comments, rootIds);
+                            console.log('Thread RSS top-level comments:', markedRoots);
+                        } catch (rootsError) {
+                            if (rootsError.message && rootsError.message.indexOf('superseded') !== -1) throw rootsError;
+                            console.warn('Root-only RSS failed; marking only the first comment as top-level:', rootsError);
+                            const firstRootIds = data.comments.length > 0 ? [data.comments[0].id] : [];
+                            window.RekindleRedditComments.markTopLevelComments(data.comments, firstRootIds);
+                        }
+                    } catch (rssError) {
+                        if (rssError.message && rssError.message.indexOf('superseded') !== -1) throw rssError;
+                        rssFailure = rssError;
+                        console.warn('Thread RSS failed, trying JSON:', rssError);
                     }
 
                     if (!data.post) {
                         try {
-                            responseText = await api.getThread(permalink);
-                            console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                            data = parseRssThread(responseText);
-                            console.log('Thread RSS has post:', !!data.post);
-                        } catch (rssError) {
-                            throw jsonFailure || rssError;
+                            responseText = await api.getThreadJson(permalink);
+                            console.log('Thread JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                            if (!window.RekindleRedditComments) throw new Error('Reddit comment parser is unavailable');
+                            data = window.RekindleRedditComments.parseThread(responseText);
+                            console.log('Thread JSON has post:', !!data.post, 'comments:', data.comments.length);
+                        } catch (jsonError) {
+                            throw rssFailure || jsonError;
                         }
                     }
                     const post = data.post;
