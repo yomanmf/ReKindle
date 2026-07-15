@@ -10,6 +10,7 @@ var RELEASE_DIR = process.env.REKINDLE_CONFIG_RELEASE_DIR || "/private/tmp/rekin
 var MANIFEST = JSON.parse(fs.readFileSync(path.join(RELEASE_DIR, "manifest.json"), "utf8"));
 var CONCURRENCY = 10;
 var OLD_CONFIG = /rekindle-dd1fa|748026882518|1:748026882518:web:6877dd4329318070c11c77/;
+var FIREBASE_API_KEY_PLACEHOLDER = "__REKINDLE_FIREBASE_API_KEY__";
 
 function sha256(value) {
     return crypto.createHash("sha256").update(value).digest("hex");
@@ -47,6 +48,9 @@ async function verifyManifestObject(expected) {
     var actual = await fetchObject(expected.objectName);
     if (sha256(actual.body) !== expected.sha256) throw new Error(expected.objectName + " hash mismatch.");
     if (OLD_CONFIG.test(actual.body)) throw new Error(expected.objectName + " still contains upstream Firebase config.");
+    if (actual.body.indexOf(FIREBASE_API_KEY_PLACEHOLDER) !== -1) {
+        throw new Error(expected.objectName + " still contains the Firebase API key placeholder.");
+    }
     if (expected.html && actual.contentType.toLowerCase().indexOf("text/html") === -1) {
         throw new Error(expected.objectName + " has incorrect Content-Type " + actual.contentType + ".");
     }
@@ -56,6 +60,9 @@ async function auditSiteFile(name) {
     var actual = await fetchObject(name, name.indexOf(".") === -1);
     if (!actual) return false;
     if (OLD_CONFIG.test(actual.body)) throw new Error(name + " still contains upstream Firebase config.");
+    if (actual.body.indexOf(FIREBASE_API_KEY_PLACEHOLDER) !== -1) {
+        throw new Error(name + " still contains the Firebase API key placeholder.");
+    }
     if (/\.html$/.test(name) || name.indexOf(".") === -1) {
         if (actual.contentType.toLowerCase().indexOf("text/html") === -1) {
             throw new Error(name + " has incorrect Content-Type " + actual.contentType + ".");

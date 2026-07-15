@@ -900,10 +900,19 @@ requires `REKINDLE_FIREBASE_API_KEY` and injects it only into build artifacts.
 Never commit the concrete value or replace the placeholder in source files.
 
 For a Yandex config-only rotation, run
-`yandex/prepare-firebase-config-release.js` with both
-`REKINDLE_CURRENT_FIREBASE_API_KEY` and `REKINDLE_FIREBASE_API_KEY` supplied
-outside Git. Publish and verify the generated production objects before deleting
-the old Google Cloud API key; deleting it first breaks Firebase Auth immediately.
+`yandex/prepare-firebase-config-release.js` with `REKINDLE_FIREBASE_API_KEY`
+supplied outside Git. Supply `REKINDLE_CURRENT_FIREBASE_API_KEY` as well when
+rotating an existing concrete key. The script also repairs a mistakenly
+published `__REKINDLE_FIREBASE_API_KEY__` placeholder. Publish and verify the
+generated production objects before deleting the old Google Cloud API key;
+deleting it first breaks Firebase Auth immediately.
+
+**Yandex frontend release key injection:** Never upload checked-in HTML files
+directly to the public bucket. `yandex/prepare-frontend-release.js` requires
+`REKINDLE_FIREBASE_API_KEY`, injects it only into the staged archive, copies the
+injected bytes to extensionless aliases, and fails if any release object still
+contains `__REKINDLE_FIREBASE_API_KEY__`. Publishing raw source produces
+`auth/api-key-not-valid` on every primary Firebase login and data operation.
 
 ## Reddit comment-tree navigation
 

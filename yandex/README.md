@@ -27,6 +27,13 @@ When publishing the frontend to the `rekindle` Object Storage bucket, upload
 the page under both `reddit.html` and `reddit`. Object Storage does not perform
 an extensionless rewrite, and the public application URL is `/reddit`.
 
+`prepare-frontend-release.js` reads source files containing
+`__REKINDLE_FIREBASE_API_KEY__`, requires `REKINDLE_FIREBASE_API_KEY`, and
+injects the concrete public Firebase web key only into staged release objects.
+Never upload the checked-in HTML files directly: the source placeholder makes
+Firebase Auth fail with `auth/api-key-not-valid`. The release script scans every
+archive object and stops if a placeholder remains.
+
 The function has no npm dependencies. It validates the destination hostname,
 supports feeds and images, and uses a bounded warm-instance cache with a stale
 fallback. This cache is intentionally best-effort; use YDB if a persistent,
@@ -106,12 +113,13 @@ browser CORS, list, download, and delete, then removes the test object, RTDB
 profile nodes, and Firebase Auth user in a `finally` cleanup.
 
 For a full-fork Firebase migration, do not bulk-upload a dirty local worktree.
-Run `node yandex/prepare-firebase-config-release.js` instead. It downloads the
-currently deployed root HTML files, applies only the seven
-exact primary-project config substitutions, creates matching extensionless
-HTML aliases, and writes a SHA-256 manifest under
-`/private/tmp/rekindle-firebase-config-release`. Review the manifest before any
-production upload.
+Run `REKINDLE_FIREBASE_API_KEY=... node yandex/prepare-firebase-config-release.js`
+instead. It downloads the currently deployed root HTML files, replaces a
+published API-key placeholder and any supplied
+`REKINDLE_CURRENT_FIREBASE_API_KEY`, applies the exact primary-project config
+substitutions, creates matching extensionless HTML aliases, and writes a
+SHA-256 manifest under `/private/tmp/rekindle-firebase-config-release`. Review
+the manifest before any production upload.
 
 ## Interactive Story function
 

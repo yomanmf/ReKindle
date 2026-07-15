@@ -44,6 +44,10 @@ five changed pages backed by `rekindle-socials`.
 - [x] Production smoke checks passed for health, NRL, Suggestions routing,
   protected AI/OCR/mail/storage/Reader/Akinator routes, proxy private-address
   rejection, Reddit allowlisting and Story missing-game handling.
+- [x] Firebase web-key hotfix published on 15 July 2026. All 70 affected HTML
+  objects and extensionless aliases match the release manifest, the production
+  audit found no API-key placeholder across 229 existing objects, and the
+  owner login plus server-side IP check both passed.
 
 ## 1. General backend function
 
