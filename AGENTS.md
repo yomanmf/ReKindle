@@ -923,6 +923,13 @@ throttle wait. This lets a later foreground navigation supersede a sleeping
 background root request; allocating the ID after the wait can make the old
 background request cancel the user's newer subreddit or thread request.
 
+`reddit.html` depends on `js/reddit-comments.js` for JSON parsing and progressive
+root enrichment. A production release must upload that helper before the page
+and bump the query-string version in the page whenever the helper API changes.
+Uploading only `reddit.html` leaves the helper at 404 or stale in browser caches;
+the thread still renders, but root markers/navigation fail after the background
+request. Smoke-test the helper URL as well as both `reddit` page object aliases.
+
 Thread JSON remains a fallback and `js/reddit-comments.js` parses its reply tree
 recursively. Keep `raw_json=1` on the JSON request so comment HTML does not arrive
 with an unnecessary extra escaping layer. Unauthenticated Reddit JSON currently

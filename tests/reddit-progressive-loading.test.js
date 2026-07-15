@@ -7,6 +7,10 @@ var path = require('node:path');
 
 var redditHtml = fs.readFileSync(path.join(__dirname, '..', 'reddit.html'), 'utf8');
 
+test('loads the versioned Reddit comment helper used by progressive enrichment', function () {
+    assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=2"><\/script>/);
+});
+
 test('renders the main Reddit thread before loading root metadata', function () {
     var loadThreadStart = redditHtml.indexOf('async loadThread(permalink)');
     var loadThreadEnd = redditHtml.indexOf('processCommentHtml(html)', loadThreadStart);
