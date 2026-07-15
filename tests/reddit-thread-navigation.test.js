@@ -9,9 +9,18 @@ var redditHtml = fs.readFileSync(path.join(__dirname, '..', 'reddit.html'), 'utf
 var releaseManifest = fs.readFileSync(path.join(__dirname, '..', 'yandex', 'FRONTEND-RELEASE-MANIFEST.txt'), 'utf8');
 
 test('renders an accessible next-thread button in the Reddit toolbar', function () {
+    var nextButtonStyles = redditHtml.match(/\.next-thread-btn\s*\{([^}]*)\}/);
+
+    assert.match(redditHtml, /class="nav-btn"[^>]*id="back-btn"[^>]*data-i18n-title="rss\.btn\.back"[^>]*>&lt;<\/button>/);
+    assert.doesNotMatch(redditHtml, /id="back-btn"[^>]*data-i18n="rss\.btn\.back"/);
+    assert.match(redditHtml, /class="nav-btn next-thread-btn"[^>]*id="next-thread-btn"/);
     assert.match(redditHtml, /id="next-thread-btn"[^>]*onclick="ui\.goToNextThread\(\)"/);
     assert.match(redditHtml, /data-i18n-title="reddit\.thread\.next"/);
-    assert.match(redditHtml, /\.next-thread-btn\s*\{[^}]*display:\s*none;[^}]*min-width:\s*48px;[^}]*min-height:\s*48px;/s);
+    assert.ok(nextButtonStyles);
+    assert.match(nextButtonStyles[1], /display:\s*none/);
+    assert.match(nextButtonStyles[1], /margin-left:\s*auto/);
+    assert.doesNotMatch(nextButtonStyles[1], /(?:min-)?(?:width|height)|padding|font-size|line-height/);
+    assert.match(redditHtml, /\.next-thread-btn\.visible\s*\{[^}]*display:\s*inline-block/);
 });
 
 test('keeps feed order for next-thread navigation', function () {

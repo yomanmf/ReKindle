@@ -787,6 +787,15 @@ browser round trips persist only the feed permalinks in `reddit_return_state`,
 which is enough to restore the same next-thread order without caching full post
 bodies.
 
+The `>` button must remain exactly the same visual size as the toolbar's `<`
+back button. Both use `.nav-btn`; `.next-thread-btn` may control only its
+visibility and right alignment, and must not override width, height, padding,
+font size, or line height. Adding a separate 48px minimum made the forward
+button visibly larger at the Kindle UI scale. Keep the back button's visible
+text as the literal ASCII `<` and localize only its title; `data-i18n` replaces
+the symbol with words such as `Назад`, which changes the intrinsic button width
+and breaks the exact `<`/`>` size match.
+
 Feed-position helpers live in `js/reddit-comments.js` alongside the comment
 navigation helpers. When that API changes, bump its query version in
 `reddit.html`, keep `js/reddit-comments.js` in

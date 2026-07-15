@@ -293,16 +293,11 @@
 
         .next-thread-btn {
             display: none;
-            min-width: 48px;
-            min-height: 48px;
-            padding: 4px 12px;
             margin-left: auto;
-            font-size: 1.4rem;
-            line-height: 1;
         }
 
         .next-thread-btn.visible {
-            display: block;
+            display: inline-block;
         }
 
         .next-thread-btn:disabled {
@@ -579,7 +574,7 @@
             <div class="main-content">
                 <div class="toolbar">
                     <button class="nav-btn" id="back-btn" onclick="ui.goBack()" style="display:none;"
-                        data-i18n="rss.btn.back">&lt;</button>
+                        aria-label="Back" data-i18n-title="rss.btn.back" title="Back">&lt;</button>
                     <span style="font-weight:bold; font-size:1rem;">r/</span>
                     <input type="text" id="sub-input" value="popular" onkeypress="ui.handleEnter(event)">
                     <button class="nav-btn" onclick="ui.loadCurrentSub()" data-i18n="reddit.btn.go">Go</button>
