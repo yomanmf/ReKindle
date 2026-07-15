@@ -79,7 +79,6 @@ admin.initializeApp({
     databaseURL: DATABASE_URL
 });
 
-const rtdb = admin.database();
 const firestore = admin.firestore();
 
 // --- RESOLVE USER ---
@@ -112,16 +111,17 @@ async function resolveUser(target) {
         }
     }
 
-    // Look up in users_public by displayName or email
-    const snap = await rtdb.ref('users_public').once('value');
-    const users = snap.val() || {};
-    for (const [uid, data] of Object.entries(users)) {
-        const name = (data.displayName || '').toLowerCase();
-        const email = (data.email || '').toLowerCase();
-        const t = target.toLowerCase();
-        if (name === t || email === t || email.startsWith(t + '@') || uid === target) {
-            return { uid, name: data.displayName || t, email: data.email || '' };
-        }
+    // ReKindle usernames map directly to synthetic Firebase Auth email addresses.
+    try {
+        const email = target + '@rekindle.ink';
+        const userRecord = await admin.auth().getUserByEmail(email);
+        return {
+            uid: userRecord.uid,
+            name: userRecord.displayName || target,
+            email: userRecord.email
+        };
+    } catch (e) {
+        // not found
     }
 
     return null;

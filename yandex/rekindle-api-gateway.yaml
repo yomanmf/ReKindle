@@ -454,51 +454,12 @@ paths:
         tag: '$latest'
         payload_format_version: '1.0'
 
-  /api/rekindle/social/flipbook:
-    post:
-      operationId: postFlipbook
-      responses:
-        '200':
-          description: KindleChat flipbook post response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
   /api/rekindle/reports/submit:
     post:
       operationId: submitPrimarySuggestionReport
       responses:
         '200':
           description: Primary Suggestions report response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
-  /api/rekindle/social/moderate:
-    post:
-      operationId: moderateSocialContent
-      responses:
-        '200':
-          description: Moderated social write response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
-  /api/rekindle/social/translate:
-    post:
-      operationId: translateSocialContent
-      responses:
-        '200':
-          description: Social translation response
       x-yc-apigateway-integration:
         type: cloud_functions
         function_id: d4ebc0qtt85o8fb1j2c6

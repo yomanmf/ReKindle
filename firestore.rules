@@ -164,9 +164,6 @@ service cloud.firestore {
       match /watchlist/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      match /topic_states/{topicId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
     }
 
     // 2. TETRIS LEADERBOARD
@@ -357,12 +354,6 @@ service cloud.firestore {
 
     // 11.5 CONFIG (Supporters)
     match /config/supporters {
-      allow read: if request.auth != null;
-      allow write: if isDeveloper();
-    }
-
-    // 11.6 CONFIG (Moderators)
-    match /config/moderators {
       allow read: if request.auth != null;
       allow write: if isDeveloper();
     }

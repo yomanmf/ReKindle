@@ -27,7 +27,6 @@ var DEFAULT_ALLOWED_ORIGINS = [
 var ALLOWED_FOLDERS = { files: true, photos: true };
 var RESERVED_USERNAME = /(ukiyo|rekindle|wantban|root|system|admin|administrator|mod|moderator|support)/i;
 var firebaseApp;
-var socialFirebaseApp;
 var s3Client;
 var nrlCache = { expiresAt: 0, body: null };
 
@@ -116,15 +115,6 @@ module.exports.handler = async function (event, context) {
         if (method === "POST" && endsWith(path, "/reports/submit")) {
             return response(200, await createPrimarySuggestionReport(event), origin);
         }
-        if (method === "POST" && endsWith(path, "/social/flipbook")) {
-            return response(200, await postFlipbook(event), origin);
-        }
-        if (method === "POST" && endsWith(path, "/social/moderate")) {
-            return response(200, await moderateAndPostSocial(event), origin);
-        }
-        if (method === "POST" && endsWith(path, "/social/translate")) {
-            return response(200, await translateSocialContent(event, context || {}), origin);
-        }
         return response(404, { error: "Endpoint not found." }, origin);
     } catch (error) {
         var normalized = normalizeError(error);
@@ -176,21 +166,8 @@ async function registerUser(event) {
 
     try {
         await ensureIpIsAllowed(database, ip);
-        var avatarSeed = Math.floor(Math.random() * 10000);
         var updates = {};
         updates["users_private/" + userRecord.uid + "/ipAddress"] = ip || "unknown";
-        updates["users_public/" + userRecord.uid] = {
-            username: username,
-            email: email,
-            avatarSeed: avatarSeed,
-            createdAt: admin.database.ServerValue.TIMESTAMP,
-            lastActive: admin.database.ServerValue.TIMESTAMP
-        };
-        updates["user_cards/" + userRecord.uid] = {
-            username: username,
-            avatarSeed: avatarSeed,
-            customAvatar: null
-        };
         await database.ref().update(updates);
         var customToken = await app.auth().createCustomToken(userRecord.uid);
         return { customToken: customToken };
@@ -1126,277 +1103,6 @@ async function handleMailRequest(event, path) {
     throw httpError(404, "not-found", "Mail endpoint not found.");
 }
 
-async function postFlipbook(event) {
-    var user = await requireFirebaseUser(event, false);
-    ensureSocialPostingEligible(user);
-    var body = parseJsonBody(event);
-    var data = validateFlipbookPayload(body.flipnote_data);
-    var database = getSocialFirebaseApp().database();
-    var timeoutSnapshot = await database.ref("timeouts/" + user.uid).once("value");
-    var timeout = timeoutSnapshot.val();
-    if (timeout && typeof timeout.until === "number" && timeout.until > Date.now()) {
-        var minutes = Math.ceil((timeout.until - Date.now()) / 60000);
-        throw httpError(403, "timed-out", "You are timed out. Please wait " + minutes + " minute(s) before posting.");
-    }
-    var rate = await consumeTokenBucket(database, user.uid, "kindlechat", 5, 12000);
-    if (!rate.allowed) {
-        var rateError = httpError(429, "rate-limited", "Rate limit exceeded. Please wait before posting again.");
-        rateError.retryAfter = rate.retryAfter;
-        throw rateError;
-    }
-    var message = {
-        uid: user.uid,
-        timestamp: admin.database.ServerValue.TIMESTAMP,
-        text: "",
-        is_flipnote: true,
-        flipnote_data: data
-    };
-    var messageRef = await database.ref("kindlechat/messages").push(message);
-    await database.ref("kindlechat/art_index/" + messageRef.key).set({
-        uid: user.uid,
-        type: "flipbook",
-        timestamp: admin.database.ServerValue.TIMESTAMP,
-        thumbnail: data.frames[0],
-        text: ""
-    });
-    return { allowed: true, key: messageRef.key };
-}
-
-function validateFlipbookPayload(value) {
-    var data = value || {};
-    var fps = Number(data.fps || 0);
-    var frames = Array.isArray(data.frames) ? data.frames : [];
-    if (!Number.isInteger(fps) || fps < 1 || fps > 24) throw httpError(400, "invalid-fps", "Invalid animation speed.");
-    if (!frames.length || frames.length > 60) throw httpError(400, "invalid-frames", "Animation must contain 1-60 frames.");
-    var total = 0;
-    frames = frames.map(function (frame) {
-        frame = String(frame || "");
-        total += frame.length;
-        if (!/^data:image\/(png|webp);base64,[a-zA-Z0-9+/=]+$/i.test(frame) || frame.length > 180000) {
-            throw httpError(400, "invalid-frame", "Animation contains an invalid frame.");
-        }
-        return frame;
-    });
-    if (total > 2 * 1024 * 1024) throw httpError(413, "animation-too-large", "Animation is too large.");
-    return { fps: fps, frames: frames };
-}
-
-async function consumeTokenBucket(database, uid, type, capacity, refillMs) {
-    var now = Date.now();
-    var allowed = false;
-    var retryAfter = refillMs;
-    await database.ref("kindlechat/server_rate_limits/" + uid + "/" + type).transaction(function (current) {
-        current = current || { tokens: capacity, lastRefill: now };
-        var elapsed = Math.max(0, now - Number(current.lastRefill || now));
-        var refill = Math.floor(elapsed / refillMs);
-        var tokens = Math.min(capacity, Number(current.tokens || 0) + refill);
-        var lastRefill = refill > 0 ? Number(current.lastRefill || now) + refill * refillMs : Number(current.lastRefill || now);
-        if (tokens < 1) {
-            allowed = false;
-            retryAfter = Math.max(1000, refillMs - (now - lastRefill));
-            return { tokens: tokens, lastRefill: lastRefill, updatedAt: now };
-        }
-        allowed = true;
-        return { tokens: tokens - 1, lastRefill: lastRefill, updatedAt: now };
-    });
-    return { allowed: allowed, retryAfter: retryAfter };
-}
-
-async function moderateAndPostSocial(event) {
-    var user = await requireAnyFirebaseUser(event);
-    var body = parseJsonBody(event);
-    var type = String(body.type || "");
-    if (type !== "report") ensureSocialPostingEligible(user);
-    var social = getSocialFirebaseApp();
-    var database = social.database();
-    var firestore = social.firestore();
-    if (!type) throw httpError(400, "invalid-argument", "Missing content type.");
-    if (type !== "report") await ensureNotTimedOut(database, user.uid);
-    var limits = {
-        kindlechat: [5, 12000], topic: [3, 8 * 60 * 60 * 1000], topic_edit: [10, 60000], topic_comment: [5, 12000],
-        neighbourhood_post: [5, 5 * 60 * 1000], neighbourhood_edit: [10, 60000], neighbourhood_comment: [10, 30000], report: [60, 60000]
-    };
-    if (!limits[type]) throw httpError(400, "invalid-type", "Unsupported social content type.");
-    var rate = await consumeTokenBucket(database, user.uid, type, limits[type][0], limits[type][1]);
-    if (!rate.allowed) {
-        var rateError = httpError(429, "rate-limited", "Rate limit exceeded. Please wait before posting again.");
-        rateError.retryAfter = Math.ceil(rate.retryAfter / 1000);
-        throw rateError;
-    }
-    if (type === "kindlechat") return postKindleChat(body, user, database);
-    if (type === "topic") return postTopic(body, user, database, firestore);
-    if (type === "topic_edit") return editTopic(body, user, firestore);
-    if (type === "topic_comment") return postTopicComment(body, user, database, firestore);
-    if (type === "neighbourhood_post") return postNeighbourhood(body, user, database, firestore, false);
-    if (type === "neighbourhood_edit") return editNeighbourhoodPost(body, user, firestore);
-    if (type === "neighbourhood_comment") return postNeighbourhood(body, user, database, firestore, true);
-    return createSocialReport(body, user, database, firestore);
-}
-
-async function postKindleChat(body, user, database) {
-    var text = validateSocialText(body.text, 1000, true);
-    var isPixelArt = body.is_pixel_art === true;
-    var isFlipnote = body.is_flipnote === true;
-    if (!text && !isPixelArt && !isFlipnote) throw httpError(400, "empty-message", "Empty message.");
-    if (isPixelArt) validatePixelArt(body);
-    if (!isPixelArt && !isFlipnote) {
-        await ensureNotDuplicate(database, user.uid, "kindlechat", text);
-        await ensureModerationAllowed(text);
-    }
-    var message = { uid: user.uid, timestamp: admin.database.ServerValue.TIMESTAMP, text: text };
-    ["pixel_art", "grid_data", "is_pixel_art", "is_flipnote", "flipnote_data", "replyTo"].forEach(function (key) {
-        if (Object.prototype.hasOwnProperty.call(body, key)) message[key] = body[key];
-    });
-    var ref = await database.ref("kindlechat/messages").push(message);
-    if (isPixelArt || isFlipnote) {
-        var thumbnail = isPixelArt ? body.pixel_art : (body.flipnote_data && body.flipnote_data.frames && body.flipnote_data.frames[0]);
-        await database.ref("kindlechat/art_index/" + ref.key).set({
-            uid: user.uid, type: isPixelArt ? "pixel_art" : "flipbook", timestamp: admin.database.ServerValue.TIMESTAMP,
-            thumbnail: thumbnail || null, text: text
-        });
-    }
-    if (text) await recordDuplicate(database, user.uid, isPixelArt ? "kindlechat_pixel_art" : "kindlechat", isPixelArt ? body.grid_data : text);
-    return { allowed: true, key: ref.key };
-}
-
-async function postTopic(body, user, database, firestore) {
-    var title = String(body.title || "").trim();
-    var subheading = String(body.subheading || "").trim();
-    var icon = String(body.icon || "");
-    if (!title || title.length > 20) throw httpError(400, "invalid-title", "Title must be 1-20 characters.");
-    if (subheading.length > 35 || !icon || icon.length > 10000) throw httpError(400, "invalid-topic", "Invalid topic details.");
-    validateNoLinksOrPromotion(title + " " + subheading);
-    var poll = null;
-    if (body.poll && typeof body.poll === "object") {
-        var question = String(body.poll.question || "").trim();
-        var options = Array.isArray(body.poll.options) ? body.poll.options.map(function (v) { return String(v || "").trim(); }).filter(Boolean) : [];
-        if (!question || question.length > 100 || options.length < 2 || options.length > 4 || options.some(function (v) { return v.length > 50; })) {
-            throw httpError(400, "invalid-poll", "Invalid poll.");
-        }
-        validateNoLinksOrPromotion(question + " " + options.join(" "));
-        poll = { question: question, options: options };
-    }
-    var combined = title + " " + subheading + (poll ? " " + poll.question + " " + poll.options.join(" ") : "");
-    await ensureNotDuplicate(database, user.uid, "topic", combined);
-    await ensureModerationAllowed(combined);
-    var data = { title: title, subheading: subheading, body: "", icon: icon, authorId: user.uid, timestamp: admin.firestore.FieldValue.serverTimestamp(), lastActive: admin.firestore.FieldValue.serverTimestamp(), commentCount: 0 };
-    if (poll) data.poll = poll;
-    var ref = await firestore.collection("topics").add(data);
-    await recordDuplicate(database, user.uid, "topic", combined);
-    return { success: true, id: ref.id };
-}
-
-async function postTopicComment(body, user, database, firestore) {
-    var topicId = validateFirebaseId(body.topicId, "topic ID");
-    var text = validateSocialText(body.body, 1000, false);
-    await ensureNotDuplicate(database, user.uid, "topic_comment", text);
-    await ensureModerationAllowed(text);
-    var topicRef = firestore.collection("topics").doc(topicId);
-    var commentRef = topicRef.collection("comments").doc();
-    var count = 0;
-    await firestore.runTransaction(async function (transaction) {
-        var snapshot = await transaction.get(topicRef);
-        if (!snapshot.exists) throw httpError(404, "not-found", "Topic not found.");
-        count = Number(snapshot.data().commentCount || 0) + 1;
-        transaction.set(commentRef, { body: text, authorId: user.uid, timestamp: admin.firestore.FieldValue.serverTimestamp() });
-        transaction.update(topicRef, { commentCount: count, lastActive: admin.firestore.FieldValue.serverTimestamp() });
-    });
-    await recordDuplicate(database, user.uid, "topic_comment", text);
-    return { success: true, id: commentRef.id, commentCount: count };
-}
-
-async function editTopic(body, user, firestore) {
-    var topicId = validateFirebaseId(body.topicId, "topic ID");
-    var title = String(body.title || "").trim();
-    var subheading = String(body.subheading || "").trim();
-    var icon = String(body.icon || "");
-    if (!title || title.length > 20) throw httpError(400, "invalid-title", "Title must be 1-20 characters.");
-    if (subheading.length > 35 || !icon || icon.length > 10000) throw httpError(400, "invalid-topic", "Invalid topic details.");
-    var combined = title + " " + subheading;
-    validateNoLinksOrPromotion(combined);
-    await ensureModerationAllowed(combined);
-    var ref = firestore.collection("topics").doc(topicId);
-    var snapshot = await ref.get();
-    if (!snapshot.exists) throw httpError(404, "not-found", "Topic not found.");
-    if (snapshot.data().authorId !== user.uid) throw httpError(403, "forbidden", "Only the topic author can edit it.");
-    await ref.update({ title: title, subheading: subheading, icon: icon });
-    return { success: true, id: topicId };
-}
-
-async function postNeighbourhood(body, user, database, firestore, isComment) {
-    var text = validateSocialText(body.text, isComment ? 200 : 280, false);
-    if (isComment && text.length < 2) throw httpError(400, "invalid-comment", "Comment must be 2-200 characters.");
-    if (!isComment && text.split(/\s+/).length < 10) throw httpError(400, "invalid-post", "Keep it meaningful! Minimum 10 words.");
-    var type = isComment ? "neighbourhood_comment" : "neighbourhood_post";
-    await ensureNotDuplicate(database, user.uid, type, text);
-    await ensureModerationAllowed(text);
-    var collection = isComment
-        ? firestore.collection("neighbourhood_posts").doc(validateFirebaseId(body.postId, "post ID")).collection("comments")
-        : firestore.collection("neighbourhood_posts");
-    var ref = await collection.add({ uid: user.uid, text: text, timestamp: admin.firestore.FieldValue.serverTimestamp() });
-    await recordDuplicate(database, user.uid, type, text);
-    return { success: true, id: ref.id };
-}
-
-async function editNeighbourhoodPost(body, user, firestore) {
-    var postId = validateFirebaseId(body.postId, "post ID");
-    var text = validateSocialText(body.text, 280, false);
-    if (text.split(/\s+/).length < 10) throw httpError(400, "invalid-post", "Keep it meaningful! Minimum 10 words.");
-    await ensureModerationAllowed(text);
-    var ref = firestore.collection("neighbourhood_posts").doc(postId);
-    var snapshot = await ref.get();
-    if (!snapshot.exists) throw httpError(404, "not-found", "Post not found.");
-    if (snapshot.data().uid !== user.uid) throw httpError(403, "forbidden", "Only the post author can edit it.");
-    await ref.update({ text: text });
-    return { success: true, id: postId };
-}
-
-async function createSocialReport(body, user, database) {
-    var allowedTypes = { kindlechat: true, topic: true, topic_comment: true, neighbourhood_post: true, neighbourhood_comment: true, suggestion: true, suggestion_comment: true };
-    var contentType = String(body.contentType || "");
-    var contentId = validateFirebaseId(body.contentId, "content ID");
-    if (!allowedTypes[contentType]) throw httpError(400, "invalid-report", "Invalid report type.");
-    var report = {
-        reporterId: user.uid,
-        reporterName: String(user.email || "").split("@")[0],
-        reportedUserId: String(body.reportedUserId || "").slice(0, 128),
-        contentType: contentType,
-        contentId: contentId,
-        contentPath: String(body.contentPath || "").slice(0, 500),
-        reason: String(body.reason || "").slice(0, 100),
-        comment: String(body.comment || "").slice(0, 1000),
-        contentSnapshot: String(body.contentSnapshot || "").slice(0, 2000),
-        status: "pending",
-        timestamp: admin.database.ServerValue.TIMESTAMP
-    };
-    if (!report.reason) throw httpError(400, "invalid-report", "A report reason is required.");
-    var existingSnapshot = await database.ref("reports").orderByChild("contentId").equalTo(contentId).once("value");
-    var existingDifferentReporter = null;
-    existingSnapshot.forEach(function (child) {
-        var value = child.val() || {};
-        if (!existingDifferentReporter && value.contentType === contentType && value.status === "pending" && value.reporterId !== user.uid) {
-            existingDifferentReporter = { key: child.key, value: value };
-        }
-    });
-    var ref = await database.ref("reports").push(report);
-    var immediate = { kindlechat: true, topic_comment: true, neighbourhood_comment: true, suggestion_comment: true };
-    var twoReports = { topic: true, neighbourhood_post: true, suggestion: true };
-    var shouldDelete = immediate[contentType] || (twoReports[contentType] && existingDifferentReporter);
-    if (shouldDelete) {
-        try {
-            await deleteReportedContent(contentType, contentId, report.contentPath, database);
-            var resolution = { status: "resolved", autoDeleted: true, resolvedAt: admin.database.ServerValue.TIMESTAMP };
-            await ref.update(resolution);
-            if (existingDifferentReporter) await database.ref("reports/" + existingDifferentReporter.key).update(resolution);
-            report.autoDeleted = true;
-        } catch (error) {
-            await ref.update({ resolutionNote: "Auto-delete failed", deleteError: String(error.message || error).slice(0, 500) });
-        }
-    }
-    await sendDiscordReport(report, ref.key).catch(function (error) { console.error("Discord report notification failed", error.message); });
-    return { success: true, id: ref.key, autoDeleted: report.autoDeleted === true };
-}
-
 async function createPrimarySuggestionReport(event) {
     var user = await requireFirebaseUser(event);
     await enforceUserWindowRateLimit(user.uid, "suggestion_report", 60, 60 * 60 * 1000);
@@ -1485,22 +1191,6 @@ function primarySuggestionReportSnapshot(contentType, content) {
     return (String(content.title || "") + " - " + String(content.description || "")).slice(0, 2000);
 }
 
-async function deleteReportedContent(type, id, path, socialDatabase) {
-    var socialFirestore = getSocialFirebaseApp().firestore();
-    if (type === "kindlechat") {
-        await socialDatabase.ref("kindlechat/messages/" + id).remove();
-        await socialDatabase.ref("kindlechat/art_index/" + id).remove();
-        return;
-    }
-    if (type === "topic") return socialFirestore.collection("topics").doc(id).delete();
-    if (type === "neighbourhood_post") return socialFirestore.collection("neighbourhood_posts").doc(id).delete();
-    if (type === "topic_comment" && /^topics\/[a-zA-Z0-9_-]+\/comments\/[a-zA-Z0-9_-]+$/.test(path)) return socialFirestore.doc(path).delete();
-    if (type === "neighbourhood_comment" && /^neighbourhood_posts\/[a-zA-Z0-9_-]+\/comments\/[a-zA-Z0-9_-]+$/.test(path)) return socialFirestore.doc(path).delete();
-    if (type === "suggestion") return getFirebaseApp().database().ref("suggestions/" + id).remove();
-    if (type === "suggestion_comment" && /^suggestions\/[a-zA-Z0-9_-]+\/comments\/[a-zA-Z0-9_-]+$/.test(path)) return getFirebaseApp().database().ref(path).remove();
-    throw new Error("Reported content path is invalid.");
-}
-
 async function sendDiscordReport(report, reportId) {
     if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_CHANNEL_ID) return;
     var description = String(report.contentSnapshot || "No content snapshot").slice(0, 1000).replace(/```/g, "` ` `");
@@ -1516,163 +1206,10 @@ async function sendDiscordReport(report, reportId) {
     if (!upstream.ok) throw new Error("Discord returned HTTP " + upstream.status);
 }
 
-async function translateSocialContent(event, context) {
-    var user = await requireAnyFirebaseUser(event);
-    ensureSocialPostingEligible(user);
-    var body = parseJsonBody(event);
-    var msgId = validateFirebaseId(body.msgId, "message ID");
-    var social = getSocialFirebaseApp();
-    var text;
-    var ownerUid;
-    if (body.app === "neighbourhood") {
-        var postSnapshot = await social.firestore().collection("neighbourhood_posts").doc(msgId).get();
-        if (!postSnapshot.exists) throw httpError(404, "not-found", "Post not found.");
-        text = String(postSnapshot.data().text || "").trim();
-        ownerUid = postSnapshot.data().uid;
-    } else {
-        var messageSnapshot = await social.database().ref("kindlechat/messages/" + msgId).once("value");
-        var message = messageSnapshot.val();
-        if (!message) throw httpError(404, "not-found", "Message not found.");
-        text = String(message.text || "").trim();
-        ownerUid = message.uid;
-    }
-    if (ownerUid !== user.uid && user.moderator !== true && user.email !== "ukiyo@rekindle.ink") {
-        throw httpError(403, "forbidden", "Only the author or a moderator can request translation.");
-    }
-    if (!text || text.length > 2000) throw httpError(400, "invalid-text", "Invalid translation text.");
-    await enforceUserWindowRateLimit(user.uid, "social_translate", 60, 60 * 60 * 1000);
-    var targetLanguages = ["en", "es", "pt", "pl", "de", "it", "fr", "ru", "zh", "vi"];
-    var translations = {};
-    var token = getYandexIamToken(context);
-    var folderId = String(process.env.YANDEX_FOLDER_ID || context.functionFolderId || "");
-    for (var i = 0; i < targetLanguages.length; i++) {
-        var upstream = await fetch("https://translate.api.cloud.yandex.net/translate/v2/translate", {
-            method: "POST",
-            headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json", "x-folder-id": folderId, "x-data-logging-enabled": "false" },
-            body: JSON.stringify({ folderId: folderId, texts: [text], targetLanguageCode: targetLanguages[i] })
-        });
-        var result = await readUpstreamResponse(upstream);
-        if (result.status >= 200 && result.status < 300 && result.body.translations && result.body.translations[0] && result.body.translations[0].text !== text) {
-            translations[targetLanguages[i]] = result.body.translations[0].text;
-        }
-    }
-    if (body.app === "neighbourhood") {
-        await social.firestore().collection("neighbourhood_posts").doc(msgId).set({ translation: translations, reprocessedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-    } else {
-        var updates = {};
-        Object.keys(translations).forEach(function (lang) { updates[lang + "/" + msgId] = translations[lang]; });
-        if (Object.keys(updates).length) await social.database().ref("kindlechat/translations_by_lang").update(updates);
-    }
-    return { success: true, msgId: msgId, translation: translations, skipped: Object.keys(translations).length === 0 };
-}
-
-async function requireAnyFirebaseUser(event) {
-    var header = String(getHeader(event, "authorization") || "");
-    var token = header.indexOf("Bearer ") === 0 ? header.slice(7) : getHeader(event, "x-firebase-token");
-    if (!token) throw httpError(401, "unauthenticated", "Authentication is required.");
-    try { return await getSocialFirebaseApp().auth().verifyIdToken(token, true); } catch (socialError) {
-        try { return await getFirebaseApp().auth().verifyIdToken(token, true); } catch (primaryError) {
-            throw httpError(401, "unauthenticated", "Session is invalid or expired.");
-        }
-    }
-}
-
-function ensureSocialPostingEligible(user) {
-    if (!user || (user.ageVerified !== true && user.email !== "ukiyo@rekindle.ink")) {
-        throw httpError(403, "age-verification-required", "Age verification is required for social posting.");
-    }
-}
-
-async function ensureNotTimedOut(database, uid) {
-    var snapshot = await database.ref("timeouts/" + uid).once("value");
-    var value = snapshot.val();
-    if (value && Number(value.until || 0) > Date.now()) throw httpError(403, "timed-out", "You are currently timed out.");
-}
-
-function validateSocialText(value, max, allowEmpty) {
-    var text = String(value || "").substring(0, max).replace(/(\n\s*){3,}/g, "\n\n").trim();
-    if (!allowEmpty && !text) throw httpError(400, "empty-message", "Message is empty.");
-    validateNoLinksOrPromotion(text);
-    return text;
-}
-
-function validateNoLinksOrPromotion(text) {
-    var value = String(text || "").toLowerCase();
-    if (/h\s*t\s*t\s*p\s*s?\s*[:/]{1,4}|\bwww\.|\b[a-z0-9-]+\s*\.\s*(com|net|org|io|co|ai|app|dev|edu|gov|mil|int|biz|info|name|pro|museum|aero|coop|jobs|mobi|travel|arpa|asia|cat|tel|xxx|post|geo|mail|onion|bit|crypto|eth|us|uk|au|ca|de|fr|jp|cn|kr|ru|br|mx|es|it|nl|se|no|fi|dk|pl|cz|at|ch|be|pt|ie|nz|za|in|sg|hk|tw|id|th|vn|ph|my|xyz|club|online|site|top|ink|cc|tv|ws|me|nu|gg|to|vc|link)\b|\b\d{1,3}(\.\d{1,3}){3}\b/.test(value)) {
-        throw httpError(400, "links-not-allowed", "Links and URLs are not allowed.");
-    }
-    if (/\b(?:unreader|un-reader|inkchat|kindlehub)\b/i.test(value)) throw httpError(400, "promotion-not-allowed", "Promotional content is not allowed.");
-}
-
-async function ensureModerationAllowed(text) {
-    var clean = stripAsciiArt(text);
-    if (!clean) return;
-    var result = await readUpstreamResponse(await fetch("https://api.openai.com/v1/moderations", {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + getRequiredEnv("OPENAI_API_KEY"), "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "omni-moderation-latest", input: clean })
-    }));
-    if (result.status < 200 || result.status >= 300) throw upstreamError(result, "Content moderation failed.");
-    var moderation = result.body.results && result.body.results[0];
-    if (moderation && moderation.flagged) throw httpError(400, "content-flagged", "Your message was flagged by content moderation and cannot be posted.");
-}
-
-function stripAsciiArt(text) {
-    var arts = [
-        "\\˚ㄥ˚\\", "☁ ▅▒░☼‿☼░▒▅ ☁", "ˁ˚ᴥ˚ˀ", "⎦˚◡˚⎣", "<*_*>", "(-(-_(-_-)_-)-)",
-        "(✿ ♥‿♥)", "㋡", "(⌒▽⌒)", "(◔/‿\\◔)", "(⋗_⋖)", "ة_ة", "\\(^-^)/", "◕_◕", "(っ◕‿◕)っ",
-        "( ͠° ͟ʖ ͡°)", "ʘ‿ʘ", "(｡◕‿◕｡)", "☜(⌒▽⌒)☞", "ヽ(´▽`)/", "ヽ(´ー｀)ノ", "⊂(◉‿◉)つ",
-        "(づ￣ ³￣)づ", "“ヽ(´▽｀)ノ”", "♥‿♥", "( ˘ ³˘)♥", "\\(ᵔᵕᵔ)/", "ᴖ̮ ̮ᴖ", "-`ღ´-", "ಠ_ಠ",
-        "(╬ ಠ益ಠ)", "ლ(ಠ益ಠლ)", "ಠ‿ಠ", "ಥ_ಥ", "ಥ﹏ಥ", "٩◔̯◔۶", "(´･_･`)", "(ಥ⌣ಥ)", "눈_눈",
-        "( ఠ ͟ʖ ఠ)", "( ͡ಠ ʖ̯ ͡ಠ)", "( ಠ ʖ̯ ಠ)", "(ᵟຶ︵ ᵟຶ)", "¯\\_(ツ)_/¯", "( ͡° ͜ʖ ͡°)",
-        "ᕙ(⇀‸↼‶)ᕗ", "┌(ㆆ㉨ㆆ)ʃ", "(•̀ᴗ•́)و ̑̑", "(☞ﾟヮﾟ)☞", "(っ▀¯▀)つ", "(∩｀-´)⊃━☆ﾟ.*･｡ﾟ",
-        "(╯°□°）╯︵ ┻━┻", "┬─┬ ノ( ゜-゜ノ)", "┬─┬⃰͡ (ᵔᵕᵔ͜ )", "(ง'̀-'́)ง", "ʕ•ᴥ•ʔ", "ʕᵔᴥᵔʔ",
-        "ʕ •`ᴥ•´ʔ", "V•ᴥ•V", "ฅ^•ﻌ•^ฅ", "ʕ •́؈•̀ ₎", "{•̃_•̃}", "(ᵔᴥᵔ)", "[¬º-°]¬", "ƪ(ړײ)‎ƪ​​",
-        "¯\\(°_o)/¯", "⊙﹏⊙", "¯\\_(⊙︿⊙)_/¯", "¿ⓧ_ⓧﮌ", "(⊙.☉)7", "٩(๏_๏)۶", "(⊙_◎)",
-        "ミ●﹏☉ミ", "(Ծ‸ Ծ)", "⥀.⥀", "♨_♨", "(._.)"
-    ];
-    arts.sort(function (a, b) { return b.length - a.length; });
-    var clean = String(text || "");
-    arts.forEach(function (art) { clean = clean.split(art).join(""); });
-    return clean.trim();
-}
-
-async function ensureNotDuplicate(database, uid, type, text) {
-    var hash = hashSocialText(text);
-    var snapshot = await database.ref("kindlechat/user_recent/" + uid + "/" + type + "/" + hash).once("value");
-    var timestamp = Number(snapshot.val() || 0);
-    if (timestamp && Date.now() - timestamp < 5 * 60 * 1000) throw httpError(429, "duplicate", "You already posted this recently. Please wait a few minutes.");
-}
-
-async function recordDuplicate(database, uid, type, text) {
-    await database.ref("kindlechat/user_recent/" + uid + "/" + type + "/" + hashSocialText(text)).set(admin.database.ServerValue.TIMESTAMP);
-}
-
-function hashSocialText(text) {
-    var normalized = String(text || "").toLowerCase().replace(/[^a-z0-9\u0400-\u04ff\s]/g, "").replace(/\s+/g, " ").trim();
-    var hash = 5381;
-    for (var i = 0; i < normalized.length; i++) hash = ((hash << 5) + hash) ^ normalized.charCodeAt(i);
-    return (hash >>> 0).toString(16);
-}
-
 function validateFirebaseId(value, label) {
     var id = String(value || "");
     if (!id || id.length > 200 || !/^[a-zA-Z0-9_-]+$/.test(id)) throw httpError(400, "invalid-id", "Invalid " + label + ".");
     return id;
-}
-
-function validatePixelArt(body) {
-    var data = String(body.pixel_art || "");
-    var grid = String(body.grid_data || "");
-    if (!/^data:image\/(png|webp);base64,[a-zA-Z0-9+/=]+$/i.test(data) || data.length > 500000 || grid.length > 100000) {
-        throw httpError(400, "invalid-pixel-art", "Invalid pixel art.");
-    }
-    try {
-        var parsed = JSON.parse(grid);
-        if (!Array.isArray(parsed) || parsed.length === 64 || parsed.every(function (row) { return Array.isArray(row) && row.every(function (cell) { return cell === 0; }); })) {
-            throw new Error("invalid");
-        }
-    } catch (error) { throw httpError(400, "invalid-pixel-art", "Invalid or blank pixel art."); }
 }
 
 function loadMailLibraries() {
@@ -2321,24 +1858,6 @@ function getFirebaseApp() {
     return firebaseApp;
 }
 
-function getSocialFirebaseApp() {
-    if (socialFirebaseApp) return socialFirebaseApp;
-    var serviceAccountRaw = getRequiredEnv("SOCIAL_FIREBASE_SERVICE_ACCOUNT_JSON");
-    var serviceAccount;
-    try {
-        serviceAccount = JSON.parse(serviceAccountRaw);
-    } catch (error) {
-        throw new Error("SOCIAL_FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON.");
-    }
-    if (serviceAccount.private_key) serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
-    socialFirebaseApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        databaseURL: "https://rekindle-socials-default-rtdb.firebaseio.com",
-        projectId: "rekindle-socials"
-    }, "rekindle-yandex-social");
-    return socialFirebaseApp;
-}
-
 function getS3Client() {
     if (s3Client) return s3Client;
     s3Client = new s3Package.S3Client({
@@ -2518,9 +2037,6 @@ function endsWith(value, suffix) {
 }
 
 module.exports.testHooks = {
-    ensureSocialPostingEligible: ensureSocialPostingEligible,
-    validateNoLinksOrPromotion: validateNoLinksOrPromotion,
-    validateFlipbookPayload: validateFlipbookPayload,
     validatePrimarySuggestionReport: validatePrimarySuggestionReport,
     primarySuggestionReportSnapshot: primarySuggestionReportSnapshot,
     buildDailyQuota: buildDailyQuota,

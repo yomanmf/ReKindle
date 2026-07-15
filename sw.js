@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v21'; // Bumped version to force update
+const CACHE_NAME = 'rekindle-cache-v22'; // Remove stale internal-social pages from old caches
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

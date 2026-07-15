@@ -1,6 +1,6 @@
 # ReKindle paywall removal audit
 
-Status: the non-social paywall removal is implemented, deployed to Yandex and
+Status: the paywall removal is implemented, deployed to Yandex and
 verified against the release archive. ReKindle+ is optional supporter status
 and must not grant application capabilities.
 
@@ -26,7 +26,7 @@ and must not grant application capabilities.
 
 - `pro-gate.js`
 - `js/anti-tamper.js`
-- the unused `pro` claim in Firebase social custom tokens
+- the retired internal-social custom-token flow
 - dashboard `app.plus` launch interception
 - the RSS two-feed limit and Pro-only category branch
 - callable `createRssFeed` entitlement enforcement
@@ -36,16 +36,17 @@ and must not grant application capabilities.
 - every frontend `workers.dev` and relative `/api/*` backend dependency
 
 Supporter records (`isPro`, `proExpiresAt`, Stripe customer/subscription metadata)
-remain only for optional badges, account history and moderation tooling. They
+remain only for optional badges and account history. They
 must not appear in an authorization condition for launching an app, storage,
 AI, OCR, mail, export, feeds or categories.
 
 ## Functionality without a paywall
 
-The non-social applications no longer require ReKindle+ in production. The
-Yandex Functions, Gateway, primary Firebase rules and 113 frontend objects in
-`DEPLOYMENT-CHECKLIST.md` are deployed. The `rekindle-socials` project and apps
-that depend on it are explicitly outside the current production rollout.
+Applications no longer require ReKindle+ in production. The
+preceding Yandex Functions, Gateway, primary Firebase rules and 113-object
+frontend release are deployed. The 117-object internal-social removal release
+is prepared but still pending in `DEPLOYMENT-CHECKLIST.md`. Pixel and Flipbook
+remain standalone creative applications in that release.
 The following are operational requirements, not subscription gates:
 
 - a Firebase account for cost-bearing server routes;
@@ -69,10 +70,9 @@ The following are operational requirements, not subscription gates:
   only `news.error.paywall` remains for external publisher restrictions, while
   `pay.desc` and `support.desc` explicitly state that every app is available
   without a subscription.
-- The non-social frontend release archive contains 68 changed source files and
-  45 byte-identical extensionless HTML aliases (113 production objects). The
-  five changed `rekindle-socials` pages are explicitly excluded. Checksums for
-  the five non-social release archives are recorded in `RELEASE-SHA256.txt`.
+- The previous frontend release archive contained 68 changed source files and
+  45 byte-identical extensionless HTML aliases (113 production objects).
+  Checksums for the five release archives are recorded in `RELEASE-SHA256.txt`.
 - Public Object Storage verification matched all 113 release objects byte for
   byte; no object was missing or different. The two obsolete gate scripts now
   return HTTP 404.

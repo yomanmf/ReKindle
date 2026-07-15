@@ -11,12 +11,11 @@ var stageDir = path.join(outputDir, "rekindle-frontend-stage");
 var archivePath = path.join(outputDir, "rekindle-frontend.zip");
 var firebaseApiKeyPlaceholder = "__REKINDLE_FIREBASE_API_KEY__";
 var firebaseApiKey = process.env.REKINDLE_FIREBASE_API_KEY;
-var socialFiles = {
-    "flipbook.html": true,
+var retiredFiles = {
     "kindlechat.html": true,
     "neighbourhood.html": true,
-    "pixel.html": true,
-    "topics.html": true
+    "topics.html": true,
+    "moderation.html": true
 };
 
 var files = fs.readFileSync(manifestPath, "utf8").split(/\r?\n/).map(function (line) {
@@ -50,7 +49,7 @@ function prepareReleaseSource(relativePath, source) {
 }
 
 files.forEach(function (relativePath) {
-    if (socialFiles[relativePath]) throw new Error("Social file is not allowed in this release: " + relativePath);
+    if (retiredFiles[relativePath]) throw new Error("Retired file is not allowed in this release: " + relativePath);
     var source = path.join(root, relativePath);
     if (!fs.statSync(source).isFile()) throw new Error("Release source is not a file: " + relativePath);
     var destination = path.join(stageDir, relativePath);
@@ -85,8 +84,8 @@ if (archiveObjects.length !== expectedEntries) {
     throw new Error("Frontend archive contains " + archiveObjects.length + " objects; expected " + expectedEntries + ".");
 }
 archiveObjects.forEach(function (relativePath) {
-    if (socialFiles[relativePath] || socialFiles[relativePath + ".html"]) {
-        throw new Error("Social object leaked into frontend archive: " + relativePath);
+    if (retiredFiles[relativePath] || retiredFiles[relativePath + ".html"]) {
+        throw new Error("Retired object leaked into frontend archive: " + relativePath);
     }
     var stagedObject = fs.readFileSync(path.join(stageDir, relativePath));
     if (stagedObject.indexOf(firebaseApiKeyPlaceholder) !== -1) {

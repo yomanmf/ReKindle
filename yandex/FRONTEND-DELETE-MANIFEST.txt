@@ -2,3 +2,11 @@
 # updated HTML has been published and verified.
 pro-gate.js
 js/anti-tamper.js
+kindlechat.html
+kindlechat
+neighbourhood.html
+neighbourhood
+topics.html
+topics
+moderation.html
+moderation

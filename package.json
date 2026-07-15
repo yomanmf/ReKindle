@@ -5,13 +5,11 @@
         "build": "node build-automation.js",
         "build:badwords": "node scripts/build-bad-words.js",
         "test:chat-ai": "node --test tests/chat-ai-contract.test.js",
+        "test:social-removal": "node --test tests/social-removal-contract.test.js",
         "deploy:beta": "npx wrangler pages deploy . --project-name=rekindle --branch=beta",
         "deploy:rules:firestore": "firebase deploy --only firestore:rules",
         "deploy:rules:rtdb": "firebase deploy --only database:rules",
-        "deploy:rules:storage": "firebase deploy --only storage",
-        "deploy:rules:social:firestore": "firebase deploy --config firebase-social.json --only firestore:rules --project rekindle-socials",
-        "deploy:rules:social:rtdb": "firebase deploy --config firebase-social.json --only database:rules --project rekindle-socials",
-        "deploy:rules:social": "npm run deploy:rules:social:firestore && npm run deploy:rules:social:rtdb"
+        "deploy:rules:storage": "firebase deploy --only storage"
     },
     "dependencies": {
         "@babel/core": "^7.23.0",

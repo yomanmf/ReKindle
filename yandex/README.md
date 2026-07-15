@@ -47,7 +47,7 @@ cross-instance cache is required later.
 - Firebase ID-token verification;
 - signed upload/download URLs for the private user-files Object Storage bucket;
 - listing and deleting objects owned by the authenticated user;
-- authenticated AI, OCR, mail, content proxies, social services, and billing.
+- authenticated AI, OCR, mail, content proxies, Suggestions reports, and billing.
 - a public GET/HEAD content proxy with SSRF protection, IP rate limits and a
   5 MB response cap, plus the NRL scoreboard route used by local apps.
 
@@ -56,10 +56,8 @@ The function requires these secret-backed environment variables:
 - `FIREBASE_SERVICE_ACCOUNT_JSON`
 - `S3_ACCESS_KEY_ID`
 - `S3_SECRET_ACCESS_KEY`
-- `SOCIAL_FIREBASE_SERVICE_ACCOUNT_JSON`
 - `PINTEREST_CLIENT_ID`
 - `PINTEREST_CLIENT_SECRET`
-- `OPENAI_API_KEY`
 - `TMDB_API_KEY`
 - `STRIPE_KEY`
 - `STRIPE_WEBHOOK_SECRET`
@@ -67,7 +65,7 @@ The function requires these secret-backed environment variables:
 It also requires the non-secret variables `S3_BUCKET`, `ALLOWED_ORIGINS`,
 `YANDEX_FOLDER_ID`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, and
 `STRIPE_PRICE_LIFETIME`. `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` are
-optional; without them, social reports are still stored but no Discord embed is
+optional; without them, Suggestions reports are still stored but no Discord embed is
 sent. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
 use the IAM token supplied to the function through its attached service account.
 Secrets must be supplied from Yandex Lockbox; never paste them into source files
@@ -95,9 +93,9 @@ Reddit `GET`/`HEAD` routes and its public CORS behavior when changing the file;
 the ReKindle function enforces its own stricter origin allowlist. The browser
 client uses `/api/rekindle/*` through the existing `rekindle-api` gateway.
 
-Primary Suggestions reports use `/api/rekindle/reports/submit`. This route is
-independent of the `rekindle-socials` project and writes only to the primary
-Firebase RTDB after validating the stored content owner and canonical path.
+Suggestions reports use `/api/rekindle/reports/submit` and write only to the
+primary Firebase RTDB after validating the stored content owner and canonical
+path. The retired internal social project is not part of the runtime.
 
 The former relative `/api/proxy`, `/api/maps`, `/api/price`, and
 `/api/nrl-scores` Pages Functions have been removed. Frontend pages call
@@ -110,8 +108,8 @@ Run the non-mutating unit suite with `npm test`. The production E2E suite is
 `FIREBASE_SERVICE_ACCOUNT_FILE`. It creates a unique temporary account, verifies
 registration, custom-token login, IP checking, an authenticated shared
 YandexGPT response with server-authoritative quota readback, signed upload,
-browser CORS, list, download, and delete, then removes the test object, RTDB
-profile/quota/rate-limit nodes, and Firebase Auth user in a `finally` cleanup.
+browser CORS, list, download, and delete, then removes the test object, private
+RTDB/quota/rate-limit nodes, and Firebase Auth user in a `finally` cleanup.
 
 Do not rely on a successful `yc storage s3 cp --recursive` exit status for
 frontend releases. Yandex CLI 1.18.0 silently omitted 42 of 113 objects during

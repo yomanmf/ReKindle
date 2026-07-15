@@ -380,7 +380,7 @@ The project uses **two separate Firebase projects**. You must know which one you
 *   **Config:** `firebase.json`
 *   **Firestore Rules:** `firestore.rules` — user data, leaderboards, app-specific collections.
 *   **Storage Rules:** `storage.rules` — direct Firebase Storage is denied; user files and photos use the quota-aware Yandex backend for every authenticated user.
-*   **RTDB Rules:** `rtdb-rules.json` — presence, freewrite sessions, moderator lists, public/user state and API rate-limit data. There is no Pro gate.
+*   **RTDB Rules:** `rtdb-rules.json` — private user state, presence, multiplayer, Suggestions and API rate-limit data. There is no Pro gate.
 *   **Cloud Functions:** `firebase-functions/index.js`
 
 The primary RTDB is hosted in Belgium (`europe-west1`). Its canonical URL is
@@ -410,29 +410,20 @@ Firebase Admin SDK can publish the same source with
 file. The AI Assistant rollout used this path and verified active ruleset
 `eadc917f-8ffc-4d47-91cb-4e2a671dec96` byte-for-byte after normalized newlines.
 
-#### Project 2: Social (`rekindle-socials`)
-*   **Used by:** Social apps — KindleChat, Neighbourhood, Topics, Flipbook, Pixel, Moderation. Any HTML file using `projectId: "rekindle-socials"`.
-*   **Config:** `firebase-social.json`
-*   **Firestore Rules:** `firestore-social.rules` — topics, neighbourhood posts/comments.
-*   **RTDB Rules:** `rtdb-social-rules.json` — KindleChat messages, translations, server-side rate limits (`kindlechat/server_rate_limits`), and per-user duplicate-detection cache (`kindlechat/user_recent`).
-*   **Cloud Functions:** Same `firebase-functions/index.js` (initialized as secondary `socialAdminApp`).
-
 #### Rule Update Checklist
 When adding a new feature that writes to Firebase, you **must** update the corresponding rules:
 
 | If your feature writes to... | Update this file |
 | :--- | :--- |
 | Primary Firestore (leaderboards, user collections) | `firestore.rules` |
-| Social Firestore (topics, posts, comments) | `firestore-social.rules` |
 | Primary Storage (user files/photos) | `storage.rules` |
 | Primary RTDB (presence, sessions) | `rtdb-rules.json` |
-| Social RTDB (chat messages) | `rtdb-social-rules.json` |
 
 Without matching rules, writes will be **silently rejected** by security rules. Always follow the existing patterns in the target file for authenticated-user-only collections.
 
 **Firestore overlapping-match gotcha:** Security-rule `match` blocks are ORed, not ordered by specificity. A restrictive exact match does not override a broader permissive match. For example, both `match /privateSettings/ai` and `match /privateSettings/{docId}` match the `ai` document; if the wildcard rule allows the owner unconditionally, the intended ReKindle+ check in the exact rule is ineffective. Put the conditional in the wildcard rule (for example, branch on `docId == 'ai'`) or exclude the sensitive document from the broad allow. Audit other exact-plus-wildcard pairs the same way.
 
-**Removing a client paywall does not create backend access control:** CORS is not authentication and can be bypassed by non-browser clients. The Yandex routes for AI, OCR, mail, Pinterest, Substack, Flipbook, Files, Docs, and Photo Frame therefore verify a primary Firebase ID token and enforce server-side per-user rate limits or storage quotas. Files, Docs, and Photo Frame are open to every authenticated user while retaining path ownership, MIME/type validation, 100 MB per-user storage, and 25 MB per-object limits. Direct Firebase Storage is deliberately denied by `storage.rules`; it has no byte-quota mechanism and must not be reopened as a shortcut.
+**Removing a client paywall does not create backend access control:** CORS is not authentication and can be bypassed by non-browser clients. The Yandex routes for AI, OCR, mail, Pinterest, Substack, Files, Docs, and Photo Frame therefore verify a primary Firebase ID token and enforce server-side per-user rate limits or storage quotas. Files, Docs, and Photo Frame are open to every authenticated user while retaining path ownership, MIME/type validation, 100 MB per-user storage, and 25 MB per-object limits. Direct Firebase Storage is deliberately denied by `storage.rules`; it has no byte-quota mechanism and must not be reopened as a shortcut.
 
 **Yandex-only production architecture:** Browser code must call Yandex Cloud Functions through the `rekindle-api` API Gateway. Cloudflare Worker sources and Wrangler manifests have been removed. Do not restore their endpoints or patch old CORS allowlists. A new server route must be implemented and tested in Yandex before its frontend is published.
 
@@ -440,9 +431,29 @@ Without matching rules, writes will be **silently rejected** by security rules. 
 
 **Paywall removal state (July 2026):** Dashboard interception and application-level ReKindle+ access checks have been removed. No app registry entry uses `plus: true`. ReKindle+ supporter data may remain for cosmetic profile badges and historical billing records; it must not control app launch, export, feed count, categories, storage, AI, OCR, or mail access. When adding an app, do not recreate `pro-gate.js` or introduce an `app.plus` access branch.
 
-**Supporter badges must not trust profile fields or local storage:** Cosmetic supporter styling must come from the server-maintained `config/supporters` document (or equivalent trusted billing record). Never read a self-writable profile field such as `kindlePlus`, and never infer supporter status from `localStorage`. `neighbourhood.html` previously persisted `kindlePlus` in the user's profile and defaulted a missing local flag to active; that did not gate features, but it allowed badge spoofing and has been removed.
+**Supporter badges must not trust profile fields or local storage:** Cosmetic supporter styling must come from the server-maintained `config/supporters` document (or equivalent trusted billing record). Never read a self-writable profile field such as `kindlePlus`, and never infer supporter status from `localStorage`.
 
-**Social custom tokens do not carry supporter entitlement:** `getSocialToken` includes only the claims needed by social rules (`moderator`, `ageVerified`, and `email`). Do not re-add `pro` to that token: supporter decoration is read from the trusted supporter registry, while every social capability is governed by authentication, age verification, moderation and abuse controls.
+**Retired internal social subsystem (July 2026):** The separate
+`rekindle-socials` Firebase project is no longer part of the application.
+KindleChat, Neighbourhood, Topics, Moderation, age verification, social custom
+tokens, public profile cards, and their moderation/translation/reporting routes
+were removed. Do not recreate their pages, Firebase configuration, rules,
+callables, Gateway routes, locale keys, or admin scripts.
+
+Pixel and Flipbook remain standalone creative tools. Pixel stores signed-in
+cloud drawings in the primary Firestore `pixel_drawings` collection; Flipbook
+uses primary Firestore `flipnote_animations`. Neither tool posts into a feed or
+depends on RTDB. The dashboard and multiplayer games use deterministic
+UID-derived avatar seeds instead of public profile cards. Life stores birthdays
+owner-only at primary RTDB `users_private/{uid}/life/birthday`.
+
+The frontend release manifest includes `pixel.html` and `flipbook.html`. The
+delete manifest includes both HTML and extensionless object keys for the four
+retired social pages so stale production URLs are removed after rollout.
+Before publishing the primary RTDB rules, run
+`admin/retire-public-profiles.js` without arguments to audit the migration and
+then with `--force`: it preserves valid Life birthdays under the private path
+before removing the obsolete `users_public` and `user_cards` trees.
 
 **Removing a paywall includes its locale contract:** When a gated component is deleted, remove its unused translation keys too. Stale keys such as `airtype.paywall.*`, `mail.paywall.*`, `mail.pro.*`, `quicknotes.paywall.*`, `quicktodo.pro.*`, and `paywall.popup.*` previously continued to advertise exclusive apps and could be resurrected by cached or legacy markup. The remaining `pay.desc` and `support.desc` text must explicitly state that every app is available without a subscription. `news.error.paywall` is unrelated: it describes an external publisher's article paywall.
 
@@ -460,9 +471,9 @@ Without matching rules, writes will be **silently rejected** by security rules. 
 
 **Yandex Object Storage recursive-copy gotcha:** Yandex CLI 1.18.0 marks `yc storage s3` as preview. During the 15 July 2026 AI Assistant release, both `yc storage s3 cp <dir> s3://rekindle/ --recursive` commands returned exit code 0 but silently omitted the same alphabetical tail of the 113-object release (42 root HTML objects and aliases). Never accept a recursive-copy exit code as proof of a complete frontend deployment. Read the bucket back and compare every manifest object byte-for-byte; upload any missing objects individually with `yc storage s3api put-object`. Set extensionless page aliases to `Content-Type: text/html` explicitly and verify their public HTTP headers.
 
-**Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, moderation, translation, Reader, Reddit, Readwise, Pinterest, Substack, Akinator, Chords, Story, TMDB, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module. This also includes non-page integrations such as the Discord interactions endpoint documented below.
+**Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Pinterest, Substack, Akinator, Chords, Story, TMDB, Suggestions reports, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
-**Suggestions reports are primary, not social:** `suggestions.html` stores content in the primary RTDB even though it shares `js/reports.js` with social pages. Its reports must use `/api/rekindle/reports/submit`, authenticate against `rekindle-fork`, verify the stored content owner and canonical `suggestions/...` path, and store server-maintained records under `suggestion_reports`. Do not route Suggestions reports through `/social/moderate`; that would make a primary app depend on `rekindle-socials` credentials.
+**Suggestions reports are primary-only:** `suggestions.html` stores content in the primary RTDB. Its reports use `/api/rekindle/reports/submit`, authenticate against `rekindle-fork`, verify the stored content owner and canonical `suggestions/...` path, and store server-maintained records under `suggestion_reports`.
 
 **Reddit is not covered by merely deleting its Pages Function:** `reddit.html` needs browser-like upstream headers and proxies Reddit-hosted images as well as RSS/JSON. It continues to use the dedicated Yandex Function behind `/api/reddit`, but derives the Gateway origin from `RekindleCloud.gatewayBase` instead of embedding another absolute URL. The handler validates a fixed Reddit/Imgur hostname allowlist, revalidates every redirect against the same allowlist, uses a bounded warm cache with stale fallback, and caps responses at 5 MB. Do not silently replace it with an unrestricted generic proxy.
 
@@ -477,92 +488,6 @@ Without matching rules, writes will be **silently rejected** by security rules. 
 **Story runtime entrypoint and generated CSS:** Yandex Cloud resolves the Story entrypoint `index.handler` from `yandex/rekindle-story/index.js`; keeping only `index.mjs` produces a runtime 502 even when `package.json` uses `"type": "module"`. The generated play page in `story-engine.mjs` must also follow Kindle rendering limits: use a sibling margin instead of flex `gap`, and keep the controls container in normal document flow rather than `position: sticky`.
 
 **Reader dependency pin:** Keep `linkedom` pinned to `0.16.11` in the CommonJS Yandex backend. `0.18.13` pulls an ESM-only `css-select` into its CommonJS entry and fails with `ERR_REQUIRE_ESM`. Test the actual `require('@mozilla/readability'); require('linkedom')` path after dependency updates, not only auth-gated unit tests.
-
-### 9. Server-Side Rate Limiting & Duplicate Detection (Yandex backend)
-
-`yandex/rekindle-backend/index.js` enforces **global, per-user token-bucket rate limits** using the social RTDB, so limits are shared across Yandex Function instances and cannot be bypassed with parallel requests or extracted tokens.
-
-#### Rate-limit data model
-*   **Bucket path:** `kindlechat/server_rate_limits/{uid}/{contentType}`
-*   **Bucket shape:** `{ tokens: number, lastRefill: number, updatedAt: number }`
-*   **Concurrency:** Firebase Admin RTDB transactions.
-
-#### Configured limits
-| Content type | Capacity | Refill rate |
-| :--- | :--- | :--- |
-| `kindlechat` | 5 | 1 token / 12 s |
-| `topic` | 3 | 1 token / 8 h |
-| `topic_edit` | 10 | 1 token / 1 min |
-| `topic_comment` | 5 | 1 token / 12 s |
-| `neighbourhood_post` | 5 | 1 token / 5 min |
-| `neighbourhood_edit` | 10 | 1 token / 1 min |
-| `neighbourhood_comment` | 10 | 1 token / 30 s |
-| `report` | 60 | 1 token / 1 min |
-
-#### Duplicate / repetitive-content detection
-*   **Path:** `kindlechat/user_recent/{uid}/{contentType}/{hash}`
-*   **Hash:** Normalized text (lowercased, punctuation stripped, whitespace collapsed) run through DJB2.
-*   **Window:** 5 minutes.
-*   Repeated identical or near-identical text within the window is rejected with a `429` error.
-
-#### Important rules
-*   No user bypasses the limits — not even `ukiyo@rekindle.ink` or moderators.
-*   These paths are **service-account writable only** in `rtdb-social-rules.json`.
-
-#### Firebase RTDB Script Gotcha
-Only include `firebase-database-compat.js` on pages that actually use Realtime Database (presence, matchmaking, chat, sessions, etc.). Pages that only need Auth/Firestore/Functions (such as `login.html`) should omit it. Loading RTDB unnecessarily can trigger `SafariExtensionMessageEvent` duplicate-variable errors in browsers with certain Safari extensions installed, and it causes extra polling connections to `*.firebaseio.com` that may log CORS/network errors even when the user is authenticated.
-
-### 8. URL / Link Blocking in Social Apps
-All social apps (KindleChat, Neighbourhood, Topics) block users from posting URLs and links. This is enforced **both client-side and server-side** in the Yandex backend.
-
-**Client-side helper** (add to each social app HTML):
-```javascript
-function containsUrl(text) {
-    if (!text) return false;
-    var t = String(text).toLowerCase();
-    var protocolLike = /h\s*t\s*t\s*p\s*s?\s*[:/]{1,4}/.test(t);
-    var wwwLike = /\bwww\./.test(t);
-    var domainLike = /\b[a-z0-9-]+\s*\.\s*(com|net|org|io|co|ai|app|dev|edu|gov|mil|int|biz|info|name|pro|museum|aero|coop|jobs|mobi|travel|arpa|asia|cat|tel|xxx|post|geo|mail|onion|bit|crypto|eth|us|uk|au|ca|de|fr|jp|cn|kr|ru|br|mx|es|it|nl|se|no|fi|dk|pl|cz|at|ch|be|pt|ie|nz|za|in|sg|hk|tw|id|th|vn|ph|my|xyz|club|online|site|top|ink|cc|tv|ws|me|nu|gg|to|vc|link)\b/.test(t);
-    var ipLike = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/.test(t);
-    return protocolLike || wwwLike || domainLike || ipLike;
-}
-```
-
-**Where to block:**
-*   **KindleChat:** `sendMessage()` in `kindlechat.html`. Do not restore the removed direct-RTDB `sendGeneralMessageViaApi()`/`sendGeneralMessageToRTDB()` fallback; it bypassed server moderation and is rejected by the service-account-only create rule.
-*   **Neighbourhood:** `submitPost()` and `submitComment()` in `neighbourhood.html`
-*   **Topics:** `submitTopic()` (title, subheading, poll options) and `postComment()` in `topics.html`
-*   **Yandex backend:** `validateNoLinksOrPromotion()` in `yandex/rekindle-backend/index.js` checks every social `type` handler.
-
-**Error message (URL):** Use `"Links and URLs are not allowed."` consistently across all apps.
-
-### 9. Promotional Term Blocking in Social Apps
-The following competing-service names are banned from mention in social apps as promotional content: **Unreader**, **un-reader**, **Inkchat**, **kindlehub**. This is enforced **both client-side and server-side** in the Yandex backend.
-
-**Client-side helper** (add to each social app HTML next to `containsUrl`):
-```javascript
-function containsPromotedTerm(text) {
-    if (!text) return false;
-    return /\b(?:unreader|un-reader|inkchat|kindlehub)\b/i.test(String(text));
-}
-```
-
-**Where to block:** Same locations as URL blocking. Apply `containsPromotedTerm()` to message text, topic titles/subheadings, poll questions/options, post text, and comment text.
-
-**Error message (promotion):** Use `"Promotional content is not allowed."` consistently across all apps.
-
-**Moderated edits:** Creating through the Yandex API is not sufficient if Firestore rules let an author rewrite content afterward. Topic and Neighbourhood edits use `topic_edit` and `neighbourhood_edit` in `yandex/rekindle-backend/index.js`; the backend checks the owner and reruns link, promotion, and OpenAI moderation. `firestore-social.rules` permits normal clients to update only `commentCount`/`lastActive`; content-field updates are moderator/developer-only because Admin SDK writes bypass rules. Do not restore broad author update access.
-
-**Translation input ownership:** `/social/translate` must never trust client-supplied `text`. It loads the canonical KindleChat message or Neighbourhood post by `msgId`, uses its stored text, and verifies that the caller is the author or a moderator. This prevents the translation route from becoming a generic paid translation proxy or overwriting translations for unrelated content.
-
-### 10. ASCII Emoji Stripping Before Moderation
-The OpenAI `omni-moderation-latest` model incorrectly flags innocent ASCII art emoticons (e.g. `¯\_(ツ)_/¯`, `( ͡° ͜ʖ ͡°)`, `(っ◕‿◕)っ`) as sexual or harassing content.
-
-**Rule:** All ASCII emojis from `emojis.js` must be stripped from message text **before** it is sent to the OpenAI moderation API.
-
-**Implementation:** `stripAsciiArt()` in `yandex/rekindle-backend/index.js` maintains a hard-coded list of every `art` value from `ASCII_EMOJIS` and removes them before `ensureModerationAllowed()` calls OpenAI. If the text is empty after stripping, moderation is skipped.
-
-**If you add new emojis to `emojis.js`, you must also add their `art` strings to the array in `stripAsciiArt()`.**
 
 ### 11. RTDB Turn Timers and `ServerValue.TIMESTAMP` Placeholders
 When building turn-based multiplayer games with RTDB, store `turnStartedAt` using `firebase.database.ServerValue.TIMESTAMP` so all clients share the same clock.
@@ -670,7 +595,7 @@ The primary Firebase web API key is restricted by HTTP referrer. When a new prod
 
 For `https://rekindle.website.yandexcloud.net`, add both `https://rekindle.website.yandexcloud.net` and `https://rekindle.website.yandexcloud.net/*` to the key's Website/HTTP-referrer allowlist in Google Cloud Console. Preserve all existing referrers and API restrictions. Also add the hostname-only value `rekindle.website.yandexcloud.net` to Firebase Authentication's Authorized domains list so future redirect-based auth flows work. Apply this checklist to every new deployment hostname.
 
-For an independent fork that cannot change the original project's allowlists, a new Firebase project and web-app configuration are required. Replacing only `apiKey` is insufficient: replace the complete config (`apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`, and every explicit `databaseURL`). Login then calls the callable function `checkIPOnLogin`, while registration calls `registerUser`; either deploy the fork's `firebase-functions/` and add the fork's origin to `allowedOrigins` in `firebase-functions/index.js`, or deliberately replace/remove these calls and accept the loss of server-side IP-ban enforcement. The full application also requires the matching Firestore, RTDB, and Storage rules. A second Firebase project is only necessary if the fork keeps the separate social-app architecture.
+For an independent fork that cannot change the original project's allowlists, a new Firebase project and web-app configuration are required. Replacing only `apiKey` is insufficient: replace the complete config (`apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`, and every explicit `databaseURL`). Login then calls the callable function `checkIPOnLogin`, while registration calls `registerUser`; either deploy the fork's `firebase-functions/` and add the fork's origin to `allowedOrigins` in `firebase-functions/index.js`, or deliberately replace/remove these calls and accept the loss of server-side IP-ban enforcement. The full application also requires the matching Firestore, RTDB, and Storage rules. ReKindle uses one Firebase project; do not add a second project for retired social features.
 
 **This fork's no-Blaze backend:** `rekindle-fork` keeps Firebase Authentication,
 Firestore, and RTDB on Spark. Registration, login IP checks, and private cloud
@@ -708,96 +633,9 @@ External APIs such as Reddit aggressively rate-limit shared cloud egress IPs. Ya
 
 Use `yandex/reddit-function/index.js` and the public proxy in `yandex/rekindle-backend/index.js` as production patterns.
 
-## 📋 Reporting System
+## Suggestions Reporting
 
-Users can report content across all social apps. Reports are stored in the social RTDB and can trigger Discord notifications.
-
-### Architecture
-- **Client Module:** `js/reports.js` — provides `rekindleOpenReportModal()` with System 7 styling
-- **Backend Handler:** `yandex/rekindle-backend/index.js` handles `type: "report"` requests
-- **Storage:** RTDB `/reports` on the **social** project (`rekindle-socials`)
-- **Notifications:** Discord bot via `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` environment variables. The current Yandex handler sends an informational embed; moderation actions remain in `moderation.html`.
-
-### Data Model (`/reports` RTDB)
-Each entry is keyed by a Firebase push ID and contains:
-```javascript
-{
-  reporterId, reporterName,
-  reportedUserId, reportedUserName,
-  contentType, contentId, contentPath,
-  reason, comment, contentSnapshot,
-  status: "pending" | "resolved" | "dismissed",
-  createdAt, resolvedAt, resolvedBy, resolutionNote
-}
-```
-
-### RTDB Rules
-Reports live under `/reports` in `rtdb-social-rules.json`:
-- `.read`: `ukiyo@rekindle.ink` or moderators
-- `.write`: `ukiyo@rekindle.ink` or the social service account
-- `.indexOn`: `["contentId", "contentType", "status", "createdAt"]`
-
-### RTDB Indexes Required
-Add this index in the Firebase Console under the social RTDB for the `/reports` node:
-- `contentId`
-- `contentType`
-- `status`
-- `createdAt`
-
-### Rate Limits
-- 60 reports per hour per user (enforced in the Yandex backend)
-
-### Adding Report Buttons to New Social Apps
-1. Include `<script src="js/reports.js"></script>` in the HTML `<head>`
-2. Call `rekindleOpenReportModal({contentType, contentId, contentPath, reportedUserId, contentSnapshot})`
-
-### Files Modified
-- `js/reports.js` (new)
-- `yandex/rekindle-backend/index.js` — report handler + Discord notification
-- `kindlechat.html` — report buttons on messages
-- `neighbourhood.html` — report buttons on posts and comments
-- `topics.html` — report buttons on topics and comments
-- `moderation.html` — added "User Reports" panel with pending/resolved/dismissed filters
-- `firestore-social.rules` — added `reports` collection rules
-
-### Discord Bot Setup
-Set `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` as Yandex Function environment variables. If either is absent, notifications are skipped. Never commit the bot token to the repository.
-
-**Setup Steps:**
-1. Create a Discord bot at [Discord Developer Portal](https://discord.com/developers/applications)
-2. Go to "Bot" tab → Click "Reset Token" → Copy the token
-3. Invite the bot to your server with "Send Messages", "Embed Links", and "Use Application Commands" permissions
-4. Set `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` as Yandex Function secrets/environment variables
-
-**Auto-Deletion:** When 2 different users report the same content (same `contentType` + `contentId`), the content is automatically deleted and both reports are marked as "resolved". The Discord notification will show a green embed indicating the auto-deletion.
-
-**Discord actions:** The Yandex notification currently has no interaction buttons. Delete, timeout, and dismiss actions are performed in `moderation.html`. If Discord interactions are added later, expose a verified-signature route through the Yandex Gateway; do not point Discord at a legacy Worker URL.
-
-### RTDB Indexes Required
-Reports live under `/reports` in the social RTDB. The dashboard reads from RTDB and filters/sorts in memory, but the worker query for existing reports uses `orderByChild('contentId').equalTo(...)`, so an index on `contentId` is required for performance at scale.
-
-1. **Reports node:**
-    - **Path:** `/reports`
-    - **Index fields:** `contentId`
-
-### Auto-Delete Behaviour
-When 2 different users report the same content (same `contentType` + `contentId`), the worker attempts to automatically delete the content. If deletion succeeds, both reports are marked as `resolved`. If deletion fails (e.g. RTDB permission issue), both reports remain `pending` so moderators can review them manually. The Discord notification will indicate whether the auto-delete succeeded or failed.
-
-### Security: Escaping for JS String Literals
-When passing user-generated text into `onclick` HTML attributes, **never rely solely on `escapeHtml()`**. HTML entity decoding happens before JS execution, so `&#039;` becomes `'` and breaks out of the string literal.
-
-**Correct pattern** (used in all report buttons):
-```javascript
-var safeText = userText
-    .replace(/\\/g, '\\\\\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r')
-    .replace(/\u0026/g, '\u0026amp;')
-    .replace(/\u003c/g, '\u0026lt;')
-    .replace(/\u003e/g, '\u0026gt;')
-    .replace(/"/g, '\u0026quot;');
-```
+`js/reports.js` is Suggestions-only. It accepts only `suggestion` and `suggestion_comment`, submits to `/api/rekindle/reports/submit`, and stores server-written records under primary RTDB `suggestion_reports`. Suggestion comments are removed on the first report; top-level suggestions require reports from two different users. Optional Discord notifications use `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID`.
 
 ### Guarding Optional Firebase / CDN Dependencies
 If an app can function without Firebase (e.g., local-only games), wrap Firebase initialization and all `auth`/`db` usage in feature checks. A blocked or failed CDN script must not prevent the rest of the page script from running. Use `typeof firebase !== 'undefined' && typeof firebase.auth === 'function' && typeof firebase.firestore === 'function'` before initializing, and guard every `db.collection(...)` / `auth.onAuthStateChanged(...)` call. See `nonograms.html` for the pattern used in this codebase.
@@ -810,64 +648,6 @@ ESPN's JSON scoreboard API (`site.api.espn.com/apis/site/v2/sports/{sport}/{leag
 *   Only games where both teams are in the known NRL team list are returned (filters out State of Origin / Tests).
 *   The response uses a two-minute warm-instance cache plus a two-minute client cache header.
 *   In `scores.html`, NRL is added to `LEAGUES` with `source: "nrl-scores"`, and `fetchFromAPI()` routes it to the Yandex endpoint.
-
-## KindleChat Art Gallery & `kindlechat/art_index`
-
-The KindleChat gallery (`kindlechat.html`) shows only pixel art and flipbooks. To avoid downloading every chat message, the gallery reads from a dedicated RTDB index at `kindlechat/art_index`.
-
-### Architecture
-
-- `kindlechat/art_index/{messageId}` stores a lightweight record for every art post:
-  - `type`: `"pixel_art"` or `"flipbook"`
-  - `uid`: author UID
-  - `timestamp`: server timestamp
-  - `thumbnail`: data URL (pixel art image or first flipbook frame)
-  - `text`: caption text
-- The gallery queries `art_index` ordered by `timestamp` and paginates with `limitToLast` + `endAt`.
-- Clicking a gallery item fetches the full message from `kindlechat/messages/{messageId}` to show the large pixel art or play the full flipbook.
-- The Yandex social handler automatically writes the index entry when pixel art or flipbook is posted, and deletes it when a message is auto-deleted from a report.
-
-### Files involved
-- `yandex/rekindle-backend/index.js` — writes/deletes index entries.
-- `rtdb-social-rules.json` — security rules for `kindlechat/art_index`.
-- `kindlechat.html` — gallery view reads from `art_index`.
-- `scripts/backfill-art-index.js` — one-time migration to populate the index for existing art posts.
-
-### Backfill
-
-Existing pixel art and flipbook posts do not automatically appear in the index. Run the migration once:
-
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/rekindle-socials-service-account.json
-node scripts/backfill-art-index.js
-```
-
-### Important rule for future art features
-
-Any new feature that posts pixel art or flipbooks to KindleChat must also write an entry to `kindlechat/art_index/{messageId}` with the same shape, or update the Yandex social handler to do it. Otherwise the gallery will not show those posts.
-
-
-## KindleChat Pixel Art Duplicate Prevention
-
-To stop users from reposting the exact same pixel art repeatedly in KindleChat, duplicate prevention is enforced both client-side and server-side.
-
-### Client-side `postedToKindleChat` flag (`pixel.html`)
-
-Each drawing in the user's manifest can carry a `postedToKindleChat: true` flag.
-
-*   When a drawing is successfully posted to KindleChat, `postToPixelChat()` sets `item.postedToKindleChat = true` on the current manifest item and saves the manifest.
-*   Before posting, `postToPixelChat()` checks the flag and shows a modal if the drawing has already been posted unchanged.
-*   Any modification to the drawing (saved via `performSave()`) clears the flag to `false`, so the edited drawing can be posted again.
-*   Translation key: `pixel.status.already_posted` — "This pixel art has already been posted to KindleChat. Modify it to post again."
-*   Blank (all-white) pixel art is also blocked from posting. Use `pixel.status.blank` — "Blank pixel art cannot be posted."
-
-### Server-side duplicate detection (`yandex/rekindle-backend/index.js`)
-
-*   Pixel art posts skip the text-only duplicate check (the placeholder text `"Shared a pixel art!"` would otherwise block different pixel art).
-*   Instead, the Yandex backend hashes `body.grid_data` and checks `kindlechat/user_recent/{uid}/kindlechat_pixel_art/{hash}` for a 5-minute duplicate window.
-*   After a successful post, the grid data hash is recorded under `kindlechat_pixel_art` for duplicate detection.
-*   No RTDB rule changes are required: `kindlechat/user_recent/{uid}` is already writable by the social service account for any child path.
-
 
 ## 🎮 Single-Player Games Catalog
 

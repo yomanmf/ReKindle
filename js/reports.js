@@ -1,14 +1,15 @@
 /**
- * REKINDLE REPORTS - Shared reporting module for social apps
+ * REKINDLE SUGGESTION REPORTS
  * 
  * Provides a System 7-styled report modal that can be triggered from
- * any social app (KindleChat, Neighbourhood, Topics, Suggestions).
+ * the Suggestions app. Reports are authenticated against the primary Firebase
+ * project and submitted to the primary Yandex route.
  * 
  * Usage:
  *   rekindleOpenReportModal({
- *     contentType: 'kindlechat|topic|topic_comment|neighbourhood_post|neighbourhood_comment|suggestion|suggestion_comment',
+ *     contentType: 'suggestion|suggestion_comment',
  *     contentId: 'message-key-or-doc-id',
- *     contentPath: 'kindlechat/messages/xxx',
+ *     contentPath: 'suggestions/xxx',
  *     reportedUserId: 'uid-of-content-author',
  *     contentSnapshot: 'text/content-to-show-in-report'
  *   });
@@ -50,7 +51,7 @@
         
         var msg = document.createElement('div');
         msg.style.cssText = 'text-align:center;padding:20px;font-size:1rem;';
-        msg.innerHTML = '<strong>Thank you.</strong><br><br>Your report has been submitted and will be reviewed by our moderation team.';
+        msg.innerHTML = '<strong>Thank you.</strong><br><br>Your report has been submitted for review.';
         body.appendChild(msg);
 
         var okBtn = document.createElement('button');
@@ -62,33 +63,6 @@
         btnRow.style.cssText = 'display:flex;justify-content:center;';
         btnRow.appendChild(okBtn);
         body.appendChild(btnRow);
-    }
-
-    function getModerationApiUrl() {
-        if (typeof MODERATION_API_URL !== 'undefined' && MODERATION_API_URL) {
-            return MODERATION_API_URL;
-        }
-        return window.RekindleCloud ? window.RekindleCloud.apiBase + '/social/moderate' : '';
-    }
-
-    function getAuthToken() {
-        return new Promise(function (resolve, reject) {
-            var tokenSource = null;
-            if (typeof socialAuth !== 'undefined' && socialAuth.currentUser) {
-                tokenSource = socialAuth.currentUser;
-            } else if (typeof currentUser !== 'undefined' && currentUser) {
-                tokenSource = currentUser;
-            } else if (typeof auth !== 'undefined' && auth.currentUser) {
-                tokenSource = auth.currentUser;
-            }
-
-            if (!tokenSource) {
-                reject(new Error('You must be signed in to submit a report.'));
-                return;
-            }
-
-            tokenSource.getIdToken(true).then(resolve)['catch'](reject);
-        });
     }
 
     function submitReport(data) {
@@ -117,38 +91,27 @@
         }
 
         var reportData = {
-            type: 'report',
             contentType: data.contentType,
             contentId: data.contentId,
             contentPath: data.contentPath,
             reportedUserId: data.reportedUserId,
             reason: reason,
-            comment: comment,
-            contentSnapshot: data.contentSnapshot
+            comment: comment
         };
 
-        var request;
-        if ((data.contentType === 'suggestion' || data.contentType === 'suggestion_comment') && window.RekindleCloud) {
-            request = window.RekindleCloud.request('/reports/submit', {
-                method: 'POST',
-                body: reportData
-            });
-        } else {
-            request = getAuthToken().then(function (token) {
-                return fetch(getModerationApiUrl(), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
-                    },
-                    body: JSON.stringify(reportData)
-                });
-            }).then(function (resp) {
-                return resp.json();
-            });
+        if (!window.RekindleCloud) {
+            if (errorEl) errorEl.textContent = 'Reporting service is unavailable.';
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Report';
+            }
+            return;
         }
 
-        request.then(function (result) {
+        window.RekindleCloud.request('/reports/submit', {
+            method: 'POST',
+            body: reportData
+        }).then(function (result) {
             if (result.error) {
                 throw new Error(result.error);
             }
@@ -164,7 +127,7 @@
     }
 
     window.rekindleOpenReportModal = function (data) {
-        if (!data || !data.contentType || !data.contentId) {
+        if (!data || (data.contentType !== 'suggestion' && data.contentType !== 'suggestion_comment') || !data.contentId) {
             console.error('rekindleOpenReportModal: Missing required fields');
             return;
         }
@@ -245,7 +208,7 @@
 
         var warningEl = document.createElement('div');
         warningEl.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;padding:8px;margin-top:10px;font-size:0.75rem;color:#856404;';
-        warningEl.innerHTML = '<strong>Warning:</strong> Misuse of the report system will lead to a permanent ban. KindleChat messages, suggestion comments, topic comments and neighbourhood comments are removed immediately when reported. Suggestions, topics and neighbourhood posts require 2 reports from different users before they are automatically deleted.';
+        warningEl.innerHTML = '<strong>Warning:</strong> Suggestion comments are removed immediately when reported; suggestions require reports from two different users.';
         body.appendChild(warningEl);
 
         var errorEl = document.createElement('div');

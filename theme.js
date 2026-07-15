@@ -704,60 +704,12 @@
         lastTouchEnd = now;
     }, false);
 
-    // --- AVATAR CACHING HELPER ---
-    window.rekindleAvatarCache = {};
+    // --- DETERMINISTIC AVATAR HELPER ---
+    // Multiplayer avatars are derived from the stable Firebase UID. They no
+    // longer depend on the retired public social-profile database.
     window.rekindleFetchAvatarSeed = function (db, uid, callback) {
         if (!uid) { callback('default'); return; }
-        if (uid in window.rekindleAvatarCache) {
-            callback(window.rekindleAvatarCache[uid]);
-            return;
-        }
-        if (!db) { callback(uid); return; }
-
-        db.ref('user_cards/' + uid).once('value').then(function (snap) {
-            var seed = uid;
-            if (snap.exists()) {
-                var card = snap.val();
-                seed = card.customAvatar || card.avatarSeed || uid;
-            }
-            window.rekindleAvatarCache[uid] = seed;
-            callback(seed);
-        }).catch(function () {
-            callback(uid);
-        });
-    };
-
-    // --- USER CARD CACHING HELPER ---
-    // Cache stores { card, ts } entries; TTL is 15 minutes (900 000 ms).
-    window.rekindleCardCache = {};
-    var _pendingCardFetches = {};
-    var _CARD_TTL = 900000;
-    window.rekindleFetchUserCard = function (db, uid, callback) {
-        if (!uid || !db) { callback(null); return; }
-        var cached = window.rekindleCardCache[uid];
-        if (cached && (Date.now() - cached.ts) < _CARD_TTL) {
-            callback(cached.card);
-            return;
-        }
-        if (_pendingCardFetches[uid]) {
-            _pendingCardFetches[uid].push(callback);
-            return;
-        }
-        _pendingCardFetches[uid] = [callback];
-        db.ref('user_cards/' + uid).once('value').then(function (snap) {
-            var card = snap.exists() ? snap.val() : null;
-            window.rekindleCardCache[uid] = { card: card, ts: Date.now() };
-            var cbs = _pendingCardFetches[uid];
-            delete _pendingCardFetches[uid];
-            cbs.forEach(function (cb) { cb(card); });
-        }).catch(function () {
-            var cbs = _pendingCardFetches[uid];
-            delete _pendingCardFetches[uid];
-            cbs.forEach(function (cb) { cb(null); });
-        });
-    };
-    window.rekindleInvalidateUserCard = function (uid) {
-        if (uid) delete window.rekindleCardCache[uid];
+        callback(uid);
     };
 
 })();

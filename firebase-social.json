@@ -1,8 +1,0 @@
-{
-    "firestore": {
-        "rules": "firestore-social.rules"
-    },
-    "database": {
-        "rules": "rtdb-social-rules.json"
-    }
-}

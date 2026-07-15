@@ -36,11 +36,6 @@ function safeFirebaseKey(value) {
     return String(value || 'unknown').replace(/[.#$\[\]\/]/g, '_');
 }
 
-function userLabel(uid, publicData) {
-    if (!publicData) return uid;
-    return publicData.displayName || publicData.username || (publicData.email ? publicData.email.split('@')[0] : '') || uid;
-}
-
 function buildBannedUserEntry(user, addedBy, addedAt) {
     const entry = {
         uid: user.uid,
@@ -105,19 +100,16 @@ async function main() {
     try {
         // 1. Scan and optionally ban existing users
         console.log(`Scanning database for users with this IP...`);
-        const [usersPrivateSnap, usersPublicSnap] = await Promise.all([
-            rtdb.ref('users_private').once('value'),
-            rtdb.ref('users_public').once('value')
-        ]);
+        const usersPrivateSnap = await rtdb.ref('users_private').once('value');
         const users = usersPrivateSnap.val() || {};
-        const publicUsers = usersPublicSnap.val() || {};
         
         let matchingUsers = [];
         for (const uid of Object.keys(users)) {
             if (users[uid].ipAddress === TARGET_IP) {
+                const userRecord = await admin.auth().getUser(uid).catch(function () { return null; });
                 matchingUsers.push({
                     uid,
-                    username: userLabel(uid, publicUsers[uid])
+                    username: userRecord && userRecord.email ? userRecord.email.split('@')[0] : uid
                 });
             }
         }

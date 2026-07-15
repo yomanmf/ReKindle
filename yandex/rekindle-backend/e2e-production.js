@@ -82,8 +82,6 @@ async function cleanup() {
     if (!uid) return;
     await app.database().ref().update({
         ["users_private/" + uid]: null,
-        ["users_public/" + uid]: null,
-        ["user_cards/" + uid]: null,
         ["api_daily_limits/" + uid]: null,
         ["api_rate_limits/" + uid]: null
     }).catch(function () {});

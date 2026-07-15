@@ -81,11 +81,12 @@ ReKindle operates in two modes: **Guest Mode** (all data stored locally on your 
 *   **Words Online:** Play Scrabble-style games asynchronously against other ReKindle users.
 *   **Pass-and-Play:** Local 2-player versions of Chess, Checkers, Battleships, Connect 4, Tic-Tac-Toe, and 8 Ball.
 
-### Social & Creative
-*   **KindleChat:** An exclusive chat platform for ReKindle users.
+### Creative & Reading
 *   **Reddit:** A text-optimized Reddit client.
-*   **Sketchpad & Pixel Art:** Create simple drawings or 1-bit pixel art canvases.
-*   **Flipbook⁺:** Create pixel animations directly on your e-ink device.
+*   **Sketchpad & Pixel:** Draw on a monochrome pixel grid, keep a local/cloud
+    drawing library, export the result, or use it as the dashboard wallpaper.
+*   **Flipbook:** Build frame-by-frame monochrome animations with onion-skin
+    drawing, adjustable playback speed, local/cloud saves, and GIF export.
 *   **Music:** Sheet Music library and Guitar Chords/Tabs search.
 
 All applications are available without a paid subscription.
@@ -135,7 +136,7 @@ ReKindle uses Google Firebase for user authentication and storing app data.
 Enable the **Google Tasks**, **Calendar**, and **People** APIs in the [Google Cloud Console](https://console.cloud.google.com/). Create an OAuth 2.0 Client ID for a Web Application and add your domain to the authorized origins.
 
 ### 3. Yandex Cloud backend
-ReKindle routes authenticated AI, OCR, storage, mail, social moderation/translation, billing, and third-party API proxy requests through Yandex API Gateway and Yandex Cloud Functions. Interactive Z-code stories use a dedicated Yandex Function backed by Yandex Object Storage. Cloudflare Worker sources and Wrangler manifests have been removed; the frontend must not call `workers.dev`.
+ReKindle routes authenticated AI, OCR, storage, mail, Suggestions reports, billing, and third-party API proxy requests through Yandex API Gateway and Yandex Cloud Functions. Interactive Z-code stories use a dedicated Yandex Function backed by Yandex Object Storage. Cloudflare Worker sources and Wrangler manifests have been removed; the frontend must not call `workers.dev`.
 
 ## 🛠️ Building & Deployment
 

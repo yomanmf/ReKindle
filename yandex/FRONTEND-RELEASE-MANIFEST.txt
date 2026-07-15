@@ -12,6 +12,7 @@ docs.html
 dropbox.html
 epub.html
 files.html
+flipbook.html
 history.html
 icons.js
 index.html
@@ -30,6 +31,7 @@ newspaper.html
 pay.html
 photoframe.html
 pinterest.html
+pixel.html
 privacy.html
 quicknotes.html
 quicktodo.html

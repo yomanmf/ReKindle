@@ -50,7 +50,6 @@ const ASSETS_TO_CACHE = [
     './history',
     './einksites',
     './napkin',
-    './kindlechat',
     './standardebooks',
     './libby',
     './sheetmusic',

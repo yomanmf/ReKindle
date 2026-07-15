@@ -3,10 +3,10 @@
 Publish backend infrastructure before any changed HTML. The checked-in frontend
 already points at the new Gateway routes and will fail if it is uploaded first.
 Prepared archives are under `/private/tmp/rekindle-yandex-release`; verify all
-five non-social archives against `RELEASE-SHA256.txt` before upload. The
-frontend archive contains 68 source files plus 45 byte-identical extensionless
-HTML aliases, for 113 production objects. Its manifest explicitly excludes the
-five changed pages backed by `rekindle-socials`.
+five release archives against `RELEASE-SHA256.txt` before upload. The current
+frontend manifest contains 70 source files plus 47 byte-identical extensionless
+HTML aliases, for 117 production objects. Pixel and Flipbook are standalone
+primary-project applications; retired internal-social pages are delete-only.
 
 ## Production rollout status (15 July 2026)
 
@@ -31,9 +31,15 @@ five changed pages backed by `rekindle-socials`.
   the primary Firebase service account and S3 credentials; AI and OCR use the
   Yandex service-account token from the function invocation context.
 - [ ] Stripe webhook migration and authenticated integration E2E checks remain.
-- [x] All 113 objects from the non-social frontend archive are published to
-  Yandex Object Storage. The `rekindle-socials` project, its rules, tokens and
-  moderation flows are explicitly outside this rollout.
+- [x] All 113 objects from the previous frontend archive are published to
+  Yandex Object Storage.
+- [ ] Publish the social-removal release: deploy the backend and Gateway first,
+  run the public-profile migration, publish primary rules and all 117 frontend
+  objects, then delete the eight HTML/extensionless internal-social objects
+  listed in `FRONTEND-DELETE-MANIFEST.txt`.
+- [x] Local social-removal verification passed: contract 5/5, backend 28/28,
+  Reddit 3/3, changed inline scripts, YAML, locale/rules JSON, and the complete
+  117-object release archive.
 - [x] Local verification passed: backend 28/28, Reddit 3/3, Story syntax,
   changed inline scripts (50 HTML files), release checksums and locale/rules JSON.
 - [x] Production comparison reports 113/113 byte-identical objects, with no
@@ -80,7 +86,7 @@ Required secrets:
 - `S3_SECRET_ACCESS_KEY`
 
 Integration-specific secrets (required only when publishing the corresponding
-non-social integration):
+integration):
 
 - `PINTEREST_CLIENT_ID`
 - `PINTEREST_CLIENT_SECRET`
@@ -155,32 +161,39 @@ The Gateway must expose:
 - `/api/rekindle/ai/*`
 - `/api/rekindle/mail/*`
 - `/api/rekindle/reports/submit`
-- `/api/rekindle/social/*`
 - `/api/rekindle/content/*`
 - `/api/rekindle/games/akinator/*`
 - `/api/rekindle/billing/*`
 - `/api/rekindle/story/*`
 
-## 5. Firebase callable functions (outside this rollout)
+## 5. Legacy Firebase callable functions
 
-The callables still referenced by active pages are age verification and social
-token functions used only by `kindlechat.html`, `neighbourhood.html` and
-`topics.html`. They are excluded together with `rekindle-socials`. The legacy
-`registerUser` call exists only in `index_old.html` and is not required by the
-current dashboard.
+No active page requires age verification, social token minting or social user
+administration. Those callables and the secondary Firebase initialization have
+been removed. The legacy `registerUser` call exists only in `index_old.html`;
+the current dashboard uses the Yandex registration route.
 
-If the social deployment is resumed later, deploy from `firebase-functions/`:
+If a remaining legacy callable must be published, deploy from
+`firebase-functions/`:
 
 ```bash
 firebase deploy --config firebase.json --project rekindle-fork --only functions
 ```
 
-The remaining callables provide age verification, social custom-token minting,
-moderation user controls and compatibility operations. `getSocialToken` must
-not include a `pro` claim, and no callable may enforce ReKindle+ application
-access. Verify the deployed function list before continuing.
+Verify the deployed function list before continuing and do not reintroduce a
+secondary Firebase service account.
 
 ## 6. Firebase rules
+
+Before tightening the RTDB rules, audit and migrate the retired public profile
+trees. The command is dry-run unless `--force` is present; the forced run copies
+valid Life birthdays to `users_private/{uid}/life/birthday` before deleting
+`users_public` and `user_cards`:
+
+```bash
+node admin/retire-public-profiles.js
+node admin/retire-public-profiles.js --force
+```
 
 Publish the primary project rules:
 
@@ -191,7 +204,7 @@ firebase deploy --config firebase.json --project rekindle-fork --only firestore:
 The primary Storage rules intentionally deny direct Firebase Storage. Files,
 Docs and Photo Frame use the quota-aware Yandex Object Storage backend.
 
-Social Firestore/RTDB rules are deliberately not part of this rollout.
+The repository contains only primary Firestore/RTDB rules.
 
 ## 7. Stripe
 
@@ -211,8 +224,8 @@ ReKindle+ is supporter status only and must never gate app functionality.
    a shared prompt returns non-empty text and decrements that quota exactly once,
    and a failed provider request releases its reservation. OCR and Reader return
    a controlled response for an authenticated user.
-4. A primary Suggestions report rejects mismatched content ownership/path and
-   does not require `rekindle-socials` credentials.
+4. A Suggestions report rejects mismatched content ownership/path and uses only
+   primary Firebase credentials.
 5. `/content/proxy` rejects localhost/private destinations and returns a public
    image under 5 MB.
 6. `/content/nrl-scores` returns `{ "events": [...] }`.
@@ -223,10 +236,11 @@ ReKindle+ is supporter status only and must never gate app functionality.
 9. Stripe test-mode checkout and signed webhook both succeed when optional
    supporter billing is enabled.
 
-The 15 July 2026 non-social release has been published and verified byte for
-byte. For future releases, run the checks above before publishing the changed
-frontend files and their extensionless Object Storage aliases. No page may
-restore references to `pro-gate.js` or `js/anti-tamper.js`.
+The preceding Yandex/paywall release has been published and verified byte for
+byte. The internal-social removal release remains pending as recorded above.
+For future releases, run the checks above before publishing the changed frontend
+files and their extensionless Object Storage aliases. No page may restore
+references to `pro-gate.js` or `js/anti-tamper.js`.
 
 The exact obsolete static-object list is checked in as
 `FRONTEND-DELETE-MANIFEST.txt`. Delete those objects only after the replacement

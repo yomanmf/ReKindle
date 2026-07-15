@@ -385,13 +385,13 @@
         });
 
         function loadUserData() {
-            socialRtdb.ref('users_public/' + currentUser.uid).once('value').then(snapshot => {
-                const data = snapshot.val();
+            db.ref('users_private/' + currentUser.uid + '/life/birthday').once('value').then(snapshot => {
+                const birthday = snapshot.val();
                 document.getElementById('loading-overlay').style.display = 'none';
 
                 let validParams = false;
-                if (data && data.birthday) {
-                    if (renderLife(data.birthday)) {
+                if (birthday) {
+                    if (renderLife(birthday)) {
                         validParams = true;
                     }
                 }
@@ -401,7 +401,7 @@
                 }
             }).catch(e => {
                 console.error(e);
-                document.getElementById('loading-overlay').innerHTML = "Error loading profile.";
+                document.getElementById('loading-overlay').innerHTML = "Error loading birthday.";
             });
         }
 
@@ -421,9 +421,7 @@
             document.getElementById('birthday-modal').style.display = 'none';
             document.getElementById('loading-overlay').style.display = 'flex';
 
-            socialRtdb.ref('users_public/' + currentUser.uid).update({
-                birthday: dateStr
-            }).then(() => {
+            db.ref('users_private/' + currentUser.uid + '/life/birthday').set(dateStr).then(() => {
                 renderLife(dateStr);
                 document.getElementById('loading-overlay').style.display = 'none';
             }).catch(e => {

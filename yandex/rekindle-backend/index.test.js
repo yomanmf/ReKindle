@@ -111,44 +111,6 @@ test("public content proxy returns bounded binary responses", async function () 
     }
 });
 
-test("social eligibility depends on age verification, not supporter status", function () {
-    assert.throws(function () {
-        backend.testHooks.ensureSocialPostingEligible({ uid: "supporter", pro: true });
-    }, function (error) {
-        return error.status === 403 && error.code === "age-verification-required";
-    });
-    assert.doesNotThrow(function () {
-        backend.testHooks.ensureSocialPostingEligible({ uid: "verified", ageVerified: true, pro: false });
-    });
-});
-
-test("social validation blocks URLs and promotional service names", function () {
-    assert.throws(function () {
-        backend.testHooks.validateNoLinksOrPromotion("visit example.com");
-    }, function (error) {
-        return error.code === "links-not-allowed";
-    });
-    assert.throws(function () {
-        backend.testHooks.validateNoLinksOrPromotion("try KindleHub today");
-    }, function (error) {
-        return error.code === "promotion-not-allowed";
-    });
-});
-
-test("Flipbook validation keeps abuse bounds independent of subscription", function () {
-    var result = backend.testHooks.validateFlipbookPayload({
-        fps: 6,
-        frames: ["data:image/png;base64,AA=="]
-    });
-    assert.equal(result.fps, 6);
-    assert.equal(result.frames.length, 1);
-    assert.throws(function () {
-        backend.testHooks.validateFlipbookPayload({ fps: 6, frames: new Array(61).fill("data:image/png;base64,AA==") });
-    }, function (error) {
-        return error.status === 400 && error.code === "invalid-frames";
-    });
-});
-
 test("registration validates input before accessing credentials", async function () {
     var result = await backend.handler(event(
         "POST",
@@ -340,15 +302,15 @@ test("mail operations require a Firebase ID token", async function () {
     assert.equal(JSON.parse(result.body).code, "unauthenticated");
 });
 
-test("Flipbook posting requires a Firebase ID token", async function () {
+test("retired social endpoints are not routed", async function () {
     var result = await backend.handler(event(
         "POST",
-        "/api/rekindle/social/flipbook",
+        "/api/rekindle/social/moderate",
         "https://rekindle.website.yandexcloud.net",
-        { flipnote_data: { fps: 6, frames: [] } }
+        {}
     ));
-    assert.equal(result.statusCode, 401);
-    assert.equal(JSON.parse(result.body).code, "unauthenticated");
+    assert.equal(result.statusCode, 404);
+    assert.equal(JSON.parse(result.body).error, "Endpoint not found.");
 });
 
 test("TMDB proxy requires a Firebase ID token", async function () {
@@ -385,9 +347,7 @@ test("Readwise proxy requires a Firebase ID token", async function () {
     ["reader", "GET", "/api/rekindle/content/reader"],
     ["Akinator", "POST", "/api/rekindle/games/akinator/start"],
     ["supporter checkout", "POST", "/api/rekindle/billing/checkout"],
-    ["primary suggestion reports", "POST", "/api/rekindle/reports/submit"],
-    ["social moderation", "POST", "/api/rekindle/social/moderate"],
-    ["social translation", "POST", "/api/rekindle/social/translate"]
+    ["primary suggestion reports", "POST", "/api/rekindle/reports/submit"]
 ].forEach(function (item) {
     test(item[0] + " requires a Firebase ID token", async function () {
         var result = await backend.handler(event(item[1], item[2], "https://rekindle.website.yandexcloud.net", {}));

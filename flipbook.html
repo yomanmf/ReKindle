@@ -10,7 +10,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js" integrity="sha384-+KqYOH8TSu3FKjN3ld86eZMYqq6lk+y2GjV1hyOW+1hT3Pk/aD8JFueZP1W3bPh1" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js" integrity="sha384-+OubPIxtsLCp2uUuSsvWDuBB9oSIEDIYt2qQfYki+vDmSxc6GQsBbBPH6Z6x5wrq" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js" integrity="sha384-6A4YFdmYPT5gmyRp8KegTqUol1Ff3navFf6eyVLErDtdSrikTwa1MQpVhFtubVlq" crossorigin="anonymous"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js" integrity="sha384-wgWsmYYQHit2pRy7gDddz6mH+S1x+rzuEL8DgPIg7lyJjm7pw3v6woxnm/0ULf9p" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js" integrity="sha384-4RMW82CWFobXY+HRHXe5go/V5acBhiIVGCT+2k7TEoxi7AiWKw8WoWb9qMU+FAFu" crossorigin="anonymous"></script>
 
     <style>
@@ -522,7 +521,6 @@
         }
     </style>
     <script src="theme.js?v=18"></script>
-    <script src="js/rekindle-cloud.js?v=2"></script>
     <script src="js/i18n.js"></script>
 </head>
 
@@ -562,19 +560,6 @@
         </div>
     </div>
 
-    <!-- POST CONFIRM MODAL -->
-    <div id="post-confirm-modal" class="modal-overlay">
-        <div class="modal-box">
-            <h3 data-i18n="flipbook.modal.post.title">Post to KindleChat?</h3>
-            <p style="margin-bottom:20px;" data-i18n="flipbook.modal.post.desc">Post this animation to General Chat?</p>
-            <div style="display: flex; justify-content: center">
-                <button class="sys-btn" onclick="confirmPost()" data-i18n="msg.yes">Yes</button>
-                <button class="sys-btn" onclick="closeModal('post-confirm-modal')" data-i18n="msg.no"
-                    style="margin-left: 10px">No</button>
-            </div>
-        </div>
-    </div>
-
     <div class="window">
         <!-- TITLE BAR -->
         <div class="title-bar">
@@ -605,9 +590,7 @@
         <div id="screen-editor" class="screen">
             <!-- Menu Bar -->
             <div class="menu-bar">
-                <button class="menu-btn" onclick="openModal('post-confirm-modal')" data-i18n="flipbook.menu.post">Post
-                    to KindleChat</button>
-                <button class="menu-btn" onclick="downloadGIF()" disabled=""
+                <button class="menu-btn" onclick="downloadGIF()"
                     data-i18n="flipbook.menu.download">Download</button>
                 <button class="menu-btn" onclick="changeSpeed()" id="fps-btn">6 FPS</button>
             </div>
@@ -716,7 +699,7 @@
         let autoSaveTimer = null;
 
         let manifest = [];
-        let db, auth, rtdb, currentUser = null;
+        let db, auth, currentUser = null;
 
         const firebaseConfig = {
             apiKey: "__REKINDLE_FIREBASE_API_KEY__",
@@ -744,15 +727,18 @@
         window.onload = () => {
             if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
 
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            db = firebase.firestore();
-            rtdb = firebase.database();
+            if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function' && typeof firebase.firestore === 'function') {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
 
-            auth.onAuthStateChanged(user => {
-                currentUser = user;
-                initApp();
-            });
+                auth.onAuthStateChanged(user => {
+                    currentUser = user || null;
+                    initApp();
+                });
+            } else {
+                initApp(); // Local-only mode when the Firebase CDN is unavailable.
+            }
 
             // Canvas Events
             canvas.addEventListener('pointerdown', startDrawing);
@@ -1390,50 +1376,6 @@
             });
 
             gif.render();
-        }
-
-        // --- POSTING ---
-        async function confirmPost() {
-            closeModal('post-confirm-modal');
-            if (!currentUser) { showInfoModal("Please log in."); return; }
-
-            const currentUsername = currentUser.email.split('@')[0];
-
-
-            // Ensure we are up to date
-            await performSave();
-
-            const animData = {
-                fps: fps,
-                frames: await Promise.all(frames.map((_, i) => createThumbnail(i)))
-            };
-
-            try {
-                const result = await RekindleCloud.request('/social/flipbook', {
-                    method: 'POST',
-                    body: {
-                        flipnote_data: animData
-                    }
-                });
-                if (result.allowed === false) {
-                    const waitSec = Math.ceil((result.retryAfter || 20000) / 1000);
-                    const slowDownMsg = 'Please wait ' + waitSec + ' seconds before posting again.';
-                    showInfoModal(slowDownMsg);
-                    return;
-                }
-                if (result.error) {
-                    showInfoModal(result.error);
-                    return;
-                }
-                showInfoModal("Posted to KindleChat!");
-            } catch (e) {
-                console.error(e);
-                if (e.code === 'rate-limited') {
-                    showInfoModal('Please wait before posting again.');
-                    return;
-                }
-                showInfoModal("Error posting.");
-            }
         }
 
         function showInfoModal(msg) {
