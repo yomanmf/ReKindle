@@ -905,6 +905,26 @@ For a Yandex config-only rotation, run
 outside Git. Publish and verify the generated production objects before deleting
 the old Google Cloud API key; deleting it first breaks Firebase Auth immediately.
 
+## Reddit comment-tree navigation
+
+`reddit.html` uses `js/reddit-comments.js` to parse a Reddit thread's JSON comment
+listing recursively. Thread JSON must remain the primary source because RSS does
+not reliably expose reply depth; RSS is only a fallback and its comments are
+treated as top-level. Keep `raw_json=1` on the JSON request so comment HTML does
+not arrive with an unnecessary extra escaping layer.
+
+The page flattens the reply tree in document order and stores `depth` plus
+`isTopLevel` on each parsed comment. Rendered top-level comments have
+`data-root-comment="true"`; the bottom-right navigation button uses those markers
+to jump directly between root threads without doing expensive tree traversal on
+each Kindle render.
+
+`#content-area` also drives infinite scrolling for the subreddit feed. When a
+thread is open, every scroll path must guard on `ui.currentThread` and must not
+call `loadMorePosts()`. Reset `afterToken` when opening a thread as a second line
+of defense; otherwise reaching the bottom of comments can append unrelated feed
+posts to the thread.
+
 ## Git Workflow
 
 After successfully completing any task that changes code:

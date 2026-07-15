@@ -260,6 +260,7 @@
             flex-direction: column;
             background: white;
             overflow: hidden;
+            position: relative;
         }
 
         .toolbar {
@@ -304,6 +305,53 @@
             overflow-y: auto;
             padding: 0;
             background: white;
+        }
+
+        #content-area.thread-mode .thread-container {
+            padding-bottom: 80px;
+        }
+
+        .comment-nav-btn {
+            display: none;
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            z-index: 3;
+            width: 50px;
+            height: 50px;
+            padding: 7px;
+            border: 2px solid black;
+            border-radius: 0;
+            background: white;
+            color: black;
+            box-shadow: 3px 3px 0 black;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .comment-nav-btn.visible {
+            display: flex;
+        }
+
+        .comment-nav-btn svg {
+            display: block;
+            width: 30px;
+            height: 30px;
+        }
+
+        .comment-nav-btn:active:not(:disabled) {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+            background: black;
+            color: white;
+        }
+
+        .comment-nav-btn:disabled {
+            color: #999;
+            border-color: #999;
+            box-shadow: none;
+            cursor: default;
         }
 
         /* POST ITEM */
@@ -376,11 +424,36 @@
             border-left: 2px solid #ccc;
         }
 
+        .comment-root {
+            border-left: 4px solid black;
+            padding-left: 8px;
+        }
+
+        .comment-depth-1 { margin-left: 12px; }
+        .comment-depth-2 { margin-left: 24px; }
+        .comment-depth-3 { margin-left: 36px; }
+        .comment-depth-4 { margin-left: 48px; }
+        .comment-depth-5 { margin-left: 60px; }
+
         .comment-meta {
             font-size: 0.75rem;
             font-weight: bold;
             color: #555;
             margin-bottom: 4px;
+        }
+
+        .root-comment-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .root-comment-icon svg {
+            display: block;
+            width: 18px;
+            height: 18px;
         }
 
         .comment-body {
@@ -459,6 +532,7 @@
     <script src="theme.js?v=18"></script>
     <script src="js/i18n.js"></script>
     <script src="js/rekindle-cloud.js"></script>
+    <script src="js/reddit-comments.js"></script>
 </head>
 
 <body>
@@ -499,6 +573,15 @@
                 </div>
 
                 <div id="content-area"></div>
+                <button id="next-root-comment-btn" class="comment-nav-btn" type="button"
+                    onclick="ui.goToNextRootComment()" aria-label="Next top-level comment"
+                    data-i18n-title="reddit.comment.next_top_level" title="Next top-level comment">
+                    <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor"
+                        stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
+                        <path d="M16 4 V25"></path>
+                        <path d="M7 17 L16 26 L25 17"></path>
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -714,7 +797,7 @@
 
             async getThreadJson(permalink) {
                 const cleanLink = permalink.replace(/\/$/, "");
-                return this.request(cleanLink + '.json');
+                return this.request(cleanLink + '.json?raw_json=1&limit=200&depth=10');
             }
         };
 
@@ -835,9 +918,13 @@
             for (var i = 1; i < items.length; i++) {
                 var c = isAtom ? extractEntryFields(items[i]) : extractItemFields(items[i]);
                 comments.push({
+                    id: c.id,
+                    parentId: '',
                     author: c.author,
                     bodyHtml: c.contentHtml,
-                    permalink: c.permalink
+                    permalink: c.permalink,
+                    depth: 0,
+                    isTopLevel: true
                 });
             }
             return { post: post, comments: comments };
@@ -868,40 +955,6 @@
             }
         }
 
-        function parseJsonThread(jsonText) {
-            try {
-                var data = JSON.parse(jsonText);
-                if (!Array.isArray(data) || data.length < 2) {
-                    return { post: null, comments: [] };
-                }
-                var postChildren = data[0].data && data[0].data.children;
-                var commentChildren = data[1].data && data[1].data.children;
-                var postData = postChildren && postChildren[0] ? postChildren[0].data : null;
-                var post = {
-                    title: postData ? postData.title || "" : "",
-                    author: postData ? postData.author || "" : "",
-                    contentHtml: postData ? decodeXmlEntities(postData.selftext_html || "") : "",
-                    permalink: postData ? postData.permalink || "" : ""
-                };
-                var comments = [];
-                if (commentChildren) {
-                    for (var i = 0; i < commentChildren.length; i++) {
-                        var c = commentChildren[i].data;
-                        if (c) {
-                            comments.push({
-                                author: c.author || "",
-                                bodyHtml: decodeXmlEntities(c.body_html || ""),
-                                permalink: c.permalink || ""
-                            });
-                        }
-                    }
-                }
-                return { post: post, comments: comments };
-            } catch (e) {
-                return { post: null, comments: [] };
-            }
-        }
-
         function postFullnameFromPermalink(permalink) {
             var m = String(permalink).match(/\/comments\/([a-z0-9]+)/i);
             if (m && m[1]) return "t3_" + m[1];
@@ -917,6 +970,8 @@
             afterToken: null,
             isLoadingMore: false,
             scrollTimeout: null,
+            commentNavIndex: -1,
+            commentNavLastScrollTop: 0,
 
             init() {
                 if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
@@ -1042,6 +1097,7 @@
 
             renderPostList(posts, sub, stale) {
                 const content = document.getElementById('content-area');
+                this.resetCommentNavigation();
                 content.innerHTML = '';
                 if (stale) {
                     content.innerHTML = '<div class="loading" style="color:#a60;">Showing cached posts for r/' + escapeHtml(sub) + ' because Reddit is busy.<br>Pull to refresh or try again shortly.</div>';
@@ -1068,9 +1124,19 @@
                 const el = document.getElementById('content-area');
                 el.addEventListener('scroll', function() {
                     if (ui.scrollTimeout) clearTimeout(ui.scrollTimeout);
+                    ui.scrollTimeout = null;
+
+                    if (ui.currentThread) {
+                        ui.scrollTimeout = setTimeout(function() {
+                            ui.scrollTimeout = null;
+                            ui.syncCommentNavigationFromScroll();
+                        }, 100);
+                        return;
+                    }
+
                     ui.scrollTimeout = setTimeout(function() {
                         ui.scrollTimeout = null;
-                        if (ui.isLoadingMore || !ui.afterToken) return;
+                        if (ui.currentThread || ui.isLoadingMore || !ui.afterToken) return;
                         const scrollBottom = el.scrollTop + el.clientHeight;
                         if (scrollBottom >= el.scrollHeight - 300) {
                             ui.loadMorePosts();
@@ -1079,8 +1145,91 @@
                 });
             },
 
+            resetCommentNavigation() {
+                const content = document.getElementById('content-area');
+                const button = document.getElementById('next-root-comment-btn');
+                this.commentNavIndex = -1;
+                this.commentNavLastScrollTop = content ? content.scrollTop : 0;
+                if (content) content.classList.remove('thread-mode');
+                if (button) {
+                    button.classList.remove('visible');
+                    button.disabled = false;
+                }
+            },
+
+            getRootComments() {
+                const content = document.getElementById('content-area');
+                return content ? content.querySelectorAll('[data-root-comment="true"]') : [];
+            },
+
+            getCommentTop(comment, content) {
+                const commentRect = comment.getBoundingClientRect();
+                const contentRect = content.getBoundingClientRect();
+                return commentRect.top - contentRect.top + content.scrollTop;
+            },
+
+            updateCommentNavigation() {
+                const content = document.getElementById('content-area');
+                const button = document.getElementById('next-root-comment-btn');
+                if (!content || !button) return;
+
+                const roots = this.getRootComments();
+                if (!this.currentThread || roots.length === 0) {
+                    content.classList.remove('thread-mode');
+                    button.classList.remove('visible');
+                    button.disabled = false;
+                    return;
+                }
+
+                content.classList.add('thread-mode');
+                button.classList.add('visible');
+                const buttonLabel = window.t ? window.t('reddit.comment.next_top_level', 'Next top-level comment') : 'Next top-level comment';
+                button.setAttribute('aria-label', buttonLabel);
+                button.disabled = this.commentNavIndex >= roots.length - 1;
+            },
+
+            syncCommentNavigationFromScroll() {
+                const content = document.getElementById('content-area');
+                if (!content || !this.currentThread) return;
+
+                const roots = this.getRootComments();
+                const rootTops = [];
+                for (let i = 0; i < roots.length; i++) {
+                    rootTops.push(this.getCommentTop(roots[i], content));
+                }
+
+                this.commentNavIndex = window.RekindleRedditComments.resolveNavigationIndex(
+                    rootTops,
+                    content.scrollTop,
+                    content.clientHeight,
+                    this.commentNavLastScrollTop,
+                    this.commentNavIndex
+                );
+                this.commentNavLastScrollTop = content.scrollTop;
+                this.updateCommentNavigation();
+            },
+
+            goToNextRootComment() {
+                const content = document.getElementById('content-area');
+                if (!content || !this.currentThread) return;
+
+                this.syncCommentNavigationFromScroll();
+                const roots = this.getRootComments();
+                const nextIndex = window.RekindleRedditComments.getNextRootIndex(this.commentNavIndex, roots.length);
+                if (nextIndex === -1) {
+                    this.updateCommentNavigation();
+                    return;
+                }
+
+                const previousScrollTop = content.scrollTop;
+                this.commentNavIndex = nextIndex;
+                this.commentNavLastScrollTop = previousScrollTop;
+                content.scrollTop = Math.max(0, this.getCommentTop(roots[nextIndex], content) - 8);
+                this.updateCommentNavigation();
+            },
+
             async loadMorePosts() {
-                if (this.isLoadingMore || !this.afterToken) return;
+                if (this.currentThread || this.isLoadingMore || !this.afterToken) return;
                 this.isLoadingMore = true;
 
                 const content = document.getElementById('content-area');
@@ -1137,6 +1286,7 @@
                 this.currentSub = sub;
                 this.afterToken = null;
                 this.currentThread = null;
+                this.resetCommentNavigation();
 
                 document.getElementById('back-btn').style.display = 'none';
                 this.renderSidebar();
@@ -1177,26 +1327,48 @@
 
             async loadThread(permalink) {
                 const content = document.getElementById('content-area');
+                this.resetCommentNavigation();
+                if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
+                this.scrollTimeout = null;
+                this.afterToken = null;
+                this.currentThread = permalink;
+                content.scrollTop = 0;
                 content.innerHTML = `<div class="loading">Loading thread...</div>`;
                 document.getElementById('back-btn').style.display = 'block';
-                this.currentThread = permalink;
 
                 try {
-                    let responseText = await api.getThread(permalink);
-                    console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                    let data = parseRssThread(responseText);
-                    console.log('Thread RSS has post:', !!data.post);
-                    if (!data.post) {
+                    let responseText = '';
+                    let data = { post: null, comments: [] };
+                    let jsonFailure = null;
+
+                    try {
                         responseText = await api.getThreadJson(permalink);
                         console.log('Thread JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                        data = parseJsonThread(responseText);
-                        console.log('Thread JSON has post:', !!data.post);
+                        if (!window.RekindleRedditComments) throw new Error('Reddit comment parser is unavailable');
+                        data = window.RekindleRedditComments.parseThread(responseText);
+                        console.log('Thread JSON has post:', !!data.post, 'comments:', data.comments.length);
+                    } catch (jsonError) {
+                        if (jsonError.message && jsonError.message.indexOf('superseded') !== -1) throw jsonError;
+                        jsonFailure = jsonError;
+                        console.warn('Thread JSON failed, trying RSS:', jsonError);
+                    }
+
+                    if (!data.post) {
+                        try {
+                            responseText = await api.getThread(permalink);
+                            console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                            data = parseRssThread(responseText);
+                            console.log('Thread RSS has post:', !!data.post);
+                        } catch (rssError) {
+                            throw jsonFailure || rssError;
+                        }
                     }
                     const post = data.post;
                     const comments = data.comments;
 
                     if (!post) {
                         content.innerHTML = `<div class="loading" style="color:red">No thread data found.</div>`;
+                        this.updateCommentNavigation();
                         return;
                     }
 
@@ -1225,15 +1397,29 @@
                         }
                     }
 
-                    html += `<h3>Comments</h3>`;
+                    html += `<h3 data-i18n="reddit.comments">Comments</h3>`;
 
                     comments.forEach(function(c) {
                         let body = c.bodyHtml ? ui.decodeHtml(c.bodyHtml) : '';
                         body = ui.processCommentHtml(body);
+                        const actualDepth = Math.max(Number(c.depth) || 0, 0);
+                        const depth = Math.min(actualDepth, 5);
+                        const isTopLevel = c.isTopLevel === true || actualDepth === 0;
+                        const commentClass = 'comment comment-depth-' + depth + (isTopLevel ? ' comment-root' : '');
+                        const rootAttribute = isTopLevel ? ' data-root-comment="true"' : '';
+                        const rootIcon = isTopLevel ? `
+                            <span class="root-comment-icon" data-i18n-title="reddit.comment.top_level" title="Top-level comment">
+                                <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="black" stroke-width="2">
+                                    <path d="M5 5 H27 V21 H15 L8 27 V21 H5 Z"></path>
+                                    <circle cx="11" cy="13" r="1.5" fill="black" stroke="none"></circle>
+                                    <circle cx="16" cy="13" r="1.5" fill="black" stroke="none"></circle>
+                                    <circle cx="21" cy="13" r="1.5" fill="black" stroke="none"></circle>
+                                </svg>
+                            </span>` : '';
 
                         html += `
-                            <div class="comment">
-                                <div class="comment-meta">${escapeHtml(c.author)}</div>
+                            <div class="${commentClass}" data-comment-depth="${actualDepth}"${rootAttribute}>
+                                <div class="comment-meta">${rootIcon}${escapeHtml(c.author)}</div>
                                 <div class="comment-body">${body}</div>
                             </div>
                          `;
@@ -1242,10 +1428,14 @@
                     html += '</div>';
                     content.innerHTML = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
                     this.addLinkHandlers();
+                    this.commentNavIndex = -1;
+                    this.commentNavLastScrollTop = 0;
+                    this.updateCommentNavigation();
 
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
-                    content.innerHTML = `<div class="loading" style="color:red">Error loading thread<br>${e.message}</div>`;
+                    content.innerHTML = `<div class="loading" style="color:red">Error loading thread<br>${escapeHtml(e.message)}</div>`;
+                    this.updateCommentNavigation();
                 }
             },
 
