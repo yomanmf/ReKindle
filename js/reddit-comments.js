@@ -107,6 +107,21 @@
         return nextIndex >= 0 && nextIndex < rootCount ? nextIndex : -1;
     }
 
+    function findPostIndex(posts, permalink) {
+        if (!Array.isArray(posts) || !permalink) return -1;
+
+        for (var i = 0; i < posts.length; i++) {
+            if (posts[i] && posts[i].permalink === permalink) return i;
+        }
+
+        return -1;
+    }
+
+    function getNextPostIndex(currentIndex, postCount) {
+        var nextIndex = currentIndex + 1;
+        return nextIndex >= 0 && nextIndex < postCount ? nextIndex : -1;
+    }
+
     function markTopLevelComments(comments, rootIds) {
         var rootLookup = Object.create(null);
         var markedCount = 0;
@@ -129,6 +144,8 @@
         parseThread: parseThread,
         resolveNavigationIndex: resolveNavigationIndex,
         getNextRootIndex: getNextRootIndex,
+        findPostIndex: findPostIndex,
+        getNextPostIndex: getNextPostIndex,
         markTopLevelComments: markTopLevelComments
     };
 }));

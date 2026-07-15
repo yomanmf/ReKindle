@@ -758,6 +758,22 @@ call `loadMorePosts()`. Reset `afterToken` when opening a thread as a second lin
 of defense; otherwise reaching the bottom of comments can append unrelated feed
 posts to the thread.
 
+The thread toolbar's right-side `>` button advances through the posts already
+loaded in the current feed. `ui.feedPosts` must be replaced by `renderPostList()`
+and extended by `loadMorePosts()` in exactly the same order as the rendered
+cards. `loadThread()` finds and stores `ui.currentPostIndex`; do not clear the
+feed list while opening a thread. The button is hidden outside thread mode,
+disabled while a thread is loading or at the final loaded post, and remains
+available after a thread-load error so the user can skip forward. External
+browser round trips persist only the feed permalinks in `reddit_return_state`,
+which is enough to restore the same next-thread order without caching full post
+bodies.
+
+Feed-position helpers live in `js/reddit-comments.js` alongside the comment
+navigation helpers. When that API changes, bump its query version in
+`reddit.html`, keep `js/reddit-comments.js` in
+`yandex/FRONTEND-RELEASE-MANIFEST.txt`, and publish the helper before the page.
+
 ## Git Workflow
 
 After successfully completing any task that changes code:

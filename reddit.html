@@ -291,6 +291,27 @@
             transform: translate(1px, 1px);
         }
 
+        .next-thread-btn {
+            display: none;
+            min-width: 48px;
+            min-height: 48px;
+            padding: 4px 12px;
+            margin-left: auto;
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .next-thread-btn.visible {
+            display: block;
+        }
+
+        .next-thread-btn:disabled {
+            color: #999;
+            border-color: #999;
+            box-shadow: none;
+            cursor: default;
+        }
+
         #sub-input {
             flex-grow: 1;
             border: 2px solid black;
@@ -532,7 +553,7 @@
     <script src="theme.js?v=18"></script>
     <script src="js/i18n.js"></script>
     <script src="js/rekindle-cloud.js"></script>
-    <script src="js/reddit-comments.js?v=2"></script>
+    <script src="js/reddit-comments.js?v=3"></script>
 </head>
 
 <body>
@@ -565,6 +586,9 @@
                     <button class="nav-btn" id="save-btn" onclick="ui.toggleSave()" title="Save Subreddit">☆</button>
                     <span id="loading-indicator"
                         style="display:none; margin-left:10px; font-size:0.8rem;">Loading...</span>
+                    <button class="nav-btn next-thread-btn" id="next-thread-btn" type="button"
+                        onclick="ui.goToNextThread()" aria-label="Next thread"
+                        data-i18n-title="reddit.thread.next" title="Next thread">&gt;</button>
                 </div>
 
                 <div id="rate-limit-message"
@@ -976,9 +1000,12 @@
             subToDelete: null,
             afterToken: null,
             isLoadingMore: false,
+            isThreadLoading: false,
             scrollTimeout: null,
             commentNavIndex: -1,
             commentNavLastScrollTop: 0,
+            feedPosts: [],
+            currentPostIndex: -1,
 
             init() {
                 if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
@@ -1105,6 +1132,9 @@
             renderPostList(posts, sub, stale) {
                 const content = document.getElementById('content-area');
                 this.resetCommentNavigation();
+                this.feedPosts = posts.slice();
+                this.currentPostIndex = -1;
+                this.updateThreadNavigation();
                 content.innerHTML = '';
                 if (stale) {
                     content.innerHTML = '<div class="loading" style="color:#a60;">Showing cached posts for r/' + escapeHtml(sub) + ' because Reddit is busy.<br>Pull to refresh or try again shortly.</div>';
@@ -1162,6 +1192,40 @@
                     button.classList.remove('visible');
                     button.disabled = false;
                 }
+            },
+
+            updateThreadNavigation() {
+                const button = document.getElementById('next-thread-btn');
+                if (!button) return;
+
+                if (!this.currentThread) {
+                    button.classList.remove('visible');
+                    button.disabled = false;
+                    return;
+                }
+
+                const postCount = this.feedPosts.length;
+                const nextIndex = window.RekindleRedditComments.getNextPostIndex(this.currentPostIndex, postCount);
+                const buttonLabel = window.t ? window.t('reddit.thread.next', 'Next thread') : 'Next thread';
+                button.classList.add('visible');
+                button.setAttribute('aria-label', buttonLabel);
+                button.title = buttonLabel;
+                button.disabled = this.isThreadLoading || nextIndex === -1;
+            },
+
+            goToNextThread() {
+                if (!this.currentThread || this.isThreadLoading) return;
+
+                const nextIndex = window.RekindleRedditComments.getNextPostIndex(
+                    this.currentPostIndex,
+                    this.feedPosts.length
+                );
+                if (nextIndex === -1) {
+                    this.updateThreadNavigation();
+                    return;
+                }
+
+                this.loadThread(this.feedPosts[nextIndex].permalink);
             },
 
             getRootComments() {
@@ -1319,6 +1383,7 @@
                     }
 
                     if (posts.length > 0) {
+                        this.feedPosts = this.feedPosts.concat(posts);
                         posts.forEach(function(p) {
                             const el = document.createElement('div');
                             el.className = 'post-item';
@@ -1353,7 +1418,11 @@
                 this.currentSub = sub;
                 this.afterToken = null;
                 this.currentThread = null;
+                this.isThreadLoading = false;
+                this.feedPosts = [];
+                this.currentPostIndex = -1;
                 this.resetCommentNavigation();
+                this.updateThreadNavigation();
 
                 document.getElementById('back-btn').style.display = 'none';
                 this.renderSidebar();
@@ -1399,6 +1468,9 @@
                 this.scrollTimeout = null;
                 this.afterToken = null;
                 this.currentThread = permalink;
+                this.currentPostIndex = window.RekindleRedditComments.findPostIndex(this.feedPosts, permalink);
+                this.isThreadLoading = true;
+                this.updateThreadNavigation();
                 content.scrollTop = 0;
                 content.innerHTML = `<div class="loading">Loading thread...</div>`;
                 document.getElementById('back-btn').style.display = 'block';
@@ -1500,6 +1572,11 @@
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
                     content.innerHTML = `<div class="loading" style="color:red">Error loading thread<br>${escapeHtml(e.message)}</div>`;
                     this.updateCommentNavigation();
+                } finally {
+                    if (this.currentThread === permalink) {
+                        this.isThreadLoading = false;
+                        this.updateThreadNavigation();
+                    }
                 }
             },
 
@@ -1582,6 +1659,7 @@
                     currentSub: this.currentSub,
                     currentThread: this.currentThread,
                     afterToken: this.afterToken,
+                    feedPermalinks: this.feedPosts.map(function(post) { return post.permalink; }),
                     scrollTop: content ? content.scrollTop : 0,
                     savedAt: Date.now()
                 };
@@ -1605,6 +1683,10 @@
                     this.currentSub = state.currentSub;
                     this.afterToken = state.afterToken || null;
                     this.currentThread = state.currentThread || null;
+                    this.feedPosts = Array.isArray(state.feedPermalinks) ? state.feedPermalinks.map(function(permalink) {
+                        return { permalink: permalink };
+                    }) : [];
+                    this.currentPostIndex = window.RekindleRedditComments.findPostIndex(this.feedPosts, this.currentThread);
                     this.renderSidebar();
 
                     if (this.currentThread) {

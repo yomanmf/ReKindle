@@ -1,0 +1,55 @@
+'use strict';
+
+var test = require('node:test');
+var assert = require('node:assert/strict');
+var fs = require('node:fs');
+var path = require('node:path');
+
+var redditHtml = fs.readFileSync(path.join(__dirname, '..', 'reddit.html'), 'utf8');
+var releaseManifest = fs.readFileSync(path.join(__dirname, '..', 'yandex', 'FRONTEND-RELEASE-MANIFEST.txt'), 'utf8');
+
+test('renders an accessible next-thread button in the Reddit toolbar', function () {
+    assert.match(redditHtml, /id="next-thread-btn"[^>]*onclick="ui\.goToNextThread\(\)"/);
+    assert.match(redditHtml, /data-i18n-title="reddit\.thread\.next"/);
+    assert.match(redditHtml, /\.next-thread-btn\s*\{[^}]*display:\s*none;[^}]*min-width:\s*48px;[^}]*min-height:\s*48px;/s);
+});
+
+test('keeps feed order for next-thread navigation', function () {
+    var renderStart = redditHtml.indexOf('renderPostList(posts, sub, stale)');
+    var renderEnd = redditHtml.indexOf('initScrollListener()', renderStart);
+    var renderSource = redditHtml.slice(renderStart, renderEnd);
+    var loadMoreStart = redditHtml.indexOf('async loadMorePosts()');
+    var loadMoreEnd = redditHtml.indexOf('// FEED', loadMoreStart);
+    var loadMoreSource = redditHtml.slice(loadMoreStart, loadMoreEnd);
+    var nextStart = redditHtml.indexOf('            goToNextThread() {');
+    var nextEnd = redditHtml.indexOf('rootCommentIconHtml()', nextStart);
+    var nextSource = redditHtml.slice(nextStart, nextEnd);
+
+    assert.match(renderSource, /this\.feedPosts = posts\.slice\(\)/);
+    assert.match(loadMoreSource, /this\.feedPosts = this\.feedPosts\.concat\(posts\)/);
+    assert.match(nextSource, /getNextPostIndex\(/);
+    assert.match(nextSource, /this\.loadThread\(this\.feedPosts\[nextIndex\]\.permalink\)/);
+});
+
+test('shows navigation only in thread mode and restores its feed context', function () {
+    var updateStart = redditHtml.indexOf('            updateThreadNavigation() {');
+    var updateEnd = redditHtml.indexOf('            goToNextThread() {', updateStart);
+    var updateSource = redditHtml.slice(updateStart, updateEnd);
+    var saveStart = redditHtml.indexOf('saveReturnState()');
+    var saveEnd = redditHtml.indexOf('restoreReturnState()', saveStart);
+    var saveSource = redditHtml.slice(saveStart, saveEnd);
+    var restoreStart = redditHtml.indexOf('restoreReturnState()');
+    var restoreSource = redditHtml.slice(restoreStart);
+
+    assert.match(updateSource, /if \(!this\.currentThread\)/);
+    assert.match(updateSource, /button\.classList\.remove\('visible'\)/);
+    assert.match(updateSource, /button\.classList\.add\('visible'\)/);
+    assert.match(updateSource, /button\.disabled = this\.isThreadLoading \|\| nextIndex === -1/);
+    assert.match(saveSource, /feedPermalinks:/);
+    assert.match(restoreSource, /Array\.isArray\(state\.feedPermalinks\)/);
+});
+
+test('ships the versioned navigation helper with the Yandex frontend release', function () {
+    assert.match(releaseManifest, /^js\/reddit-comments\.js$/m);
+    assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=3"><\/script>/);
+});

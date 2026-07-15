@@ -20,6 +20,7 @@ index.html
 index_old.html
 interactive.html
 js/rekindle-cloud.js
+js/reddit-comments.js
 js/reports.js
 language.html
 login.html

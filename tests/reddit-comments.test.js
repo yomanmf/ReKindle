@@ -104,6 +104,20 @@ test('tracks the current root while scrolling and advances one root at a time', 
     assert.equal(commentsParser.getNextRootIndex(2, rootTops.length), -1);
 });
 
+test('finds the current feed post and advances to the next thread in order', function () {
+    var posts = [
+        { permalink: '/r/test/comments/one/first/' },
+        { permalink: '/r/test/comments/two/second/' },
+        { permalink: '/r/test/comments/three/third/' }
+    ];
+
+    assert.equal(commentsParser.findPostIndex(posts, posts[1].permalink), 1);
+    assert.equal(commentsParser.findPostIndex(posts, '/r/test/comments/missing/'), -1);
+    assert.equal(commentsParser.getNextPostIndex(0, posts.length), 1);
+    assert.equal(commentsParser.getNextPostIndex(2, posts.length), -1);
+    assert.equal(commentsParser.getNextPostIndex(-1, 0), -1);
+});
+
 test('keeps a navigated root selected while it remains visible during an upward scroll', function () {
     var rootTops = [300, 700, 1100];
 
