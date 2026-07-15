@@ -113,6 +113,18 @@ YandexGPT response with server-authoritative quota readback, signed upload,
 browser CORS, list, download, and delete, then removes the test object, RTDB
 profile/quota/rate-limit nodes, and Firebase Auth user in a `finally` cleanup.
 
+Do not rely on a successful `yc storage s3 cp --recursive` exit status for
+frontend releases. Yandex CLI 1.18.0 silently omitted 42 of 113 objects during
+the AI Assistant rollout while returning zero. Read every manifest object back,
+compare it byte-for-byte, upload missing keys with `storage s3api put-object`,
+and force `text/html` for extensionless page aliases.
+
+A Firebase rules service account may be able to create and release Rulesets but
+lack the unrelated `serviceusage.services.get` permission used by the Firebase
+CLI preflight. Do not expand IAM for that check alone. Use the official Firebase
+Admin SDK `SecurityRules` API and verify `getFirestoreRuleset()` against the
+checked-in source immediately after publishing.
+
 For a full-fork Firebase migration, do not bulk-upload a dirty local worktree.
 Run `REKINDLE_FIREBASE_API_KEY=... node yandex/prepare-firebase-config-release.js`
 instead. It downloads the currently deployed root HTML files, replaces a

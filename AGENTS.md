@@ -398,6 +398,18 @@ the first line after the intended file. Focus the editor textbox, send
 Before publishing, verify that `rules_version = '2';` appears exactly once (for
 Firestore) and that the default deny-all starter block is gone.
 
+**Firebase CLI service-account preflight gotcha:** `firebase-tools@15.23.0`
+checks `serviceusage.googleapis.com` before a Firestore rules deploy. A narrowly
+scoped deployment service account can have all required Firebase Rules
+permissions but still receive `403 Permission denied to get service
+[firestore.googleapis.com]` because it lacks `serviceusage.services.get`. Do not
+broaden IAM only to satisfy this preflight. The already-installed official
+Firebase Admin SDK can publish the same source with
+`securityRules().releaseFirestoreRulesetFromSource()`; immediately call
+`getFirestoreRuleset()` and compare the active source/hash with the checked-in
+file. The AI Assistant rollout used this path and verified active ruleset
+`eadc917f-8ffc-4d47-91cb-4e2a671dec96` byte-for-byte after normalized newlines.
+
 #### Project 2: Social (`rekindle-socials`)
 *   **Used by:** Social apps — KindleChat, Neighbourhood, Topics, Flipbook, Pixel, Moderation. Any HTML file using `projectId: "rekindle-socials"`.
 *   **Config:** `firebase-social.json`
@@ -445,6 +457,8 @@ Without matching rules, writes will be **silently rejected** by security rules. 
 **AI Assistant diagnostics and IAM:** Do not collapse every `/ai/chat` rejection into a network error. The frontend distinguishes Firebase session errors, the server daily limit, BYO provider authentication/rate errors, Yandex configuration/permissions, upstream capacity, and timeouts; backend errors include a safe `requestId` for log correlation. The Cloud Function's attached service account needs the folder-level `ai.languageModels.user` role in addition to invocation/secret/storage permissions. An unauthenticated `401` smoke test proves only routing and Firebase-token enforcement; production verification must make one authenticated shared prompt and confirm a non-empty answer plus a one-message quota decrement.
 
 **Yandex CLI browser authentication gotcha:** On macOS, `yc init --no-browser` can wait for the OAuth callback without printing a usable authorization URL. Use `yc init --username=<account-email>` with the normal browser flow for deployment sessions. Do not enable `--debug` around authentication because its output can expose sensitive authentication details.
+
+**Yandex Object Storage recursive-copy gotcha:** Yandex CLI 1.18.0 marks `yc storage s3` as preview. During the 15 July 2026 AI Assistant release, both `yc storage s3 cp <dir> s3://rekindle/ --recursive` commands returned exit code 0 but silently omitted the same alphabetical tail of the 113-object release (42 root HTML objects and aliases). Never accept a recursive-copy exit code as proof of a complete frontend deployment. Read the bucket back and compare every manifest object byte-for-byte; upload any missing objects individually with `yc storage s3api put-object`. Set extensionless page aliases to `Content-Type: text/html` explicitly and verify their public HTTP headers.
 
 **Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, moderation, translation, Reader, Reddit, Readwise, Pinterest, Substack, Akinator, Chords, Story, TMDB, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module. This also includes non-page integrations such as the Discord interactions endpoint documented below.
 

@@ -48,6 +48,19 @@ five changed pages backed by `rekindle-socials`.
   objects and extensionless aliases match the release manifest, the production
   audit found no API-key placeholder across 229 existing objects, and the
   owner login plus server-side IP check both passed.
+- [x] AI Assistant backend release `d4em36gkmifsm2tef1no` published on 15 July
+  2026 with `ai.languageModels.user`, an explicit `YANDEX_FOLDER_ID`, atomic
+  server quota/refund, bounded provider timeouts and request IDs. Authenticated
+  production E2E passed for a real shared YandexGPT answer, quota decrement,
+  signed upload/download/delete and cleanup.
+- [x] The corresponding 113 frontend objects were republished and read back
+  byte-for-byte. `/chat` and all extensionless aliases use `text/html`; the
+  production page shows the localized signed-out state with no JavaScript
+  console errors.
+- [x] AI Assistant Firestore cleanup published as active ruleset
+  `eadc917f-8ffc-4d47-91cb-4e2a671dec96`. Its normalized SHA-256 matches the
+  checked-in `firestore.rules`, and the obsolete client-writable
+  `users/{uid}/chatLimits` match is absent.
 
 ## 1. General backend function
 
@@ -219,3 +232,15 @@ The exact obsolete static-object list is checked in as
 `FRONTEND-DELETE-MANIFEST.txt`. Delete those objects only after the replacement
 pages are live, so an interrupted upload cannot break the currently deployed
 frontend.
+
+`yc storage s3 cp --recursive` is a preview command and may return exit code 0
+after uploading only part of a release. The AI Assistant rollout omitted 42 of
+113 objects until they were sent individually. Every release must therefore be
+read back and matched against the complete manifest; use `s3api put-object` for
+any missing object and set extensionless aliases to `text/html` explicitly.
+
+If Firebase CLI fails only its Service Usage preflight with
+`serviceusage.services.get`, do not grant a broad role just to pass that check.
+A service account that already has Firebase Rules permissions can publish with
+the official Admin SDK `SecurityRules` API; verify the resulting active ruleset
+source and hash immediately after release.
