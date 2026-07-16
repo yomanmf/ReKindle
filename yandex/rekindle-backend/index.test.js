@@ -4,6 +4,8 @@ var test = require("node:test");
 var assert = require("node:assert/strict");
 var backend = require("./index.js");
 var nrlParser = require("./nrl.js");
+var telegramService = require("./telegram-service.js");
+var teleproto = require("teleproto");
 
 function event(method, path, origin, body) {
     return {
@@ -300,6 +302,79 @@ test("mail operations require a Firebase ID token", async function () {
     ));
     assert.equal(result.statusCode, 401);
     assert.equal(JSON.parse(result.body).code, "unauthenticated");
+});
+
+test("Telegram operations require a Firebase ID token", async function () {
+    var result = await backend.handler(event(
+        "POST",
+        "/api/rekindle/telegram/status",
+        "https://rekindle.website.yandexcloud.net",
+        {}
+    ));
+    assert.equal(result.statusCode, 401);
+    assert.equal(JSON.parse(result.body).code, "unauthenticated");
+});
+
+test("Telegram sessions use authenticated encryption bound to the Firebase user", function () {
+    var key = Buffer.alloc(32, 7);
+    var encrypted = telegramService.testHooks.encryptObject(
+        { stringSession: "private-session" },
+        key,
+        telegramService.testHooks.sessionAad("user-a")
+    );
+    assert.equal(encrypted.version, 1);
+    assert.doesNotMatch(encrypted.ciphertext, /private-session/);
+    assert.deepEqual(
+        telegramService.testHooks.decryptObject(encrypted, key, telegramService.testHooks.sessionAad("user-a")),
+        { stringSession: "private-session" }
+    );
+    assert.throws(function () {
+        telegramService.testHooks.decryptObject(encrypted, key, telegramService.testHooks.sessionAad("user-b"));
+    });
+});
+
+test("Telegram chat references are signed and reject tampering", function () {
+    var key = Buffer.alloc(32, 11);
+    var peer = new teleproto.Api.InputPeerChannel({ channelId: "123456", accessHash: "987654321" });
+    var chatRef = telegramService.testHooks.signPeerRef(peer, key);
+    var restored = telegramService.testHooks.inputPeerFromRef(chatRef, key);
+    assert.ok(restored instanceof teleproto.Api.InputPeerChannel);
+    assert.equal(restored.channelId.toString(), "123456");
+    assert.equal(restored.accessHash.toString(), "987654321");
+    assert.throws(function () {
+        telegramService.testHooks.inputPeerFromRef(chatRef.slice(0, -1) + "A", key);
+    }, /Invalid Telegram chat reference/);
+});
+
+test("Telegram validation and upstream errors have stable public codes", function () {
+    assert.equal(telegramService.testHooks.validatePhone("+1 (202) 555-0123"), "+12025550123");
+    assert.throws(function () { telegramService.testHooks.validatePhone("555"); }, /international format/);
+    var flood = telegramService.testHooks.mapTelegramError({ errorMessage: "FLOOD_WAIT_37" });
+    assert.equal(flood.status, 429);
+    assert.equal(flood.code, "telegram-rate-limited");
+    assert.equal(flood.retryAfter, 37);
+    assert.equal(
+        telegramService.testHooks.mapTelegramError({ errorMessage: "AUTH_KEY_UNREGISTERED" }).code,
+        "telegram-session-expired"
+    );
+});
+
+test("MTProxy secrets are validated and private destinations are rejected", function () {
+    assert.equal(
+        telegramService.testHooks.validateProxySecret("0123456789abcdef0123456789abcdef"),
+        "0123456789abcdef0123456789abcdef"
+    );
+    assert.equal(
+        telegramService.testHooks.validateProxySecret("dd0123456789abcdef0123456789abcdef"),
+        "dd0123456789abcdef0123456789abcdef"
+    );
+    assert.throws(function () {
+        telegramService.testHooks.validateProxySecret("short");
+    }, /valid MTProxy secret/);
+    ["127.0.0.1", "10.0.0.1", "169.254.169.254", "192.168.1.1", "198.18.0.1", "203.0.113.10", "::1", "fd00::1", "2001:db8::1"].forEach(function (address) {
+        assert.equal(telegramService.testHooks.isPrivateAddress(address), true, address);
+    });
+    assert.equal(telegramService.testHooks.isPrivateAddress("1.1.1.1"), false);
 });
 
 test("retired social endpoints are not routed", async function () {

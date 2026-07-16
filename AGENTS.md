@@ -475,20 +475,34 @@ before removing the obsolete `users_public` and `user_cards` trees.
 
 **Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Pinterest, Substack, Akinator, Chords, Story, TMDB, Suggestions reports, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
-**Telegram is a direct Beeper Desktop integration:** `telegram.html` is a
-Kindle-oriented Telegram client over Beeper Desktop API v1, not a Telegram Bot
-API console and not a ReKindle cloud proxy. It discovers `/v1/accounts`, keeps
-only accounts whose `bridge.type`, network, or account ID identifies Telegram,
-then uses `/v1/chats/search`, `/v1/chats/{chatID}/messages`, and the corresponding
-send/read routes. The Beeper base URL and bearer token stay in browser storage;
-they must never be synced to Firebase, forwarded to Yandex, logged, or added to
-query strings. ReKindle production is HTTPS, so a plain LAN
-`http://HOST:23373` address is normally blocked as mixed content. The setup UI
-must continue to explain Beeper Remote Access plus a user-controlled HTTPS
-tunnel. Do not add a generic cloud proxy for this address: it would both expose
-chat credentials and create SSRF/private-network risk. Keep a `?demo=1` local
-fixture path so the complete Kindle UI can be visually tested without a real
-Beeper token.
+**Telegram is a server-side MTProto client:** `telegram.html` talks only to the
+authenticated `/api/rekindle/telegram/{action}` routes. The Yandex backend uses
+`teleproto` and a Telegram application `api_id`/`api_hash`; it is not a Bot API
+client and does not depend on Beeper or a home computer. Phone-code login,
+Telegram login-email verification, and 2FA are implemented as short-lived
+authorization stages. Login codes and 2FA passwords must never be logged or
+stored. New Telegram accounts must still be created in an official Telegram
+app.
+
+Authorized MTProto `StringSession` values live only in the server-maintained
+top-level Firestore `telegram_sessions/{firebaseUid}` documents, which have an
+explicit client deny rule in `firestore.rules`. Both completed and pending
+sessions are encrypted with AES-256-GCM, authenticated with UID-specific AAD,
+using the 32-byte base64 `TELEGRAM_SESSION_ENCRYPTION_KEY`. Production also
+requires secret-backed `TELEGRAM_API_ID` and `TELEGRAM_API_HASH`. Chat references
+returned to the browser are HMAC-signed so clients cannot substitute arbitrary
+peer IDs or access hashes. Every route verifies the primary Firebase ID token
+and has a server-side rate limit.
+
+Users may optionally route their server-to-Telegram connection through an
+MTProxy. The proxy host, resolved public IP, port, and normalized secret are
+stored only inside the encrypted session payload; the browser receives only the
+host/port summary and must re-enter the secret to change it. Resolve hostnames
+before connecting and reject every loopback, link-local, private, carrier-grade
+NAT, multicast, and reserved address to prevent the MTProxy setting becoming an
+SSRF path into Yandex infrastructure. The stored resolved public IP prevents DNS
+rebinding on later requests. Keep `telegram.html?demo=1` for complete Kindle UI
+QA without a real Telegram or Firebase account.
 
 **Extensionless URL cleanup must preserve URL state:** `theme.js` removes the
 `.html` suffix with `history.replaceState()`. The replacement URL must include

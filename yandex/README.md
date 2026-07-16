@@ -48,6 +48,7 @@ cross-instance cache is required later.
 - signed upload/download URLs for the private user-files Object Storage bucket;
 - listing and deleting objects owned by the authenticated user;
 - authenticated AI, OCR, mail, content proxies, Suggestions reports, and billing.
+- an authenticated Telegram MTProto client with encrypted per-user sessions and optional MTProxy routing.
 - a public GET/HEAD content proxy with SSRF protection, IP rate limits and a
   5 MB response cap, plus the NRL scoreboard route used by local apps.
 
@@ -61,6 +62,9 @@ The function requires these secret-backed environment variables:
 - `TMDB_API_KEY`
 - `STRIPE_KEY`
 - `STRIPE_WEBHOOK_SECRET`
+- `TELEGRAM_API_ID`
+- `TELEGRAM_API_HASH`
+- `TELEGRAM_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
 
 It also requires the non-secret variables `S3_BUCKET`, `ALLOWED_ORIGINS`,
 `YANDEX_FOLDER_ID`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, and
@@ -70,6 +74,12 @@ sent. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
 use the IAM token supplied to the function through its attached service account.
 Secrets must be supplied from Yandex Lockbox; never paste them into source files
 or ordinary checked-in configuration.
+
+Telegram authorization sessions are stored in the server-only Firestore
+`telegram_sessions/{firebaseUid}` collection after AES-256-GCM encryption. The
+browser cannot access that collection directly. Login codes and 2FA passwords
+are never persisted. User-supplied MTProxy hosts are DNS-resolved and rejected
+if any result is private or local before the encrypted configuration is saved.
 
 The runtime service account needs only these folder roles:
 

@@ -454,6 +454,26 @@ paths:
         tag: '$latest'
         payload_format_version: '1.0'
 
+  /api/rekindle/telegram/{action}:
+    post:
+      operationId: telegramAction
+      parameters:
+        - name: action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [status, start, email-start, email-confirm, confirm, password, chats, messages, send, read, proxy, logout]
+      responses:
+        '200':
+          description: Authenticated Telegram MTProto operation response
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
   /api/rekindle/reports/submit:
     post:
       operationId: submitPrimarySuggestionReport

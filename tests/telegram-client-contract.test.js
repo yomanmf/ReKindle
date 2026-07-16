@@ -34,8 +34,11 @@ function assertInlineScriptsParse(relativePath) {
 
 test("Telegram page follows the Kindle browser contract", function () {
     var source = read("telegram.html");
+    var client = read("js/telegram.js");
 
     assertInlineScriptsParse("telegram.html");
+    assert.doesNotThrow(function () { new Function(client); });
+    assert.doesNotMatch(client, /\?\.|\?\?/);
     assert.doesNotMatch(source, /\b(?:alert|confirm|prompt)\s*\(/);
     assert.doesNotMatch(source, /display\s*:\s*flex[^}]*\bgap\s*:/i);
     assert.match(source, /transition:\s*none\s*!important/);
@@ -45,23 +48,42 @@ test("Telegram page follows the Kindle browser contract", function () {
     assert.match(source, /class="title-stripes"/);
     assert.match(source, /class="close-box"/);
     assert.match(source, /id="error-modal"/);
+    assert.match(source, /id="logout-modal"/);
     assert.match(source, /single-account/);
+    assert.match(source, /id="auth-proxy-enabled"/);
+    assert.match(source, /id="settings-proxy-secret"/);
     assert.doesNotMatch(source, /[\u{1F300}-\u{1FAFF}]/u);
+    assert.doesNotMatch(client, /[\u{1F300}-\u{1FAFF}]/u);
 });
 
-test("Telegram uses the direct Beeper v1 API and keeps credentials local", function () {
+test("Telegram uses the authenticated ReKindle MTProto API", function () {
     var source = read("telegram.html");
+    var client = read("js/telegram.js");
+    var backend = read("yandex/rekindle-backend/telegram-service.js");
+    var gateway = read("yandex/rekindle-api-gateway.yaml");
+    var rules = read("firestore.rules");
+    var backendPackage = JSON.parse(read("yandex/rekindle-backend/package.json"));
 
-    assert.match(source, /"\/v1\/accounts"/);
-    assert.match(source, /"\/v1\/chats\/search\?"/);
-    assert.match(source, /"\/v1\/chats\/"\s*\+\s*encodeURIComponent\(getChatId\(this\.currentChat\)\)\s*\+\s*"\/messages"/);
-    assert.match(source, /"Authorization":\s*"Bearer "\s*\+\s*this\.token/);
-    assert.match(source, /bridge\.type/);
-    assert.match(source, /localStorage\.setItem\(STORAGE_TOKEN/);
-    assert.match(source, /sessionStorage\.setItem\(SESSION_TOKEN/);
-    assert.match(source, /demo=1/);
-    assert.doesNotMatch(source, /RekindleCloud|firebase\.initializeApp|firebasejs|firestore|workers\.dev/i);
-    assert.doesNotMatch(source, /X-Firebase-Token/);
+    assert.match(source, /firebase-auth-compat\.js/);
+    assert.match(source, /js\/rekindle-cloud\.js/);
+    assert.match(client, /RekindleCloud\.request\("\/telegram\/"\s*\+\s*action/);
+    ["status", "start", "email-start", "email-confirm", "confirm", "password", "chats", "messages", "send", "read", "proxy", "logout"].forEach(function (action) {
+        assert.match(gateway, new RegExp("\\b" + action.replace("-", "\\-") + "\\b"));
+    });
+    assert.match(gateway, /\/api\/rekindle\/telegram\/\{action\}/);
+    assert.equal(backendPackage.dependencies.teleproto, "1.227.1");
+    assert.match(backend, /aes-256-gcm/);
+    assert.match(backend, /TELEGRAM_SESSION_ENCRYPTION_KEY/);
+    assert.match(backend, /TELEGRAM_API_ID/);
+    assert.match(backend, /TELEGRAM_API_HASH/);
+    assert.match(backend, /validateProxyConfig/);
+    assert.match(backend, /isPrivateAddress/);
+    assert.match(backend, /var proxy = await validateProxyConfig\(body\.proxy\);[\s\S]*?createClient\("", env, proxy\)[\s\S]*?client\.sendCode/);
+    assert.match(client, /request\("start",\s*\{[\s\S]*?proxy:\s*readProxyForm\("auth"\)/);
+    assert.match(rules, /match \/telegram_sessions\/\{userId\}[\s\S]*?allow read, write: if false/);
+    assert.match(client, /demo=1/);
+    assert.doesNotMatch(source + client, /Beeper Desktop|beeper_token|workers\.dev/i);
+    assert.doesNotMatch(client, /localStorage\.setItem|sessionStorage\.setItem/);
 });
 
 test("Telegram is present in the catalog, release, and locale contracts", function () {
@@ -70,13 +92,15 @@ test("Telegram is present in the catalog, release, and locale contracts", functi
     assert.match(catalog, /cat:\s*['"]lifestyle['"]/);
     assert.doesNotMatch(catalog.match(/\{\s*id:\s*['"]telegram['"][\s\S]*?\n\s*\}/)[0], /plus:\s*true/);
     assert.ok(manifestEntries().includes("telegram.html"));
+    assert.ok(manifestEntries().includes("js/telegram.js"));
 
     ["de", "en", "es", "fr", "it", "pl", "pt", "ru", "vi", "zh"].forEach(function (language) {
         var locale = JSON.parse(read("locales/" + language + ".json"));
         assert.ok(locale["app.telegram.name"], language + " app name");
         assert.ok(locale["app.telegram.desc"], language + " app description");
         var privacy = JSON.parse(read("locales/privacy-" + language + ".json"));
-        assert.match(privacy["privacy.intro"], /Beeper Desktop/i, language + " privacy disclosure");
+        assert.match(privacy["privacy.intro"], /MTProto/i, language + " privacy disclosure");
+        assert.doesNotMatch(privacy["privacy.intro"], /Beeper Desktop/i, language + " stale privacy disclosure");
     });
 
     ["en", "ru"].forEach(function (language) {
@@ -84,6 +108,9 @@ test("Telegram is present in the catalog, release, and locale contracts", functi
         [
             "telegram.setup.title",
             "telegram.setup.security",
+            "telegram.auth.phone_title",
+            "telegram.auth.password_title",
+            "telegram.proxy.settings",
             "telegram.toolbar.search",
             "telegram.state.loading_chats",
             "telegram.chat.send",

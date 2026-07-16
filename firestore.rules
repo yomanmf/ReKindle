@@ -36,6 +36,12 @@ service cloud.firestore {
 
     // --- Collection Rules ---
 
+    // Server-only encrypted MTProto sessions. Browser clients must never read,
+    // write, or delete Telegram authorization keys directly.
+    match /telegram_sessions/{userId} {
+      allow read, write: if false;
+    }
+
     function isDeveloper() {
       return request.auth != null && (
         request.auth.uid == 'ukiyo' ||

@@ -50,7 +50,7 @@
   "oregontrail.store.total": "Total Cost",
   "oregontrail.title": "Oregon Trail",
   "privacy.header": "Chính sách bảo mật cho ReKindle",
-  "privacy.intro": "ReKindle là một ứng dụng web được thiết kế để cung cấp bảng điều khiển cho các thiết bị mực điện tử (E-ink). Chúng tôi ưu tiên quyền riêng tư và sự minh bạch của bạn. Ứng dụng Telegram kết nối trực tiếp với API Beeper Desktop do người dùng cấu hình; địa chỉ và mã truy cập chỉ được lưu trong trình duyệt này khi người dùng chọn ghi nhớ.",
+  "privacy.intro": "ReKindle là ứng dụng web dành cho thiết bị mực điện tử (E-ink). Ứng dụng Telegram sử dụng Telegram MTProto API thông qua máy chủ ReKindle trên Yandex Cloud. Phiên ủy quyền của từng người dùng và cấu hình MTProxy tùy chọn được mã hóa khi lưu trên máy chủ; mã đăng nhập và mật khẩu xác minh hai bước không được lưu giữ.",
   "privacy.last_updated": "Cập nhật lần cuối: ngày 14 tháng 7 năm 2026",
   "privacy.section.1.body": "<p>ReKindle hoạt động ở hai chế độ:</p><ul><li><strong>Chế độ Khách:</strong> Không có dữ liệu nào được lưu trữ vĩnh viễn trên máy chủ của chúng tôi. Tất cả dữ liệu ứng dụng được lưu trữ cục bộ trong <code>localStorage</code> của trình duyệt của bạn.</li><li><strong>Chế độ Đăng nhập:</strong> Dữ liệu của bạn được đồng bộ hóa an toàn với Google Firebase dưới ID người dùng duy nhất của bạn để cung cấp trải nghiệm nhất quán trên tất cả các thiết bị của bạn.</li></ul>",
   "privacy.section.1.title": "1. Kiến trúc dữ liệu",

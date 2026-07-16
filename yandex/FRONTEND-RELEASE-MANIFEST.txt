@@ -22,6 +22,7 @@ interactive.html
 js/rekindle-cloud.js
 js/reddit-comments.js
 js/reports.js
+js/telegram.js
 language.html
 login.html
 mail.html

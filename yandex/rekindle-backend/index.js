@@ -12,6 +12,7 @@ var dns = require("node:dns").promises;
 var net = require("node:net");
 var crypto = require("node:crypto");
 var nrlParser = require("./nrl");
+var telegramService = require("./telegram-service");
 
 var MAX_USER_STORAGE_BYTES = 100 * 1024 * 1024;
 var MAX_OBJECT_BYTES = 25 * 1024 * 1024;
@@ -111,6 +112,9 @@ module.exports.handler = async function (event, context) {
         }
         if (method === "POST" && path.indexOf("/mail/") !== -1) {
             return response(200, await handleMailRequest(event, path), origin);
+        }
+        if (method === "POST" && path.indexOf("/telegram/") !== -1) {
+            return response(200, await handleTelegramRequest(event, path), origin);
         }
         if (method === "POST" && endsWith(path, "/reports/submit")) {
             return response(200, await createPrimarySuggestionReport(event), origin);
@@ -1101,6 +1105,46 @@ async function handleMailRequest(event, path) {
         return mailSendMessage(body);
     }
     throw httpError(404, "not-found", "Mail endpoint not found.");
+}
+
+async function handleTelegramRequest(event, path) {
+    var user = await requireFirebaseUser(event, false);
+    var action = path.split("/").pop();
+    var allowedActions = {
+        status: true,
+        start: true,
+        "email-start": true,
+        "email-confirm": true,
+        confirm: true,
+        password: true,
+        chats: true,
+        messages: true,
+        send: true,
+        read: true,
+        proxy: true,
+        logout: true
+    };
+    if (!allowedActions[action]) throw httpError(404, "telegram-action-not-found", "Telegram action was not found.");
+
+    if (action === "start") {
+        await enforceUserWindowRateLimit(user.uid, "telegram_auth_start", 3, 60 * 60 * 1000);
+    } else if (action === "confirm" || action === "password" || action === "email-start" || action === "email-confirm") {
+        await enforceUserWindowRateLimit(user.uid, "telegram_auth_confirm", 12, 60 * 60 * 1000);
+    } else if (action === "send") {
+        await enforceUserWindowRateLimit(user.uid, "telegram_send", 30, 60 * 1000);
+    } else if (action === "proxy") {
+        await enforceUserWindowRateLimit(user.uid, "telegram_proxy", 10, 60 * 60 * 1000);
+    } else if (action !== "status" && action !== "logout") {
+        await enforceUserWindowRateLimit(user.uid, "telegram_read", 120, 60 * 1000);
+    }
+
+    return telegramService.handle({
+        action: action,
+        body: parseJsonBody(event),
+        uid: user.uid,
+        firestore: getFirebaseApp().firestore(),
+        env: process.env
+    });
 }
 
 async function createPrimarySuggestionReport(event) {
