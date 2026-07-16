@@ -4,9 +4,27 @@ Publish backend infrastructure before any changed HTML. The checked-in frontend
 already points at the new Gateway routes and will fail if it is uploaded first.
 Prepared archives are under `/private/tmp/rekindle-yandex-release`; verify all
 five release archives against `RELEASE-SHA256.txt` before upload. The current
-frontend manifest contains 71 source files plus 47 byte-identical extensionless
-HTML aliases, for 118 production objects. Pixel and Flipbook are standalone
+frontend manifest contains 74 source files plus 48 byte-identical extensionless
+HTML aliases, for 122 production objects. Pixel and Flipbook are standalone
 primary-project applications; retired internal-social pages are delete-only.
+
+## Production rollout status (16 July 2026, Telegram)
+
+- [x] Primary Firestore rules published as active ruleset
+  `f419f69b-7166-4e3e-b6be-9cecd44b0165`; its normalized source matches the
+  checked-in rules and denies browser access to `telegram_sessions`.
+- [x] Telegram Gateway route is active. Backend version
+  `d4epdt7g8p5tumctlbbi` includes the server-side MTProto implementation, the
+  Lockbox-backed session encryption key, and an explicit Firestore dependency.
+  `/api/rekindle/health` returns HTTP 200 and an authenticated temporary-user
+  request to `/api/rekindle/telegram/status` returned HTTP 200 with stage
+  `phone`; test user and documents were deleted afterward.
+- [ ] `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` are not provisioned. The owner
+  authenticated successfully at `my.telegram.org`, but the portal rejected
+  several valid application-create requests with only its generic `ERROR`
+  alert. Do not use shared Telegram Desktop credentials. The Telegram frontend
+  remains intentionally unpublished until owner-specific credentials can be
+  created on another connection and stored in Lockbox.
 
 ## Production rollout status (15 July 2026)
 
@@ -92,6 +110,12 @@ Required secrets:
 - `S3_ACCESS_KEY_ID`
 - `S3_SECRET_ACCESS_KEY`
 
+Telegram secrets (required before publishing `telegram.html`):
+
+- `TELEGRAM_API_ID`
+- `TELEGRAM_API_HASH`
+- `TELEGRAM_SESSION_ENCRYPTION_KEY` (32 random bytes, base64 encoded)
+
 Integration-specific secrets (required only when publishing the corresponding
 integration):
 
@@ -117,6 +141,10 @@ Optional report notifications:
 
 - `DISCORD_BOT_TOKEN`
 - `DISCORD_CHANNEL_ID`
+
+Keep `@google-cloud/firestore` pinned as a direct backend dependency. Yandex can
+omit the copy declared as optional by `firebase-admin`, which causes Firestore
+routes to fail at runtime or makes the function cold start return HTTP 502.
 
 Attach the minimal permissions needed for Object Storage, Lockbox, Foundation
 Models (`ai.languageModels.user`) and Vision OCR (`ai.vision.user`). Do not set a

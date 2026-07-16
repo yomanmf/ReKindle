@@ -111,6 +111,7 @@ test("Telegram is present in the catalog, release, and locale contracts", functi
             "telegram.auth.phone_title",
             "telegram.auth.password_title",
             "telegram.proxy.settings",
+            "telegram.error.storage",
             "telegram.toolbar.search",
             "telegram.state.loading_chats",
             "telegram.chat.send",

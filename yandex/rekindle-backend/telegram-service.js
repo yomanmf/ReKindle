@@ -50,7 +50,17 @@ async function handle(options) {
 }
 
 async function getStatus(doc, uid, env) {
-    var snapshot = await doc.get();
+    var snapshot;
+    try {
+        snapshot = await doc.get();
+    } catch (error) {
+        console.error("Telegram session status read failed", {
+            name: String(error && error.name || "").slice(0, 80),
+            code: String(error && error.code || "").slice(0, 80),
+            message: String(error && error.message || "").replace(/\s+/g, " ").slice(0, 300)
+        });
+        throw serviceError(503, "telegram-storage-unavailable", "Telegram session storage is temporarily unavailable.");
+    }
     if (!snapshot.exists) return { authorized: false, stage: "phone" };
     var data = snapshot.data() || {};
     if (data.session) {

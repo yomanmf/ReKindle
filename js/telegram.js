@@ -85,6 +85,7 @@
             "telegram-recaptcha-required": ["telegram.error.recaptcha", "Telegram requested an additional verification step that is not available on Kindle."],
             "telegram-configuration": ["telegram.error.configuration", "The ReKindle Telegram service is not configured yet."],
             "telegram-unavailable": ["telegram.error.unavailable", "Telegram did not respond in time."],
+            "telegram-storage-unavailable": ["telegram.error.storage", "Telegram session storage is temporarily unavailable."],
             "auth/unavailable": ["telegram.error.rekindle_auth", "Sign in to ReKindle first."],
             "auth/timeout": ["telegram.error.rekindle_auth", "Sign in to ReKindle first."],
             "auth/restore-failed": ["telegram.error.rekindle_auth", "Sign in to ReKindle first."]

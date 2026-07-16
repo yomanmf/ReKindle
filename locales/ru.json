@@ -280,6 +280,7 @@
   "telegram.error.registration": "Сначала создайте аккаунт в официальном приложении Telegram.",
   "telegram.error.rekindle_auth": "Сначала войдите в ReKindle.",
   "telegram.error.session_expired": "Сессия Telegram истекла. Войдите снова.",
+  "telegram.error.storage": "Хранилище сессий Telegram временно недоступно.",
   "telegram.error.title": "Ошибка Telegram",
   "telegram.error.unavailable": "Telegram не ответил вовремя.",
   "telegram.message.attachment": "[Вложение]",

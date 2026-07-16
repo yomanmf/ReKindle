@@ -504,6 +504,37 @@ SSRF path into Yandex infrastructure. The stored resolved public IP prevents DNS
 rebinding on later requests. Keep `telegram.html?demo=1` for complete Kindle UI
 QA without a real Telegram or Firebase account.
 
+**Telegram API application provisioning can be an external blocker:** every
+deployment must use an application `api_id` and `api_hash` created by the
+repository owner at `my.telegram.org/apps`. The portal can accept login and then
+answer every valid create request with only the generic JavaScript alert
+`ERROR`, especially when its anti-abuse checks reject the account or current
+network. Changing valid titles, short names, platforms, URLs, or descriptions
+does not reliably clear that state. Do not substitute Telegram Desktop's shared
+credentials or credentials copied from another project. Leave the frontend
+unpublished until the owner can create the application from a normal mobile or
+matching-country connection, then put both values directly into Lockbox rather
+than source, browser storage, terminal history, or chat.
+
+**Yandex can omit Firebase Admin's Firestore implementation:**
+`firebase-admin` declares `@google-cloud/firestore` as optional. A clean Yandex
+Cloud Functions build may omit that package, causing either a runtime 500 when
+`app.firestore()` is first called or a cold-start 502 such as `Cannot find
+module '@google-cloud/firestore/build/src/path'`. Keep
+`@google-cloud/firestore` as an explicit pinned dependency in
+`yandex/rekindle-backend/package.json` and initialize it with
+`require('firebase-admin/firestore').getFirestore(app)`. Verify both the health
+route and an authenticated Firestore-backed route after every clean backend
+build; a health-only check does not prove Firestore is installed.
+
+**Build frontend releases from the current production Firebase web config:** a
+cached release staging directory can contain an API key that has since been
+rotated or restricted. Before running `prepare-frontend-release.js`, read the
+currently deployed HTML object from the production bucket, validate its key
+against Firebase Authentication from the production referrer, and use that
+current value for placeholder replacement. Never treat an older file under
+`/private/tmp/rekindle-yandex-release` as authoritative.
+
 **Extensionless URL cleanup must preserve URL state:** `theme.js` removes the
 `.html` suffix with `history.replaceState()`. The replacement URL must include
 both `window.location.search` and `window.location.hash`; using only the cleaned

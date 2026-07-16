@@ -280,6 +280,7 @@
   "telegram.error.registration": "Create the Telegram account in the official app first.",
   "telegram.error.rekindle_auth": "Sign in to ReKindle first.",
   "telegram.error.session_expired": "The Telegram session expired. Sign in again.",
+  "telegram.error.storage": "Telegram session storage is temporarily unavailable.",
   "telegram.error.title": "Telegram Error",
   "telegram.error.unavailable": "Telegram did not respond in time.",
   "telegram.message.attachment": "[Attachment]",

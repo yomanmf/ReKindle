@@ -11,6 +11,7 @@ var parseHTML;
 var dns = require("node:dns").promises;
 var net = require("node:net");
 var crypto = require("node:crypto");
+var firebaseFirestore = require("firebase-admin/firestore");
 var nrlParser = require("./nrl");
 var telegramService = require("./telegram-service");
 
@@ -1142,7 +1143,7 @@ async function handleTelegramRequest(event, path) {
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,
-        firestore: getFirebaseApp().firestore(),
+        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
         env: process.env
     });
 }
