@@ -3,7 +3,7 @@
     // --- PRETTY URLS (Global) ---
     // Automatically strip .html from URL bar
     if (window.location.pathname.endsWith('.html')) {
-        var cleanUrl = window.location.pathname.replace('.html', '');
+        var cleanUrl = window.location.pathname.replace('.html', '') + window.location.search + window.location.hash;
         window.history.replaceState(null, '', cleanUrl);
     }
 

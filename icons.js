@@ -237,6 +237,13 @@ const APPS = [
         desc: 'Decentralized social.',
         icon: '<path d="M21.3,4.5c-2.2-1.1-4.7-1.1-6.9-0.2c-0.6-0.3-1.3-0.4-1.9-0.4c-0.7,0-1.4,0.1-2,0.4C8.2,3.4,5.7,3.5,3.5,4.5C1.3,5.6,0,8.5,0,8.5v11c0,3,2.2,5.5,5,5.5h3v-7c0-1.1,0.9-2,2-2s2,0.9,2,2v6h1v-6c0-1.1,0.9-2,2-2s2,0.9,2,2v7h3c2.8,0,5-2.5,5-5.5v-11C25,8.5,23.6,5.6,21.3,4.5z" fill="black"/>'
     },
+    {
+        id: 'telegram',
+        name: 'Telegram',
+        cat: 'lifestyle',
+        desc: 'Telegram for E-ink.',
+        icon: '<path d="M3 15 L29 4 L23 28 L15 21 L10 25 L10 18 Z" fill="white" stroke="black" stroke-width="2" stroke-linejoin="miter"/><path d="M10 18 L23 10 L15 21" fill="none" stroke="black" stroke-width="2" stroke-linejoin="miter"/>'
+    },
     /*     {
             id: 'beeper',
             name: 'Beeper',

@@ -50,7 +50,7 @@
   "oregontrail.store.total": "Total Cost",
   "oregontrail.title": "Oregon Trail",
   "privacy.header": "Política de Privacidade para o ReKindle",
-  "privacy.intro": "O ReKindle é uma aplicação web concebida para fornecer um dashboard para dispositivos E-ink. Priorizamos a sua privacidade e transparência.",
+  "privacy.intro": "O ReKindle é uma aplicação web concebida para fornecer um dashboard para dispositivos E-ink. Priorizamos a sua privacidade e transparência. O cliente Telegram liga-se diretamente a uma API Beeper Desktop configurada pelo utilizador; o endereço e o token de acesso só são guardados neste navegador quando o utilizador opta por memorizá-los.",
   "privacy.last_updated": "Última atualização: 14 de julho de 2026",
   "privacy.section.1.body": "<p>O ReKindle opera em dois modos:</p><ul><li><strong>Modo Visitante:</strong> Nenhum dado é armazenado permanentemente nos nossos servidores. Todos os dados da aplicação são armazenados localmente no <code>localStorage</code> do seu navegador.</li><li><strong>Modo Ligado:</strong> Os seus dados são sincronizados de forma segura com o Google Firebase sob o seu ID de utilizador exclusivo para fornecer uma experiência consistente em todos os seus dispositivos.</li></ul>",
   "privacy.section.1.title": "1. Arquitetura de Dados",

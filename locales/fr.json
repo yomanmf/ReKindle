@@ -250,6 +250,8 @@
   "app.tasks.name": "Tâches",
   "app.teleprompter.desc": "Fait défiler les notes ligne par ligne.",
   "app.teleprompter.name": "Téléprompteur",
+  "app.telegram.desc": "Telegram pour liseuse E-ink.",
+  "app.telegram.name": "Telegram",
   "app.tetris.name": "Tetris",
   "app.texasholdem.name": "Texas Hold'em",
   "app.timer.name": "Minuteur",

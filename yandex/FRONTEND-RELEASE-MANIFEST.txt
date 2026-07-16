@@ -49,6 +49,7 @@ stocks.html
 strands.html
 substack.html
 suggestions.html
+telegram.html
 watchlist.html
 wordle.html
 locales/privacy-de.json

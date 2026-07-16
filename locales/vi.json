@@ -250,6 +250,8 @@
   "app.tasks.name": "Tác vụ",
   "app.teleprompter.desc": "Cuộn ghi chú từng dòng.",
   "app.teleprompter.name": "Máy nhắc chữ",
+  "app.telegram.desc": "Telegram dành cho màn hình E-ink.",
+  "app.telegram.name": "Telegram",
   "app.tetris.name": "Tetris",
   "app.texasholdem.name": "Texas Hold'em",
   "app.timer.name": "Hẹn giờ",

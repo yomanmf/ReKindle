@@ -475,6 +475,27 @@ before removing the obsolete `users_public` and `user_cards` trees.
 
 **Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Pinterest, Substack, Akinator, Chords, Story, TMDB, Suggestions reports, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
+**Telegram is a direct Beeper Desktop integration:** `telegram.html` is a
+Kindle-oriented Telegram client over Beeper Desktop API v1, not a Telegram Bot
+API console and not a ReKindle cloud proxy. It discovers `/v1/accounts`, keeps
+only accounts whose `bridge.type`, network, or account ID identifies Telegram,
+then uses `/v1/chats/search`, `/v1/chats/{chatID}/messages`, and the corresponding
+send/read routes. The Beeper base URL and bearer token stay in browser storage;
+they must never be synced to Firebase, forwarded to Yandex, logged, or added to
+query strings. ReKindle production is HTTPS, so a plain LAN
+`http://HOST:23373` address is normally blocked as mixed content. The setup UI
+must continue to explain Beeper Remote Access plus a user-controlled HTTPS
+tunnel. Do not add a generic cloud proxy for this address: it would both expose
+chat credentials and create SSRF/private-network risk. Keep a `?demo=1` local
+fixture path so the complete Kindle UI can be visually tested without a real
+Beeper token.
+
+**Extensionless URL cleanup must preserve URL state:** `theme.js` removes the
+`.html` suffix with `history.replaceState()`. The replacement URL must include
+both `window.location.search` and `window.location.hash`; using only the cleaned
+pathname silently drops parameters such as `?lang=ru`, OAuth state, or
+`telegram.html?demo=1` before page scripts read them.
+
 **Suggestions reports are primary-only:** `suggestions.html` stores content in the primary RTDB. Its reports use `/api/rekindle/reports/submit`, authenticate against `rekindle-fork`, verify the stored content owner and canonical `suggestions/...` path, and store server-maintained records under `suggestion_reports`.
 
 **Reddit is not covered by merely deleting its Pages Function:** `reddit.html` needs browser-like upstream headers and proxies Reddit-hosted images as well as RSS/JSON. It continues to use the dedicated Yandex Function behind `/api/reddit`, but derives the Gateway origin from `RekindleCloud.gatewayBase` instead of embedding another absolute URL. The handler validates a fixed Reddit/Imgur hostname allowlist, revalidates every redirect against the same allowlist, uses a bounded warm cache with stale fallback, and caps responses at 5 MB. Do not silently replace it with an unrestricted generic proxy.

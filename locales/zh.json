@@ -250,6 +250,8 @@
   "app.tasks.name": "任务",
   "app.teleprompter.desc": "逐行滚动笔记。",
   "app.teleprompter.name": "提词器",
+  "app.telegram.desc": "适用于电子墨水屏的 Telegram。",
+  "app.telegram.name": "Telegram",
   "app.tetris.name": "Tetris",
   "app.texasholdem.name": "德州扑克",
   "app.timer.name": "计时器",

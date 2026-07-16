@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title data-i18n="app.telegram.name">Telegram</title>
+    <style>
+        :root {
+            --shadow: 4px 4px 0 #000000;
+            --stripe-pattern: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px, #000 4px);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            transition: none !important;
+            animation: none !important;
+        }
+
+        body {
+            background-color: #e5e5e5;
+            font-family: "Geneva", "Verdana", sans-serif;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            border-radius: 0;
+            color: #000;
+            font-family: inherit;
+        }
+
+        button {
+            touch-action: manipulation;
+        }
+
+        .window {
+            background: #fff;
+            border: 2px solid #000;
+            box-shadow: var(--shadow);
+            width: 95%;
+            max-width: 650px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .title-bar {
+            height: 38px;
+            border-bottom: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .title-stripes {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            bottom: 4px;
+            left: 4px;
+            background-image: var(--stripe-pattern);
+            z-index: 0;
+        }
+
+        .title-text {
+            background: #fff;
+            padding: 0 14px;
+            font-weight: bold;
+            font-size: 1.05rem;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            height: 100%;
+            box-sizing: border-box;
+            max-width: 55%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .close-box {
+            position: absolute;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #000;
+            background: #fff;
+            z-index: 2;
+            box-shadow: 2px 2px 0 #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            line-height: 1;
+        }
+
+        .close-box::before {
+            content: "";
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            bottom: -12px;
+            left: -12px;
+        }
+
+        .close-box:active,
+        .title-button:active,
+        .sys-btn:active {
+            background: #000;
+            color: #fff;
+            box-shadow: none;
+            transform: translate(2px, 2px);
+        }
+
+        .title-button {
+            position: absolute;
+            right: 8px;
+            z-index: 2;
+            min-width: 64px;
+            height: 26px;
+            padding: 0 7px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            font-size: 0.72rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .content-area {
+            flex: 1 1 auto;
+            min-height: 0;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .view.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setup-scroll {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 18px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .setup-intro {
+            display: grid;
+            grid-template-columns: 64px minmax(0, 1fr);
+            column-gap: 14px;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+        }
+
+        .telegram-mark {
+            width: 58px;
+            height: 58px;
+            border: 2px solid #000;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .setup-intro h1 {
+            font-size: 1.25rem;
+            margin: 0 0 6px;
+        }
+
+        .setup-intro p {
+            margin: 0;
+            font-size: 0.84rem;
+            line-height: 1.35;
+        }
+
+        .instructions {
+            margin: 0 0 16px;
+            padding-left: 24px;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: bold;
+            margin: 10px 0 5px;
+        }
+
+        .text-input,
+        .select-input,
+        .message-input {
+            width: 100%;
+            min-height: 48px;
+            border: 2px solid #000;
+            background: #fff;
+            padding: 10px;
+            font-size: 0.95rem;
+        }
+
+        .token-input {
+            font-family: "Courier New", monospace;
+        }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            min-height: 48px;
+            margin-top: 6px;
+            font-size: 0.8rem;
+        }
+
+        .remember-row input {
+            width: 22px;
+            height: 22px;
+            margin: 0 10px 0 0;
+        }
+
+        .button-row {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .button-row .sys-btn + .sys-btn {
+            margin-left: 10px;
+        }
+
+        .sys-btn {
+            min-height: 48px;
+            padding: 8px 14px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 3px 3px 0 #000;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .sys-btn.primary {
+            background: #000;
+            color: #fff;
+            box-shadow: 3px 3px 0 #888;
+        }
+
+        .sys-btn.primary:active {
+            background: #fff;
+            color: #000;
+        }
+
+        .sys-btn:disabled {
+            color: #666;
+            background: #ddd;
+            box-shadow: none;
+            cursor: default;
+            transform: none;
+        }
+
+        .security-note,
+        .setup-warning {
+            border: 2px solid #000;
+            padding: 9px;
+            margin-top: 14px;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            background: #eee;
+        }
+
+        .setup-warning {
+            display: none;
+            background: #fff;
+            border-style: double;
+            border-width: 4px;
+        }
+
+        .toolbar {
+            border-bottom: 2px solid #000;
+            background: #eee;
+            padding: 8px;
+            flex-shrink: 0;
+        }
+
+        .account-row,
+        .search-row,
+        .conversation-toolbar,
+        .composer {
+            display: flex;
+            align-items: center;
+        }
+
+        .account-row {
+            margin-bottom: 8px;
+        }
+
+        .account-row.single-account {
+            justify-content: flex-end;
+        }
+
+        .account-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .select-input {
+            flex: 1 1 auto;
+            min-width: 0;
+            height: 44px;
+            min-height: 44px;
+            padding: 5px 8px;
+            margin-right: 8px;
+        }
+
+        .toolbar .sys-btn,
+        .conversation-toolbar .sys-btn,
+        .composer .sys-btn {
+            min-height: 44px;
+            padding: 6px 10px;
+            box-shadow: 2px 2px 0 #000;
+            flex-shrink: 0;
+        }
+
+        .search-row .text-input {
+            min-width: 0;
+            min-height: 44px;
+            height: 44px;
+            margin-right: 8px;
+        }
+
+        .chat-list,
+        .message-list {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .chat-row {
+            width: 100%;
+            min-height: 68px;
+            border: 0;
+            border-bottom: 1px solid #000;
+            background: #fff;
+            padding: 9px 10px;
+            text-align: left;
+            cursor: pointer;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            column-gap: 10px;
+            align-items: center;
+        }
+
+        .chat-row:active,
+        .chat-row.selected {
+            background: #000;
+            color: #fff;
+        }
+
+        .chat-main {
+            min-width: 0;
+        }
+
+        .chat-title {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 4px;
+        }
+
+        .chat-meta {
+            display: block;
+            font-size: 0.72rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chat-side {
+            min-width: 42px;
+            text-align: right;
+            font-size: 0.68rem;
+        }
+
+        .unread-badge {
+            display: inline-flex;
+            min-width: 26px;
+            height: 26px;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #000;
+            background: #000;
+            color: #fff;
+            padding: 0 5px;
+            margin-top: 4px;
+            font-weight: bold;
+        }
+
+        .chat-row:active .unread-badge,
+        .chat-row.selected .unread-badge {
+            border-color: #fff;
+            background: #fff;
+            color: #000;
+        }
+
+        .empty-state,
+        .loading-state {
+            padding: 28px 16px;
+            text-align: center;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .empty-state svg,
+        .loading-state svg {
+            display: block;
+            width: 42px;
+            height: 42px;
+            margin: 0 auto 12px;
+        }
+
+        .conversation-toolbar {
+            min-height: 54px;
+            border-bottom: 2px solid #000;
+            padding: 5px 7px;
+            background: #eee;
+            flex-shrink: 0;
+        }
+
+        .conversation-heading {
+            flex: 1 1 auto;
+            min-width: 0;
+            margin: 0 8px;
+            text-align: center;
+        }
+
+        .conversation-title {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .conversation-subtitle {
+            display: block;
+            font-size: 0.66rem;
+            margin-top: 2px;
+        }
+
+        .older-row {
+            display: none;
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #000;
+            flex-shrink: 0;
+        }
+
+        .older-row .sys-btn {
+            min-height: 40px;
+        }
+
+        .message-list {
+            padding: 10px;
+            background: #fff;
+        }
+
+        .message-row {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .message-row.self {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 84%;
+            border: 2px solid #000;
+            background: #fff;
+            padding: 8px 9px 6px;
+            box-shadow: 2px 2px 0 #aaa;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .message-row.self .message-bubble {
+            background: #000;
+            color: #fff;
+            box-shadow: 2px 2px 0 #888;
+        }
+
+        .message-sender {
+            font-size: 0.69rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .message-text {
+            font-size: 0.9rem;
+            line-height: 1.38;
+            white-space: pre-wrap;
+            user-select: text;
+        }
+
+        .message-meta {
+            font-size: 0.62rem;
+            text-align: right;
+            margin-top: 5px;
+            opacity: 0.72;
+        }
+
+        .attachment-note {
+            border-top: 1px solid currentColor;
+            margin-top: 6px;
+            padding-top: 6px;
+            font-size: 0.72rem;
+            font-family: "Courier New", monospace;
+        }
+
+        .composer {
+            border-top: 2px solid #000;
+            padding: 8px;
+            background: #eee;
+            flex-shrink: 0;
+        }
+
+        .message-input {
+            min-width: 0;
+            min-height: 48px;
+            max-height: 96px;
+            resize: none;
+            margin-right: 8px;
+            flex: 1 1 auto;
+        }
+
+        .read-only-note {
+            display: none;
+            border-top: 2px solid #000;
+            padding: 12px;
+            text-align: center;
+            background: #eee;
+            font-size: 0.78rem;
+            flex-shrink: 0;
+        }
+
+        .status-bar {
+            min-height: 26px;
+            border-top: 2px solid #000;
+            padding: 5px 8px;
+            background: #eee;
+            font-family: "Courier New", monospace;
+            font-size: 0.68rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 390px;
+            max-height: 86vh;
+            overflow-y: auto;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        .modal-box .title-bar {
+            height: 38px;
+        }
+
+        .modal-content {
+            padding: 16px;
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .modal-content .sys-btn {
+            width: 100%;
+            margin-top: 14px;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 6px;
+            }
+
+            .window {
+                width: 100%;
+                height: calc(100vh - 12px);
+                max-height: none;
+                box-shadow: 2px 2px 0 #000;
+            }
+
+            .setup-scroll {
+                padding: 12px;
+            }
+
+            .setup-intro {
+                grid-template-columns: 50px minmax(0, 1fr);
+                column-gap: 10px;
+            }
+
+            .telegram-mark {
+                width: 48px;
+                height: 48px;
+            }
+
+            .account-label {
+                display: none;
+            }
+
+            .title-text {
+                max-width: 48%;
+                font-size: 0.92rem;
+            }
+
+            .chat-row {
+                min-height: 72px;
+            }
+
+            .message-bubble {
+                max-width: 90%;
+            }
+        }
+
+        @media (max-height: 540px) {
+            .window {
+                height: calc(100vh - 8px);
+            }
+
+            .status-bar {
+                display: none;
+            }
+
+            .setup-scroll {
+                padding-top: 10px;
+            }
+        }
+    </style>
+    <script src="theme.js?v=19"></script>
+    <script src="js/i18n.js"></script>
+</head>
+
+<body>
+    <main class="window" id="telegram-window">
+        <div class="title-bar">
+            <div class="title-stripes"></div>
+            <button type="button" class="close-box" onclick="window.location.href='index.html'" aria-label="Close">X</button>
+            <span class="title-text" id="window-title" data-i18n="app.telegram.name">Telegram</span>
+            <button type="button" class="title-button" id="setup-button" onclick="telegramApp.openSetup()"
+                data-i18n="telegram.title.setup">Setup</button>
+        </div>
+
+        <div class="content-area">
+            <section class="view active" id="setup-view">
+                <div class="setup-scroll">
+                    <div class="setup-intro">
+                        <div class="telegram-mark" aria-hidden="true">
+                            <svg width="44" height="44" viewBox="0 0 32 32" fill="none" stroke="black" stroke-width="2"
+                                stroke-linejoin="miter">
+                                <path d="M3 15 L29 4 L23 28 L15 21 L10 25 L10 18 Z" fill="white"></path>
+                                <path d="M10 18 L23 10 L15 21"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 data-i18n="telegram.setup.title">Telegram for ReKindle</h1>
+                            <p data-i18n="telegram.setup.intro">A quiet, text-first Telegram client powered by your Beeper Desktop.</p>
+                        </div>
+                    </div>
+
+                    <ol class="instructions">
+                        <li data-i18n="telegram.setup.step1">Install Beeper Desktop and connect your Telegram account.</li>
+                        <li data-i18n="telegram.setup.step2">In Beeper, open Settings, then Integrations, and enable Desktop API.</li>
+                        <li data-i18n="telegram.setup.step3">Create an approved connection token and enable Remote Access for your Kindle.</li>
+                        <li data-i18n="telegram.setup.step4">Use an HTTPS tunnel address when ReKindle is opened over HTTPS.</li>
+                    </ol>
+
+                    <form id="connection-form">
+                        <label class="field-label" for="base-url" data-i18n="telegram.setup.base_url">Beeper API address</label>
+                        <input class="text-input" id="base-url" type="url" inputmode="url" autocomplete="url"
+                            placeholder="https://beeper.example.net" data-i18n-placeholder="telegram.setup.base_url_placeholder">
+
+                        <label class="field-label" for="access-token" data-i18n="telegram.setup.token">Access token</label>
+                        <input class="text-input token-input" id="access-token" type="password" autocomplete="off"
+                            placeholder="Beeper access token" data-i18n-placeholder="telegram.setup.token_placeholder">
+
+                        <label class="remember-row" for="remember-connection">
+                            <input id="remember-connection" type="checkbox">
+                            <span data-i18n="telegram.setup.remember">Remember this connection on this device</span>
+                        </label>
+
+                        <div class="button-row">
+                            <button class="sys-btn primary" id="connect-button" type="submit"
+                                data-i18n="telegram.setup.connect">Connect</button>
+                            <button class="sys-btn" id="disconnect-button" type="button" onclick="telegramApp.disconnect()"
+                                data-i18n="telegram.setup.disconnect">Forget</button>
+                        </div>
+                    </form>
+
+                    <div class="setup-warning" id="mixed-content-warning" data-i18n="telegram.setup.mixed_content">
+                        This page uses HTTPS. Most browsers will block a plain HTTP Beeper address; use an HTTPS tunnel.
+                    </div>
+                    <div class="security-note" data-i18n="telegram.setup.security">
+                        The address and token stay in this browser. ReKindle does not upload them to Firebase or Yandex Cloud.
+                    </div>
+                </div>
+            </section>
+
+            <section class="view" id="chats-view">
+                <div class="toolbar">
+                    <div class="account-row" id="account-row">
+                        <label class="account-label" for="account-select" data-i18n="telegram.toolbar.account">Telegram account</label>
+                        <select class="select-input" id="account-select"></select>
+                        <button type="button" class="sys-btn" id="refresh-chats-button" onclick="telegramApp.loadChats()"
+                            data-i18n="telegram.toolbar.refresh">Refresh</button>
+                    </div>
+                    <form class="search-row" id="search-form">
+                        <input class="text-input" id="chat-search" type="search"
+                            placeholder="Search chats" data-i18n-placeholder="telegram.toolbar.search">
+                        <button type="submit" class="sys-btn" data-i18n="telegram.toolbar.search_button">Find</button>
+                    </form>
+                </div>
+                <div class="chat-list" id="chat-list"></div>
+            </section>
+
+            <section class="view" id="conversation-view">
+                <div class="conversation-toolbar">
+                    <button type="button" class="sys-btn" onclick="telegramApp.backToChats()"
+                        data-i18n="telegram.chat.back">Back</button>
+                    <div class="conversation-heading">
+                        <span class="conversation-title" id="conversation-title">Chat</span>
+                        <span class="conversation-subtitle" id="conversation-subtitle">Telegram</span>
+                    </div>
+                    <button type="button" class="sys-btn" onclick="telegramApp.refreshMessages()"
+                        data-i18n="telegram.chat.refresh">Refresh</button>
+                </div>
+                <div class="older-row" id="older-row">
+                    <button type="button" class="sys-btn" id="older-button" onclick="telegramApp.loadOlderMessages()"
+                        data-i18n="telegram.chat.load_older">Load older messages</button>
+                </div>
+                <div class="message-list" id="message-list"></div>
+                <form class="composer" id="composer-form">
+                    <textarea class="message-input" id="message-input" rows="1" maxlength="4000"
+                        placeholder="Write a message" data-i18n-placeholder="telegram.chat.message_placeholder"></textarea>
+                    <button type="submit" class="sys-btn primary" id="send-button"
+                        data-i18n="telegram.chat.send">Send</button>
+                </form>
+                <div class="read-only-note" id="read-only-note" data-i18n="telegram.chat.read_only">
+                    This chat is read-only.
+                </div>
+            </section>
+        </div>
+
+        <div class="status-bar" id="status-bar" data-i18n="telegram.status.ready">Ready</div>
+    </main>
+
+    <div class="modal-overlay" id="error-modal" role="dialog" aria-modal="true" aria-labelledby="error-title">
+        <div class="modal-box">
+            <div class="title-bar">
+                <div class="title-stripes"></div>
+                <span class="title-text" id="error-title" data-i18n="telegram.error.title">Telegram Error</span>
+            </div>
+            <div class="modal-content">
+                <div id="error-message"></div>
+                <button type="button" class="sys-btn" onclick="telegramApp.closeError()"
+                    data-i18n="telegram.error.close">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            "use strict";
+
+            var STORAGE_BASE = "rekindle_telegram_beeper_url";
+            var STORAGE_TOKEN = "rekindle_telegram_beeper_token";
+            var STORAGE_REMEMBER = "rekindle_telegram_beeper_remember";
+            var SESSION_BASE = "rekindle_telegram_session_url";
+            var SESSION_TOKEN = "rekindle_telegram_session_token";
+            var REQUEST_TIMEOUT = 15000;
+            var isDemo = window.location.search.indexOf("demo=1") !== -1;
+
+            function translate(key, fallback) {
+                if (typeof window.t === "function") return window.t(key, fallback);
+                return fallback;
+            }
+
+            function replaceValue(template, key, value) {
+                return String(template).split("${" + key + "}").join(String(value));
+            }
+
+            function setText(element, text) {
+                if (element) element.textContent = text;
+            }
+
+            function cleanBaseUrl(value) {
+                var raw = String(value || "").trim();
+                if (!raw) throw new Error(translate("telegram.error.missing_address", "Enter the Beeper API address."));
+                if (!/^https?:\/\//i.test(raw)) raw = "http://" + raw;
+                var parsed;
+                try {
+                    parsed = new URL(raw);
+                } catch (error) {
+                    throw new Error(translate("telegram.error.invalid_address", "The Beeper API address is not valid."));
+                }
+                if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+                    throw new Error(translate("telegram.error.invalid_address", "The Beeper API address is not valid."));
+                }
+                if (parsed.username || parsed.password) {
+                    throw new Error(translate("telegram.error.invalid_address", "The Beeper API address is not valid."));
+                }
+                return raw.replace(/\/+$/, "");
+            }
+
+            function isTelegramAccount(account) {
+                var bridgeType = account && account.bridge ? account.bridge.type : "";
+                var network = account ? account.network : "";
+                var accountId = account ? (account.accountID || account.accountId || account.id) : "";
+                var joined = String(bridgeType || "") + " " + String(network || "") + " " + String(accountId || "");
+                return joined.toLowerCase().indexOf("telegram") !== -1;
+            }
+
+            function getAccountId(account) {
+                return account ? (account.accountID || account.accountId || account.id || "") : "";
+            }
+
+            function getChatId(chat) {
+                return chat ? (chat.id || chat.chatID || chat.chatId || "") : "";
+            }
+
+            function formatRelativeTime(value) {
+                if (!value) return "";
+                var timestamp = new Date(value).getTime();
+                if (!isFinite(timestamp)) return "";
+                var seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+                if (seconds < 60) return translate("telegram.time.now", "now");
+                if (seconds < 3600) {
+                    var minutes = Math.floor(seconds / 60);
+                    return replaceValue(translate("telegram.time.minutes", "${count}m"), "count", minutes);
+                }
+                if (seconds < 86400) {
+                    var hours = Math.floor(seconds / 3600);
+                    return replaceValue(translate("telegram.time.hours", "${count}h"), "count", hours);
+                }
+                if (seconds < 604800) {
+                    var days = Math.floor(seconds / 86400);
+                    return replaceValue(translate("telegram.time.days", "${count}d"), "count", days);
+                }
+                var date = new Date(timestamp);
+                var year = String(date.getUTCFullYear());
+                var month = String(date.getUTCMonth() + 1);
+                var day = String(date.getUTCDate());
+                if (month.length < 2) month = "0" + month;
+                if (day.length < 2) day = "0" + day;
+                return year + "-" + month + "-" + day;
+            }
+
+            function attachmentLabel(attachment) {
+                var type = String(attachment && attachment.type || "").toLowerCase();
+                var fileName = String(attachment && attachment.fileName || "");
+                if (attachment && attachment.isSticker) return translate("telegram.message.sticker", "[Sticker]");
+                if (attachment && attachment.isVoiceNote) return translate("telegram.message.voice", "[Voice message]");
+                if (type === "img" || type === "image") return translate("telegram.message.photo", "[Photo]");
+                if (type === "video") return translate("telegram.message.video", "[Video]");
+                if (type === "audio") return translate("telegram.message.audio", "[Audio]");
+                if (fileName) {
+                    return replaceValue(translate("telegram.message.file", "[File: ${name}]"), "name", fileName);
+                }
+                return translate("telegram.message.attachment", "[Attachment]");
+            }
+
+            function demoResponse(method, path, body) {
+                var account = {
+                    accountID: "local-telegram_demo",
+                    bridge: { id: "local-telegram", provider: "local", type: "telegram" },
+                    network: "Telegram",
+                    status: "connected",
+                    user: { fullName: "Alex", username: "alex" }
+                };
+                var chats = [
+                    { id: "demo-family", accountID: account.accountID, network: "Telegram", title: "Family", type: "group", unreadCount: 3, lastActivity: new Date(Date.now() - 4 * 60000).toISOString(), participants: { total: 5, items: [] } },
+                    { id: "demo-reading", accountID: account.accountID, network: "Telegram", title: "E-ink Readers", type: "group", unreadCount: 0, lastActivity: new Date(Date.now() - 3 * 3600000).toISOString(), participants: { total: 248, items: [] } },
+                    { id: "demo-maria", accountID: account.accountID, network: "Telegram", title: "Maria", type: "single", unreadCount: 1, lastActivity: new Date(Date.now() - 86400000).toISOString(), participants: { total: 2, items: [] } }
+                ];
+                var messages = {
+                    "demo-family": [
+                        { id: "m1", chatID: "demo-family", senderName: "Maria", text: "Dinner is at seven. Will you make it?", timestamp: new Date(Date.now() - 25 * 60000).toISOString(), isSender: false, type: "TEXT" },
+                        { id: "m2", chatID: "demo-family", senderName: "Alex", text: "Yes, I will be there.", timestamp: new Date(Date.now() - 19 * 60000).toISOString(), isSender: true, type: "TEXT" },
+                        { id: "m3", chatID: "demo-family", senderName: "Nina", text: "I sent the shopping list.", timestamp: new Date(Date.now() - 4 * 60000).toISOString(), isSender: false, type: "FILE", attachments: [{ type: "file", fileName: "shopping-list.txt" }] }
+                    ],
+                    "demo-reading": [
+                        { id: "m4", chatID: "demo-reading", senderName: "Sam", text: "The new article mode is much easier to read on E-ink.", timestamp: new Date(Date.now() - 3 * 3600000).toISOString(), isSender: false, type: "TEXT" }
+                    ],
+                    "demo-maria": [
+                        { id: "m5", chatID: "demo-maria", senderName: "Maria", text: "Can you send me the book title?", timestamp: new Date(Date.now() - 86400000).toISOString(), isSender: false, type: "TEXT" }
+                    ]
+                };
+                if (method === "GET" && path === "/v1/info") return Promise.resolve({ name: "Beeper Desktop", version: "demo" });
+                if (method === "GET" && path === "/v1/accounts") return Promise.resolve([account]);
+                if (method === "GET" && path.indexOf("/v1/chats/search") === 0) return Promise.resolve({ items: chats, hasMore: false });
+                var match = path.match(/^\/v1\/chats\/([^/]+)\/messages/);
+                if (method === "GET" && match) {
+                    return Promise.resolve({ items: messages[decodeURIComponent(match[1])] || [], hasMore: false, newestCursor: "demo-new", oldestCursor: "demo-old" });
+                }
+                if (method === "POST" && match) {
+                    return Promise.resolve({ chatID: decodeURIComponent(match[1]), pendingMessageID: "demo-" + Date.now(), text: body && body.text });
+                }
+                if (method === "POST" && path.indexOf("/read") !== -1) return Promise.resolve({});
+                return Promise.resolve({});
+            }
+
+            var telegramApp = {
+                baseUrl: "",
+                token: "",
+                accounts: [],
+                selectedAccountIds: [],
+                chats: [],
+                currentChat: null,
+                messages: [],
+                oldestCursor: "",
+                newestCursor: "",
+                hasOlder: false,
+                connected: false,
+
+                init: function () {
+                    document.getElementById("connection-form").addEventListener("submit", function (event) {
+                        event.preventDefault();
+                        telegramApp.connect();
+                    });
+                    document.getElementById("search-form").addEventListener("submit", function (event) {
+                        event.preventDefault();
+                        telegramApp.loadChats();
+                    });
+                    document.getElementById("composer-form").addEventListener("submit", function (event) {
+                        event.preventDefault();
+                        telegramApp.sendMessage();
+                    });
+                    document.getElementById("account-select").addEventListener("change", function () {
+                        telegramApp.updateSelectedAccounts();
+                        telegramApp.loadChats();
+                    });
+                    document.getElementById("base-url").addEventListener("input", function () {
+                        telegramApp.updateMixedContentWarning();
+                    });
+
+                    if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
+                    if (window.rekindleApplyScale) window.rekindleApplyScale();
+                    if (window.rekindleAutoDetectScale) window.rekindleAutoDetectScale();
+                    if (window.rekindleApplyDefaultFullscreen) window.rekindleApplyDefaultFullscreen();
+
+                    this.restoreConnection();
+                    this.updateMixedContentWarning();
+                    if (isDemo) {
+                        document.getElementById("base-url").value = "http://demo.invalid:23373";
+                        document.getElementById("access-token").value = "demo-token";
+                        this.connect();
+                    } else if (this.baseUrl && this.token) {
+                        this.connect();
+                    } else {
+                        this.showView("setup-view");
+                        this.setStatus(translate("telegram.status.ready", "Ready"));
+                    }
+                },
+
+                restoreConnection: function () {
+                    var remember = localStorage.getItem(STORAGE_REMEMBER) === "true";
+                    var base = remember ? localStorage.getItem(STORAGE_BASE) : sessionStorage.getItem(SESSION_BASE);
+                    var token = remember ? localStorage.getItem(STORAGE_TOKEN) : sessionStorage.getItem(SESSION_TOKEN);
+                    this.baseUrl = base || "";
+                    this.token = token || "";
+                    document.getElementById("base-url").value = this.baseUrl;
+                    document.getElementById("access-token").value = this.token;
+                    document.getElementById("remember-connection").checked = remember;
+                    document.getElementById("disconnect-button").style.display = (this.baseUrl || this.token) ? "inline-block" : "none";
+                },
+
+                saveConnection: function () {
+                    if (isDemo) {
+                        document.getElementById("disconnect-button").style.display = "inline-block";
+                        return;
+                    }
+                    var remember = document.getElementById("remember-connection").checked;
+                    localStorage.setItem(STORAGE_REMEMBER, remember ? "true" : "false");
+                    if (remember) {
+                        localStorage.setItem(STORAGE_BASE, this.baseUrl);
+                        localStorage.setItem(STORAGE_TOKEN, this.token);
+                        sessionStorage.removeItem(SESSION_BASE);
+                        sessionStorage.removeItem(SESSION_TOKEN);
+                    } else {
+                        localStorage.removeItem(STORAGE_BASE);
+                        localStorage.removeItem(STORAGE_TOKEN);
+                        sessionStorage.setItem(SESSION_BASE, this.baseUrl);
+                        sessionStorage.setItem(SESSION_TOKEN, this.token);
+                    }
+                    document.getElementById("disconnect-button").style.display = "inline-block";
+                },
+
+                disconnect: function () {
+                    localStorage.removeItem(STORAGE_BASE);
+                    localStorage.removeItem(STORAGE_TOKEN);
+                    localStorage.removeItem(STORAGE_REMEMBER);
+                    sessionStorage.removeItem(SESSION_BASE);
+                    sessionStorage.removeItem(SESSION_TOKEN);
+                    this.baseUrl = "";
+                    this.token = "";
+                    this.accounts = [];
+                    this.selectedAccountIds = [];
+                    this.chats = [];
+                    this.messages = [];
+                    this.currentChat = null;
+                    this.connected = false;
+                    document.getElementById("base-url").value = "";
+                    document.getElementById("access-token").value = "";
+                    document.getElementById("remember-connection").checked = false;
+                    document.getElementById("disconnect-button").style.display = "none";
+                    this.showView("setup-view");
+                    this.setWindowTitle(translate("app.telegram.name", "Telegram"));
+                    this.setStatus(translate("telegram.status.disconnected", "Disconnected"));
+                },
+
+                updateMixedContentWarning: function () {
+                    var value = String(document.getElementById("base-url").value || "").trim();
+                    var isPlainHttp = /^http:\/\//i.test(value) || (/^[0-9a-z.-]+(?::[0-9]+)?\/?$/i.test(value) && value.indexOf("https://") !== 0);
+                    var shouldShow = window.location.protocol === "https:" && isPlainHttp && !isDemo;
+                    document.getElementById("mixed-content-warning").style.display = shouldShow ? "block" : "none";
+                },
+
+                connect: function () {
+                    var button = document.getElementById("connect-button");
+                    try {
+                        this.baseUrl = cleanBaseUrl(document.getElementById("base-url").value);
+                        this.token = String(document.getElementById("access-token").value || "").trim();
+                        if (!this.token) throw new Error(translate("telegram.error.missing_token", "Enter the Beeper access token."));
+                    } catch (error) {
+                        this.showError(error.message);
+                        return;
+                    }
+
+                    button.disabled = true;
+                    setText(button, translate("telegram.state.connecting", "Connecting..."));
+                    this.setStatus(translate("telegram.state.connecting", "Connecting..."));
+                    this.apiRequest("GET", "/v1/accounts").then(function (data) {
+                        var accounts = Array.isArray(data) ? data : (data.items || data.accounts || []);
+                        telegramApp.accounts = accounts.filter(isTelegramAccount);
+                        if (!telegramApp.accounts.length) {
+                            throw new Error(translate("telegram.error.no_account", "No connected Telegram account was found in Beeper."));
+                        }
+                        telegramApp.connected = true;
+                        telegramApp.saveConnection();
+                        telegramApp.renderAccountSelect();
+                        telegramApp.showView("chats-view");
+                        telegramApp.setWindowTitle(translate("app.telegram.name", "Telegram"));
+                        return telegramApp.loadChats();
+                    }).catch(function (error) {
+                        telegramApp.connected = false;
+                        telegramApp.showError(telegramApp.describeError(error));
+                        telegramApp.setStatus(translate("telegram.status.connection_failed", "Connection failed"));
+                    }).then(function () {
+                        button.disabled = false;
+                        setText(button, translate("telegram.setup.connect", "Connect"));
+                    });
+                },
+
+                apiRequest: function (method, path, body) {
+                    if (isDemo) return demoResponse(method, path, body);
+                    var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+                    var timer = null;
+                    if (controller) timer = setTimeout(function () { controller.abort(); }, REQUEST_TIMEOUT);
+                    var options = {
+                        method: method,
+                        headers: {
+                            "Accept": "application/json",
+                            "Authorization": "Bearer " + this.token
+                        }
+                    };
+                    if (body !== undefined) {
+                        options.headers["Content-Type"] = "application/json";
+                        options.body = JSON.stringify(body);
+                    }
+                    if (controller) options.signal = controller.signal;
+                    return fetch(this.baseUrl + path, options).then(function (response) {
+                        if (timer) clearTimeout(timer);
+                        if (response.status === 204) return {};
+                        return response.text().then(function (text) {
+                            var data = {};
+                            if (text) {
+                                try { data = JSON.parse(text); } catch (error) { data = {}; }
+                            }
+                            if (!response.ok) {
+                                var requestError = new Error(data.error || data.message || ("Beeper request failed (" + response.status + ")."));
+                                requestError.status = response.status;
+                                throw requestError;
+                            }
+                            return data;
+                        });
+                    }).catch(function (error) {
+                        if (timer) clearTimeout(timer);
+                        throw error;
+                    });
+                },
+
+                describeError: function (error) {
+                    if (error && error.status === 401) return translate("telegram.error.unauthorized", "Beeper rejected the token. Create a new approved connection token.");
+                    if (error && error.name === "AbortError") return translate("telegram.error.timeout", "Beeper did not respond in time.");
+                    if (error && error.message && error.message.indexOf("No connected Telegram") !== -1) return error.message;
+                    if (window.location.protocol === "https:" && /^http:\/\//i.test(this.baseUrl)) {
+                        return translate("telegram.error.mixed_content", "The browser blocked the HTTP connection. Enable Beeper Remote Access and use an HTTPS tunnel address.");
+                    }
+                    if (error && error.message && error.message !== "Failed to fetch") return error.message;
+                    return translate("telegram.error.connection", "Could not reach Beeper Desktop. Check the address, token, Remote Access, and that Beeper is running.");
+                },
+
+                renderAccountSelect: function () {
+                    var select = document.getElementById("account-select");
+                    select.innerHTML = "";
+                    for (var i = 0; i < this.accounts.length; i++) {
+                        var account = this.accounts[i];
+                        var option = document.createElement("option");
+                        option.value = getAccountId(account);
+                        var user = account.user || {};
+                        option.textContent = user.fullName || user.username || account.network || getAccountId(account);
+                        select.appendChild(option);
+                    }
+                    if (this.accounts.length > 1) {
+                        var allOption = document.createElement("option");
+                        allOption.value = "__all__";
+                        allOption.textContent = translate("telegram.toolbar.all_accounts", "All Telegram accounts");
+                        select.insertBefore(allOption, select.firstChild);
+                        select.value = "__all__";
+                    }
+                    var multipleAccounts = this.accounts.length > 1;
+                    document.getElementById("account-row").style.display = "flex";
+                    document.getElementById("account-row").className = multipleAccounts ? "account-row" : "account-row single-account";
+                    document.getElementById("account-select").style.display = multipleAccounts ? "block" : "none";
+                    document.querySelector(".account-label").style.display = multipleAccounts ? "" : "none";
+                    this.updateSelectedAccounts();
+                },
+
+                updateSelectedAccounts: function () {
+                    var value = document.getElementById("account-select").value;
+                    if (!value || value === "__all__") {
+                        this.selectedAccountIds = this.accounts.map(getAccountId).filter(Boolean);
+                    } else {
+                        this.selectedAccountIds = [value];
+                    }
+                },
+
+                loadChats: function () {
+                    if (!this.connected) return Promise.resolve();
+                    var list = document.getElementById("chat-list");
+                    this.renderLoading(list, translate("telegram.state.loading_chats", "Loading Telegram chats..."));
+                    this.setStatus(translate("telegram.state.loading_chats", "Loading Telegram chats..."));
+                    document.getElementById("refresh-chats-button").disabled = true;
+                    var params = new URLSearchParams();
+                    params.set("limit", "50");
+                    params.set("type", "any");
+                    params.set("inbox", "primary");
+                    params.set("includeMuted", "true");
+                    for (var i = 0; i < this.selectedAccountIds.length; i++) params.append("accountIDs", this.selectedAccountIds[i]);
+                    var query = String(document.getElementById("chat-search").value || "").trim();
+                    if (query) params.set("query", query);
+                    return this.apiRequest("GET", "/v1/chats/search?" + params.toString()).then(function (data) {
+                        var items = Array.isArray(data) ? data : (data.items || data.chats || []);
+                        telegramApp.chats = items.filter(function (chat) {
+                            var accountId = chat.accountID || chat.accountId || "";
+                            return telegramApp.selectedAccountIds.indexOf(accountId) !== -1 || String(chat.network || "").toLowerCase().indexOf("telegram") !== -1;
+                        });
+                        telegramApp.renderChats();
+                        var template = translate("telegram.status.chat_count", "${count} chats");
+                        telegramApp.setStatus(replaceValue(template, "count", telegramApp.chats.length));
+                    }).catch(function (error) {
+                        telegramApp.chats = [];
+                        telegramApp.renderEmpty(list, telegramApp.describeError(error));
+                        telegramApp.showError(telegramApp.describeError(error));
+                    }).then(function () {
+                        document.getElementById("refresh-chats-button").disabled = false;
+                    });
+                },
+
+                renderChats: function () {
+                    var list = document.getElementById("chat-list");
+                    list.innerHTML = "";
+                    if (!this.chats.length) {
+                        this.renderEmpty(list, translate("telegram.state.no_chats", "No Telegram chats found."));
+                        return;
+                    }
+                    for (var i = 0; i < this.chats.length; i++) {
+                        (function (chat) {
+                            var button = document.createElement("button");
+                            button.type = "button";
+                            button.className = "chat-row";
+                            var main = document.createElement("span");
+                            main.className = "chat-main";
+                            var title = document.createElement("span");
+                            title.className = "chat-title";
+                            title.textContent = chat.title || translate("telegram.chat.untitled", "Untitled chat");
+                            var meta = document.createElement("span");
+                            meta.className = "chat-meta";
+                            var participantCount = chat.participants && chat.participants.total ? Number(chat.participants.total) : 0;
+                            if (chat.type === "group" && participantCount) {
+                                meta.textContent = replaceValue(translate("telegram.chat.members", "${count} members"), "count", participantCount);
+                            } else if (chat.isMuted) {
+                                meta.textContent = translate("telegram.chat.muted", "Muted");
+                            } else {
+                                meta.textContent = chat.network || "Telegram";
+                            }
+                            main.appendChild(title);
+                            main.appendChild(meta);
+                            var side = document.createElement("span");
+                            side.className = "chat-side";
+                            var time = document.createElement("span");
+                            time.textContent = formatRelativeTime(chat.lastActivity);
+                            side.appendChild(time);
+                            var unread = Number(chat.unreadCount || chat.unread_count || 0);
+                            if (unread > 0) {
+                                var badge = document.createElement("span");
+                                badge.className = "unread-badge";
+                                badge.textContent = unread > 99 ? "99+" : String(unread);
+                                side.appendChild(document.createElement("br"));
+                                side.appendChild(badge);
+                            }
+                            button.appendChild(main);
+                            button.appendChild(side);
+                            button.addEventListener("click", function () { telegramApp.openChat(chat); });
+                            list.appendChild(button);
+                        })(this.chats[i]);
+                    }
+                },
+
+                openChat: function (chat) {
+                    this.currentChat = chat;
+                    this.messages = [];
+                    this.oldestCursor = "";
+                    this.newestCursor = "";
+                    this.hasOlder = false;
+                    setText(document.getElementById("conversation-title"), chat.title || translate("telegram.chat.untitled", "Untitled chat"));
+                    setText(document.getElementById("conversation-subtitle"), chat.network || "Telegram");
+                    this.setWindowTitle(chat.title || translate("app.telegram.name", "Telegram"));
+                    this.showView("conversation-view");
+                    var readOnly = chat.isReadOnly === true;
+                    document.getElementById("composer-form").style.display = readOnly ? "none" : "flex";
+                    document.getElementById("read-only-note").style.display = readOnly ? "block" : "none";
+                    this.loadMessages(false);
+                },
+
+                loadMessages: function (older) {
+                    if (!this.currentChat) return Promise.resolve();
+                    var list = document.getElementById("message-list");
+                    if (!older) this.renderLoading(list, translate("telegram.state.loading_messages", "Loading messages..."));
+                    var path = "/v1/chats/" + encodeURIComponent(getChatId(this.currentChat)) + "/messages";
+                    if (older && this.oldestCursor) {
+                        path += "?cursor=" + encodeURIComponent(this.oldestCursor) + "&direction=before";
+                    }
+                    document.getElementById("older-button").disabled = true;
+                    this.setStatus(translate("telegram.state.loading_messages", "Loading messages..."));
+                    return this.apiRequest("GET", path).then(function (data) {
+                        var incoming = Array.isArray(data) ? data : (data.items || data.messages || []);
+                        incoming = incoming.filter(function (message) { return !message.isHidden; });
+                        if (older) telegramApp.messages = incoming.concat(telegramApp.messages);
+                        else telegramApp.messages = incoming;
+                        telegramApp.messages.sort(function (a, b) {
+                            return new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime();
+                        });
+                        telegramApp.oldestCursor = data.oldestCursor || telegramApp.oldestCursor || "";
+                        telegramApp.newestCursor = data.newestCursor || telegramApp.newestCursor || "";
+                        telegramApp.hasOlder = data.hasMore === true;
+                        telegramApp.renderMessages(older);
+                        telegramApp.markCurrentChatRead();
+                        telegramApp.setStatus(translate("telegram.status.updated", "Updated"));
+                    }).catch(function (error) {
+                        if (!older) telegramApp.renderEmpty(list, telegramApp.describeError(error));
+                        telegramApp.showError(telegramApp.describeError(error));
+                    }).then(function () {
+                        document.getElementById("older-button").disabled = false;
+                    });
+                },
+
+                renderMessages: function (keepPosition) {
+                    var list = document.getElementById("message-list");
+                    var oldHeight = list.scrollHeight;
+                    list.innerHTML = "";
+                    if (!this.messages.length) {
+                        this.renderEmpty(list, translate("telegram.state.no_messages", "No messages in this chat."));
+                    } else {
+                        for (var i = 0; i < this.messages.length; i++) this.renderMessage(list, this.messages[i]);
+                    }
+                    document.getElementById("older-row").style.display = this.hasOlder ? "block" : "none";
+                    if (keepPosition) list.scrollTop = list.scrollHeight - oldHeight;
+                    else list.scrollTop = list.scrollHeight;
+                },
+
+                renderMessage: function (list, message) {
+                    var row = document.createElement("div");
+                    row.className = "message-row" + (message.isSender ? " self" : "");
+                    var bubble = document.createElement("div");
+                    bubble.className = "message-bubble";
+                    if (!message.isSender && message.senderName) {
+                        var sender = document.createElement("div");
+                        sender.className = "message-sender";
+                        sender.textContent = message.senderName;
+                        bubble.appendChild(sender);
+                    }
+                    var text = document.createElement("div");
+                    text.className = "message-text";
+                    if (message.isDeleted) text.textContent = translate("telegram.message.deleted", "[Deleted message]");
+                    else text.textContent = message.text || "";
+                    if (text.textContent) bubble.appendChild(text);
+                    var attachments = message.attachments || [];
+                    for (var i = 0; i < attachments.length; i++) {
+                        var attachment = document.createElement("div");
+                        attachment.className = "attachment-note";
+                        attachment.textContent = attachmentLabel(attachments[i]);
+                        bubble.appendChild(attachment);
+                    }
+                    if (!text.textContent && !attachments.length && !message.isDeleted) {
+                        var contentType = String(message.type || "").toUpperCase();
+                        var typeNote = document.createElement("div");
+                        typeNote.className = "message-text";
+                        if (contentType === "LOCATION") typeNote.textContent = translate("telegram.message.location", "[Location]");
+                        else if (contentType === "STICKER") typeNote.textContent = translate("telegram.message.sticker", "[Sticker]");
+                        else typeNote.textContent = translate("telegram.message.attachment", "[Attachment]");
+                        bubble.appendChild(typeNote);
+                    }
+                    var meta = document.createElement("div");
+                    meta.className = "message-meta";
+                    var status = message.sendStatus && message.sendStatus.status ? String(message.sendStatus.status) : "";
+                    meta.textContent = formatRelativeTime(message.timestamp) + (message.editedTimestamp ? " " + translate("telegram.message.edited", "(edited)") : "") + (status === "PENDING" ? " ..." : "");
+                    bubble.appendChild(meta);
+                    row.appendChild(bubble);
+                    list.appendChild(row);
+                },
+
+                loadOlderMessages: function () {
+                    if (this.hasOlder && this.oldestCursor) this.loadMessages(true);
+                },
+
+                refreshMessages: function () {
+                    this.loadMessages(false);
+                },
+
+                sendMessage: function () {
+                    if (!this.currentChat) return;
+                    var input = document.getElementById("message-input");
+                    var text = String(input.value || "").trim();
+                    if (!text) return;
+                    var button = document.getElementById("send-button");
+                    button.disabled = true;
+                    setText(button, translate("telegram.state.sending", "Sending..."));
+                    this.setStatus(translate("telegram.state.sending", "Sending..."));
+                    var path = "/v1/chats/" + encodeURIComponent(getChatId(this.currentChat)) + "/messages";
+                    this.apiRequest("POST", path, { text: text }).then(function (data) {
+                        telegramApp.messages.push({
+                            id: data.pendingMessageID || ("pending-" + Date.now()),
+                            chatID: getChatId(telegramApp.currentChat),
+                            senderName: "",
+                            text: text,
+                            timestamp: new Date().toISOString(),
+                            isSender: true,
+                            type: "TEXT",
+                            sendStatus: { status: "PENDING" }
+                        });
+                        input.value = "";
+                        telegramApp.renderMessages(false);
+                        telegramApp.setStatus(translate("telegram.status.sent", "Message sent"));
+                    }).catch(function (error) {
+                        telegramApp.showError(telegramApp.describeError(error));
+                        telegramApp.setStatus(translate("telegram.status.send_failed", "Message was not sent"));
+                    }).then(function () {
+                        button.disabled = false;
+                        setText(button, translate("telegram.chat.send", "Send"));
+                    });
+                },
+
+                markCurrentChatRead: function () {
+                    if (!this.currentChat || isDemo) return;
+                    var path = "/v1/chats/" + encodeURIComponent(getChatId(this.currentChat)) + "/read";
+                    this.apiRequest("POST", path, {}).catch(function () {});
+                    this.currentChat.unreadCount = 0;
+                },
+
+                backToChats: function () {
+                    this.currentChat = null;
+                    this.messages = [];
+                    this.showView("chats-view");
+                    this.setWindowTitle(translate("app.telegram.name", "Telegram"));
+                    this.renderChats();
+                },
+
+                openSetup: function () {
+                    this.showView("setup-view");
+                    this.setWindowTitle(translate("telegram.title.setup", "Setup"));
+                    this.setStatus(translate("telegram.status.ready", "Ready"));
+                    document.getElementById("base-url").value = this.baseUrl || document.getElementById("base-url").value;
+                    document.getElementById("access-token").value = this.token || document.getElementById("access-token").value;
+                    this.updateMixedContentWarning();
+                },
+
+                showView: function (id) {
+                    var views = document.querySelectorAll(".view");
+                    for (var i = 0; i < views.length; i++) views[i].classList.remove("active");
+                    document.getElementById(id).classList.add("active");
+                    document.getElementById("setup-button").style.display = id === "setup-view" ? "none" : "block";
+                },
+
+                setWindowTitle: function (title) {
+                    setText(document.getElementById("window-title"), title);
+                },
+
+                setStatus: function (message) {
+                    setText(document.getElementById("status-bar"), message);
+                },
+
+                renderLoading: function (container, message) {
+                    container.innerHTML = "";
+                    var state = document.createElement("div");
+                    state.className = "loading-state";
+                    state.innerHTML = '<svg viewBox="0 0 32 32" fill="none" stroke="black" stroke-width="2"><rect x="4" y="4" width="24" height="24"></rect><path d="M9 10 H23 M9 16 H20 M9 22 H17"></path></svg>';
+                    var text = document.createElement("div");
+                    text.textContent = message;
+                    state.appendChild(text);
+                    container.appendChild(state);
+                },
+
+                renderEmpty: function (container, message) {
+                    container.innerHTML = "";
+                    var state = document.createElement("div");
+                    state.className = "empty-state";
+                    state.innerHTML = '<svg viewBox="0 0 32 32" fill="none" stroke="black" stroke-width="2"><path d="M3 15 L29 4 L23 28 L15 21 L10 25 L10 18 Z"></path><path d="M10 18 L23 10 L15 21"></path></svg>';
+                    var text = document.createElement("div");
+                    text.textContent = message;
+                    state.appendChild(text);
+                    container.appendChild(state);
+                },
+
+                showError: function (message) {
+                    setText(document.getElementById("error-message"), message);
+                    document.getElementById("error-modal").style.display = "flex";
+                },
+
+                closeError: function () {
+                    document.getElementById("error-modal").style.display = "none";
+                },
+
+                refreshTranslations: function () {
+                    if (this.currentChat) this.setWindowTitle(this.currentChat.title || translate("app.telegram.name", "Telegram"));
+                    else if (document.getElementById("setup-view").classList.contains("active")) this.setWindowTitle(translate("telegram.title.setup", "Setup"));
+                    else this.setWindowTitle(translate("app.telegram.name", "Telegram"));
+                    if (document.getElementById("chats-view").classList.contains("active") && this.chats.length) {
+                        this.renderChats();
+                        this.setStatus(replaceValue(translate("telegram.status.chat_count", "${count} chats"), "count", this.chats.length));
+                    }
+                    if (document.getElementById("conversation-view").classList.contains("active") && this.messages.length) {
+                        this.renderMessages(false);
+                    }
+                }
+            };
+
+            window.telegramApp = telegramApp;
+            document.addEventListener("DOMContentLoaded", function () { telegramApp.init(); });
+            document.addEventListener("rekindle:i18n:ready", function () { telegramApp.refreshTranslations(); });
+        })();
+    </script>
+</body>
+
+</html>
