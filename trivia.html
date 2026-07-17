@@ -707,7 +707,7 @@
 
                 <div id="leaderboard-list" class="leaderboard-list">
                     <div style="padding:20px; text-align:center; font-style:italic;"
-                        data-i18n="suggestions.msg.loading">Loading...</div>
+                        data-i18n="common.loading">Loading...</div>
                 </div>
 
                 <button onclick="closeLeaderboard()" data-i18n="reddit.btn.close">Close</button>
@@ -1008,7 +1008,7 @@
                     const data = doc.data();
                     if (data.gameCount > 0) {
                         entries.push({
-                            username: data.username || (window.t ? window.t('suggestions.msg.anonymous') : 'Unknown'),
+                            username: data.username || (window.t ? window.t('common.anonymous') : 'Unknown'),
                             avg: (data.totalPercent / data.gameCount) * 100,
                             games: data.gameCount
                         });
@@ -1047,7 +1047,7 @@
             if (!currentUser) return;
 
             const percent = score / currentQuestions.length;
-            const username = currentUser.email ? currentUser.email.split('@')[0] : (window.t ? window.t('suggestions.msg.anonymous') : 'Anonymous');
+            const username = currentUser.email ? currentUser.email.split('@')[0] : (window.t ? window.t('common.anonymous') : 'Anonymous');
 
             try {
                 const docRef = db.collection('leaderboard_trivia').doc(currentUser.uid);

@@ -55,18 +55,17 @@ service cloud.firestore {
       );
     }
 
-    // 1. USER PRIVATE DATA (e.g., settings, notes, substack_sid)
+    // 1. USER PRIVATE DATA (e.g., settings and notes)
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isDeveloper());
       
-      // Allow create, but strictly BLOCK setting 'isPro', 'proExpiresAt', or 'substack_sid' during creation.
+      // Allow create, but strictly block server-maintained supporter fields.
       allow create: if request.auth != null && 
                        request.auth.uid == userId &&
-                       !request.resource.data.keys().hasAny(['isPro', 'proExpiresAt', 'substack_sid']);
+                       !request.resource.data.keys().hasAny(['isPro', 'proExpiresAt']);
       
       // Allow update, but:
       // - BLOCK modifying 'isPro' or 'proExpiresAt' (unless admin)
-      // - Allow the owner to update app credentials such as substack_sid
       allow update: if request.auth != null && (
                       // Admin can update anything
                       isDeveloper()
@@ -99,30 +98,10 @@ service cloud.firestore {
       match /quick_notes/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      match /journal/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-
-      // NEWLY ADDED SUBCOLLECTIONS FOR VARIOUS APPS
       match /library/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      match /rss_feeds/{docId} {
-        allow read:   if request.auth != null && request.auth.uid == userId;
-        allow delete: if request.auth != null && request.auth.uid == userId;
-        allow update: if request.auth != null && request.auth.uid == userId;
-        allow create: if request.auth != null && request.auth.uid == userId;
-      }
       match /apps/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /chords/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /contacts/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /cookbook/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       match /countdown_events/{docId} {
@@ -140,40 +119,13 @@ service cloud.firestore {
       match /flipnote_animations/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      match /habit_history/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /habits/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
       match /interactive_games/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /mindmaps/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /pixel_drawings/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       match /privateSettings/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      match /reading_list/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /reading_logs/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /food_logs/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
       match /readlater/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /sheet_music_library/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /watchlist/{docId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
@@ -379,24 +331,5 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.uploaderUid == request.auth.uid;
     }
 
-    // 13. SHEET MUSIC UPLOADS
-    match /sheet_music_uploads/{uploadId} {
-      allow read: if true;
-      allow create: if request.auth != null &&
-                      request.resource.data.uploaderUid == request.auth.uid &&
-                      isValidText(request.resource.data.title);
-      allow delete: if request.auth != null && resource.data.uploaderUid == request.auth.uid;
-    }
-
-    // 14. SUGGESTIONS APP (ARCHIVED — migrated to RTDB)
-    match /suggestions/{suggestionId} {
-      allow read: if true;
-      allow create, update, delete: if false;
-
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create, update, delete: if false;
-      }
-    }
   }
 }

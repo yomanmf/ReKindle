@@ -1214,8 +1214,6 @@
                 <div style="display: flex; justify-content: center; margin-bottom: 15px">
                     <a href="mailto:support@rekindle.ink" class="sys-btn" data-i18n="home.btn.support"
                         style="text-decoration:none; box-shadow: 2px 2px 0 black; padding: 5px 10px; font-size: 0.8rem;">Support</a>
-                    <button class="sys-btn" onclick="openDiscordModal()" data-i18n="home.btn.discord"
-                        style="box-shadow: 2px 2px 0 black; padding: 5px 10px; font-size: 0.8rem;; margin-left: 10px">Discord</button>
                 </div>
                 <div class="mobile-only-btn" style="border-top: 2px solid black; padding-top: 15px; margin-top: 15px;">
                     <button class="sys-btn" onclick="location.href='settings'" style="width: 100%; margin-bottom: 10px;"
@@ -1238,23 +1236,6 @@
                 <div data-i18n="home.info.scan_donate" style="font-size:0.7rem; font-weight:bold; margin-top:5px;">Scan to Donate</div>
                 <a href="http://link.rekindle.ink/donate" target="_blank" class="privacy-link" data-i18n="home.info.buy_coffee"
                     style="margin-top: 0;">Buy me a coffee</a>
-            </div>
-        </div>
-
-        <div id="discord-modal" class="modal-overlay" onclick="closeModal('discord-modal')">
-            <div class="modal-box" onclick="event.stopPropagation()">
-                <h2 style="margin-top:0; border-bottom: 2px solid black; padding-bottom:10px;"
-                    data-i18n="discord.modal.title">Join our Discord</h2>
-                <div style="margin: 15px auto; width: 150px; height: 150px;">
-                    <img src="discord.svg" style="width:100%; height:100%; background:white;"
-                        alt="Discord Invite QR Code">
-                </div>
-                <p style="font-size:0.9rem;">Scan to join the <a href="http://link.rekindle.ink/discord/"
-                        target="_blank" style="color: black; text-decoration: underline;"
-                        data-i18n="discord.link.text">ReKindle
-                        community</a>!</p>
-                <button class="sys-btn" onclick="closeModal('discord-modal')"
-                    data-i18n="discord.btn.close">Close</button>
             </div>
         </div>
 
@@ -1745,8 +1726,9 @@
             const container = document.getElementById('favorites-section');
             const grid = document.getElementById('favorites-grid');
             grid.innerHTML = '';
-            const favApps = favoriteApps.map(id => APPS.find(a => a.id === id)).filter(Boolean);
-            const displayApps = gamesDisabled ? favApps.filter(app => app.cat !== 'games' && app.cat !== 'two_player' && app.cat !== 'live_game') : favApps;
+            const displayApps = favoriteApps.map(id => APPS.find(a => a.id === id)).filter(app => {
+                return app && app.cat !== 'games' && app.cat !== 'two_player' && app.cat !== 'live_game';
+            });
 
             if (displayApps.length > 0) {
                 container.style.display = 'block';
@@ -1831,10 +1813,11 @@
             a.id = `icon-${app.id}`;
 
             if (app.isFolder) {
-                a.onclick = (e) => { e.preventDefault(); openFolderModal(app.name, app.groupedApps); };
-                a.href = "javascript:void(0)";
-            } else if (app.id === 'discord') {
-                a.onclick = (e) => { e.preventDefault(); openDiscordModal(); };
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    const folderName = window.t && app.i18nKey ? window.t(app.i18nKey, app.name) : app.name;
+                    openFolderModal(folderName, app.groupedApps, app.allowChildCustomization === true);
+                };
                 a.href = "javascript:void(0)";
             }
 
@@ -1855,7 +1838,7 @@
 
             if (isHidden) { a.style.opacity = '0.4'; a.style.filter = 'grayscale(100%)'; }
 
-            let extraHtml = `
+            let extraHtml = app.virtualFolder ? '' : `
                 <div class="favorite-toggle ${isFavClass} ${showToggleClass}" onclick="toggleFavorite('${app.id}', event)">
                     <svg viewBox="0 0 32 32"><path d="M16 2 L20 12 L30 13 L22 20 L24 30 L16 25 L8 30 L10 20 L2 13 L12 12 Z"/></svg>
                 </div>
@@ -1888,7 +1871,8 @@
                 labelClass += " folder-title-badge";
             }
 
-            a.innerHTML = `${iconHtml}<span class="${labelClass}" data-i18n="app.${app.id}.name">${app.name}</span>${extraHtml}`;
+            const i18nKey = app.i18nKey || `app.${app.id}.name`;
+            a.innerHTML = `${iconHtml}<span class="${labelClass}" data-i18n="${i18nKey}">${app.name}</span>${extraHtml}`;
             return a;
         }
 
@@ -2071,14 +2055,18 @@
             featuredContainer.style.display = 'block';
             featuredGrid.innerHTML = '';
             const fragment = document.createDocumentFragment();
-            let featuredApps = APPS.filter(a => a.featured);
-            if (gamesDisabled) featuredApps = featuredApps.filter(app => app.cat !== 'games' && app.cat !== 'two_player');
+            let featuredApps = APPS.filter(a => a.featured && a.cat !== 'games' && a.cat !== 'two_player' && a.cat !== 'live_game');
             featuredApps.sort((a, b) => (a.featuredOrder || 999) - (b.featuredOrder || 999));
+
+            if (featuredApps.length === 0) {
+                featuredContainer.style.display = 'none';
+                renderFavoriteSection();
+                return;
+            }
 
             featuredApps.forEach(app => {
                 const a = document.createElement('a');
                 a.href = `${app.id}.html`;
-                if (app.id === 'discord') { a.onclick = (e) => { e.preventDefault(); openDiscordModal(); }; a.href = "javascript:void(0)"; }
                 a.className = 'featured-card';
                 const subheading = app.desc || '';
                 let badgeHtml = '';
@@ -2117,6 +2105,9 @@
                     const folderApp = Object.assign({}, primaryApp);
                     folderApp.id = 'folder_' + primaryApp.id;
                     folderApp.isFolder = true;
+                    folderApp.virtualFolder = true;
+                    folderApp.allowChildCustomization = true;
+                    folderApp.i18nKey = 'app.' + primaryApp.id + '.name';
                     folderApp.groupedApps = group;
                     result.push(folderApp);
                 } else {
@@ -2148,8 +2139,8 @@
                 document.getElementById('category-title').innerText = "All Applications";
                 let baseList = APPS.filter(a => (!a.featured || featuredHidden) && !favoriteApps.includes(a.id));
                 if (!isEditMode) baseList = baseList.filter(a => !hiddenApps.includes(a.id));
-                if (gamesDisabled) baseList = baseList.filter(app => app.cat !== 'games' && app.cat !== 'two_player' && app.cat !== 'live_game');
-                let games = baseList.filter(a => (a.cat === 'games' || a.cat === 'two_player' || a.cat === 'live_game'));
+                let games = gamesDisabled ? [] : APPS.filter(a => a.cat === 'games' || a.cat === 'two_player' || a.cat === 'live_game');
+                if (!isEditMode) games = games.filter(a => !hiddenApps.includes(a.id));
                 const apps = baseList.filter(a => a.cat !== 'games' && a.cat !== 'two_player' && a.cat !== 'live_game');
 
                 apps.sort((a, b) => a.name.localeCompare(b.name));
@@ -2159,12 +2150,17 @@
                 apps.forEach(app => fragment.appendChild(createAppElement(app)));
 
                 if (games.length > 0) {
-                    const header = document.createElement('div');
-                    header.className = 'view-header';
-                    header.style.gridColumn = '1 / -1'; header.style.marginTop = '25px'; header.style.marginBottom = '15px'; header.style.borderBottom = '2px solid black';
-                    header.innerHTML = '<span style="font-size: 1.2rem; font-weight: bold;">All Games</span>';
-                    fragment.appendChild(header);
-                    games.forEach(app => fragment.appendChild(createAppElement(app)));
+                    fragment.appendChild(createAppElement({
+                        id: 'folder_games',
+                        name: 'Games',
+                        cat: 'games',
+                        isFolder: true,
+                        virtualFolder: true,
+                        allowChildCustomization: true,
+                        i18nKey: 'nav.games',
+                        groupedApps: games,
+                        icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><path d="M10 17 h6 M13 14 v6" stroke="black" stroke-width="2"/><circle cx="22" cy="16" r="1.5" fill="black" stroke="none"/><circle cx="25" cy="20" r="1.5" fill="black" stroke="none"/>'
+                    }));
                 }
             } else {
                 let filtered = appsToRender;
@@ -2191,7 +2187,7 @@
         function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
         function openAbout() { document.getElementById('about-modal').style.display = 'flex'; }
 
-        function openFolderModal(appName, groupedAppsArray) {
+        function openFolderModal(appName, groupedAppsArray, allowChildCustomization) {
             document.getElementById('folder-title').innerText = appName;
             const container = document.getElementById('folder-options');
             container.innerHTML = '';
@@ -2202,7 +2198,10 @@
                 const element = createAppElement(clonedApp);
                 element.id = 'modal-icon-' + clonedApp.id;
 
-                element.querySelectorAll('.favorite-toggle, .hide-toggle, .plus-label').forEach(e => e.remove());
+                if (!allowChildCustomization) {
+                    element.querySelectorAll('.favorite-toggle, .hide-toggle').forEach(e => e.remove());
+                }
+                element.querySelectorAll('.plus-label').forEach(e => e.remove());
 
                 fragment.appendChild(element);
             });
@@ -2211,7 +2210,6 @@
             document.getElementById('folder-modal').style.display = 'flex';
         }
 
-        function openDiscordModal() { document.getElementById('discord-modal').style.display = 'flex'; }
         function openDonateModal() { document.getElementById('donate-modal').style.display = 'flex'; }
         function openLogoutModal() { document.getElementById('logout-modal').style.display = 'flex'; }
         function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }

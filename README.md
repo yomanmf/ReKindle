@@ -2,7 +2,7 @@
 
 **Your E-Ink Device, Upgraded.**
 
-ReKindle is a web-based dashboard for E-ink devices (Kindle, Kobo, Boox, etc.). It transforms your e-reader into a powerful productivity tool, gaming device, news hub & more.
+ReKindle is a web-based dashboard for E-ink devices (Kindle, Kobo, Boox, etc.). It transforms your e-reader into a productivity, reading, and gaming device.
 
 ## Setup & Installation
 
@@ -42,36 +42,28 @@ ReKindle is a Progressive Web App (PWA). No "installation" or jailbreak is requi
 ReKindle operates in two modes: **Guest Mode** (all data stored locally on your device) and **Cloud Mode** (create an account to sync data across devices).
 
 ### Productivity & Organization
-*   **Quick ToDo⁺:** A unique task manager that uses **OCR (Handwriting Recognition)** to convert your handwriting into digital, sync-able tasks.
-*   **Google Integration:** Full read/write sync for **Google Tasks**, **Google Calendar**, and **Google Contacts**.
-*   **Mail⁺:** A fully functional email client for your E-ink device.
-*   **Universal Sync:** Supports **CalDAV** and **CardDAV** for non-Google users.
+*   **Quick ToDo:** A unique task manager that uses **OCR (Handwriting Recognition)** to convert your handwriting into digital, sync-able tasks.
+*   **Google Integration:** Full read/write sync for **Google Tasks** and **Google Calendar**.
+*   **Calendar Sync:** Supports **CalDAV** for non-Google calendars.
 *   **Note Pad:** A clean, distraction-free writing environment.
-*   **Habit Tracker:** Keep your streaks alive with a visual weekly tracker.
 *   **Focus Timer:** A Pomodoro-style timer to boost productivity.
-*   **Decider:** A random decision engine for when you just can't choose.
-*   **Mindmap:** Visually organize your ideas and concepts.
-*   **Teleprompter:** Display notes line-by-line for speeches or practice.
 
 ### Reading & News
 *   **Reader:** A fully functional EPUB reader powered by `epub.js` with library management.
-*   **Library Integration:** Built-in search and download for **Project Gutenberg**, **Standard Ebooks**, and **Libby**.
+*   **Library Integration:** Built-in public-domain search and download through **Gutendex / Project Gutenberg**.
 *   **NetLite:** A lightweight, text-only web browser powered by **FrogFind**, optimizing the web for E-ink screens.
-*   **RSS Reader:** Follow your favorite feeds in a clean, readable format.
-*   **The Daily Kindling:** A daily newspaper aggregating top headlines from world news, tech, science, and more.
-*   **Reading Log & List:** Track your daily reading minutes and maintain a "To-Read" wish list with search integration.
 
 ### Knowledge & Tools
-*   **Oracle AI⁺:** Chat with **Gemini 2.5**, optimized for text-based responses.
+*   **Oracle AI:** Chat with a shared YandexGPT model or configure a supported provider.
 *   **Atlas:** Global maps powered by OpenStreetMap.
 *   **Babel:** Text translator supporting multiple languages.
 *   **Wikipedia:** Search or read random entries from the free encyclopedia.
-*   **On This Day:** Discover historical events, births, and deaths for the current date.
-*   **Stocks:** Track your portfolio with real-time market data.
 *   **Weather:** Current conditions and 5-day forecasts.
-*   **Utilities:** Calculator, Unit Converter, Dictionary, World Clock, **AirType⁺** (Phone Typewriter), and Breathing Exercises.
+*   **Utilities:** Calculator, Dictionary, **AirType** (phone typewriter), and breathing exercises.
 
 ### Games Arcade
+Games appear in a single **Games** folder on the dashboard, with dedicated single-player and multiplayer category views.
+
 **Single Player:**
 *   **Word Games:** Wordle, Spelling Bee, Connections, Crossword (NYT Archives), Anagrams, Hangman, Word Search.
 *   **Logic & Numbers:** Sudoku, Nerdle (Math Wordle), 2048, Minesweeper, Memory, Jigsaw Puzzles, Tower of Hanoi, Lights Out, Nonograms, Codebreaker.
@@ -83,11 +75,8 @@ ReKindle operates in two modes: **Guest Mode** (all data stored locally on your 
 
 ### Creative & Reading
 *   **Reddit:** A text-optimized Reddit client.
-*   **Sketchpad & Pixel:** Draw on a monochrome pixel grid, keep a local/cloud
-    drawing library, export the result, or use it as the dashboard wallpaper.
 *   **Flipbook:** Build frame-by-frame monochrome animations with onion-skin
     drawing, adjustable playback speed, local/cloud saves, and GIF export.
-*   **Music:** Sheet Music library and Guitar Chords/Tabs search.
 
 All applications are available without a paid subscription.
 
@@ -95,7 +84,7 @@ All applications are available without a paid subscription.
 
 ## ⚡ ReKindle+
 
-ReKindle+ is an optional supporter membership. It helps cover AI, storage, mail proxying, and development costs; it does not control access to applications or features.
+ReKindle+ is an optional supporter membership. It helps cover AI, storage, and development costs; it does not control access to applications or features.
 
 **Pricing:**
 *   **Monthly:** $2/mo
@@ -112,7 +101,7 @@ ReKindle is designed with privacy as a priority.
 
 *   **Guest Mode:** By default, ReKindle uses your browser's `localStorage`. No data leaves your device.
 *   **Cloud Sync:** If you choose to log in, app-specific data (notes, tasks, game states) is synced securely via Google Firebase.
-*   **Google Data:** Google Tokens are stored locally on your device. ReKindle fetches Calendar/Contacts/Tasks data directly from Google APIs to your browser; this data is **never** stored on ReKindle servers.
+*   **Google Data:** Google tokens are stored locally on your device. ReKindle fetches Calendar and Tasks data directly from Google APIs to your browser; this data is **never** stored on ReKindle servers.
 
 ## License
 
@@ -133,10 +122,10 @@ ReKindle uses Google Firebase for user authentication and storing app data.
 3.  Enable **Firestore Database** and set security rules to restrict access to owner-only.
 
 ### 2. Google API Setup (Optional for Google Sync)
-Enable the **Google Tasks**, **Calendar**, and **People** APIs in the [Google Cloud Console](https://console.cloud.google.com/). Create an OAuth 2.0 Client ID for a Web Application and add your domain to the authorized origins.
+Enable the **Google Tasks** and **Calendar** APIs in the [Google Cloud Console](https://console.cloud.google.com/). Create an OAuth 2.0 Client ID for a Web Application and add your domain to the authorized origins.
 
 ### 3. Yandex Cloud backend
-ReKindle routes authenticated AI, OCR, storage, mail, Suggestions reports, billing, and third-party API proxy requests through Yandex API Gateway and Yandex Cloud Functions. Interactive Z-code stories use a dedicated Yandex Function backed by Yandex Object Storage. Cloudflare Worker sources and Wrangler manifests have been removed; the frontend must not call `workers.dev`.
+ReKindle routes authenticated AI, OCR, storage, billing, Telegram, Microsoft To Do, and third-party API proxy requests through Yandex API Gateway and Yandex Cloud Functions. Interactive Z-code stories use a dedicated Yandex Function backed by Yandex Object Storage. Cloudflare Worker sources and Wrangler manifests have been removed; the frontend must not call `workers.dev`.
 
 ## 🛠️ Building & Deployment
 

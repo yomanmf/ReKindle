@@ -5,7 +5,6 @@
         "build": "node build-automation.js",
         "build:badwords": "node scripts/build-bad-words.js",
         "test:chat-ai": "node --test tests/chat-ai-contract.test.js",
-        "test:newspaper": "node --test tests/newspaper-reliability.test.js",
         "test:microsoft-todo": "node --test tests/microsoft-todo-contract.test.js",
         "test:social-removal": "node --test tests/social-removal-contract.test.js",
         "test:telegram": "node --test tests/telegram-client-contract.test.js",

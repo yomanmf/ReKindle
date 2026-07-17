@@ -3,16 +3,12 @@
 var admin = require("firebase-admin");
 var s3Package = require("@aws-sdk/client-s3");
 var presignerPackage = require("@aws-sdk/s3-request-presigner");
-var ImapFlow;
-var simpleParser;
-var nodemailer;
 var Readability;
 var parseHTML;
 var dns = require("node:dns").promises;
 var net = require("node:net");
 var crypto = require("node:crypto");
 var firebaseFirestore = require("firebase-admin/firestore");
-var nrlParser = require("./nrl");
 var telegramService = require("./telegram-service");
 var microsoftTodoService = require("./microsoft-todo-service");
 
@@ -31,7 +27,6 @@ var ALLOWED_FOLDERS = { files: true, photos: true };
 var RESERVED_USERNAME = /(ukiyo|rekindle|wantban|root|system|admin|administrator|mod|moderator|support)/i;
 var firebaseApp;
 var s3Client;
-var nrlCache = { expiresAt: 0, body: null };
 
 module.exports.handler = async function (event, context) {
     event = event || {};
@@ -65,34 +60,11 @@ module.exports.handler = async function (event, context) {
         if (method === "DELETE" && endsWith(path, "/storage/object")) {
             return response(200, await deleteObject(event), origin);
         }
-        if (method === "POST" && endsWith(path, "/integrations/pinterest/oauth")) {
-            return upstreamResponse(await pinterestExchangeCode(event), origin);
-        }
-        if (method === "POST" && endsWith(path, "/integrations/pinterest/refresh")) {
-            return upstreamResponse(await pinterestRefreshToken(event), origin);
-        }
-        if (path.indexOf("/integrations/pinterest/api/") !== -1 &&
-            (method === "GET" || method === "POST" || method === "DELETE")) {
-            return upstreamResponse(await pinterestApiProxy(event, path, method), origin);
-        }
-        if (path.indexOf("/integrations/substack/api/") !== -1 &&
-            (method === "GET" || method === "POST")) {
-            return upstreamResponse(await substackApiProxy(event, path, method), origin);
-        }
         if (method === "GET" && path.indexOf("/integrations/readwise/") !== -1) {
             return upstreamResponse(await readwiseApiProxy(event, path), origin);
         }
-        if (method === "GET" && path.indexOf("/content/tmdb/") !== -1) {
-            return upstreamResponse(await tmdbApiProxy(event, path), origin);
-        }
-        if (method === "GET" && endsWith(path, "/content/chords")) {
-            return upstreamResponse(await chordsApiProxy(event), origin);
-        }
         if ((method === "GET" || method === "HEAD") && endsWith(path, "/content/proxy")) {
             return await publicContentProxy(event, method, origin);
-        }
-        if ((method === "GET" || method === "HEAD") && endsWith(path, "/content/nrl-scores")) {
-            return await nrlScoresProxy(event, method, origin);
         }
         if (method === "GET" && (endsWith(path, "/content/reader") || endsWith(path, "/content/reader/search"))) {
             return response(200, await readerContentProxy(event, path), origin);
@@ -112,17 +84,11 @@ module.exports.handler = async function (event, context) {
         if (method === "POST" && endsWith(path, "/ai/ocr")) {
             return response(200, await recognizeImageText(event, context || {}), origin);
         }
-        if (method === "POST" && path.indexOf("/mail/") !== -1) {
-            return response(200, await handleMailRequest(event, path), origin);
-        }
         if (method === "POST" && path.indexOf("/telegram/") !== -1) {
             return response(200, await handleTelegramRequest(event, path), origin);
         }
         if (method === "POST" && path.indexOf("/microsoft-todo/") !== -1) {
             return response(200, await handleMicrosoftTodoRequest(event, path), origin);
-        }
-        if (method === "POST" && endsWith(path, "/reports/submit")) {
-            return response(200, await createPrimarySuggestionReport(event), origin);
         }
         return response(404, { error: "Endpoint not found." }, origin);
     } catch (error) {
@@ -284,87 +250,6 @@ async function deleteObject(event) {
         Key: key
     }));
     return { deleted: true };
-}
-
-async function pinterestExchangeCode(event) {
-    var user = await requireFirebaseUser(event, false);
-    await enforceUserWindowRateLimit(user.uid, "pinterest_oauth", 10, 60 * 60 * 1000);
-    var body = parseJsonBody(event);
-    var code = String(body.code || "");
-    var redirectUri = validateRedirectUri(body.redirect_uri, "pinterest");
-    if (!code) throw httpError(400, "invalid-argument", "Missing authorization code.");
-
-    return pinterestTokenRequest({
-        grant_type: "authorization_code",
-        code: code,
-        redirect_uri: redirectUri
-    });
-}
-
-async function pinterestRefreshToken(event) {
-    var user = await requireFirebaseUser(event, false);
-    await enforceUserWindowRateLimit(user.uid, "pinterest_refresh", 20, 60 * 60 * 1000);
-    var body = parseJsonBody(event);
-    var refreshToken = String(body.refresh_token || "");
-    if (!refreshToken) throw httpError(400, "invalid-argument", "Missing refresh token.");
-    return pinterestTokenRequest({ grant_type: "refresh_token", refresh_token: refreshToken });
-}
-
-async function pinterestTokenRequest(fields) {
-    var clientId = getRequiredEnv("PINTEREST_CLIENT_ID");
-    var clientSecret = getRequiredEnv("PINTEREST_CLIENT_SECRET");
-    var form = new URLSearchParams();
-    Object.keys(fields).forEach(function (key) { form.append(key, fields[key]); });
-    var upstream = await fetch("https://api.pinterest.com/v5/oauth/token", {
-        method: "POST",
-        headers: {
-            "Authorization": "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64"),
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: form.toString()
-    });
-    return readUpstreamResponse(upstream);
-}
-
-async function pinterestApiProxy(event, path, method) {
-    var user = await requireFirebaseUser(event, false);
-    await enforceUserWindowRateLimit(user.uid, "pinterest_api", 120, 60 * 1000);
-    var authHeader = getHeader(event, "authorization");
-    if (!/^Bearer\s+\S+$/i.test(authHeader)) {
-        throw httpError(401, "missing-provider-token", "Pinterest authorization is required.");
-    }
-    var marker = "/integrations/pinterest/api";
-    var apiPath = path.slice(path.indexOf(marker) + marker.length);
-    if (!apiPath || apiPath.indexOf("..") !== -1) throw httpError(400, "invalid-path", "Invalid Pinterest API path.");
-    var url = new URL("https://api.pinterest.com/v5" + apiPath);
-    appendQueryParameters(url, event.queryStringParameters || {});
-    var options = {
-        method: method,
-        headers: { "Authorization": authHeader, "Content-Type": "application/json" }
-    };
-    if (method === "POST") options.body = JSON.stringify(parseJsonBody(event));
-    return readUpstreamResponse(await fetch(url.toString(), options));
-}
-
-async function substackApiProxy(event, path, method) {
-    var user = await requireFirebaseUser(event, false);
-    await enforceUserWindowRateLimit(user.uid, "substack_api", 120, 60 * 1000);
-    var marker = "/integrations/substack/api/";
-    var apiPath = path.slice(path.indexOf(marker) + marker.length);
-    if (!apiPath || apiPath.indexOf("..") !== -1) throw httpError(400, "invalid-path", "Invalid Substack API path.");
-    var targetDomain = validateSubstackDomain(getHeader(event, "x-substack-target") || "substack.com");
-    var url = new URL("https://" + targetDomain + "/api/v1/" + apiPath);
-    appendQueryParameters(url, event.queryStringParameters || {});
-    var headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "User-Agent": "ReKindle/1.0"
-    };
-    var sid = getHeader(event, "x-substack-sid");
-    if (sid) headers.Cookie = "substack.sid=" + sid.replace(/[\r\n;]/g, "");
-    var options = { method: method, headers: headers };
-    if (method === "POST") options.body = JSON.stringify(parseJsonBody(event));
-    return readUpstreamResponse(await fetch(url.toString(), options));
 }
 
 async function aiChat(event, context, requestId) {
@@ -550,73 +435,6 @@ async function recognizeImageText(event, context) {
     return { text: lines.join(" ").trim() };
 }
 
-async function tmdbApiProxy(event, path) {
-    var user = await requireFirebaseUser(event, false);
-    await enforceUserWindowRateLimit(user.uid, "tmdb", 120, 60 * 60 * 1000);
-    var marker = "/content/tmdb/";
-    var apiPath = path.slice(path.indexOf(marker) + marker.length);
-    if (!/^(search\/multi|tv\/\d+(\/season\/\d+)?|movie\/\d+)$/.test(apiPath)) {
-        throw httpError(404, "not-found", "TMDB route is not allowed.");
-    }
-    var target = new URL("https://api.themoviedb.org/3/" + apiPath);
-    appendQueryParameters(target, event.queryStringParameters || {});
-    target.searchParams.set("api_key", getRequiredEnv("TMDB_API_KEY"));
-    target.searchParams.set("include_adult", "false");
-    var result = await readUpstreamResponse(await fetch(target.toString(), {
-        headers: { "Accept": "application/json", "User-Agent": "ReKindle-Yandex/1.0" }
-    }));
-    if (result.status < 200 || result.status >= 300) throw upstreamError(result, "TMDB request failed.");
-    return result;
-}
-
-async function chordsApiProxy(event) {
-    var user = await requireFirebaseUser(event, false);
-    await enforceUserWindowRateLimit(user.uid, "chords", 120, 60 * 60 * 1000);
-    var query = event.queryStringParameters || {};
-    var cmd = String(query.cmd || "search");
-    var headers = { "User-Agent": "Mozilla/5.0 ReKindle-Yandex/1.0", "Accept": "text/html" };
-    if (cmd === "search") {
-        var term = String(query.q || "").trim();
-        if (!term || term.length > 100) throw httpError(400, "invalid-query", "A search query is required.");
-        var searchUrl = "https://www.guitaretab.com/fetch/?type=tab&query=" + encodeURIComponent(term);
-        var searchResponse = await fetch(searchUrl, { headers: headers });
-        if (!searchResponse.ok) throw httpError(502, "upstream-error", "Chord search failed.");
-        var html = await searchResponse.text();
-        var results = [];
-        var linkRegex = /<a[^>]+href=["'](\/[a-z0-9]\/[^"']+\/[^"']+\.html)["'][^>]*class=["']gt-link[^"']*gt-link--primary[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
-        var match;
-        while ((match = linkRegex.exec(html)) !== null && results.length < 50) {
-            results.push({
-                title: stripHtml(match[2]).trim(),
-                artist: "Unknown",
-                url: "https://www.guitaretab.com" + match[1],
-                source: "GuitareTab"
-            });
-        }
-        return { status: 200, body: results };
-    }
-    if (cmd === "get") {
-        var target;
-        try { target = new URL(String(query.url || "")); } catch (error) {
-            throw httpError(400, "invalid-target", "Invalid chord URL.");
-        }
-        if (target.protocol !== "https:" || (target.hostname !== "guitaretab.com" && !endsWith(target.hostname, ".guitaretab.com"))) {
-            throw httpError(400, "invalid-target", "Chord URL is not allowed.");
-        }
-        target.search = "";
-        target.hash = "";
-        var pageResponse = await fetch(target.toString(), { headers: headers });
-        if (!pageResponse.ok) throw httpError(502, "upstream-error", "Chord page failed.");
-        var pageHtml = await pageResponse.text();
-        var contentMatch = pageHtml.match(/<section[^>]+class=["'][^"']*js-tab[^"']*["'][^>]*>([\s\S]*?)<\/section>/i) ||
-            pageHtml.match(/<pre[^>]+class=["'][^"']*js-tab-content[^"']*["'][^>]*>([\s\S]*?)<\/pre>/i);
-        var content = contentMatch ? stripHtml(contentMatch[1]) : "";
-        if (!content.trim()) throw httpError(422, "parse-failed", "Could not parse chord content.");
-        return { status: 200, body: { content: content, source: target.toString() } };
-    }
-    throw httpError(400, "invalid-command", "Invalid chord command.");
-}
-
 async function readwiseApiProxy(event, path) {
     var user = await requireFirebaseUser(event, false);
     await enforceUserWindowRateLimit(user.uid, "readwise", 180, 60 * 60 * 1000);
@@ -761,24 +579,6 @@ async function publicContentProxy(event, method, origin) {
     if (method === "HEAD") return rawResponse(upstream.status, Buffer.alloc(0), origin, contentType, 60);
     var bytes = await readLimitedResponseBytes(upstream, 5 * 1024 * 1024);
     return rawResponse(upstream.status, bytes, origin, contentType, 60);
-}
-
-async function nrlScoresProxy(event, method, origin) {
-    await enforcePublicIpRateLimit(event, "nrl_scores", 120, 60 * 60 * 1000);
-    if (nrlCache.body && nrlCache.expiresAt > Date.now()) {
-        return rawResponse(200, method === "HEAD" ? Buffer.alloc(0) : nrlCache.body, origin, "application/json; charset=utf-8", 120);
-    }
-    var upstream = await fetch("https://www.espn.com/nrl/scoreboard", {
-        headers: {
-            "User-Agent": "ReKindle-Yandex/1.0 (https://rekindle.website.yandexcloud.net)",
-            "Accept": "text/html,application/xhtml+xml"
-        }
-    });
-    if (!upstream.ok) throw httpError(502, "upstream-error", "NRL source returned HTTP " + upstream.status + ".");
-    var html = (await readLimitedResponseBytes(upstream, 4 * 1024 * 1024)).toString("utf8");
-    var body = Buffer.from(JSON.stringify({ events: nrlParser.parseNRLScoreboard(html) }), "utf8");
-    nrlCache = { expiresAt: Date.now() + 120000, body: body };
-    return rawResponse(200, method === "HEAD" ? Buffer.alloc(0) : body, origin, "application/json; charset=utf-8", 120);
 }
 
 async function readLimitedResponseBytes(upstream, maxBytes) {
@@ -1080,38 +880,6 @@ async function updateSupporterByCustomer(customerId, active, expiry) {
     await setSupporterStatus(snapshot.docs[0].id, { active: active, expiresAt: expiry });
 }
 
-async function handleMailRequest(event, path) {
-    var user = await requireFirebaseUser(event, false);
-    loadMailLibraries();
-    var action = path.slice(path.lastIndexOf("/") + 1);
-    var body = parseJsonBody(event);
-    if (action === "folders") {
-        await enforceUserWindowRateLimit(user.uid, "mail_read", 120, 60 * 1000);
-        return mailGetFolders(body);
-    }
-    if (action === "messages") {
-        await enforceUserWindowRateLimit(user.uid, "mail_read", 120, 60 * 1000);
-        return mailFetchMessages(body);
-    }
-    if (action === "body") {
-        await enforceUserWindowRateLimit(user.uid, "mail_read", 120, 60 * 1000);
-        return mailFetchBody(body);
-    }
-    if (action === "flags") {
-        await enforceUserWindowRateLimit(user.uid, "mail_write", 60, 60 * 1000);
-        return mailModifyFlags(body);
-    }
-    if (action === "move") {
-        await enforceUserWindowRateLimit(user.uid, "mail_write", 60, 60 * 1000);
-        return mailMoveMessage(body);
-    }
-    if (action === "send") {
-        await enforceUserWindowRateLimit(user.uid, "mail_send", 10, 60 * 60 * 1000);
-        return mailSendMessage(body);
-    }
-    throw httpError(404, "not-found", "Mail endpoint not found.");
-}
-
 async function handleTelegramRequest(event, path) {
     var user = await requireFirebaseUser(event, false);
     var action = path.split("/").pop();
@@ -1188,337 +956,6 @@ async function handleMicrosoftTodoRequest(event, path) {
     });
 }
 
-async function createPrimarySuggestionReport(event) {
-    var user = await requireFirebaseUser(event);
-    await enforceUserWindowRateLimit(user.uid, "suggestion_report", 60, 60 * 60 * 1000);
-    var database = getFirebaseApp().database();
-    var request = validatePrimarySuggestionReport(parseJsonBody(event));
-    var contentRef = database.ref(request.contentPath);
-    var contentSnapshot = await contentRef.once("value");
-    if (!contentSnapshot.exists()) throw httpError(404, "not-found", "Reported content was not found.");
-    var content = contentSnapshot.val() || {};
-    var ownerUid = String(content.authorUid || "");
-    if (!ownerUid || ownerUid !== request.reportedUserId) {
-        throw httpError(400, "invalid-report", "Reported content owner does not match.");
-    }
-    if (ownerUid === user.uid) throw httpError(400, "invalid-report", "You cannot report your own content.");
-
-    var report = {
-        reporterId: user.uid,
-        reporterName: String(user.email || "").split("@")[0],
-        reportedUserId: ownerUid,
-        contentType: request.contentType,
-        contentId: request.contentId,
-        contentPath: request.contentPath,
-        reason: request.reason,
-        comment: request.comment,
-        contentSnapshot: primarySuggestionReportSnapshot(request.contentType, content),
-        status: "pending",
-        timestamp: admin.database.ServerValue.TIMESTAMP
-    };
-    var existingSnapshot = await database.ref("suggestion_reports").orderByChild("contentId").equalTo(request.contentId).once("value");
-    var existingDifferentReporter = null;
-    existingSnapshot.forEach(function (child) {
-        var value = child.val() || {};
-        if (!existingDifferentReporter && value.contentType === request.contentType && value.status === "pending" && value.reporterId !== user.uid) {
-            existingDifferentReporter = { key: child.key };
-        }
-    });
-    var reportRef = await database.ref("suggestion_reports").push(report);
-    var shouldDelete = request.contentType === "suggestion_comment" || Boolean(existingDifferentReporter);
-    if (shouldDelete) {
-        await contentRef.remove();
-        var resolution = { status: "resolved", autoDeleted: true, resolvedAt: admin.database.ServerValue.TIMESTAMP };
-        await reportRef.update(resolution);
-        if (existingDifferentReporter) {
-            await database.ref("suggestion_reports/" + existingDifferentReporter.key).update(resolution);
-        }
-        report.autoDeleted = true;
-    }
-    await sendDiscordReport(report, reportRef.key).catch(function (error) {
-        console.error("Discord report notification failed", error.message);
-    });
-    return { success: true, id: reportRef.key, autoDeleted: report.autoDeleted === true };
-}
-
-function validatePrimarySuggestionReport(body) {
-    body = body || {};
-    var contentType = String(body.contentType || "");
-    if (contentType !== "suggestion" && contentType !== "suggestion_comment") {
-        throw httpError(400, "invalid-report", "Invalid primary report type.");
-    }
-    var contentId = validateFirebaseId(body.contentId, "content ID");
-    var contentPath = String(body.contentPath || "");
-    if (contentType === "suggestion") {
-        if (contentPath !== "suggestions/" + contentId) {
-            throw httpError(400, "invalid-report", "Invalid suggestion path.");
-        }
-    } else if (!/^suggestions\/[a-zA-Z0-9_-]+\/comments\/[a-zA-Z0-9_-]+$/.test(contentPath) || !endsWith(contentPath, "/" + contentId)) {
-        throw httpError(400, "invalid-report", "Invalid suggestion comment path.");
-    }
-    var reasons = { spam: true, harassment: true, inappropriate: true, hate_speech: true, self_harm: true, violence: true, other: true };
-    var reason = String(body.reason || "");
-    if (!reasons[reason]) throw httpError(400, "invalid-report", "A valid report reason is required.");
-    var comment = String(body.comment || "").trim();
-    if (comment.length > 200) throw httpError(400, "invalid-report", "Report comment is too long.");
-    return {
-        contentType: contentType,
-        contentId: contentId,
-        contentPath: contentPath,
-        reportedUserId: validateFirebaseId(body.reportedUserId, "reported user ID"),
-        reason: reason,
-        comment: comment
-    };
-}
-
-function primarySuggestionReportSnapshot(contentType, content) {
-    if (contentType === "suggestion_comment") return String(content.text || "").slice(0, 2000);
-    return (String(content.title || "") + " - " + String(content.description || "")).slice(0, 2000);
-}
-
-async function sendDiscordReport(report, reportId) {
-    if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_CHANNEL_ID) return;
-    var description = String(report.contentSnapshot || "No content snapshot").slice(0, 1000).replace(/```/g, "` ` `");
-    var upstream = await fetch("https://discord.com/api/v10/channels/" + encodeURIComponent(process.env.DISCORD_CHANNEL_ID) + "/messages", {
-        method: "POST",
-        headers: { "Authorization": "Bot " + process.env.DISCORD_BOT_TOKEN, "Content-Type": "application/json" },
-        body: JSON.stringify({ embeds: [{ title: report.autoDeleted ? "Report: content auto-deleted" : "New content report", description: description, fields: [
-            { name: "Type", value: report.contentType, inline: true },
-            { name: "Reason", value: report.reason, inline: true },
-            { name: "Report ID", value: reportId, inline: false }
-        ] }] })
-    });
-    if (!upstream.ok) throw new Error("Discord returned HTTP " + upstream.status);
-}
-
-function validateFirebaseId(value, label) {
-    var id = String(value || "");
-    if (!id || id.length > 200 || !/^[a-zA-Z0-9_-]+$/.test(id)) throw httpError(400, "invalid-id", "Invalid " + label + ".");
-    return id;
-}
-
-function loadMailLibraries() {
-    if (ImapFlow && simpleParser && nodemailer) return;
-    ImapFlow = require("imapflow").ImapFlow;
-    simpleParser = require("mailparser").simpleParser;
-    nodemailer = require("nodemailer");
-}
-
-async function mailGetFolders(body) {
-    var config = await validateMailServer(body.imap, "imap");
-    return withImapClient(config, async function (client) {
-        var folders = await client.list();
-        return {
-            success: true,
-            folders: folders.map(function (folder) {
-                return {
-                    path: folder.path,
-                    name: folder.name,
-                    delimiter: folder.delimiter,
-                    specialUse: folder.specialUse,
-                    flags: Array.from(folder.flags || [])
-                };
-            })
-        };
-    });
-}
-
-async function mailFetchMessages(body) {
-    var config = await validateMailServer(body.imap, "imap");
-    var mailboxPath = validateMailboxPath(body.path || "INBOX");
-    var cursor = body.cursor ? validatePositiveInteger(body.cursor, "cursor") : null;
-    var limit = Math.min(50, validatePositiveInteger(body.limit || 20, "limit"));
-    return withImapClient(config, async function (client) {
-        var lock = await client.getMailboxLock(mailboxPath);
-        try {
-            var status = await client.status(mailboxPath, { messages: true });
-            var total = Number(status.messages || 0);
-            if (!total) return { success: true, messages: [], nextCursor: null };
-            var end = cursor ? Math.max(1, cursor - 1) : total;
-            var start = Math.max(1, end - limit + 1);
-            if (end < 1) return { success: true, messages: [], nextCursor: null };
-            var messages = [];
-            for await (var message of client.fetch(start + ":" + end, {
-                envelope: true,
-                source: { maxLength: 1024 },
-                flags: true,
-                internalDate: true
-            })) {
-                var snippet = "";
-                try {
-                    if (message.source) {
-                        var parsed = await simpleParser(message.source);
-                        snippet = parsed.text ? parsed.text.substring(0, 100).replace(/\s+/g, " ").trim() : "";
-                    }
-                } catch (error) {}
-                var envelope = Object.assign({}, message.envelope);
-                envelope.date = message.envelope && message.envelope.date ? message.envelope.date.toISOString() : null;
-                messages.push({
-                    uid: message.uid,
-                    seq: message.seq,
-                    envelope: envelope,
-                    flags: Array.from(message.flags || []),
-                    internalDate: message.internalDate ? message.internalDate.toISOString() : null,
-                    snippet: snippet
-                });
-            }
-            messages.reverse();
-            return { success: true, messages: messages, nextCursor: start > 1 ? start : null };
-        } finally {
-            lock.release();
-        }
-    });
-}
-
-async function mailFetchBody(body) {
-    var config = await validateMailServer(body.imap, "imap");
-    var mailboxPath = validateMailboxPath(body.path || "INBOX");
-    var uid = validatePositiveInteger(body.uid, "uid");
-    return withImapClient(config, async function (client) {
-        var lock = await client.getMailboxLock(mailboxPath);
-        try {
-            var message = await client.fetchOne(String(uid), { source: true, uid: true });
-            if (!message || !message.source) throw httpError(404, "not-found", "Message not found.");
-            var parsed = await simpleParser(message.source);
-            var cleanedHtml = parsed.html || "";
-            if (cleanedHtml) {
-                cleanedHtml = cleanedHtml.replace(/<(p|div)[^>]*>(\s|&nbsp;|<br\s*\/?>)*<\/\1>/gi, "");
-                cleanedHtml = cleanedHtml.replace(/(<br\s*\/?>\s*)+/gi, "<br>");
-            }
-            return {
-                success: true,
-                email: {
-                    subject: parsed.subject,
-                    from: parsed.from,
-                    to: parsed.to,
-                    date: parsed.date ? parsed.date.toISOString() : null,
-                    text: parsed.text,
-                    html: cleanedHtml,
-                    attachments: []
-                }
-            };
-        } finally {
-            lock.release();
-        }
-    });
-}
-
-async function mailModifyFlags(body) {
-    var config = await validateMailServer(body.imap, "imap");
-    var mailboxPath = validateMailboxPath(body.path || "INBOX");
-    var uid = validatePositiveInteger(body.uid, "uid");
-    var allowedFlags = { "\\Seen": true, "\\Flagged": true, "\\Answered": true, "\\Draft": true };
-    var addFlags = validateMailFlags(body.addFlags, allowedFlags);
-    var removeFlags = validateMailFlags(body.removeFlags, allowedFlags);
-    return withImapClient(config, async function (client) {
-        var lock = await client.getMailboxLock(mailboxPath);
-        try {
-            if (addFlags.length) await client.messageFlagsAdd(String(uid), addFlags, { uid: true });
-            if (removeFlags.length) await client.messageFlagsRemove(String(uid), removeFlags, { uid: true });
-            return { success: true };
-        } finally {
-            lock.release();
-        }
-    });
-}
-
-async function mailMoveMessage(body) {
-    var config = await validateMailServer(body.imap, "imap");
-    var mailboxPath = validateMailboxPath(body.path || "INBOX");
-    var destination = validateMailboxPath(body.destination);
-    var uid = validatePositiveInteger(body.uid, "uid");
-    return withImapClient(config, async function (client) {
-        var lock = await client.getMailboxLock(mailboxPath);
-        try {
-            await client.messageMove(String(uid), destination, { uid: true });
-            return { success: true };
-        } finally {
-            lock.release();
-        }
-    });
-}
-
-async function mailSendMessage(body) {
-    var config = await validateMailServer(body.smtp, "smtp");
-    var message = body.message || {};
-    var to = String(message.to || "").trim();
-    var subject = String(message.subject || "").slice(0, 500);
-    var text = String(message.text || "");
-    var html = String(message.html || "");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to) || /[\r\n]/.test(to)) {
-        throw httpError(400, "invalid-recipient", "Invalid email recipient.");
-    }
-    if (text.length > 200000 || html.length > 400000) throw httpError(413, "message-too-large", "Email body is too large.");
-    var transporter = nodemailer.createTransport({
-        host: config.host,
-        port: config.port,
-        secure: config.secure,
-        auth: config.auth,
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 20000,
-        tls: { servername: config.host }
-    });
-    var info = await transporter.sendMail({
-        from: config.auth.user,
-        to: to,
-        subject: subject,
-        text: text,
-        html: html
-    });
-    return { success: true, messageId: info.messageId };
-}
-
-async function withImapClient(config, callback) {
-    var client = new ImapFlow({
-        host: config.host,
-        port: config.port,
-        secure: config.secure,
-        auth: config.auth,
-        logger: false,
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 20000,
-        tls: { servername: config.host }
-    });
-    try {
-        await client.connect();
-        return await callback(client);
-    } catch (error) {
-        if (error && error.status) throw error;
-        throw httpError(502, "mail-upstream-error", "Mail server error: " + String(error.message || "Connection failed."));
-    } finally {
-        await client.logout().catch(function () {});
-    }
-}
-
-async function validateMailServer(input, type) {
-    var config = input || {};
-    var host = String(config.host || "").trim().toLowerCase();
-    var port = Number(config.port || (type === "imap" ? 993 : 465));
-    var allowedPorts = type === "imap" ? { 143: true, 993: true } : { 25: true, 465: true, 587: true };
-    if (!host || host.length > 253 || !/^[a-z0-9.-]+$/.test(host) || host === "localhost" || endsWith(host, ".local")) {
-        throw httpError(400, "invalid-mail-host", "Invalid mail server host.");
-    }
-    if (!allowedPorts[port]) throw httpError(400, "invalid-mail-port", "Unsupported mail server port.");
-    var auth = config.auth || {};
-    var username = String(auth.user || "");
-    var password = String(auth.pass || "");
-    if (!username || !password || username.length > 320 || password.length > 1000 || /[\r\n]/.test(username)) {
-        throw httpError(400, "invalid-mail-auth", "Invalid mail server credentials.");
-    }
-    var addresses;
-    try {
-        addresses = await dns.lookup(host, { all: true });
-    } catch (error) {
-        throw httpError(400, "mail-host-unresolved", "Mail server host could not be resolved.");
-    }
-    if (!addresses.length || addresses.some(function (entry) { return isPrivateAddress(entry.address); })) {
-        throw httpError(400, "private-mail-host", "Private or local mail servers are not allowed.");
-    }
-    return { host: host, port: port, secure: config.secure !== false, auth: { user: username, pass: password } };
-}
-
 function isPrivateAddress(address) {
     var value = String(address || "").toLowerCase();
     if (value.indexOf("::ffff:") === 0) value = value.slice(7);
@@ -1536,26 +973,6 @@ function isPrivateAddress(address) {
             value.indexOf("fc") === 0 || value.indexOf("fd") === 0;
     }
     return true;
-}
-
-function validateMailboxPath(value) {
-    var path = String(value || "");
-    if (!path || path.length > 500 || /[\u0000\r\n]/.test(path)) throw httpError(400, "invalid-mailbox", "Invalid mailbox path.");
-    return path;
-}
-
-function validatePositiveInteger(value, name) {
-    var number = Number(value);
-    if (!Number.isInteger(number) || number < 1 || number > 2147483647) {
-        throw httpError(400, "invalid-" + name, "Invalid " + name + ".");
-    }
-    return number;
-}
-
-function validateMailFlags(value, allowed) {
-    var flags = Array.isArray(value) ? value : [];
-    if (flags.some(function (flag) { return !allowed[flag]; })) throw httpError(400, "invalid-flags", "Invalid mail flags.");
-    return flags;
 }
 
 function getUtcDay(now) {
@@ -1800,32 +1217,6 @@ async function enforceWindowRateLimitRef(ref, limit, windowMs) {
     if (!allowed) throw httpError(429, "rate-limited", "Too many proxy requests. Please try again later.");
 }
 
-function validateRedirectUri(value, expectedPage) {
-    var parsed;
-    try {
-        parsed = new URL(String(value || ""));
-    } catch (error) {
-        throw httpError(400, "invalid-redirect", "Invalid OAuth redirect URI.");
-    }
-    if (getAllowedOrigins().indexOf(parsed.origin) === -1) {
-        throw httpError(400, "invalid-redirect", "OAuth redirect origin is not allowed.");
-    }
-    var page = parsed.pathname.split("/").pop().replace(/\.html$/, "");
-    if (page !== expectedPage) throw httpError(400, "invalid-redirect", "OAuth redirect page is not allowed.");
-    parsed.search = "";
-    parsed.hash = "";
-    return parsed.toString();
-}
-
-function validateSubstackDomain(value) {
-    var domain = String(value || "").toLowerCase().replace(/\.$/, "");
-    if (domain !== "substack.com" && !endsWith(domain, ".substack.com")) {
-        throw httpError(400, "invalid-target", "Substack target is not allowed.");
-    }
-    if (!/^[a-z0-9.-]+$/.test(domain)) throw httpError(400, "invalid-target", "Substack target is not allowed.");
-    return domain;
-}
-
 function appendQueryParameters(url, query) {
     Object.keys(query).forEach(function (key) {
         var value = query[key];
@@ -2068,7 +1459,7 @@ function response(statusCode, body, origin) {
         headers: {
             "Access-Control-Allow-Origin": allowedOrigin,
             "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, X-Firebase-Token, Authorization, X-Substack-SID, X-Substack-Target, X-Readwise-Token, stripe-signature",
+            "Access-Control-Allow-Headers": "Content-Type, X-Firebase-Token, Authorization, X-Readwise-Token, stripe-signature",
             "Cache-Control": "no-store",
             "Content-Type": "application/json; charset=utf-8",
             "Vary": "Origin"
@@ -2122,8 +1513,6 @@ function endsWith(value, suffix) {
 }
 
 module.exports.testHooks = {
-    validatePrimarySuggestionReport: validatePrimarySuggestionReport,
-    primarySuggestionReportSnapshot: primarySuggestionReportSnapshot,
     buildDailyQuota: buildDailyQuota,
     reserveDailyLimitRef: reserveDailyLimitRef,
     releaseDailyLimitRef: releaseDailyLimitRef,

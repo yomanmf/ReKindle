@@ -21,8 +21,6 @@ x-yc-apigateway:
       - Content-Type
       - X-Firebase-Token
       - Authorization
-      - X-Substack-SID
-      - X-Substack-Target
       - X-Readwise-Token
       - stripe-signature
     maxAge: 3600
@@ -160,70 +158,6 @@ paths:
         tag: '$latest'
         payload_format_version: '1.0'
 
-  /api/rekindle/integrations/pinterest/oauth:
-    post:
-      operationId: pinterestExchangeCode
-      responses:
-        '200':
-          description: Pinterest OAuth response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
-  /api/rekindle/integrations/pinterest/refresh:
-    post:
-      operationId: pinterestRefreshToken
-      responses:
-        '200':
-          description: Pinterest OAuth refresh response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
-  /api/rekindle/integrations/pinterest/api/{path+}:
-    x-yc-apigateway-any-method:
-      operationId: pinterestApiProxy
-      parameters:
-        - name: path
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Pinterest API response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
-  /api/rekindle/integrations/substack/api/{path+}:
-    x-yc-apigateway-any-method:
-      operationId: substackApiProxy
-      parameters:
-        - name: path
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Substack API response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
   /api/rekindle/integrations/readwise/{action}:
     get:
       operationId: readwiseApiProxy
@@ -237,38 +171,6 @@ paths:
       responses:
         '200':
           description: Readwise API response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
-  /api/rekindle/content/tmdb/{path+}:
-    get:
-      operationId: tmdbApiProxy
-      parameters:
-        - name: path
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: TMDB API response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
-  /api/rekindle/content/chords:
-    get:
-      operationId: chordsApiProxy
-      responses:
-        '200':
-          description: Chord search or content response
       x-yc-apigateway-integration:
         type: cloud_functions
         function_id: d4ebc0qtt85o8fb1j2c6
@@ -305,30 +207,6 @@ paths:
       responses:
         '200':
           description: Proxied content headers
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
-  /api/rekindle/content/nrl-scores:
-    get:
-      operationId: nrlScoresProxy
-      responses:
-        '200':
-          description: Parsed NRL scoreboard
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-    head:
-      operationId: nrlScoresProxyHead
-      responses:
-        '200':
-          description: NRL scoreboard response headers
       x-yc-apigateway-integration:
         type: cloud_functions
         function_id: d4ebc0qtt85o8fb1j2c6
@@ -434,26 +312,6 @@ paths:
         tag: '$latest'
         payload_format_version: '1.0'
 
-  /api/rekindle/mail/{action}:
-    post:
-      operationId: mailAction
-      parameters:
-        - name: action
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [folders, messages, body, flags, move, send]
-      responses:
-        '200':
-          description: Authenticated mail operation response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
   /api/rekindle/telegram/{action}:
     post:
       operationId: telegramAction
@@ -487,19 +345,6 @@ paths:
       responses:
         '200':
           description: Authenticated Microsoft To Do operation response
-      x-yc-apigateway-integration:
-        type: cloud_functions
-        function_id: d4ebc0qtt85o8fb1j2c6
-        service_account_id: ajes1g26thkptnonjfdf
-        tag: '$latest'
-        payload_format_version: '1.0'
-
-  /api/rekindle/reports/submit:
-    post:
-      operationId: submitPrimarySuggestionReport
-      responses:
-        '200':
-          description: Primary Suggestions report response
       x-yc-apigateway-integration:
         type: cloud_functions
         function_id: d4ebc0qtt85o8fb1j2c6

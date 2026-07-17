@@ -1,90 +1,12 @@
 // 1. Version Bump
 const CACHE_NAME = 'rekindle-os-v10';
 
-// 2. Clean URLs in Cache List (Removed .html from apps)
+// 2. Cache only the shell. Application pages are fetched on demand.
 const ASSETS_TO_CACHE = [
     './',
     './index',  
     './donate.svg',
     './logo.svg',
-/* 
-    './privacy',
-    './manifest.json',
-    './icons.js',
-    './logo.svg',
-    './LICENSE.md',
-    // Core System Apps
-    './settings',
-    './browser',
-    // Productivity
-    './tasks',
-    './calendar',
-    './contacts',
-    './notes',
-    './quicktodo',
-    './timer',
-    './streak',
-    './flashcards',
-    // Tools
-    './mindmap',
-    './calculator',
-    './converter',
-    './clocks',
-    './weather',
-    './stocks',
-    './countdown',
-    './translate',
-    './dictionary',
-    './maps',
-    './chat',
-    // Lifestyle & Reading
-    './reader',
-    './epub',
-    './books',
-    './rssreader',
-    './newspaper',
-    './reading',
-    './cookbook',
-    './reddit',
-    './wikipedia',
-    './history',
-    './einksites',
-    './napkin',
-    './standardebooks',
-    './libby',
-    './sheetmusic',
-    // Games
-    './wordle',
-    './crossword',
-    './sudoku',
-    './solitaire',
-    './minesweeper',
-    './2048',
-    './tetris',
-    './snake',
-    './chess',
-    './blackjack',
-    './memory',
-    './hangman',
-    './anagrams',
-    './wordsearch',
-    './jigsaw',
-    './bindings',
-    './spellbound',
-    './nerdle',
-    './words',
-    './breathing',
-    './checkers',
-    './codebreaker',
-    './mini',
-    './nonograms',
-    // Multiplayer
-    './2pchess',
-    './2pbattleships',
-    './2pconnect4',
-    './2ptictactoe',
-    './2pcheckers'
-*/    
 ];
 
 // Helper to clean redirected responses (Fixes Safari/Chrome errors)

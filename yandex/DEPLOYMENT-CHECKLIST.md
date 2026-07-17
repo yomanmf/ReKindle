@@ -3,10 +3,10 @@
 Publish backend infrastructure before any changed HTML. The checked-in frontend
 already points at the new Gateway routes and will fail if it is uploaded first.
 Prepared archives are under `/private/tmp/rekindle-yandex-release`; verify all
-five release archives against `RELEASE-SHA256.txt` before upload. The current
-frontend manifest contains 76 source files plus 49 byte-identical extensionless
-HTML aliases, for 125 production objects. Pixel and Flipbook are standalone
-primary-project applications; retired internal-social pages are delete-only.
+release archives against `RELEASE-SHA256.txt` before upload. Treat
+`FRONTEND-RELEASE-MANIFEST.txt` as authoritative instead of copying historical
+object counts. Flipbook is a standalone primary-project application; retired
+application pages and aliases are delete-only.
 
 ## Production rollout status (17 July 2026, Microsoft To Do)
 
@@ -38,73 +38,6 @@ primary-project applications; retired internal-social pages are delete-only.
   remains intentionally unpublished until owner-specific credentials can be
   created on another connection and stored in Lockbox.
 
-## Production rollout status (15 July 2026)
-
-- [x] `rekindle-backend` updated and running with Node.js 22, 30-second timeout
-  and 512 MB memory. Health and NRL routes return HTTP 200.
-- [x] `rekindle-reddit` updated. Non-allowlisted URLs return HTTP 403; allowed
-  Reddit requests reach the upstream service.
-- [x] `rekindle-story` created as `d4ehvm01ga7mfo9vuas6` with Node.js 22,
-  30-second timeout and 512 MB memory. Unauthenticated upload returns HTTP 401
-  and a missing game returns HTTP 404 through the gateway.
-- [x] `rekindle-api` updated with the current backend, NRL and Story paths.
-- [x] Primary Firestore and RTDB rules published. The production primary RTDB
-  no longer contains the obsolete `pro_gate` rule. The Suggestions report
-  backend writes through the Admin SDK and is live; publishing the newer
-  `suggestion_reports` client-read block is needed only before exposing a
-  browser moderation queue for those records.
-- [ ] Primary Firebase Storage rules cannot be published because the Spark
-  project has no provisioned Firebase Storage product. Direct Firebase Storage
-  remains unavailable; user files use the Yandex backend.
-- [ ] The general backend still needs optional Pinterest, TMDB and Stripe
-  integration configuration listed below. The existing Lockbox secret supplies
-  the primary Firebase service account and S3 credentials; AI and OCR use the
-  Yandex service-account token from the function invocation context.
-- [ ] Stripe webhook migration and authenticated integration E2E checks remain.
-- [x] All 113 objects from the previous frontend archive are published to
-  Yandex Object Storage.
-- [x] Social-removal release published on 15 July 2026: the backend and Gateway
-  no longer expose social routes, the public-profile migration completed,
-  primary Firestore/RTDB rules were published, all 118 frontend objects were
-  verified, and the eight HTML/extensionless internal-social objects were
-  deleted. The full delete manifest removed ten objects including the already
-  retired `pro-gate.js` and `js/anti-tamper.js`.
-- [x] Local social-removal verification passed: contract 5/5, backend 28/28,
-  Reddit 3/3, changed inline scripts, YAML, locale/rules JSON, and the complete
-  118-object release archive.
-- [x] Production social-removal verification passed: `/index`, `/pixel` and
-  `/flipbook` return HTTP 200; KindleChat, Neighbourhood, Topics and Moderation
-  HTML/extensionless routes return HTTP 404; the retired social Gateway route
-  returns HTTP 404; `icons.js` contains no retired catalog IDs; and `sw.js`
-  serves `rekindle-cache-v22` with cache revalidation enabled.
-- [x] Local verification passed: backend 28/28, Reddit 3/3, Story syntax,
-  changed inline scripts (50 HTML files), release checksums and locale/rules JSON.
-- [x] Production comparison reports 113/113 byte-identical objects, with no
-  missing or different files. Extensionless pages and representative JS/JSON
-  assets return their intended MIME types.
-- [x] Obsolete `pro-gate.js` and `js/anti-tamper.js` objects were deleted and
-  return HTTP 404 in production.
-- [x] Production smoke checks passed for health, NRL, Suggestions routing,
-  protected AI/OCR/mail/storage/Reader/Akinator routes, proxy private-address
-  rejection, Reddit allowlisting and Story missing-game handling.
-- [x] Firebase web-key hotfix published on 15 July 2026. All 70 affected HTML
-  objects and extensionless aliases match the release manifest, the production
-  audit found no API-key placeholder across 229 existing objects, and the
-  owner login plus server-side IP check both passed.
-- [x] AI Assistant backend release `d4em36gkmifsm2tef1no` published on 15 July
-  2026 with `ai.languageModels.user`, an explicit `YANDEX_FOLDER_ID`, atomic
-  server quota/refund, bounded provider timeouts and request IDs. Authenticated
-  production E2E passed for a real shared YandexGPT answer, quota decrement,
-  signed upload/download/delete and cleanup.
-- [x] The corresponding 113 frontend objects were republished and read back
-  byte-for-byte. `/chat` and all extensionless aliases use `text/html`; the
-  production page shows the localized signed-out state with no JavaScript
-  console errors.
-- [x] AI Assistant Firestore cleanup published as active ruleset
-  `eadc917f-8ffc-4d47-91cb-4e2a671dec96`. Its normalized SHA-256 matches the
-  checked-in `firestore.rules`, and the obsolete client-writable
-  `users/{uid}/chatLimits` match is absent.
-
 ## 1. General backend function
 
 Update Yandex Function `rekindle-backend` (`d4ebc0qtt85o8fb1j2c6`) from the
@@ -114,7 +47,7 @@ contents of `rekindle-backend/`:
 - Entry point: `index.handler`
 - Service account: the same least-privilege account used by API Gateway
 - Timeout: at least 30 seconds
-- Memory: at least 512 MB (Reader parsing, IMAP and OCR share this function)
+- Memory: at least 512 MB (Reader parsing and OCR share this function)
 
 Required secrets:
 
@@ -132,12 +65,8 @@ Microsoft To Do secret (required before publishing `microsofttodo.html`):
 
 - `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (32 random bytes, base64 encoded)
 
-Integration-specific secrets (required only when publishing the corresponding
-integration):
+Supporter-billing secrets (required only when Stripe support is enabled):
 
-- `PINTEREST_CLIENT_ID`
-- `PINTEREST_CLIENT_SECRET`
-- `TMDB_API_KEY`
 - `STRIPE_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 
@@ -154,11 +83,6 @@ Supporter-billing configuration (only when Stripe support is enabled):
 - `STRIPE_PRICE_MONTHLY`
 - `STRIPE_PRICE_YEARLY`
 - `STRIPE_PRICE_LIFETIME`
-
-Optional report notifications:
-
-- `DISCORD_BOT_TOKEN`
-- `DISCORD_CHANNEL_ID`
 
 Keep `@google-cloud/firestore` pinned as a direct backend dependency. Yandex can
 omit the copy declared as optional by `firebase-admin`, which causes Firestore
@@ -212,9 +136,9 @@ The Gateway must expose:
 - `/api/rekindle/storage/*`
 - `/api/rekindle/integrations/*`
 - `/api/rekindle/ai/*`
-- `/api/rekindle/mail/*`
-- `/api/rekindle/reports/submit`
 - `/api/rekindle/content/*`
+- `/api/rekindle/telegram/*`
+- `/api/rekindle/microsoft-todo/*`
 - `/api/rekindle/games/akinator/*`
 - `/api/rekindle/billing/*`
 - `/api/rekindle/story/*`
@@ -277,20 +201,15 @@ ReKindle+ is supporter status only and must never gate app functionality.
    a shared prompt returns non-empty text and decrements that quota exactly once,
    and a failed provider request releases its reservation. OCR and Reader return
    a controlled response for an authenticated user.
-4. A Suggestions report rejects mismatched content ownership/path and uses only
-   primary Firebase credentials.
-5. `/content/proxy` rejects localhost/private destinations and returns a public
+4. `/content/proxy` rejects localhost/private destinations and returns a public
    image under 5 MB.
-6. `/content/nrl-scores` returns `{ "events": [...] }`.
-7. `/api/reddit` returns a Reddit RSS/JSON response, rejects a non-Reddit URL,
+5. `/api/reddit` returns a Reddit RSS/JSON response, rejects a non-Reddit URL,
    and proxies an allowed image without exceeding the 5 MB bound.
-8. Story upload rejects an unauthenticated request, accepts a small Z-code file,
+6. Story upload rejects an unauthenticated request, accepts a small Z-code file,
    and its returned `/play/{id}` URL loads.
-9. Stripe test-mode checkout and signed webhook both succeed when optional
+7. Stripe test-mode checkout and signed webhook both succeed when optional
    supporter billing is enabled.
 
-The preceding Yandex/paywall release has been published and verified byte for
-byte. The internal-social removal release remains pending as recorded above.
 For future releases, run the checks above before publishing the changed frontend
 files and their extensionless Object Storage aliases. No page may restore
 references to `pro-gate.js` or `js/anti-tamper.js`.

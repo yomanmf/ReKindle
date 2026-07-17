@@ -760,23 +760,7 @@
             <div id="dav-cal-container" class="dav-input-container">
                 <span class="dav-label">CalDAV / iCalendar URL (.ics)</span>
                 <input type="text" id="caldav-url" class="dav-input" placeholder="https://example.com/calendar.ics">
-                <button class="save-dav-btn" onclick="saveDavSetting('calendar')">Save URL</button>
-            </div>
-
-            <!-- CONTACTS SETTINGS -->
-            <div class="setting-row">
-                <div class="setting-text">
-                    <strong data-i18n="settings.google_contacts">Google Contacts</strong>
-                    <div class="setting-desc" data-i18n="settings.desc.google_contacts">Access your Google Contacts.
-                    </div>
-                </div>
-                <input type="checkbox" id="toggle-contacts" class="toggle-switch" onchange="toggleService('contacts')">
-            </div>
-
-            <div id="dav-card-container" class="dav-input-container">
-                <span class="dav-label">CardDAV / vCard URL (.vcf)</span>
-                <input type="text" id="carddav-url" class="dav-input" placeholder="https://example.com/contacts.vcf">
-                <button class="save-dav-btn" onclick="saveDavSetting('contacts')">Save URL</button>
+                <button class="save-dav-btn" onclick="saveDavSetting()">Save URL</button>
             </div>
 
             <h2>Account</h2>
@@ -1239,13 +1223,10 @@
 
             document.getElementById('toggle-tasks').checked = localStorage.getItem('rekindle_google_tasks_enabled') === 'true';
             document.getElementById('toggle-calendar').checked = localStorage.getItem('rekindle_google_calendar_enabled') === 'true';
-            document.getElementById('toggle-contacts').checked = localStorage.getItem('rekindle_google_contacts_enabled') === 'true';
 
-            toggleDavVisibility('calendar', !document.getElementById('toggle-calendar').checked);
-            toggleDavVisibility('contacts', !document.getElementById('toggle-contacts').checked);
+            toggleDavVisibility(!document.getElementById('toggle-calendar').checked);
 
             document.getElementById('caldav-url').value = localStorage.getItem('rekindle_caldav_url') || '';
-            document.getElementById('carddav-url').value = localStorage.getItem('rekindle_carddav_url') || '';
             document.getElementById('unit-system').value = localStorage.getItem('rekindle_unit_system') || 'auto';
             document.getElementById('display-mode-select').value = localStorage.getItem('rekindle_display_mode') || 'led';
             const autoEnabled = (localStorage.getItem('rekindle_scale_auto') !== 'false');
@@ -1519,8 +1500,8 @@
             isEnabled = document.getElementById(elId).checked;
             localStorage.setItem(key, isEnabled);
 
-            if (serviceName === 'calendar' || serviceName === 'contacts') {
-                toggleDavVisibility(serviceName, !isEnabled);
+            if (serviceName === 'calendar') {
+                toggleDavVisibility(!isEnabled);
             }
 
             if (currentUser) {
@@ -1531,20 +1512,17 @@
             }
         }
 
-        function toggleDavVisibility(service, show) {
-            const el = document.getElementById(service === 'calendar' ? 'dav-cal-container' : 'dav-card-container');
+        function toggleDavVisibility(show) {
+            const el = document.getElementById('dav-cal-container');
             if (el) el.style.display = show ? 'block' : 'none';
         }
 
-        function saveDavSetting(type) {
-            const urlId = type === 'calendar' ? 'caldav-url' : 'carddav-url';
-            const url = document.getElementById(urlId).value.trim();
-            localStorage.setItem('rekindle_' + type + '_url', url);
+        function saveDavSetting() {
+            const url = document.getElementById('caldav-url').value.trim();
+            localStorage.setItem('rekindle_caldav_url', url);
 
             if (currentUser) {
-                const update = {};
-                update[type === 'calendar' ? 'caldav_url' : 'carddav_url'] = url;
-                db.collection('users').doc(currentUser.uid).collection('settings').doc('integrations').set(update, { merge: true });
+                db.collection('users').doc(currentUser.uid).collection('settings').doc('integrations').set({ caldav_url: url }, { merge: true });
                 triggerSettingsSyncSignal();
             }
             showModal("Success", "URL saved.");
@@ -2038,20 +2016,11 @@
                     if (data.google_calendar !== undefined) {
                         localStorage.setItem('rekindle_google_calendar_enabled', data.google_calendar);
                         document.getElementById('toggle-calendar').checked = data.google_calendar;
-                        toggleDavVisibility('calendar', !data.google_calendar);
+                        toggleDavVisibility(!data.google_calendar);
                     }
                     if (data.caldav_url) {
                         localStorage.setItem('rekindle_caldav_url', data.caldav_url);
                         document.getElementById('caldav-url').value = data.caldav_url;
-                    }
-                    if (data.google_contacts !== undefined) {
-                        localStorage.setItem('rekindle_google_contacts_enabled', data.google_contacts);
-                        document.getElementById('toggle-contacts').checked = data.google_contacts;
-                        toggleDavVisibility('contacts', !data.google_contacts);
-                    }
-                    if (data.carddav_url) {
-                        localStorage.setItem('rekindle_carddav_url', data.carddav_url);
-                        document.getElementById('carddav-url').value = data.carddav_url;
                     }
                 }
             });

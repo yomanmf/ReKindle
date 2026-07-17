@@ -1,11 +1,10 @@
-const CACHE_NAME = 'rekindle-cache-v22'; // Remove stale internal-social pages from old caches
+const CACHE_NAME = 'rekindle-cache-v23'; // Remove retired application pages and assets from old caches
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=2',
     './theme.js?v=18',
     './logo.svg',
-    './discord.svg',
     './donate.svg',
     './manifest.json',
     './fonts/OpenDyslexic-Regular.woff2',

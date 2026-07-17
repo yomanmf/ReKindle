@@ -254,14 +254,6 @@ async function transpileHtml(htmlContent, filename = '') {
                 check: (src) => src.includes('epub.min.js'),
                 replace: () => ({ url: "https://cdn.jsdelivr.net/npm/epubjs@0.3.88/dist/epub.js", name: "epub.js" })
             },
-            'osmd': {
-                check: (src) => src.includes('opensheetmusicdisplay'),
-                replace: () => ({ url: "https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@0.8.3/build/opensheetmusicdisplay.min.js", name: "osmd.min.js" })
-            },
-            'tonejs-midi': {
-                check: (src) => src.includes('@tonejs/midi'),
-                replace: () => ({ url: "https://unpkg.com/@tonejs/midi@2.0.28/dist/Midi.js", name: "Midi.js" })
-            },
             'jszip': {
                 check: (src) => src.includes('jszip'),
                 replace: () => ({ url: "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", name: "jszip.min.js" })
@@ -548,16 +540,6 @@ async function transpileHtml(htmlContent, filename = '') {
             finalHtml = finalHtml.replace('</style>', homeCss + '</style>');
         }
 
-        // B. Mindmap: Fix empty document path error (generate ID if missing)
-        if (finalHtml.includes('id="mindmap-canvas"')) {
-            console.log("  [Mindmap] Injecting ID generation fix...");
-            // Inject check inside saveData
-            finalHtml = finalHtml.replace(
-                'function saveData() {',
-                'function saveData() { if((typeof mindmapId === "undefined" || !mindmapId)) mindmapId = Date.now().toString();'
-            );
-        }
-
         // B. Browser: Fix 'history' variable collision (rename to visitHistory)
         if (finalHtml.includes('id="browser-view"')) {
             console.log("  [Browser] Renaming 'history' variable...");
@@ -595,16 +577,6 @@ async function transpileHtml(htmlContent, filename = '') {
             // Browser.html doesn't use history API. Safe.
         }
 
-        // C. Pixel App: Fix Grid Layout (Convert to Flex)
-        if (finalHtml.includes('id="pixel-canvas"')) {
-            console.log("  [Pixel] Injecting Grid -> Flexbox fixes...");
-            const pixelParams = `
-            .gallery-grid { display: flex !important; flex-wrap: wrap !important; justify-content: center !important; gap: 0 !important; }
-            .gallery-item { width: 130px !important; height: 156px !important; margin: 10px !important; aspect-ratio: auto !important; }
-        `;
-            finalHtml = finalHtml.replace('</style>', pixelParams + '</style>');
-        }
-
         // D. Calculator: Fix Button Layout
         if (finalHtml.includes('<title>Calculator</title>')) {
             console.log("  [Calculator] Injecting Flexbox Layout fixes...");
@@ -614,18 +586,6 @@ async function transpileHtml(htmlContent, filename = '') {
             .btn-zero { width: 48% !important; }
         `;
             finalHtml = finalHtml.replace('</style>', calcCss + '</style>');
-        }
-
-        // E. Converter: Fix Button Layout
-        if (finalHtml.includes('<title>Converter</title>')) {
-            console.log("  [Converter] Injecting Flexbox Layout fixes...");
-            const convCss = `
-            .keypad { display: flex !important; flex-wrap: wrap !important; justify-content: space-between !important; margin-top: 20px !important; }
-            .key { width: 23% !important; margin-bottom: 10px !important; height: 50px !important; }
-            /* Target the zero key specifically since it spans 2 cols */
-            div[style*="span 2"] { width: 48% !important; }
-        `;
-            finalHtml = finalHtml.replace('</style>', convCss + '</style>');
         }
 
         // F. 2048: Fix Grid Layout
@@ -964,8 +924,6 @@ async function transpileLegacyHtml(htmlContent, filename = '') {
             'firebase': { check: src => src.includes('firebase') && (src.includes('.js') || src.includes('gstatic')), replace: src => ({ url: `https://www.gstatic.com/firebasejs/8.10.1/${src.split('/').pop().replace('-compat', '')}`, name: src.split('/').pop().replace('-compat', '') }) },
             'marked': { check: src => src.includes('marked.min.js'), replace: () => ({ url: "https://cdnjs.cloudflare.com/ajax/libs/marked/2.1.3/marked.min.js", name: "marked.min.js" }) },
             'epub': { check: (src) => src.includes('epub.min.js'), replace: () => ({ url: "https://cdn.jsdelivr.net/npm/epubjs@0.3.88/dist/epub.js", name: "epub.js" }) },
-            'osmd': { check: src => src.includes('opensheetmusicdisplay'), replace: () => ({ url: "https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@0.8.3/build/opensheetmusicdisplay.min.js", name: "osmd.min.js" }) },
-            'tonejs-midi': { check: src => src.includes('@tonejs/midi'), replace: () => ({ url: "https://unpkg.com/@tonejs/midi@2.0.28/dist/Midi.js", name: "Midi.js" }) },
             'jszip': { check: src => src.includes('jszip'), replace: () => ({ url: "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", name: "jszip.min.js" }) },
             'qrcode': { check: src => src.includes('qrcode'), replace: () => ({ url: "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js", name: "qrcode.min.js" }) },
             'chess': { check: src => src.includes('chess.js'), replace: () => ({ url: "https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js", name: "chess.min.js" }) }
@@ -1142,15 +1100,6 @@ async function transpileLegacyHtml(htmlContent, filename = '') {
             }
         }
 
-        // B. Mindmap: Fix empty document path error (generate ID if missing)
-        if (finalHtml.includes('id="mindmap-canvas"')) {
-            console.log("  [Mindmap] Injecting ID generation fix...");
-            finalHtml = finalHtml.replace(
-                'function saveData() {',
-                'function saveData() { if((typeof mindmapId === "undefined" || !mindmapId)) mindmapId = Date.now().toString();'
-            );
-        }
-
         // B. Browser: Fix 'history' variable collision (rename to visitHistory)
         if (finalHtml.includes('id="browser-view"')) {
             console.log("  [Browser] Renaming 'history' variable...");
@@ -1163,16 +1112,6 @@ async function transpileLegacyHtml(htmlContent, filename = '') {
             finalHtml = finalHtml.replace(/\(history\)/g, '(visitHistory)');
         }
 
-        // C. Pixel App: Fix Grid Layout (Convert to Flex)
-        if (finalHtml.includes('id="pixel-canvas"')) {
-            console.log("  [Pixel] Injecting Grid -> Flexbox fixes...");
-            let pixelParams = `
-            .gallery-grid { display: flex !important; flex-wrap: wrap !important; justify-content: center !important; gap: 0 !important; }
-            .gallery-item { width: 130px !important; height: 156px !important; margin: 10px !important; aspect-ratio: auto !important; }
-        `;
-            finalHtml = finalHtml.replace('</style>', pixelParams + '</style>');
-        }
-
         // D. Calculator: Fix Button Layout
         if (finalHtml.includes('<title>Calculator</title>')) {
             console.log("  [Calculator] Injecting Flexbox Layout fixes...");
@@ -1182,18 +1121,6 @@ async function transpileLegacyHtml(htmlContent, filename = '') {
             .btn-zero { width: 48% !important; }
         `;
             finalHtml = finalHtml.replace('</style>', calcCss + '</style>');
-        }
-
-        // E. Converter: Fix Button Layout
-        if (finalHtml.includes('<title>Converter</title>')) {
-            console.log("  [Converter] Injecting Flexbox Layout fixes...");
-            let convCss = `
-            .keypad { display: flex !important; flex-wrap: wrap !important; justify-content: space-between !important; margin-top: 20px !important; }
-            .key { width: 23% !important; margin-bottom: 10px !important; height: 50px !important; }
-            /* Target the zero key specifically since it spans 2 cols */
-            div[style*="span 2"] { width: 48% !important; }
-        `;
-            finalHtml = finalHtml.replace('</style>', convCss + '</style>');
         }
 
         // F. 2048: Fix Grid Layout

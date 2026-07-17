@@ -6,6 +6,13 @@ var fs = require("node:fs");
 var path = require("node:path");
 
 var root = path.resolve(__dirname, "..");
+var retiredAppIds = [
+    "contacts", "mail", "newspaper", "stocks", "scores", "clocks", "converter", "decide",
+    "dropbox", "mindmap", "pixel", "teleprompter", "journal", "bluesky", "language",
+    "mastodon", "libby", "epub", "standardebooks", "cookbook", "streak", "life", "history",
+    "bible", "books", "watchlist", "pinterest", "rssreader", "substack", "napkin",
+    "sheetmusic", "chords", "suggestions", "discord", "food"
+];
 
 function read(relativePath) {
     return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -47,20 +54,14 @@ test("retired internal-social files and Firebase configuration are absent", func
     });
 });
 
-test("Pixel and Flipbook are primary-project standalone editors", function () {
-    var pixel = read("pixel.html");
+test("Flipbook remains a primary-project standalone editor", function () {
     var flipbook = read("flipbook.html");
 
-    assert.match(pixel, /collection\(['"]pixel_drawings['"]\)/);
     assert.match(flipbook, /collection\(['"]flipnote_animations['"]\)/);
-    assert.match(pixel, /Local-only mode when the Firebase CDN is unavailable/);
     assert.match(flipbook, /Local-only mode when the Firebase CDN is unavailable/);
     assert.doesNotMatch(flipbook, /onclick=['"]downloadGIF\(\)['"][^>]*\bdisabled\b/);
-    [pixel, flipbook].forEach(function (source) {
-        assert.doesNotMatch(source, /rekindle-socials|getSocialToken|socialAuth|firebase-database|firebase-functions|\/social\//i);
-    });
+    assert.doesNotMatch(flipbook, /rekindle-socials|getSocialToken|socialAuth|firebase-database|firebase-functions|\/social\//i);
 
-    assertInlineScriptsParse("pixel.html");
     assertInlineScriptsParse("flipbook.html");
 });
 
@@ -75,11 +76,17 @@ test("runtime configuration exposes no internal-social backend", function () {
     });
 });
 
-test("catalog and locale bundles do not advertise retired applications", function () {
+test("catalog, source pages and locale bundles omit retired applications", function () {
     var catalog = read("icons.js");
     assert.doesNotMatch(catalog, /\b(?:kindlechat|neighbourhood|topics)\b/i);
+    retiredAppIds.forEach(function (id) {
+        assert.doesNotMatch(catalog, new RegExp("id:\\s*['\"]" + id + "['\"]"), id);
+        if (id !== "discord") assert.equal(fs.existsSync(path.join(root, id + ".html")), false, id);
+    });
+    assert.equal(fs.existsSync(path.join(root, "discord.svg")), false);
+    assert.equal(fs.existsSync(path.join(root, "js/reports.js")), false);
 
-    ["index.html", "life.html", "suggestions.html"].forEach(assertInlineScriptsParse);
+    ["index.html", "index_old.html"].forEach(assertInlineScriptsParse);
 
     fs.readdirSync(path.join(root, "locales")).filter(function (name) {
         return /^(?:de|en|es|fr|it|pl|pt|ru|vi|zh)\.json$/.test(name);
@@ -87,15 +94,28 @@ test("catalog and locale bundles do not advertise retired applications", functio
         var locale = JSON.parse(read(path.join("locales", name)));
         Object.keys(locale).forEach(function (key) {
             assert.doesNotMatch(key, /^(?:app\.)?(?:kindlechat|neighbourhood|topics)\./i, name + ": " + key);
+            retiredAppIds.forEach(function (id) {
+                assert.doesNotMatch(key, new RegExp("^app\\." + id + "\\."), name + ": " + key);
+            });
         });
     });
 });
 
-test("release publishes editors and deletes stale social page objects", function () {
+test("dashboard exposes games through one non-customizable folder", function () {
+    ["index.html", "index_old.html"].forEach(function (name) {
+        var source = read(name);
+        assert.match(source, /id:\s*['"]folder_games['"]/);
+        assert.match(source, /virtualFolder:\s*true/);
+        assert.match(source, /i18nKey:\s*['"]nav\.games['"]/);
+        assert.doesNotMatch(source, />All Games</);
+        assert.match(source, /app\.cat !== ['"]games['"] && app\.cat !== ['"]two_player['"] && app\.cat !== ['"]live_game['"]/);
+    });
+});
+
+test("release publishes the remaining editor and deletes retired page objects", function () {
     var release = manifestEntries("yandex/FRONTEND-RELEASE-MANIFEST.txt");
     var deleted = manifestEntries("yandex/FRONTEND-DELETE-MANIFEST.txt");
 
-    assert.ok(release.includes("pixel.html"));
     assert.ok(release.includes("flipbook.html"));
     assert.ok(release.includes("sw.js"));
     ["kindlechat", "neighbourhood", "topics", "moderation"].forEach(function (name) {
@@ -103,4 +123,11 @@ test("release publishes editors and deletes stale social page objects", function
         assert.ok(deleted.includes(name + ".html"));
         assert.equal(release.includes(name + ".html"), false);
     });
+    retiredAppIds.filter(function (id) { return id !== "discord"; }).forEach(function (id) {
+        assert.ok(deleted.includes(id), id);
+        assert.ok(deleted.includes(id + ".html"), id + ".html");
+        assert.equal(release.includes(id + ".html"), false, id);
+    });
+    assert.ok(deleted.includes("discord.svg"));
+    assert.ok(deleted.includes("js/reports.js"));
 });

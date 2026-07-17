@@ -47,20 +47,17 @@ cross-instance cache is required later.
 - Firebase ID-token verification;
 - signed upload/download URLs for the private user-files Object Storage bucket;
 - listing and deleting objects owned by the authenticated user;
-- authenticated AI, OCR, mail, content proxies, Suggestions reports, and billing.
+- authenticated AI, OCR, content proxies, and billing;
 - an authenticated Telegram MTProto client with encrypted per-user sessions and optional MTProxy routing.
 - an authenticated Microsoft To Do client using Microsoft Graph device authorization and encrypted per-user OAuth sessions.
 - a public GET/HEAD content proxy with SSRF protection, IP rate limits and a
-  5 MB response cap, plus the NRL scoreboard route used by local apps.
+  5 MB response cap.
 
 The function requires these secret-backed environment variables:
 
 - `FIREBASE_SERVICE_ACCOUNT_JSON`
 - `S3_ACCESS_KEY_ID`
 - `S3_SECRET_ACCESS_KEY`
-- `PINTEREST_CLIENT_ID`
-- `PINTEREST_CLIENT_SECRET`
-- `TMDB_API_KEY`
 - `STRIPE_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `TELEGRAM_API_ID`
@@ -72,9 +69,7 @@ It also requires the non-secret variables `S3_BUCKET`, `ALLOWED_ORIGINS`,
 `YANDEX_FOLDER_ID`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, and
 `STRIPE_PRICE_LIFETIME`. Microsoft To Do additionally requires the public
 `MICROSOFT_TODO_CLIENT_ID`; `MICROSOFT_TODO_TENANT` is optional and defaults to
-`common`. `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` are
-optional; without them, Suggestions reports are still stored but no Discord embed is
-sent. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
+`common`. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
 use the IAM token supplied to the function through its attached service account.
 Secrets must be supplied from Yandex Lockbox; never paste them into source files
 or ordinary checked-in configuration.
@@ -114,14 +109,10 @@ Reddit `GET`/`HEAD` routes and its public CORS behavior when changing the file;
 the ReKindle function enforces its own stricter origin allowlist. The browser
 client uses `/api/rekindle/*` through the existing `rekindle-api` gateway.
 
-Suggestions reports use `/api/rekindle/reports/submit` and write only to the
-primary Firebase RTDB after validating the stored content owner and canonical
-path. The retired internal social project is not part of the runtime.
-
 The former relative `/api/proxy`, `/api/maps`, `/api/price`, and
-`/api/nrl-scores` Pages Functions have been removed. Frontend pages call
-`/api/rekindle/content/proxy` or `/api/rekindle/content/nrl-scores` through
-`RekindleCloud.apiBase`. Static Object Storage does not execute relative API
+`/api/nrl-scores` Pages Functions have been removed. Frontend pages use the
+allowlisted `/api/rekindle/content/proxy` route through `RekindleCloud.apiBase`
+when a server-side fetch is required. Static Object Storage does not execute relative API
 routes, so never reintroduce those paths.
 
 Run the non-mutating unit suite with `npm test`. The production E2E suite is

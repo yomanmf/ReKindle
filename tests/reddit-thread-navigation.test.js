@@ -11,7 +11,7 @@ var releaseManifest = fs.readFileSync(path.join(__dirname, '..', 'yandex', 'FRON
 test('renders an accessible next-thread button in the Reddit toolbar', function () {
     var nextButtonStyles = redditHtml.match(/\.next-thread-btn\s*\{([^}]*)\}/);
 
-    assert.match(redditHtml, /class="nav-btn"[^>]*id="back-btn"[^>]*data-i18n-title="rss\.btn\.back"[^>]*>&lt;<\/button>/);
+    assert.match(redditHtml, /class="nav-btn"[^>]*id="back-btn"[^>]*data-i18n-title="common\.back"[^>]*>&lt;<\/button>/);
     assert.doesNotMatch(redditHtml, /id="back-btn"[^>]*data-i18n="rss\.btn\.back"/);
     assert.match(redditHtml, /class="nav-btn next-thread-btn"[^>]*id="next-thread-btn"/);
     assert.match(redditHtml, /id="next-thread-btn"[^>]*onclick="ui\.goToNextThread\(\)"/);

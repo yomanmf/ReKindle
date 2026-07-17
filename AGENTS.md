@@ -380,7 +380,7 @@ The project uses **two separate Firebase projects**. You must know which one you
 *   **Config:** `firebase.json`
 *   **Firestore Rules:** `firestore.rules` — user data, leaderboards, app-specific collections.
 *   **Storage Rules:** `storage.rules` — direct Firebase Storage is denied; user files and photos use the quota-aware Yandex backend for every authenticated user.
-*   **RTDB Rules:** `rtdb-rules.json` — private user state, presence, multiplayer, Suggestions and API rate-limit data. There is no Pro gate.
+*   **RTDB Rules:** `rtdb-rules.json` — private user state, presence, multiplayer, and API rate-limit data. There is no Pro gate.
 *   **Cloud Functions:** `firebase-functions/index.js`
 
 The primary RTDB is hosted in Belgium (`europe-west1`). Its canonical URL is
@@ -423,13 +423,13 @@ Without matching rules, writes will be **silently rejected** by security rules. 
 
 **Firestore overlapping-match gotcha:** Security-rule `match` blocks are ORed, not ordered by specificity. A restrictive exact match does not override a broader permissive match. For example, both `match /privateSettings/ai` and `match /privateSettings/{docId}` match the `ai` document; if the wildcard rule allows the owner unconditionally, the intended ReKindle+ check in the exact rule is ineffective. Put the conditional in the wildcard rule (for example, branch on `docId == 'ai'`) or exclude the sensitive document from the broad allow. Audit other exact-plus-wildcard pairs the same way.
 
-**Removing a client paywall does not create backend access control:** CORS is not authentication and can be bypassed by non-browser clients. The Yandex routes for AI, OCR, mail, Pinterest, Substack, Files, Docs, and Photo Frame therefore verify a primary Firebase ID token and enforce server-side per-user rate limits or storage quotas. Files, Docs, and Photo Frame are open to every authenticated user while retaining path ownership, MIME/type validation, 100 MB per-user storage, and 25 MB per-object limits. Direct Firebase Storage is deliberately denied by `storage.rules`; it has no byte-quota mechanism and must not be reopened as a shortcut.
+**Removing a client paywall does not create backend access control:** CORS is not authentication and can be bypassed by non-browser clients. The Yandex routes for AI, OCR, Files, Docs, Photo Frame, Telegram, and Microsoft To Do therefore verify a primary Firebase ID token and enforce server-side per-user rate limits or storage quotas. Files, Docs, and Photo Frame are open to every authenticated user while retaining path ownership, MIME/type validation, 100 MB per-user storage, and 25 MB per-object limits. Direct Firebase Storage is deliberately denied by `storage.rules`; it has no byte-quota mechanism and must not be reopened as a shortcut.
 
 **Yandex-only production architecture:** Browser code must call Yandex Cloud Functions through the `rekindle-api` API Gateway. Cloudflare Worker sources and Wrangler manifests have been removed. Do not restore their endpoints or patch old CORS allowlists. A new server route must be implemented and tested in Yandex before its frontend is published.
 
 **Oracle custom-provider routing:** The old Worker ignored the provider-specific `endpoint` from `chat.html` and always called OpenAI. The Yandex implementation in `yandex/rekindle-backend/index.js` fixes this with an explicit provider endpoint allowlist. Keep model listing and inference on the same validated endpoint policy, and never allow loopback, link-local, or private-network targets.
 
-**Paywall removal state (July 2026):** Dashboard interception and application-level ReKindle+ access checks have been removed. No app registry entry uses `plus: true`. ReKindle+ supporter data may remain for cosmetic profile badges and historical billing records; it must not control app launch, export, feed count, categories, storage, AI, OCR, or mail access. When adding an app, do not recreate `pro-gate.js` or introduce an `app.plus` access branch.
+**Paywall removal state (July 2026):** Dashboard interception and application-level ReKindle+ access checks have been removed. No app registry entry uses `plus: true`. ReKindle+ supporter data may remain for cosmetic profile badges and historical billing records; it must not control app launch, export, categories, storage, AI, or OCR access. When adding an app, do not recreate `pro-gate.js` or introduce an `app.plus` access branch.
 
 **Supporter badges must not trust profile fields or local storage:** Cosmetic supporter styling must come from the server-maintained `config/supporters` document (or equivalent trusted billing record). Never read a self-writable profile field such as `kindlePlus`, and never infer supporter status from `localStorage`.
 
@@ -440,26 +440,22 @@ tokens, public profile cards, and their moderation/translation/reporting routes
 were removed. Do not recreate their pages, Firebase configuration, rules,
 callables, Gateway routes, locale keys, or admin scripts.
 
-Pixel and Flipbook remain standalone creative tools. Pixel stores signed-in
-cloud drawings in the primary Firestore `pixel_drawings` collection; Flipbook
-uses primary Firestore `flipnote_animations`. Neither tool posts into a feed or
-depends on RTDB. The dashboard and multiplayer games use deterministic
-UID-derived avatar seeds instead of public profile cards. Life stores birthdays
-owner-only at primary RTDB `users_private/{uid}/life/birthday`.
+Flipbook remains a standalone creative tool and uses the primary Firestore
+`flipnote_animations` collection. It does not post into a feed or depend on
+RTDB. The dashboard and multiplayer games use deterministic UID-derived avatar
+seeds instead of public profile cards.
 
-The frontend release manifest includes `pixel.html` and `flipbook.html`. The
-delete manifest includes both HTML and extensionless object keys for the four
+The frontend release manifest includes `flipbook.html`. The delete manifest
+includes both HTML and extensionless object keys for the four
 retired social pages so stale production URLs are removed after rollout.
 Before publishing the primary RTDB rules, run
 `admin/retire-public-profiles.js` without arguments to audit the migration and
 then with `--force`: it preserves valid Life birthdays under the private path
 before removing the obsolete `users_public` and `user_cards` trees.
 
-**Removing a paywall includes its locale contract:** When a gated component is deleted, remove its unused translation keys too. Stale keys such as `airtype.paywall.*`, `mail.paywall.*`, `mail.pro.*`, `quicknotes.paywall.*`, `quicktodo.pro.*`, and `paywall.popup.*` previously continued to advertise exclusive apps and could be resurrected by cached or legacy markup. The remaining `pay.desc` and `support.desc` text must explicitly state that every app is available without a subscription. `news.error.paywall` is unrelated: it describes an external publisher's article paywall.
+**Removing a paywall includes its locale contract:** When a gated component is deleted, remove its unused translation keys too. Stale keys such as `airtype.paywall.*`, `quicknotes.paywall.*`, `quicktodo.pro.*`, and `paywall.popup.*` previously continued to advertise exclusive apps and could be resurrected by cached or legacy markup. The remaining `pay.desc` and `support.desc` text must explicitly state that every app is available without a subscription.
 
 **OCR MIME must match the canvas encoding:** Quick ToDo and Quick Notes encode cropped handwriting with `canvas.toDataURL('image/jpeg', ...)`. Their Yandex OCR request must send `mimeType: 'JPEG'`; hard-coding `PNG` in the backend produces invalid or unreliable recognition. The backend accepts only `PNG` and `JPEG` and forwards the validated value to Yandex Vision OCR.
-
-**Mail proxy SSRF rule:** IMAP and SMTP hosts are user-controlled input. The Yandex mail route must validate host syntax, restrict ports, resolve DNS, reject loopback/link-local/private IPv4 and IPv6 destinations, cap credential/message sizes, and apply connection timeouts before opening a socket. Authentication and per-user rate limits are still required. Never log mailbox passwords or access tokens.
 
 **Yandex service identity:** Yandex Foundation Models, Vision OCR, Object Storage, and other managed APIs should use the Cloud Function service-account token exposed as `context.token.access_token`. Keep the function's service-account roles minimal and pass `x-data-logging-enabled: false` for AI/OCR requests containing user content.
 
@@ -473,7 +469,7 @@ before removing the obsolete `users_public` and `user_cards` trees.
 
 **Service worker belongs in every static release:** `sw.js` was accidentally absent from `yandex/FRONTEND-RELEASE-MANIFEST.txt` during the 15 July 2026 social-removal rollout. The other 117 objects deployed correctly, but production kept `rekindle-cache-v21`, so existing browsers could continue serving the retired KindleChat catalog from cache. Keep `sw.js` in the manifest, increment `CACHE_NAME` whenever retiring cached pages, upload it with `Cache-Control: no-cache, max-age=0`, and verify both the direct bucket object and public website serve the new cache version.
 
-**Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Pinterest, Substack, Akinator, Chords, Story, TMDB, Suggestions reports, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
+**Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, Telegram, Microsoft To Do, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
 **Telegram is a server-side MTProto client:** `telegram.html` talks only to the
 authenticated `/api/rekindle/telegram/{action}` routes. The Yandex backend uses
@@ -563,8 +559,6 @@ current value for placeholder replacement. Never treat an older file under
 both `window.location.search` and `window.location.hash`; using only the cleaned
 pathname silently drops parameters such as `?lang=ru`, OAuth state, or
 `telegram.html?demo=1` before page scripts read them.
-
-**Suggestions reports are primary-only:** `suggestions.html` stores content in the primary RTDB. Its reports use `/api/rekindle/reports/submit`, authenticate against `rekindle-fork`, verify the stored content owner and canonical `suggestions/...` path, and store server-maintained records under `suggestion_reports`.
 
 **Reddit is not covered by merely deleting its Pages Function:** `reddit.html` needs browser-like upstream headers and proxies Reddit-hosted images as well as RSS/JSON. It continues to use the dedicated Yandex Function behind `/api/reddit`, but derives the Gateway origin from `RekindleCloud.gatewayBase` instead of embedding another absolute URL. The handler validates a fixed Reddit/Imgur hostname allowlist, revalidates every redirect against the same allowlist, uses a bounded warm cache with stale fallback, and caps responses at 5 MB. Do not silently replace it with an unrestricted generic proxy.
 
@@ -720,9 +714,8 @@ enforces the stricter ReKindle-origin allowlist.
 
 Do not reuse the Firebase browser API key for unrelated Google APIs. The fork's
 key is intentionally restricted to Firebase APIs and the production HTTP
-referrer. For example, `books.html` calls the public Google Books endpoint
-without a key; a dedicated Books API key or server-side proxy is required if
-higher quotas become necessary.
+referrer. Use a dedicated credential or a server-side proxy when an application
+needs a non-Firebase Google API.
 
 **Production Auth E2E gotcha:** the restricted Firebase web API key rejects
 server-side Identity Toolkit calls that do not contain the allowed website
@@ -742,21 +735,8 @@ External APIs such as Reddit aggressively rate-limit shared cloud egress IPs. Ya
 
 Use `yandex/reddit-function/index.js` and the public proxy in `yandex/rekindle-backend/index.js` as production patterns.
 
-## Suggestions Reporting
-
-`js/reports.js` is Suggestions-only. It accepts only `suggestion` and `suggestion_comment`, submits to `/api/rekindle/reports/submit`, and stores server-written records under primary RTDB `suggestion_reports`. Suggestion comments are removed on the first report; top-level suggestions require reports from two different users. Optional Discord notifications use `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID`.
-
 ### Guarding Optional Firebase / CDN Dependencies
 If an app can function without Firebase (e.g., local-only games), wrap Firebase initialization and all `auth`/`db` usage in feature checks. A blocked or failed CDN script must not prevent the rest of the page script from running. Use `typeof firebase !== 'undefined' && typeof firebase.auth === 'function' && typeof firebase.firestore === 'function'` before initializing, and guard every `db.collection(...)` / `auth.onAuthStateChanged(...)` call. See `nonograms.html` for the pattern used in this codebase.
-
-## 🏉 NRL Scores (scores.html)
-
-ESPN's JSON scoreboard API (`site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard`) supports NFL/NBA/MLB/NHL/soccer/AFL but **does not expose NRL**. NRL is served by `/api/rekindle/content/nrl-scores`; parsing lives in `yandex/rekindle-backend/nrl.js` and `scores.html` calls it through `RekindleCloud.apiBase`.
-
-*   The scraper is regex-based and relies on ESPN's current server-rendered HTML structure. If ESPN changes their markup, the parser will return empty events.
-*   Only games where both teams are in the known NRL team list are returned (filters out State of Origin / Tests).
-*   The response uses a two-minute warm-instance cache plus a two-minute client cache header.
-*   In `scores.html`, NRL is added to `LEAGUES` with `source: "nrl-scores"`, and `fetchFromAPI()` routes it to the Yandex endpoint.
 
 ## 🎮 Single-Player Games Catalog
 
@@ -767,6 +747,31 @@ The dashboard (`index.html`) reads the app registry from `icons.js`. Games are g
 | `games` | Single-player / solitaire games |
 | `two_player` | Local pass-and-play multiplayer |
 | `live_game` | Firebase real-time online multiplayer |
+
+**Dashboard Games folder:** On the `all` view, every game category must be
+represented by one virtual `folder_games` tile. Do not render favorite or
+featured games separately on the home screen. Build the folder contents from
+the full game registry so a favorite game is not accidentally omitted. Keep
+the dedicated Games and Multiplayer category views unchanged.
+
+Virtual folders are not application records and must use `virtualFolder: true`
+so they cannot be favorited or hidden. Grouped game-mode folders must also carry
+the primary app i18n key; otherwise `app.folder_*.name` is missing. When the
+Games folder is opened during dashboard edit mode, keep customization controls
+on the real child games so previously hidden games can be restored.
+
+## Application retirement checklist
+
+Deleting an app means removing its registry entry and source page plus every
+reachable contract: dashboard-only modal/assets, settings controls, locale and
+privacy keys, Firebase rules, Gateway paths, backend handlers/tests/dependencies,
+release-manifest entries, and documentation. Add both the `.html` object and its
+extensionless alias to `yandex/FRONTEND-DELETE-MANIFEST.txt`. Remove any service
+worker precache entry and bump `CACHE_NAME` so installed browsers cannot keep
+serving the retired page. Search the whole repository for the retired IDs and
+provider names after the deletion; shared translation keys discovered in active
+pages must be moved to a neutral namespace before the app-specific namespace is
+removed.
 
 ### Single-player vs multiplayer split
 

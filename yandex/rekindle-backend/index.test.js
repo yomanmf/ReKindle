@@ -3,7 +3,6 @@
 var test = require("node:test");
 var assert = require("node:assert/strict");
 var backend = require("./index.js");
-var nrlParser = require("./nrl.js");
 var telegramService = require("./telegram-service.js");
 var teleproto = require("teleproto");
 
@@ -55,7 +54,6 @@ test("preflight includes application authentication headers", async function () 
     assert.equal(result.statusCode, 204);
     assert.match(result.headers["Access-Control-Allow-Headers"], /X-Firebase-Token/);
     assert.match(result.headers["Access-Control-Allow-Headers"], /Authorization/);
-    assert.match(result.headers["Access-Control-Allow-Headers"], /X-Substack-SID/);
     assert.match(result.headers["Access-Control-Allow-Headers"], /X-Readwise-Token/);
 });
 
@@ -80,18 +78,6 @@ test("public content proxy validates its target before backend credentials", asy
     var localResult = await backend.handler(local);
     assert.equal(localResult.statusCode, 400);
     assert.equal(JSON.parse(localResult.body).code, "invalid-target");
-});
-
-test("NRL parser returns only known NRL teams", function () {
-    var html = '<header class="Card__Header" aria-label="Monday, July 13">' +
-        '<div class="ScoreboardScoreCell ScoreboardScoreCell--post">' +
-        '<li class="ScoreboardScoreCell__Item ScoreboardScoreCell__Item--away"><div class="ScoreCell__TeamName ScoreCell__TeamName--shortDisplayName">Broncos</div><div class="ScoreCell__Score ScoreCell_Score--scoreboard">18</div></li>' +
-        '<li class="ScoreboardScoreCell__Item ScoreboardScoreCell__Item--home"><div class="ScoreCell__TeamName ScoreCell__TeamName--shortDisplayName">Raiders</div><div class="ScoreCell__Score ScoreCell_Score--scoreboard">12</div></li>' +
-        '</div>';
-    var events = nrlParser.parseNRLScoreboard(html);
-    assert.equal(events.length, 1);
-    assert.equal(events[0].status.type.shortDetail, "Final");
-    assert.equal(events[0].competitions[0].competitors[0].team.shortDisplayName, "Broncos");
 });
 
 test("public content proxy returns bounded binary responses", async function () {
@@ -136,33 +122,12 @@ test("storage requires a Firebase ID token", async function () {
     assert.equal(JSON.parse(result.body).code, "unauthenticated");
 });
 
-test("Pinterest integration requires a Firebase ID token", async function () {
-    var result = await backend.handler(event(
-        "POST",
-        "/api/rekindle/integrations/pinterest/oauth",
-        "https://rekindle.website.yandexcloud.net",
-        { code: "test", redirect_uri: "https://rekindle.website.yandexcloud.net/pinterest.html" }
-    ));
-    assert.equal(result.statusCode, 401);
-    assert.equal(JSON.parse(result.body).code, "unauthenticated");
-});
-
 test("Microsoft To Do integration requires a Firebase ID token", async function () {
     var result = await backend.handler(event(
         "POST",
         "/api/rekindle/microsoft-todo/status",
         "https://rekindle.website.yandexcloud.net",
         {}
-    ));
-    assert.equal(result.statusCode, 401);
-    assert.equal(JSON.parse(result.body).code, "unauthenticated");
-});
-
-test("Substack integration requires a Firebase ID token", async function () {
-    var result = await backend.handler(event(
-        "GET",
-        "/api/rekindle/integrations/substack/api/subscriptions",
-        "https://rekindle.website.yandexcloud.net"
     ));
     assert.equal(result.statusCode, 401);
     assert.equal(JSON.parse(result.body).code, "unauthenticated");
@@ -304,17 +269,6 @@ test("OCR requires a Firebase ID token", async function () {
     assert.equal(JSON.parse(result.body).code, "unauthenticated");
 });
 
-test("mail operations require a Firebase ID token", async function () {
-    var result = await backend.handler(event(
-        "POST",
-        "/api/rekindle/mail/folders",
-        "https://rekindle.website.yandexcloud.net",
-        { imap: {} }
-    ));
-    assert.equal(result.statusCode, 401);
-    assert.equal(JSON.parse(result.body).code, "unauthenticated");
-});
-
 test("Telegram operations require a Firebase ID token", async function () {
     var result = await backend.handler(event(
         "POST",
@@ -399,24 +353,20 @@ test("retired social endpoints are not routed", async function () {
     assert.equal(JSON.parse(result.body).error, "Endpoint not found.");
 });
 
-test("TMDB proxy requires a Firebase ID token", async function () {
-    var result = await backend.handler(event(
-        "GET",
-        "/api/rekindle/content/tmdb/search/multi",
-        "https://rekindle.website.yandexcloud.net"
-    ));
-    assert.equal(result.statusCode, 401);
-    assert.equal(JSON.parse(result.body).code, "unauthenticated");
-});
-
-test("chord proxy requires a Firebase ID token", async function () {
-    var result = await backend.handler(event(
-        "GET",
-        "/api/rekindle/content/chords",
-        "https://rekindle.website.yandexcloud.net"
-    ));
-    assert.equal(result.statusCode, 401);
-    assert.equal(JSON.parse(result.body).code, "unauthenticated");
+[
+    ["Pinterest", "POST", "/api/rekindle/integrations/pinterest/oauth"],
+    ["Substack", "GET", "/api/rekindle/integrations/substack/api/subscriptions"],
+    ["TMDB", "GET", "/api/rekindle/content/tmdb/search/multi"],
+    ["chords", "GET", "/api/rekindle/content/chords"],
+    ["NRL scores", "GET", "/api/rekindle/content/nrl-scores"],
+    ["mail", "POST", "/api/rekindle/mail/folders"],
+    ["Suggestions reports", "POST", "/api/rekindle/reports/submit"]
+].forEach(function (item) {
+    test("retired " + item[0] + " endpoint is not routed", async function () {
+        var result = await backend.handler(event(item[1], item[2], "https://rekindle.website.yandexcloud.net", {}));
+        assert.equal(result.statusCode, 404);
+        assert.equal(JSON.parse(result.body).error, "Endpoint not found.");
+    });
 });
 
 test("Readwise proxy requires a Firebase ID token", async function () {
@@ -432,60 +382,11 @@ test("Readwise proxy requires a Firebase ID token", async function () {
 [
     ["reader", "GET", "/api/rekindle/content/reader"],
     ["Akinator", "POST", "/api/rekindle/games/akinator/start"],
-    ["supporter checkout", "POST", "/api/rekindle/billing/checkout"],
-    ["primary suggestion reports", "POST", "/api/rekindle/reports/submit"]
+    ["supporter checkout", "POST", "/api/rekindle/billing/checkout"]
 ].forEach(function (item) {
     test(item[0] + " requires a Firebase ID token", async function () {
         var result = await backend.handler(event(item[1], item[2], "https://rekindle.website.yandexcloud.net", {}));
         assert.equal(result.statusCode, 401);
         assert.equal(JSON.parse(result.body).code, "unauthenticated");
     });
-});
-
-test("primary suggestion report payloads are restricted to canonical primary paths", function () {
-    var validate = backend.testHooks.validatePrimarySuggestionReport;
-    assert.deepEqual(validate({
-        contentType: "suggestion",
-        contentId: "suggestion_1",
-        contentPath: "suggestions/suggestion_1",
-        reportedUserId: "author_1",
-        reason: "spam",
-        comment: "Repeated content"
-    }), {
-        contentType: "suggestion",
-        contentId: "suggestion_1",
-        contentPath: "suggestions/suggestion_1",
-        reportedUserId: "author_1",
-        reason: "spam",
-        comment: "Repeated content"
-    });
-    assert.throws(function () {
-        validate({
-            contentType: "suggestion_comment",
-            contentId: "comment_1",
-            contentPath: "suggestions/other/comments/comment_2",
-            reportedUserId: "author_1",
-            reason: "spam"
-        });
-    }, /Invalid suggestion comment path/);
-    assert.throws(function () {
-        validate({
-            contentType: "topic",
-            contentId: "topic_1",
-            contentPath: "topics/topic_1",
-            reportedUserId: "author_1",
-            reason: "spam"
-        });
-    }, /Invalid primary report type/);
-});
-
-test("primary suggestion report snapshots are derived from stored content", function () {
-    assert.equal(
-        backend.testHooks.primarySuggestionReportSnapshot("suggestion", { title: "Title", description: "Description" }),
-        "Title - Description"
-    );
-    assert.equal(
-        backend.testHooks.primarySuggestionReportSnapshot("suggestion_comment", { text: "Stored comment" }),
-        "Stored comment"
-    );
 });
