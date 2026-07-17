@@ -8,6 +8,21 @@ release archives against `RELEASE-SHA256.txt` before upload. Treat
 object counts. Flipbook is a standalone primary-project application; retired
 application pages and aliases are delete-only.
 
+## Production rollout status (18 July 2026, application retirement)
+
+- [x] Backend version `d4e0pfnoifho9c25563m` is active with `$latest`; the
+  existing 512 MB runtime, service account, environment, and Lockbox references
+  were preserved. `/api/rekindle/health` returns HTTP 200.
+- [x] The production API Gateway was updated and the retired Pinterest,
+  Substack, TMDB, Chords, NRL scores, Mail, and Suggestions report routes return
+  HTTP 404.
+- [x] All 84 frontend release objects were uploaded individually and downloaded
+  back for byte-for-byte comparison. All 80 delete-manifest keys were removed
+  and verified absent across the complete 4,902-object bucket listing.
+- [x] The public website serves the Games folder, omits retired catalog IDs,
+  serves `rekindle-cache-v23`, and returns HTTP 404 for retired page and alias
+  URLs.
+
 ## Production rollout status (17 July 2026, Microsoft To Do)
 
 - [ ] Create a Microsoft Entra public-client app registration that supports
@@ -26,7 +41,7 @@ application pages and aliases are delete-only.
   `f419f69b-7166-4e3e-b6be-9cecd44b0165`; its normalized source matches the
   checked-in rules and denies browser access to `telegram_sessions`.
 - [x] Telegram Gateway route is active. Backend version
-  `d4epdt7g8p5tumctlbbi` includes the server-side MTProto implementation, the
+  `d4e0pfnoifho9c25563m` includes the server-side MTProto implementation, the
   Lockbox-backed session encryption key, and an explicit Firestore dependency.
   `/api/rekindle/health` returns HTTP 200 and an authenticated temporary-user
   request to `/api/rekindle/telegram/status` returned HTTP 200 with stage

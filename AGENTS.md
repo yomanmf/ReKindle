@@ -18,6 +18,36 @@ Future agents (including yourself in a new session) will not have access to your
 * After pushing, verify that `origin/main` points to the new commit and that the working tree contains no uncommitted task changes.
 * If authentication, branch protection, a merge conflict, or another external restriction prevents the push, report that blocker explicitly; a local or feature-branch commit does not count as delivery.
 
+## Mandatory Yandex Production Delivery Rule
+
+**A task that changes production-facing frontend files, Yandex Functions, API
+Gateway routes, Firebase security rules, or release/delete manifests is not
+finished until the verified change is deployed to the active production
+services. Do this automatically after the GitHub delivery without waiting for a
+separate reminder.** Documentation-only and test-only changes do not require a
+production deployment.
+
+* Publish changed backend functions and API Gateway specifications before the
+  frontend that depends on them.
+* Build the frontend through `yandex/prepare-frontend-release.js`; never upload
+  checked-in pages containing the Firebase API-key placeholder.
+* Upload every release-manifest object and root HTML alias individually or
+  verify each one after any bulk copy. Compare production objects byte-for-byte
+  with the staged release because recursive Yandex CLI copies are unreliable.
+* Apply `yandex/FRONTEND-DELETE-MANIFEST.txt` only after replacement objects are
+  live, then verify every listed key is absent.
+* Run production HTTP smoke tests for the changed pages and API routes. Confirm
+  `sw.js` is served with the intended cache version and no-cache headers when a
+  release retires cached pages.
+* If authentication, IAM, a missing production credential, or an external
+  provider prevents deployment, report the exact blocker. A GitHub push alone
+  does not count as delivery for a production-facing task.
+
+**macOS/zsh deployment-shell gotcha:** `path` is a special zsh array tied to
+`PATH`. A loop such as `for path in ...` overwrites the executable search path
+after its first iteration, so later `curl`, `jq`, and `yc` calls fail with
+`command not found`. Use a neutral variable such as `route` or `object_key`.
+
 ## 🚫 Restrictions (Target: Chromium 75)
 
 ### 1. No Flexbox Gap (`gap`)
