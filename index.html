@@ -268,48 +268,6 @@
             box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 1);
         }
 
-        #nav-two_player {
-            position: relative;
-        }
-
-        #nav-games:not(.active),
-        #nav-two_player:not(.active) {
-            background: black;
-            color: white;
-        }
-
-        .tab-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 18px;
-            height: 18px;
-            background: black;
-            color: white;
-            border-radius: 50%;
-            font-size: 0.7rem;
-            font-weight: bold;
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            vertical-align: middle;
-            border: 1px solid white;
-            box-shadow: 1px 1px 0 black;
-            z-index: 10;
-        }
-
-        #nav-two_player.active .tab-badge {
-            background: black;
-            color: white;
-            border-color: black;
-        }
-
-        #nav-two_player:not(.active) .tab-badge {
-            background: white;
-            color: black;
-            border-color: black;
-        }
-
         .lobby-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -728,6 +686,28 @@
             width: 100%;
         }
 
+        .home-widgets {
+            width: 100%;
+            margin-top: 28px;
+            padding-bottom: 20px;
+        }
+
+        .home-widgets .dashboard-widget {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .home-widgets .dashboard-widget + .dashboard-widget {
+            margin-top: 20px;
+        }
+
+        .edit-toolbar {
+            justify-content: flex-end;
+            border-bottom: 0;
+            padding-bottom: 0;
+            margin-bottom: 10px;
+        }
+
         .dashboard-widget {
             border: 2px solid black;
             background: white;
@@ -792,6 +772,49 @@
         .dashboard-weather-highlow {
             font-size: 0.8rem;
             margin-top: 4px;
+        }
+
+        .dashboard-weather-week-title {
+            border-top: 2px solid black;
+            padding-top: 10px;
+            margin-top: 5px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .dashboard-weather-week {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(64px, 1fr));
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .dashboard-weather-day {
+            border: 1px solid black;
+            min-width: 0;
+            padding: 7px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .dashboard-weather-day-icon {
+            width: 28px;
+            height: 28px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-weather-day-name,
+        .dashboard-weather-day-temp {
+            font-size: 0.75rem;
+            font-weight: bold;
+            white-space: nowrap;
         }
 
         .dashboard-calendar-widget {
@@ -1125,69 +1148,11 @@
                     viewBox="0 0 24 24" style="vertical-align: middle; margin-top: -2px;">
                     <path d="M12 3l10 9h-3v9h-14v-9h-3z" fill="black" />
                 </svg></div>
-            <div class="folder-tab" id="nav-dashboard" onclick="filterApps('dashboard', this)"><svg width="16" height="16"
-                    viewBox="0 0 24 24" style="vertical-align: middle; margin-top: -2px;">
-                    <path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z" fill="black" />
-                </svg></div>
-            <div class="folder-tab" id="nav-essentials" onclick="filterApps('essentials', this)"
-                data-i18n="home.nav.essentials" style="margin-left: 20px;">Essentials</div>
-            <div class="folder-tab" id="nav-tools" onclick="filterApps('tools', this)" data-i18n="home.nav.tools">Tools
-            </div>
-            <div class="folder-tab" id="nav-lifestyle" onclick="filterApps('lifestyle', this)"
-                data-i18n="home.nav.lifestyle">Lifestyle</div>
-            <div class="folder-tab" id="nav-games" onclick="filterApps('games', this)" data-i18n="home.nav.games"
-                style="margin-left: 20px;">Games</div>
-            <div class="folder-tab" id="nav-two_player" onclick="filterApps('two_player', this)">
-                <span data-i18n="home.nav.two_player">Multiplayer Games</span>
-                <span id="live-games-count" class="tab-badge" style="display:none;">0</span>
-            </div>
         </div>
         <div class="dashboard">
             <div class="dashboard-content">
 
                 <div class="app-view">
-                    <div id="dashboard-section" style="display:none; padding-bottom: 20px;">
-                        <div class="dashboard-main-grid">
-                            <div class="dashboard-widget">
-                                <div class="dashboard-widget-title"><span data-i18n="dashboard.localtime">Local Time</span></div>
-                                <div class="dashboard-time-display" id="db-time-val">--:--</div>
-                                <div class="dashboard-date-display" id="db-date-val">--</div>
-                                <div id="db-world-clocks" class="db-world-clocks"></div>
-                            </div>
-                            <div class="dashboard-widget">
-                                <div class="dashboard-widget-title">
-                                    <span data-i18n="app.weather.name">Weather</span>
-                                    <span id="db-weather-loc" style="font-weight:normal; font-size:0.8em;"></span>
-                                </div>
-                                <div class="dashboard-weather-display">
-                                    <div id="db-weather-icon" style="width: 48px; height: 48px; margin-right: 15px; display: none;"></div>
-                                    <div class="dashboard-weather-temp" id="db-weather-temp">--°</div>
-                                    <div class="dashboard-weather-details">
-                                        <div class="dashboard-weather-desc" id="db-weather-desc" data-i18n="weather.status.loading">Loading...</div>
-                                        <div class="dashboard-weather-highlow" id="db-weather-highlow"></div>
-                                    </div>
-                                </div>
-                                <div id="db-weather-hourly" class="dash-header-row" style="display: flex; overflow-x: auto; margin-top: 10px; padding-top: 10px; border-top: 1px dotted black; font-size: 0.8rem; align-items: center; min-height: 40px; display: none;"></div>
-                            </div>
-                            <div class="dashboard-widget dashboard-calendar-widget">
-                                <div class="dashboard-widget-title">
-                                    <span id="db-calendar-title">
-                                        <span style="cursor:pointer; padding: 0 5px;" onclick="changeDashboardCalendar(-1)">&lt;</span>
-                                        <span id="db-calendar-month-text">Calendar</span>
-                                        <span style="cursor:pointer; padding: 0 5px;" onclick="changeDashboardCalendar(1)">&gt;</span>
-                                    </span>
-                                    <span id="db-agenda-title" style="font-weight:normal; font-size:0.8em;" data-i18n="dashboard.agenda.today">Today Events</span>
-                                </div>
-                                <div class="dashboard-calendar-grid" id="db-calendar-grid">
-                                    <!-- Rendered dynamically -->
-                                </div>
-                                <div class="dashboard-agenda-list" id="db-agenda-list">
-                                    <div style="text-align:center; font-style:italic; font-size:0.9rem;" data-i18n="weather.status.loading">Loading...</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div id="featured-section" class="featured-box-container" style="display:none;">
                         <div class="grid-container" id="featured-grid"></div>
                     </div>
@@ -1206,8 +1171,7 @@
                         <div id="live-games-grid" style="display:flex; flex-direction:column;"></div>
                     </div>
 
-                    <div class="view-header" id="main-view-header">
-                        <span id="category-title" data-i18n="home.header.all">All Applications</span>
+                    <div class="view-header edit-toolbar" id="main-view-header">
                         <div style="display:flex; align-items:center;">
                             <button class="sys-btn" id="featured-toggle-btn" onclick="toggleFeaturedSection()"
                                 style="box-shadow: 2px 2px 0 black; display:none; margin-right:10px; font-size:0.8rem; margin-top:-2px;"
@@ -1222,6 +1186,47 @@
                     </div>
 
                     <div class="grid-container" id="app-grid"></div>
+
+                    <div class="home-widgets" id="home-widgets">
+                        <div class="dashboard-widget dashboard-weather-widget">
+                            <div class="dashboard-widget-title">
+                                <span><span data-i18n="app.weather.name">Weather</span> · <span
+                                        data-i18n="weather.day.today">Today</span></span>
+                                <span id="db-weather-loc" style="font-weight:normal; font-size:0.8em;"></span>
+                            </div>
+                            <div class="dashboard-weather-display">
+                                <div id="db-weather-icon"
+                                    style="width: 48px; height: 48px; margin-right: 15px; display: none;"></div>
+                                <div class="dashboard-weather-temp" id="db-weather-temp">--°</div>
+                                <div class="dashboard-weather-details">
+                                    <div class="dashboard-weather-desc" id="db-weather-desc"
+                                        data-i18n="weather.status.loading">Loading...</div>
+                                    <div class="dashboard-weather-highlow" id="db-weather-highlow"></div>
+                                </div>
+                            </div>
+                            <div class="dashboard-weather-week-title" data-i18n="dashboard.weather.week">7-day forecast</div>
+                            <div id="db-weather-week" class="dashboard-weather-week"></div>
+                        </div>
+
+                        <div class="dashboard-widget dashboard-calendar-widget">
+                            <div class="dashboard-widget-title">
+                                <span id="db-calendar-title">
+                                    <span style="cursor:pointer; padding: 0 5px;"
+                                        onclick="changeDashboardCalendar(-1)">&lt;</span>
+                                    <span id="db-calendar-month-text">Calendar</span>
+                                    <span style="cursor:pointer; padding: 0 5px;"
+                                        onclick="changeDashboardCalendar(1)">&gt;</span>
+                                </span>
+                                <span id="db-agenda-title" style="font-weight:normal; font-size:0.8em;"
+                                    data-i18n="dashboard.agenda.today">Today Events</span>
+                            </div>
+                            <div class="dashboard-calendar-grid" id="db-calendar-grid"></div>
+                            <div class="dashboard-agenda-list" id="db-agenda-list">
+                                <div style="text-align:center; font-style:italic; font-size:0.9rem;"
+                                    data-i18n="weather.status.loading">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1446,6 +1451,7 @@
                         }
 
                         function attachBadgeListener() {
+                            if (!document.getElementById('live-games-count')) return;
                             if (badgeListener) return;
                             // Server-filter to only waiting matches
                             badgeListenerRef = rtdb.ref('matchmaking');
@@ -1628,18 +1634,6 @@
 
         function updateNavVisibility() {
             gamesDisabled = areGamesDisabled();
-            const gameNav = document.getElementById('nav-games');
-            const twoPlayerNav = document.getElementById('nav-two_player');
-            if (gamesDisabled) {
-                gameNav.style.display = 'none';
-                twoPlayerNav.style.display = 'none';
-                if (currentFilter === 'games' || currentFilter === 'two_player') {
-                    filterApps('all', document.getElementById('nav-all'));
-                }
-            } else {
-                gameNav.style.display = 'block';
-                twoPlayerNav.style.display = 'block';
-            }
         }
 
         function renderAboutContent() {
@@ -1947,39 +1941,26 @@
         function filterApps(category, btnElement) {
             updateNavVisibility();
             if (isEditMode) toggleEditMode();
-            if (gamesDisabled && (category === 'games' || category === 'two_player')) { category = 'all'; btnElement = document.getElementById('nav-all'); }
-            currentFilter = category;
+            category = 'all';
+            currentFilter = 'all';
             document.querySelectorAll('.folder-tab').forEach(el => el.classList.remove('active'));
             if (btnElement) btnElement.classList.add('active');
             const editBtn = document.getElementById('edit-done-btn');
-            if (category === 'all') { editBtn.style.display = 'block'; editBtn.innerText = isEditMode ? "Done" : "Edit"; }
-            else editBtn.style.display = 'none';
-
-            if (category === 'all') renderFeaturedSection();
-            else { document.getElementById('featured-section').style.display = 'none'; document.getElementById('favorites-section').style.display = 'none'; }
-
-            document.getElementById('dashboard-section').style.display = category === 'dashboard' ? 'block' : 'none';
-            if (category === 'dashboard' && typeof loadDashboard === 'function') loadDashboard();
-            const mvh = document.getElementById('main-view-header');
-            if (mvh) mvh.style.display = category === 'dashboard' ? 'none' : 'flex';
-            document.getElementById('app-grid').style.display = category === 'dashboard' ? 'none' : 'grid';
+            if (editBtn) {
+                editBtn.style.display = 'block';
+                editBtn.innerText = isEditMode ? "Done" : "Edit";
+            }
+            renderFeaturedSection();
 
             const liveGamesSection = document.getElementById('live-games-section');
             if (liveGamesSection) {
-                if (category === 'two_player') {
-                    liveGamesSection.style.display = 'block';
-                    // Detach badge listener — loadLiveGames has its own matchmaking listener
-                    if (window._badgeDetach) window._badgeDetach();
-                    loadLiveGames();
-                } else {
-                    liveGamesSection.style.display = 'none';
-                    if (window.liveGamesUnsubscribe) { window.liveGamesUnsubscribe(); window.liveGamesUnsubscribe = null; }
-                    // Reattach badge listener now that Live Games tab is closed
-                    if (window._badgeAttach) window._badgeAttach();
-                }
+                liveGamesSection.style.display = 'none';
+                if (window.liveGamesUnsubscribe) { window.liveGamesUnsubscribe(); window.liveGamesUnsubscribe = null; }
+                if (window._badgeAttach) window._badgeAttach();
             }
 
-            renderAppGrid(category);
+            renderAppGrid('all');
+            if (typeof loadDashboard === 'function') loadDashboard();
         }
 
         function loadLiveGames() {
@@ -2179,36 +2160,27 @@
         function renderAppGrid(category) {
             const grid = document.getElementById('app-grid');
             grid.innerHTML = '';
-
-            let appsToRender = APPS;
-            if (category !== 'all') {
-                appsToRender = APPS.filter(a => Array.isArray(a.cat) ? a.cat.includes(category) : a.cat === category);
-                if (category === 'two_player') {
-                    // Include both two_player and live_game in the Multiplayer tab, 
-                    // but exclude live games from the generic bottom list since they are in the top Live section
-                    appsToRender = APPS.filter(a => a.cat === 'two_player' || a.cat === 'live_game');
-                    appsToRender = appsToRender.filter(a => !a.live);
-                }
-            }
-
-            const titles = { all: "All Applications", productivity: "Productivity", essentials: "Essentials", tools: "Tools", lifestyle: "Lifestyle", games: "Games", two_player: "Multiplayer Games" };
             const fragment = document.createDocumentFragment();
+            let baseList = APPS.filter(a => (!a.featured || featuredHidden) && !favoriteApps.includes(a.id));
+            if (!isEditMode) baseList = baseList.filter(a => !hiddenApps.includes(a.id));
 
-            if (category === 'all' || currentFilter === 'all') {
-                document.getElementById('category-title').innerText = "All Applications";
-                let baseList = APPS.filter(a => (!a.featured || featuredHidden) && !favoriteApps.includes(a.id));
-                if (!isEditMode) baseList = baseList.filter(a => !hiddenApps.includes(a.id));
-                let games = gamesDisabled ? [] : APPS.filter(a => a.cat === 'games' || a.cat === 'two_player' || a.cat === 'live_game');
-                if (!isEditMode) games = games.filter(a => !hiddenApps.includes(a.id));
-                const apps = baseList.filter(a => a.cat !== 'games' && a.cat !== 'two_player' && a.cat !== 'live_game');
+            const apps = baseList.filter(a => a.cat !== 'games' && a.cat !== 'two_player' && a.cat !== 'live_game');
+            apps.sort((a, b) => a.name.localeCompare(b.name));
+            apps.forEach(app => fragment.appendChild(createAppElement(app)));
 
-                apps.sort((a, b) => a.name.localeCompare(b.name));
-                games = getGroupedApps(games);
-                games.sort((a, b) => a.name.localeCompare(b.name));
+            if (!gamesDisabled) {
+                let singlePlayerGames = APPS.filter(a => a.cat === 'games');
+                let twoPlayerGames = APPS.filter(a => a.cat === 'two_player' || a.cat === 'live_game');
+                if (!isEditMode) {
+                    singlePlayerGames = singlePlayerGames.filter(a => !hiddenApps.includes(a.id));
+                    twoPlayerGames = twoPlayerGames.filter(a => !hiddenApps.includes(a.id));
+                }
+                singlePlayerGames = getGroupedApps(singlePlayerGames);
+                twoPlayerGames = getGroupedApps(twoPlayerGames);
+                singlePlayerGames.sort((a, b) => a.name.localeCompare(b.name));
+                twoPlayerGames.sort((a, b) => a.name.localeCompare(b.name));
 
-                apps.forEach(app => fragment.appendChild(createAppElement(app)));
-
-                if (games.length > 0) {
+                if (singlePlayerGames.length > 0) {
                     fragment.appendChild(createAppElement({
                         id: 'folder_games',
                         name: 'Games',
@@ -2216,23 +2188,25 @@
                         isFolder: true,
                         virtualFolder: true,
                         allowChildCustomization: true,
-                        i18nKey: 'nav.games',
-                        groupedApps: games,
+                        i18nKey: 'home.nav.games',
+                        groupedApps: singlePlayerGames,
                         icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><path d="M10 17 h6 M13 14 v6" stroke="black" stroke-width="2"/><circle cx="22" cy="16" r="1.5" fill="black" stroke="none"/><circle cx="25" cy="20" r="1.5" fill="black" stroke="none"/>'
                     }));
                 }
-            } else {
-                let filtered = appsToRender;
-                if (!isEditMode) filtered = filtered.filter(a => !hiddenApps.includes(a.id));
-                if (gamesDisabled) filtered = filtered.filter(app => app.cat !== 'games' && app.cat !== 'two_player' && app.cat !== 'live_game');
 
-                if (category === 'games' || category === 'two_player') {
-                    filtered = getGroupedApps(filtered);
+                if (twoPlayerGames.length > 0) {
+                    fragment.appendChild(createAppElement({
+                        id: 'folder_two_player',
+                        name: 'Two-player Games',
+                        cat: 'two_player',
+                        isFolder: true,
+                        virtualFolder: true,
+                        allowChildCustomization: true,
+                        i18nKey: 'home.nav.two_player',
+                        groupedApps: twoPlayerGames,
+                        icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><circle cx="12" cy="17" r="3" fill="none" stroke="black" stroke-width="2"/><circle cx="22" cy="17" r="3" fill="black" stroke="none"/><path d="M8 24 h8 M18 24 h8" stroke="black" stroke-width="2"/>'
+                    }));
                 }
-
-                filtered.sort((a, b) => a.name.localeCompare(b.name));
-                document.getElementById('category-title').innerText = titles[currentFilter] || "Applications";
-                filtered.forEach(app => fragment.appendChild(createAppElement(app)));
             }
             grid.appendChild(fragment);
             if (isEditMode) {
@@ -2546,7 +2520,7 @@
                 const lEl = document.getElementById('db-weather-loc');
                 if (lEl) lEl.textContent = locName;
                 
-                const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&hourly=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min&timezone=auto&temperature_unit=' + unit;
+                const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=auto&temperature_unit=' + unit;
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('Weather API failed');
                 const data = await res.json();
@@ -2564,44 +2538,41 @@
                     }
 
                     let desc = "Clear";
-                    if (code === 1 || code === 2 || code === 3) desc = "Cloudy";
-                    if (code >= 45 && code <= 48) desc = "Fog";
-                    if (code >= 51 && code <= 57) desc = "Drizzle";
-                    if (code >= 61 && code <= 65) desc = "Rain";
-                    if (code >= 71 && code <= 77) desc = "Snow";
-                    if (code >= 80 && code <= 82) desc = "Showers";
-                    if (code >= 95) desc = "Storm";
-                    if (dw) dw.textContent = desc;
+                    let descKey = 'weather.cond.clear';
+                    if (code === 1 || code === 2 || code === 3) { desc = "Cloudy"; descKey = 'weather.cond.cloudy'; }
+                    if (code >= 45 && code <= 48) { desc = "Fog"; descKey = 'weather.cond.fog'; }
+                    if (code >= 51 && code <= 57) { desc = "Drizzle"; descKey = 'weather.cond.drizzle'; }
+                    if (code >= 61 && code <= 65) { desc = "Rain"; descKey = 'weather.cond.rain'; }
+                    if (code >= 71 && code <= 77) { desc = "Snow"; descKey = 'weather.cond.snow'; }
+                    if (code >= 80 && code <= 82) { desc = "Showers"; descKey = 'weather.cond.showers'; }
+                    if (code >= 95) { desc = "Storm"; descKey = 'weather.cond.thunderstorm'; }
+                    if (dw) {
+                        dw.setAttribute('data-i18n', descKey);
+                        dw.textContent = window.t ? window.t(descKey, desc) : desc;
+                    }
                     if (hl && data.daily && data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
                         hl.textContent = "H:" + Math.round(data.daily.temperature_2m_max[0]) + "° L:" + Math.round(data.daily.temperature_2m_min[0]) + "°";
                     }
 
-                    const hourlyContainer = document.getElementById('db-weather-hourly');
-                    if (hourlyContainer && data.hourly) {
-                        let nowZoned = window.rekindleGetDateInZone ? window.rekindleGetDateInZone(new Date(), data.timezone) : new Date();
-                        let startIdx = -1;
-                        for (let i = 0; i < data.hourly.time.length; i++) {
-                            if (new Date(data.hourly.time[i]) >= nowZoned) {
-                                startIdx = i;
-                                break;
-                            }
+                    const weekContainer = document.getElementById('db-weather-week');
+                    if (weekContainer && data.daily && data.daily.time && data.daily.weathercode) {
+                        let weekHtml = '';
+                        const locale = document.documentElement.lang || navigator.language || 'en';
+                        for (let i = 0; i < data.daily.time.length && i < 7; i++) {
+                            const parts = data.daily.time[i].split('-').map(Number);
+                            const forecastDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                            const dayLabel = i === 0
+                                ? (window.t ? window.t('weather.day.today', 'Today') : 'Today')
+                                : forecastDate.toLocaleDateString(locale, { weekday: 'short' });
+                            const high = Math.round(data.daily.temperature_2m_max[i]);
+                            const low = Math.round(data.daily.temperature_2m_min[i]);
+                            weekHtml += '<div class="dashboard-weather-day">' +
+                                '<div class="dashboard-weather-day-name">' + dayLabel + '</div>' +
+                                '<div class="dashboard-weather-day-icon">' + getIcon(data.daily.weathercode[i], false) + '</div>' +
+                                '<div class="dashboard-weather-day-temp">' + high + '° / ' + low + '°</div>' +
+                                '</div>';
                         }
-                        if (startIdx !== -1) {
-                            let html = '';
-                            for (let i = startIdx; i < startIdx + 24 && i < data.hourly.time.length; i++) {
-                                const date = new Date(data.hourly.time[i]);
-                                const hourLabel = window.rekindleFormatWallDate ? window.rekindleFormatWallDate(date, { hour: 'numeric', hour12: true }) : date.toLocaleTimeString([], { hour: 'numeric', hour12: true });
-                                const ht = Math.round(data.hourly.temperature_2m[i]);
-                                const hc = data.hourly.weathercode[i];
-                                html += `<div style="display:flex; flex-direction:column; align-items:center; min-width: 45px; flex-shrink: 0;">
-                                    <div style="font-size:0.7em; margin-bottom: 2px; white-space:nowrap;">${hourLabel}</div>
-                                    <div style="width:24px; height:24px;">${getIcon(hc, false)}</div>
-                                    <div style="font-weight:bold; margin-top: 2px;">${ht}°</div>
-                                </div>`;
-                            }
-                            hourlyContainer.innerHTML = html;
-                            hourlyContainer.style.display = 'flex';
-                        }
+                        weekContainer.innerHTML = weekHtml;
                     }
                 }
             } catch (e) {
@@ -2633,14 +2604,18 @@
 
                 const today = (now.getMonth() === month && now.getFullYear() === year) ? now.getDate() : -1;
 
-                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                const locale = document.documentElement.lang || navigator.language || 'en';
                 const cTitle = document.getElementById('db-calendar-month-text') || document.getElementById('db-calendar-title');
-                if (cTitle) cTitle.textContent = monthNames[month] + " " + year;
+                if (cTitle) cTitle.textContent = new Date(year, month, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' });
                 const firstDay = new Date(year, month, 1).getDay();
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
                 const grid = document.getElementById('db-calendar-grid');
                 if (!grid) return;
-                let html = '<div class="dashboard-calendar-day-header">Su</div><div class="dashboard-calendar-day-header">Mo</div><div class="dashboard-calendar-day-header">Tu</div><div class="dashboard-calendar-day-header">We</div><div class="dashboard-calendar-day-header">Th</div><div class="dashboard-calendar-day-header">Fr</div><div class="dashboard-calendar-day-header">Sa</div>';
+                let html = '';
+                for (let weekday = 0; weekday < 7; weekday++) {
+                    const weekdayLabel = new Date(2024, 0, 7 + weekday).toLocaleDateString(locale, { weekday: 'short' });
+                    html += '<div class="dashboard-calendar-day-header">' + weekdayLabel + '</div>';
+                }
                 for (let i = 0; i < firstDay; i++) html += '<div class="dashboard-calendar-day"></div>';
                 for (let i = 1; i <= daysInMonth; i++) {
                     let cls = "dashboard-calendar-day";
@@ -2830,21 +2805,12 @@
         }
 
         let dashboardLoaded = false;
-        let dashboardClockInterval = null;
         function loadDashboard() {
             if (!dashboardLoaded) {
                 dashboardLoaded = true;
-                updateDashboardTime();
                 fetchDashboardWeather();
-                dashboardClockInterval = setInterval(updateDashboardTime, 60000);
-                document.addEventListener('visibilitychange', () => {
-                    if (document.hidden) {
-                        clearInterval(dashboardClockInterval);
-                        dashboardClockInterval = null;
-                    } else {
-                        updateDashboardTime();
-                        dashboardClockInterval = setInterval(updateDashboardTime, 60000);
-                    }
+                document.addEventListener('rekindle:i18n:ready', function () {
+                    renderDashboardCalendar();
                 });
             }
             renderDashboardCalendar();

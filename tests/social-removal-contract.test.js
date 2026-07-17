@@ -92,6 +92,8 @@ test("catalog, source pages and locale bundles omit retired applications", funct
         return /^(?:de|en|es|fr|it|pl|pt|ru|vi|zh)\.json$/.test(name);
     }).forEach(function (name) {
         var locale = JSON.parse(read(path.join("locales", name)));
+        assert.equal(typeof locale["dashboard.weather.week"], "string", name);
+        assert.equal(Object.prototype.hasOwnProperty.call(locale, "home.header.all"), false, name);
         Object.keys(locale).forEach(function (key) {
             assert.doesNotMatch(key, /^(?:app\.)?(?:kindlechat|neighbourhood|topics)\./i, name + ": " + key);
             retiredAppIds.forEach(function (id) {
@@ -101,12 +103,14 @@ test("catalog, source pages and locale bundles omit retired applications", funct
     });
 });
 
-test("dashboard exposes games through one non-customizable folder", function () {
+test("dashboard exposes separate single-player and two-player folders", function () {
     ["index.html", "index_old.html"].forEach(function (name) {
         var source = read(name);
         assert.match(source, /id:\s*['"]folder_games['"]/);
+        assert.match(source, /id:\s*['"]folder_two_player['"]/);
         assert.match(source, /virtualFolder:\s*true/);
-        assert.match(source, /i18nKey:\s*['"]nav\.games['"]/);
+        assert.match(source, /i18nKey:\s*['"]home\.nav\.games['"]/);
+        assert.match(source, /i18nKey:\s*['"]home\.nav\.two_player['"]/);
         assert.doesNotMatch(source, />All Games</);
         assert.match(source, /app\.cat !== ['"]games['"] && app\.cat !== ['"]two_player['"] && app\.cat !== ['"]live_game['"]/);
         assert.match(source, /#folder-modal \.modal-box\s*\{[^}]*height:\s*82vh;[^}]*overflow:\s*hidden;/s);
@@ -115,6 +119,13 @@ test("dashboard exposes games through one non-customizable folder", function () 
         assert.match(source, /class="folder-actions"/);
         assert.doesNotMatch(source, /openDiscordModal/);
         assert.match(source, /window\.closeModal\s*=\s*closeModal/);
+        assert.doesNotMatch(source, /id="nav-(?:dashboard|essentials|tools|lifestyle|games|two_player)"/);
+        assert.doesNotMatch(source, /id="category-title"/);
+        assert.match(source, /id="edit-done-btn"/);
+        assert.match(source, /id="home-widgets"/);
+        assert.match(source, /id="db-weather-week"/);
+        assert.match(source, /forecast_days=7/);
+        assert.match(source, /id="db-calendar-grid"/);
     });
 });
 

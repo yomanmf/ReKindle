@@ -778,11 +778,12 @@ The dashboard (`index.html`) reads the app registry from `icons.js`. Games are g
 | `two_player` | Local pass-and-play multiplayer |
 | `live_game` | Firebase real-time online multiplayer |
 
-**Dashboard Games folder:** On the `all` view, every game category must be
-represented by one virtual `folder_games` tile. Do not render favorite or
-featured games separately on the home screen. Build the folder contents from
-the full game registry so a favorite game is not accidentally omitted. Keep
-the dedicated Games and Multiplayer category views unchanged.
+**Dashboard game folders:** The home screen separates the registry into two
+virtual tiles: `folder_games` contains only the `games` category, while
+`folder_two_player` contains both `two_player` and `live_game`. Do not render
+favorite or featured games separately on the home screen. Build both folder
+contents from the full game registry so a favorite game is not accidentally
+omitted. The former Games and Multiplayer category tabs no longer exist.
 
 Virtual folders are not application records and must use `virtualFolder: true`
 so they cannot be favorited or hidden. Grouped game-mode folders must also carry
@@ -791,7 +792,7 @@ Games folder is opened during dashboard edit mode, keep customization controls
 on the real child games so previously hidden games can be restored.
 
 The shared folder modal was originally sized for two or three game variants.
-The all-games folder currently contains more than 40 entries, so letting the
+The game folders contain many entries, so letting the
 entire `.modal-box` scroll creates a narrow 2-column, 2,000+ px document and
 pushes its close action off screen. Keep `#folder-modal .modal-box` as a bounded
 wide flex column with `overflow: hidden`; only `#folder-options` may scroll
@@ -801,6 +802,15 @@ The Games folder layout and both close actions were verified at the Kindle
 Scribe Colorsoft panel dimensions in portrait (`1980x2640`) and landscape
 (`2640x1980`), as well as the conservative `600x800` CSS viewport used by the
 older Kindle-browser regression check.
+
+**Dashboard home layout:** Keep only the Home tab in the top folder strip. The
+four-square Dashboard tab and the Essentials, Tools, Lifestyle, Games, and
+Multiplayer category tabs are retired. The application heading is also absent;
+the Edit button remains in a right-aligned toolbar. Weather and calendar are
+part of the normal home scroll after `#app-grid`, not a separate tab. Weather
+must span the available width and include current conditions plus seven daily
+forecast cells; the full-width month calendar follows underneath. Keep this
+contract aligned in both `index.html` and `index_old.html`.
 
 ## Application retirement checklist
 

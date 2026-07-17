@@ -236,6 +236,13 @@
             align-items: center;
         }
 
+        .edit-toolbar {
+            justify-content: flex-end;
+            border-bottom: 0;
+            padding-bottom: 0;
+            margin-bottom: 10px;
+        }
+
         .grid-container {
             display: grid;
             /* Grid Gap IS supported in Chrome 75+ */
@@ -261,6 +268,142 @@
 
         #favorites-section {
             margin-bottom: 25px;
+        }
+
+        .home-widgets {
+            width: 100%;
+            margin-top: 28px;
+            padding-bottom: 20px;
+        }
+
+        .dashboard-widget {
+            width: 100%;
+            box-sizing: border-box;
+            border: 2px solid black;
+            background: white;
+            box-shadow: 2px 2px 0 black;
+            padding: 15px;
+        }
+
+        .home-widgets .dashboard-widget + .dashboard-widget {
+            margin-top: 20px;
+        }
+
+        .dashboard-widget-title {
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            border-bottom: 2px solid black;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .dashboard-weather-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-weather-temp {
+            font-size: 2.8rem;
+            font-weight: bold;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .dashboard-weather-details {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+        }
+
+        .dashboard-weather-desc {
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .dashboard-weather-highlow {
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .dashboard-weather-week-title {
+            border-top: 2px solid black;
+            padding-top: 10px;
+            margin-top: 5px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .dashboard-weather-week {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(64px, 1fr));
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .dashboard-weather-day {
+            border: 1px solid black;
+            padding: 7px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .dashboard-weather-day-icon {
+            width: 28px;
+            height: 28px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-weather-day-name,
+        .dashboard-weather-day-temp {
+            font-size: 0.75rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .dashboard-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            text-align: center;
+            font-family: "Courier New", monospace;
+            font-size: 0.8rem;
+        }
+
+        .dashboard-calendar-day-header {
+            font-weight: bold;
+            border-bottom: 1px solid black;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-calendar-day {
+            padding: 5px 0;
+            border: 1px solid transparent;
+        }
+
+        .dashboard-calendar-day.today {
+            background: black;
+            color: white;
+            font-weight: bold;
+            border-color: black;
+        }
+
+        .dashboard-calendar-day.selected {
+            border: 1px dashed black;
+            font-weight: bold;
         }
 
         .app-icon {
@@ -791,16 +934,6 @@
             <div class="nav-menu">
                 <div class="nav-item active" id="nav-all" onclick="filterApps('all', this)"
                     data-i18n="home.nav.all_apps">All Apps</div>
-                <div class="nav-item" id="nav-essentials" onclick="filterApps('essentials', this)"
-                    data-i18n="home.nav.essentials">Essentials</div>
-                <div class="nav-item" id="nav-tools" onclick="filterApps('tools', this)" data-i18n="home.nav.tools">
-                    Tools</div>
-                <div class="nav-item" id="nav-lifestyle" onclick="filterApps('lifestyle', this)"
-                    data-i18n="home.nav.lifestyle">Lifestyle</div>
-                <div class="nav-item" id="nav-games" onclick="filterApps('games', this)" data-i18n="home.nav.games">
-                    Games</div>
-                <div class="nav-item" id="nav-two_player" onclick="filterApps('two_player', this)"
-                    data-i18n="home.nav.two_player">Multiplayer Games</div>
 
                 <div style="flex-grow:1"></div>
 
@@ -823,8 +956,7 @@
                 <div class="grid-container" id="favorites-grid"></div>
             </div>
 
-            <div class="view-header">
-                <span id="category-title" data-i18n="home.header.all">All Applications</span>
+            <div class="view-header edit-toolbar">
                 <div style="display:flex; align-items:center;">
                     <button class="sys-btn" id="featured-toggle-btn" onclick="toggleFeaturedSection()"
                         style="box-shadow: 2px 2px 0 black; display:none; margin-right:10px; font-size:0.8rem;"
@@ -838,6 +970,41 @@
             </div>
 
             <div class="grid-container" id="app-grid"></div>
+
+            <div class="home-widgets" id="home-widgets">
+                <div class="dashboard-widget dashboard-weather-widget">
+                    <div class="dashboard-widget-title">
+                        <span><span data-i18n="app.weather.name">Weather</span> · <span
+                                data-i18n="weather.day.today">Today</span></span>
+                        <span id="db-weather-loc" style="font-weight:normal; font-size:0.8em;"></span>
+                    </div>
+                    <div class="dashboard-weather-display">
+                        <div id="db-weather-icon"
+                            style="width: 48px; height: 48px; margin-right: 15px; display: none;"></div>
+                        <div class="dashboard-weather-temp" id="db-weather-temp">--°</div>
+                        <div class="dashboard-weather-details">
+                            <div class="dashboard-weather-desc" id="db-weather-desc"
+                                data-i18n="weather.status.loading">Loading...</div>
+                            <div class="dashboard-weather-highlow" id="db-weather-highlow"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-weather-week-title" data-i18n="dashboard.weather.week">7-day forecast</div>
+                    <div id="db-weather-week" class="dashboard-weather-week"></div>
+                </div>
+
+                <div class="dashboard-widget dashboard-calendar-widget">
+                    <div class="dashboard-widget-title">
+                        <span id="db-calendar-title">
+                            <span style="cursor:pointer; padding: 0 5px;"
+                                onclick="changeDashboardCalendar(-1)">&lt;</span>
+                            <span id="db-calendar-month-text">Calendar</span>
+                            <span style="cursor:pointer; padding: 0 5px;"
+                                onclick="changeDashboardCalendar(1)">&gt;</span>
+                        </span>
+                    </div>
+                    <div class="dashboard-calendar-grid" id="db-calendar-grid"></div>
+                </div>
+            </div>
         </div>
 
         <div id="login-modal" class="modal-overlay">
@@ -1117,18 +1284,6 @@
 
         function updateNavVisibility() {
             gamesDisabled = areGamesDisabled();
-            const gameNav = document.getElementById('nav-games');
-            const twoPlayerNav = document.getElementById('nav-two_player');
-            if (gamesDisabled) {
-                gameNav.style.display = 'none';
-                twoPlayerNav.style.display = 'none';
-                if (currentFilter === 'games' || currentFilter === 'two_player') {
-                    filterApps('all', document.getElementById('nav-all'));
-                }
-            } else {
-                gameNav.style.display = 'block';
-                twoPlayerNav.style.display = 'block';
-            }
         }
 
         function renderAboutContent() {
@@ -1435,17 +1590,18 @@
         function filterApps(category, btnElement) {
             updateNavVisibility();
             if (isEditMode) toggleEditMode();
-            if (gamesDisabled && (category === 'games' || category === 'two_player')) { category = 'all'; btnElement = document.getElementById('nav-all'); }
-            currentFilter = category;
+            category = 'all';
+            currentFilter = 'all';
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if (btnElement) btnElement.classList.add('active');
             const editBtn = document.getElementById('edit-done-btn');
-            if (category === 'all') { editBtn.style.display = 'block'; editBtn.innerText = isEditMode ? "Done" : "Edit"; }
-            else editBtn.style.display = 'none';
-
-            if (category === 'all') renderFeaturedSection();
-            else { document.getElementById('featured-section').style.display = 'none'; document.getElementById('favorites-section').style.display = 'none'; }
-            renderAppGrid(category);
+            if (editBtn) {
+                editBtn.style.display = 'block';
+                editBtn.innerText = isEditMode ? "Done" : "Edit";
+            }
+            renderFeaturedSection();
+            renderAppGrid('all');
+            if (typeof loadHomeWidgets === 'function') loadHomeWidgets();
         }
 
         function renderFeaturedSection() {
@@ -1528,24 +1684,27 @@
         function renderAppGrid(category) {
             const grid = document.getElementById('app-grid');
             grid.innerHTML = '';
-            const titles = { all: "All Applications", productivity: "Productivity", essentials: "Essentials", tools: "Tools", lifestyle: "Lifestyle", games: "Games", two_player: "Multiplayer Games" };
             const fragment = document.createDocumentFragment();
+            let baseList = APPS.filter(a => (!a.featured || featuredHidden) && !favoriteApps.includes(a.id));
+            if (!isEditMode) baseList = baseList.filter(a => !hiddenApps.includes(a.id));
 
-            if (category === 'all') {
-                document.getElementById('category-title').innerText = "All Applications";
-                let baseList = APPS.filter(a => (!a.featured || featuredHidden) && !favoriteApps.includes(a.id));
-                if (!isEditMode) baseList = baseList.filter(a => !hiddenApps.includes(a.id));
-                let games = gamesDisabled ? [] : APPS.filter(a => a.cat === 'games' || a.cat === 'two_player' || a.cat === 'live_game');
-                if (!isEditMode) games = games.filter(a => !hiddenApps.includes(a.id));
-                const apps = baseList.filter(a => a.cat !== 'games' && a.cat !== 'two_player' && a.cat !== 'live_game');
-                
-                apps.sort((a, b) => a.name.localeCompare(b.name));
-                games = getGroupedApps(games);
-                games.sort((a, b) => a.name.localeCompare(b.name));
-                
-                apps.forEach(app => fragment.appendChild(createAppElement(app)));
+            const apps = baseList.filter(a => a.cat !== 'games' && a.cat !== 'two_player' && a.cat !== 'live_game');
+            apps.sort((a, b) => a.name.localeCompare(b.name));
+            apps.forEach(app => fragment.appendChild(createAppElement(app)));
 
-                if (games.length > 0) {
+            if (!gamesDisabled) {
+                let singlePlayerGames = APPS.filter(a => a.cat === 'games');
+                let twoPlayerGames = APPS.filter(a => a.cat === 'two_player' || a.cat === 'live_game');
+                if (!isEditMode) {
+                    singlePlayerGames = singlePlayerGames.filter(a => !hiddenApps.includes(a.id));
+                    twoPlayerGames = twoPlayerGames.filter(a => !hiddenApps.includes(a.id));
+                }
+                singlePlayerGames = getGroupedApps(singlePlayerGames);
+                twoPlayerGames = getGroupedApps(twoPlayerGames);
+                singlePlayerGames.sort((a, b) => a.name.localeCompare(b.name));
+                twoPlayerGames.sort((a, b) => a.name.localeCompare(b.name));
+
+                if (singlePlayerGames.length > 0) {
                     fragment.appendChild(createAppElement({
                         id: 'folder_games',
                         name: 'Games',
@@ -1553,28 +1712,25 @@
                         isFolder: true,
                         virtualFolder: true,
                         allowChildCustomization: true,
-                        i18nKey: 'nav.games',
-                        groupedApps: games,
+                        i18nKey: 'home.nav.games',
+                        groupedApps: singlePlayerGames,
                         icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><path d="M10 17 h6 M13 14 v6" stroke="black" stroke-width="2"/><circle cx="22" cy="16" r="1.5" fill="black" stroke="none"/><circle cx="25" cy="20" r="1.5" fill="black" stroke="none"/>'
                     }));
                 }
-            } else {
-                let filtered = APPS.filter(a => a.cat === category);
-                if (category === 'two_player') {
-                    filtered = APPS.filter(a => a.cat === 'two_player' || a.cat === 'live_game');
-                    filtered = filtered.filter(a => !a.live);
-                }
-                
-                if (!isEditMode) filtered = filtered.filter(a => !hiddenApps.includes(a.id));
-                if (gamesDisabled) filtered = filtered.filter(app => app.cat !== 'games' && app.cat !== 'two_player' && app.cat !== 'live_game');
 
-                if (category === 'games' || category === 'two_player') {
-                    filtered = getGroupedApps(filtered);
+                if (twoPlayerGames.length > 0) {
+                    fragment.appendChild(createAppElement({
+                        id: 'folder_two_player',
+                        name: 'Two-player Games',
+                        cat: 'two_player',
+                        isFolder: true,
+                        virtualFolder: true,
+                        allowChildCustomization: true,
+                        i18nKey: 'home.nav.two_player',
+                        groupedApps: twoPlayerGames,
+                        icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><circle cx="12" cy="17" r="3" fill="none" stroke="black" stroke-width="2"/><circle cx="22" cy="17" r="3" fill="black" stroke="none"/><path d="M8 24 h8 M18 24 h8" stroke="black" stroke-width="2"/>'
+                    }));
                 }
-
-                filtered.sort((a, b) => a.name.localeCompare(b.name));
-                document.getElementById('category-title').innerText = titles[currentFilter] || "Applications";
-                filtered.forEach(app => fragment.appendChild(createAppElement(app)));
             }
             grid.appendChild(fragment);
             if (isEditMode) {
@@ -1680,6 +1836,172 @@
             else { if (titlePlus) titlePlus.style.display = 'none'; }
         }
 
+        function getDashboardWeatherIcon(code) {
+            if (code === 0) return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke="black" stroke-width="2" fill="none"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="black" stroke-width="2"/></svg>';
+            if (code <= 3) return '<svg viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" stroke="black" stroke-width="2" fill="none"/></svg>';
+            if (code <= 48) return '<svg viewBox="0 0 24 24"><path d="M4 10h16M4 14h16M4 18h16" stroke="black" stroke-width="2"/></svg>';
+            if (code <= 67) return '<svg viewBox="0 0 24 24"><path d="M16 13v8M8 13v8M12 15v8M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" stroke="black" stroke-width="2" fill="none"/></svg>';
+            if (code <= 86) return '<svg viewBox="0 0 24 24"><path d="M8 16h.01M8 20h.01M12 18h.01M12 22h.01M16 16h.01M16 20h.01M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" stroke="black" stroke-width="2" fill="none"/></svg>';
+            return '<svg viewBox="0 0 24 24"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9" stroke="black" stroke-width="2" fill="none"/><polyline points="13 11 9 17 15 17 11 23" stroke="black" stroke-width="2" fill="none"/></svg>';
+        }
+
+        function getDashboardWeatherDescription(code) {
+            if (code === 0) return window.t ? window.t('weather.cond.clear', 'Clear') : 'Clear';
+            if (code <= 3) return window.t ? window.t('weather.cond.cloudy', 'Cloudy') : 'Cloudy';
+            if (code <= 48) return window.t ? window.t('weather.cond.fog', 'Fog') : 'Fog';
+            if (code <= 57) return window.t ? window.t('weather.cond.drizzle', 'Drizzle') : 'Drizzle';
+            if (code <= 67) return window.t ? window.t('weather.cond.rain', 'Rain') : 'Rain';
+            if (code <= 77) return window.t ? window.t('weather.cond.snow', 'Snow') : 'Snow';
+            if (code <= 86) return window.t ? window.t('weather.cond.showers', 'Showers') : 'Showers';
+            return window.t ? window.t('weather.cond.thunderstorm', 'Storm') : 'Storm';
+        }
+
+        function getDashboardWeatherDescriptionKey(code) {
+            if (code === 0) return 'weather.cond.clear';
+            if (code <= 3) return 'weather.cond.cloudy';
+            if (code <= 48) return 'weather.cond.fog';
+            if (code <= 57) return 'weather.cond.drizzle';
+            if (code <= 67) return 'weather.cond.rain';
+            if (code <= 77) return 'weather.cond.snow';
+            if (code <= 86) return 'weather.cond.showers';
+            return 'weather.cond.thunderstorm';
+        }
+
+        async function fetchHomeWeather() {
+            try {
+                let lat = 40.7128;
+                let lon = -74.0060;
+                let unit = 'fahrenheit';
+                let locName = 'New York';
+                const locManual = localStorage.getItem('rekindle_location_manual');
+                if (locManual) {
+                    try {
+                        const lm = JSON.parse(locManual);
+                        if (lm.lat && lm.lon) {
+                            lat = lm.lat;
+                            lon = lm.lon;
+                            unit = (lm.country_code === 'US' || lm.country_code === 'LR' || lm.country_code === 'MM') ? 'fahrenheit' : 'celsius';
+                            if (lm.name) locName = lm.name;
+                        }
+                    } catch (e) {}
+                }
+                const weatherSettings = localStorage.getItem('rekindle_weather_settings');
+                if (weatherSettings) {
+                    try {
+                        const settings = JSON.parse(weatherSettings);
+                        if (settings.locations && settings.locations.length > 0) {
+                            const location = settings.locations[settings.currentIndex || 0];
+                            const isDefaultNewYork = Math.abs(location.lat - 40.7128) < 0.1 && location.city === 'New York';
+                            if (!isDefaultNewYork || !locManual) {
+                                lat = location.lat || lat;
+                                lon = location.long || lon;
+                                unit = location.autoUnit || unit;
+                                if (location.city) locName = location.city;
+                            }
+                        }
+                    } catch (e) {}
+                }
+                const locEl = document.getElementById('db-weather-loc');
+                if (locEl) locEl.textContent = locName;
+
+                const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=auto&temperature_unit=' + unit;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Weather API failed');
+                const data = await response.json();
+                if (!data.current_weather || !data.daily) throw new Error('Weather data missing');
+
+                const code = data.current_weather.weathercode;
+                document.getElementById('db-weather-temp').textContent = Math.round(data.current_weather.temperature) + '°';
+                const weatherDesc = document.getElementById('db-weather-desc');
+                weatherDesc.setAttribute('data-i18n', getDashboardWeatherDescriptionKey(code));
+                weatherDesc.textContent = getDashboardWeatherDescription(code);
+                document.getElementById('db-weather-highlow').textContent = 'H:' + Math.round(data.daily.temperature_2m_max[0]) + '° L:' + Math.round(data.daily.temperature_2m_min[0]) + '°';
+                const currentIcon = document.getElementById('db-weather-icon');
+                currentIcon.innerHTML = getDashboardWeatherIcon(code);
+                currentIcon.style.display = 'block';
+
+                const locale = document.documentElement.lang || navigator.language || 'en';
+                let weekHtml = '';
+                for (let i = 0; i < data.daily.time.length && i < 7; i++) {
+                    const parts = data.daily.time[i].split('-').map(Number);
+                    const forecastDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                    const dayLabel = i === 0
+                        ? (window.t ? window.t('weather.day.today', 'Today') : 'Today')
+                        : forecastDate.toLocaleDateString(locale, { weekday: 'short' });
+                    weekHtml += '<div class="dashboard-weather-day">' +
+                        '<div class="dashboard-weather-day-name">' + dayLabel + '</div>' +
+                        '<div class="dashboard-weather-day-icon">' + getDashboardWeatherIcon(data.daily.weathercode[i]) + '</div>' +
+                        '<div class="dashboard-weather-day-temp">' + Math.round(data.daily.temperature_2m_max[i]) + '° / ' + Math.round(data.daily.temperature_2m_min[i]) + '°</div>' +
+                        '</div>';
+                }
+                document.getElementById('db-weather-week').innerHTML = weekHtml;
+            } catch (e) {
+                const desc = document.getElementById('db-weather-desc');
+                if (desc) desc.textContent = window.t ? window.t('weather.status.error', 'Unavailable') : 'Unavailable';
+            }
+        }
+
+        let homeCalMonth = null;
+        let homeCalYear = null;
+        let homeCalSelectedDay = null;
+
+        function selectDashboardCalendarDay(day) {
+            homeCalSelectedDay = day;
+            renderHomeCalendar();
+        }
+
+        function changeDashboardCalendar(delta) {
+            const now = typeof window.rekindleGetZonedDate === 'function' ? window.rekindleGetZonedDate() : new Date();
+            if (homeCalMonth === null || homeCalYear === null) {
+                homeCalMonth = now.getMonth();
+                homeCalYear = now.getFullYear();
+            }
+            homeCalMonth += delta;
+            if (homeCalMonth > 11) { homeCalMonth = 0; homeCalYear++; }
+            if (homeCalMonth < 0) { homeCalMonth = 11; homeCalYear--; }
+            homeCalSelectedDay = null;
+            renderHomeCalendar();
+        }
+
+        function renderHomeCalendar() {
+            const now = typeof window.rekindleGetZonedDate === 'function' ? window.rekindleGetZonedDate() : new Date();
+            if (homeCalMonth === null || homeCalYear === null) {
+                homeCalMonth = now.getMonth();
+                homeCalYear = now.getFullYear();
+            }
+            const locale = document.documentElement.lang || navigator.language || 'en';
+            const monthDate = new Date(homeCalYear, homeCalMonth, 1);
+            document.getElementById('db-calendar-month-text').textContent = monthDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+            const firstDay = monthDate.getDay();
+            const daysInMonth = new Date(homeCalYear, homeCalMonth + 1, 0).getDate();
+            const today = now.getMonth() === homeCalMonth && now.getFullYear() === homeCalYear ? now.getDate() : -1;
+            let html = '';
+            for (let weekday = 0; weekday < 7; weekday++) {
+                const weekdayLabel = new Date(2024, 0, 7 + weekday).toLocaleDateString(locale, { weekday: 'short' });
+                html += '<div class="dashboard-calendar-day-header">' + weekdayLabel + '</div>';
+            }
+            for (let i = 0; i < firstDay; i++) html += '<div class="dashboard-calendar-day"></div>';
+            for (let day = 1; day <= daysInMonth; day++) {
+                let cls = 'dashboard-calendar-day';
+                if (day === today) cls += ' today';
+                if (day === homeCalSelectedDay && day !== today) cls += ' selected';
+                html += '<div class="' + cls + '" style="cursor:pointer;" onclick="selectDashboardCalendarDay(' + day + ')">' + day + '</div>';
+            }
+            document.getElementById('db-calendar-grid').innerHTML = html;
+        }
+
+        let homeWidgetsLoaded = false;
+        function loadHomeWidgets() {
+            renderHomeCalendar();
+            if (!homeWidgetsLoaded) {
+                homeWidgetsLoaded = true;
+                fetchHomeWeather();
+                document.addEventListener('rekindle:i18n:ready', function () {
+                    renderHomeCalendar();
+                });
+            }
+        }
+
         // Expose functions needed by inline HTML handlers
         window.filterApps = filterApps;
         window.openAbout = openAbout;
@@ -1695,6 +2017,8 @@
         window.toggleFeaturedSection = toggleFeaturedSection;
         window.toggleFavorite = toggleFavorite;
         window.toggleHidden = toggleHidden;
+        window.changeDashboardCalendar = changeDashboardCalendar;
+        window.selectDashboardCalendarDay = selectDashboardCalendarDay;
     })();
     </script>
     <script src="https://cdn.counter.dev/script.js" data-id="4e551911-0e5d-4c48-91a6-b828c3301675" data-utcoffset="11"
