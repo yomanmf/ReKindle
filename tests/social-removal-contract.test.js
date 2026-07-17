@@ -109,6 +109,12 @@ test("dashboard exposes games through one non-customizable folder", function () 
         assert.match(source, /i18nKey:\s*['"]nav\.games['"]/);
         assert.doesNotMatch(source, />All Games</);
         assert.match(source, /app\.cat !== ['"]games['"] && app\.cat !== ['"]two_player['"] && app\.cat !== ['"]live_game['"]/);
+        assert.match(source, /#folder-modal \.modal-box\s*\{[^}]*height:\s*82vh;[^}]*overflow:\s*hidden;/s);
+        assert.match(source, /#folder-options\s*\{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
+        assert.match(source, /class="modal-close" onclick="closeModal\('folder-modal'\)"/);
+        assert.match(source, /class="folder-actions"/);
+        assert.doesNotMatch(source, /openDiscordModal/);
+        assert.match(source, /window\.closeModal\s*=\s*closeModal/);
     });
 });
 

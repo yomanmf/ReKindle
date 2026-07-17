@@ -971,6 +971,63 @@
             padding: 20px;
         }
 
+        /* Large app folders scroll their grid, not the whole modal window. */
+        #folder-modal .modal-box {
+            width: 82%;
+            max-width: 780px;
+            height: 82vh;
+            max-height: 82vh;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #folder-modal .modal-close {
+            width: 48px;
+            height: 48px;
+            top: 8px;
+            left: 8px;
+        }
+
+        #folder-title {
+            flex: 0 0 auto;
+            margin-left: 48px;
+            margin-right: 48px;
+            margin-bottom: 0;
+        }
+
+        #folder-options {
+            width: 100%;
+            min-height: 0;
+            flex: 1 1 auto;
+            overflow-y: auto;
+            box-sizing: border-box;
+            padding: 6px 8px 10px;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        }
+
+        #folder-modal .folder-actions {
+            flex: 0 0 auto;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid black;
+        }
+
+        @media (max-width: 600px) {
+            #folder-modal .modal-box {
+                width: 94%;
+                height: 86vh;
+                max-height: 86vh;
+                padding: 15px;
+            }
+
+            #folder-options {
+                grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+            }
+        }
+
         .modal-input {
             width: 100%;
             padding: 8px;
@@ -1262,13 +1319,15 @@
 
         <div id="folder-modal" class="modal-overlay">
             <div class="modal-box">
+                <button class="modal-close" onclick="closeModal('folder-modal')"
+                    data-i18n-title="common.close">X</button>
                 <h2 id="folder-title" style="margin-top:0; border-bottom: 2px solid black; padding-bottom:10px;">Choose
                     Version</h2>
                 <div id="folder-options" class="grid-container"
                     style="margin-top: 20px; align-items: start; margin-bottom: 20px;"></div>
-                <div style="margin-top:15px;">
-                    <button style="border:none; background:none; text-decoration:underline; cursor:pointer;"
-                        onclick="closeModal('folder-modal')">Cancel</button>
+                <div class="folder-actions">
+                    <button class="sys-btn" onclick="closeModal('folder-modal')"
+                        data-i18n="common.close">Close</button>
                 </div>
             </div>
         </div>
@@ -2795,7 +2854,6 @@
         // Expose functions needed by inline HTML handlers
         window.filterApps = filterApps;
         window.openAbout = openAbout;
-        window.openDiscordModal = openDiscordModal;
         window.openDonateModal = openDonateModal;
         window.openLogin = openLogin;
         window.openResetModal = openResetModal;

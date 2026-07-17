@@ -790,6 +790,18 @@ the primary app i18n key; otherwise `app.folder_*.name` is missing. When the
 Games folder is opened during dashboard edit mode, keep customization controls
 on the real child games so previously hidden games can be restored.
 
+The shared folder modal was originally sized for two or three game variants.
+The all-games folder currently contains more than 40 entries, so letting the
+entire `.modal-box` scroll creates a narrow 2-column, 2,000+ px document and
+pushes its close action off screen. Keep `#folder-modal .modal-box` as a bounded
+wide flex column with `overflow: hidden`; only `#folder-options` may scroll
+(`flex: 1 1 auto; min-height: 0; overflow-y: auto`). Both the 48x48 top close
+button and the bottom close action must remain outside that scrolling grid.
+The Games folder layout and both close actions were verified at the Kindle
+Scribe Colorsoft panel dimensions in portrait (`1980x2640`) and landscape
+(`2640x1980`), as well as the conservative `600x800` CSS viewport used by the
+older Kindle-browser regression check.
+
 ## Application retirement checklist
 
 Deleting an app means removing its registry entry and source page plus every
@@ -802,6 +814,13 @@ serving the retired page. Search the whole repository for the retired IDs and
 provider names after the deletion; shared translation keys discovered in active
 pages must be moved to a neutral namespace before the app-specific namespace is
 removed.
+
+Dashboard functions are defined inside an IIFE and exported near the end of
+`index.html` and `index_old.html` for inline handlers. When retiring a modal or
+action, remove its `window.someHandler = someHandler` export too. Exporting a
+deleted identifier throws a `ReferenceError` during page load and prevents all
+later exports in that block (including `window.closeModal`) from being assigned,
+which can make unrelated modals impossible to close.
 
 ### Single-player vs multiplayer split
 
