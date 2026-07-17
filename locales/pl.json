@@ -248,6 +248,8 @@
   "app.suggestions.desc": "Głosuj na nowe funkcje!",
   "app.suggestions.name": "Sugestie",
   "app.tasks.name": "Zadania",
+  "app.microsofttodo.desc": "Zadania Microsoft na ekran E-Ink.",
+  "app.microsofttodo.name": "Microsoft To Do",
   "app.teleprompter.desc": "Przewija notatki linia po linii.",
   "app.teleprompter.name": "Teleprompter",
   "app.telegram.desc": "Telegram dla ekranów E-ink.",

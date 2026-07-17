@@ -160,6 +160,14 @@ const APPS = [
         icon: '<rect x="6" y="4" width="20" height="24"/><polyline points="9 10 11 12 15 8" fill="none" stroke="black"/><line x1="18" y1="10" x2="22" y2="10"/><polyline points="9 18 11 20 15 16" fill="none" stroke="black"/><line x1="18" y1="18" x2="22" y2="18"/>'
     },
     {
+        id: 'microsofttodo',
+        name: 'Microsoft To Do',
+        cat: 'tools',
+        beta: true,
+        desc: 'Microsoft tasks for E-ink.',
+        icon: '<rect x="4" y="4" width="10" height="10" fill="white" stroke="black" stroke-width="2"/><rect x="18" y="4" width="10" height="10" fill="white" stroke="black" stroke-width="2"/><rect x="4" y="18" width="10" height="10" fill="white" stroke="black" stroke-width="2"/><rect x="18" y="18" width="10" height="10" fill="white" stroke="black" stroke-width="2"/><path d="M7 9 L10 12 L16 6" fill="none" stroke="black" stroke-width="2"/>'
+    },
+    {
         id: 'teleprompter',
         name: 'Teleprompter',
         icon: '<path d="M16 20 L 12 30 H 20 Z M10 12 H 22 V 18 H 10 Z M8 4 H 24 V 12 H 8 Z M10 6 H 22 M10 9 H 22" />',

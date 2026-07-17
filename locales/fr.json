@@ -248,6 +248,8 @@
   "app.suggestions.desc": "Votez pour de nouvelles fonctionnalités !",
   "app.suggestions.name": "Suggestions",
   "app.tasks.name": "Tâches",
+  "app.microsofttodo.desc": "Tâches Microsoft pour liseuse.",
+  "app.microsofttodo.name": "Microsoft To Do",
   "app.teleprompter.desc": "Fait défiler les notes ligne par ligne.",
   "app.teleprompter.name": "Téléprompteur",
   "app.telegram.desc": "Telegram pour liseuse E-ink.",

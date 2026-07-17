@@ -14,6 +14,7 @@ var crypto = require("node:crypto");
 var firebaseFirestore = require("firebase-admin/firestore");
 var nrlParser = require("./nrl");
 var telegramService = require("./telegram-service");
+var microsoftTodoService = require("./microsoft-todo-service");
 
 var MAX_USER_STORAGE_BYTES = 100 * 1024 * 1024;
 var MAX_OBJECT_BYTES = 25 * 1024 * 1024;
@@ -116,6 +117,9 @@ module.exports.handler = async function (event, context) {
         }
         if (method === "POST" && path.indexOf("/telegram/") !== -1) {
             return response(200, await handleTelegramRequest(event, path), origin);
+        }
+        if (method === "POST" && path.indexOf("/microsoft-todo/") !== -1) {
+            return response(200, await handleMicrosoftTodoRequest(event, path), origin);
         }
         if (method === "POST" && endsWith(path, "/reports/submit")) {
             return response(200, await createPrimarySuggestionReport(event), origin);
@@ -1140,6 +1144,42 @@ async function handleTelegramRequest(event, path) {
     }
 
     return telegramService.handle({
+        action: action,
+        body: parseJsonBody(event),
+        uid: user.uid,
+        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        env: process.env
+    });
+}
+
+async function handleMicrosoftTodoRequest(event, path) {
+    var user = await requireFirebaseUser(event, false);
+    var action = path.split("/").pop();
+    var allowedActions = {
+        status: true,
+        start: true,
+        poll: true,
+        lists: true,
+        "create-list": true,
+        tasks: true,
+        create: true,
+        update: true,
+        delete: true,
+        logout: true
+    };
+    if (!allowedActions[action]) throw httpError(404, "microsoft-todo-action-not-found", "Microsoft To Do action was not found.");
+
+    if (action === "start") {
+        await enforceUserWindowRateLimit(user.uid, "microsoft_todo_auth_start", 5, 60 * 60 * 1000);
+    } else if (action === "poll") {
+        await enforceUserWindowRateLimit(user.uid, "microsoft_todo_auth_poll", 180, 60 * 60 * 1000);
+    } else if (action === "create" || action === "update" || action === "delete" || action === "create-list") {
+        await enforceUserWindowRateLimit(user.uid, "microsoft_todo_write", 60, 60 * 1000);
+    } else if (action !== "status" && action !== "logout") {
+        await enforceUserWindowRateLimit(user.uid, "microsoft_todo_read", 120, 60 * 1000);
+    }
+
+    return microsoftTodoService.handle({
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,

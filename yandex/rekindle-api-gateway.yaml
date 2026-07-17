@@ -474,6 +474,26 @@ paths:
         tag: '$latest'
         payload_format_version: '1.0'
 
+  /api/rekindle/microsoft-todo/{action}:
+    post:
+      operationId: microsoftTodoAction
+      parameters:
+        - name: action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [status, start, poll, lists, create-list, tasks, create, update, delete, logout]
+      responses:
+        '200':
+          description: Authenticated Microsoft To Do operation response
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
   /api/rekindle/reports/submit:
     post:
       operationId: submitPrimarySuggestionReport

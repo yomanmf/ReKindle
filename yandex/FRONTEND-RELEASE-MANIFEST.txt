@@ -23,6 +23,7 @@ js/rekindle-cloud.js
 js/reddit-comments.js
 js/reports.js
 js/telegram.js
+js/microsoft-todo.js
 language.html
 login.html
 mail.html
@@ -30,6 +31,7 @@ manga.html
 maps.html
 mastodon.html
 mindmap.html
+microsofttodo.html
 newspaper.html
 pay.html
 photoframe.html

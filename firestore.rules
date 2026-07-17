@@ -42,6 +42,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Server-only Microsoft OAuth device-flow state and refresh tokens.
+    // Task data remains in Microsoft Graph and is never copied here.
+    match /microsoft_todo_sessions/{userId} {
+      allow read, write: if false;
+    }
+
     function isDeveloper() {
       return request.auth != null && (
         request.auth.uid == 'ukiyo' ||

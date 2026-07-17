@@ -504,6 +504,29 @@ SSRF path into Yandex infrastructure. The stored resolved public IP prevents DNS
 rebinding on later requests. Keep `telegram.html?demo=1` for complete Kindle UI
 QA without a real Telegram or Firebase account.
 
+**Microsoft To Do uses server-side OAuth device authorization:**
+`microsofttodo.html` never loads MSAL, calls Microsoft Graph directly, or puts
+access/refresh tokens in browser storage. The Kindle-friendly flow displays a
+short device code from `/api/rekindle/microsoft-todo/start`; the user approves it
+at `https://microsoft.com/devicelogin`, and the client polls the authenticated
+Yandex route. This avoids PKCE/Web Crypto and modern MSAL compatibility problems
+on Chromium 75 while still supporting personal and eligible work/school
+Microsoft accounts. Keep the delegated scope at the least-privilege
+`offline_access Tasks.ReadWrite` contract. Do not add application-wide
+`Tasks.ReadWrite.All` access.
+
+Microsoft refresh/access tokens and pending device codes live only in the
+server-maintained top-level Firestore `microsoft_todo_sessions/{firebaseUid}`
+documents, which have an explicit client deny rule in `firestore.rules`. Both
+pending and connected state are encrypted with AES-256-GCM and UID-specific AAD
+using the 32-byte base64 `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY`. Production also
+requires `MICROSOFT_TODO_CLIENT_ID`; `MICROSOFT_TODO_TENANT` is optional and
+defaults to `common`. This is a public-client device flow and must not use or
+store a Microsoft client secret. Task content remains in Microsoft To Do and is
+returned through the allowlisted `/me/todo/lists` Graph paths only. Keep
+`microsofttodo.html?demo=1` for full Kindle UI QA without Microsoft or Firebase
+credentials.
+
 **Telegram API application provisioning can be an external blocker:** every
 deployment must use an application `api_id` and `api_hash` created by the
 repository owner at `my.telegram.org/apps`. The portal can accept login and then

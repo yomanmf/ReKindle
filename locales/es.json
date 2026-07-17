@@ -248,6 +248,8 @@
   "app.suggestions.desc": "¡Vota por nuevas funciones!",
   "app.suggestions.name": "Sugerencias",
   "app.tasks.name": "Tareas",
+  "app.microsofttodo.desc": "Tareas de Microsoft para tinta electrónica.",
+  "app.microsofttodo.name": "Microsoft To Do",
   "app.teleprompter.desc": "Muestra notas línea por línea.",
   "app.teleprompter.name": "Teleprompter",
   "app.telegram.desc": "Telegram para tinta electrónica.",

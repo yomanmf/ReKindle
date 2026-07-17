@@ -4,9 +4,21 @@ Publish backend infrastructure before any changed HTML. The checked-in frontend
 already points at the new Gateway routes and will fail if it is uploaded first.
 Prepared archives are under `/private/tmp/rekindle-yandex-release`; verify all
 five release archives against `RELEASE-SHA256.txt` before upload. The current
-frontend manifest contains 74 source files plus 48 byte-identical extensionless
-HTML aliases, for 122 production objects. Pixel and Flipbook are standalone
+frontend manifest contains 76 source files plus 49 byte-identical extensionless
+HTML aliases, for 125 production objects. Pixel and Flipbook are standalone
 primary-project applications; retired internal-social pages are delete-only.
+
+## Production rollout status (17 July 2026, Microsoft To Do)
+
+- [ ] Create a Microsoft Entra public-client app registration that supports
+  personal and organizational accounts, enables device-code flow, and grants
+  delegated `Tasks.ReadWrite` access. Do not create a client secret.
+- [ ] Put `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` in Lockbox and configure the
+  public `MICROSOFT_TODO_CLIENT_ID` on `rekindle-backend`.
+- [ ] Publish the Firestore client-deny rule for
+  `microsoft_todo_sessions/{firebaseUid}`, deploy the backend and Gateway route,
+  then verify an authenticated device-code login and one create/update/delete
+  cycle before publishing `microsofttodo.html`.
 
 ## Production rollout status (16 July 2026, Telegram)
 
@@ -116,6 +128,10 @@ Telegram secrets (required before publishing `telegram.html`):
 - `TELEGRAM_API_HASH`
 - `TELEGRAM_SESSION_ENCRYPTION_KEY` (32 random bytes, base64 encoded)
 
+Microsoft To Do secret (required before publishing `microsofttodo.html`):
+
+- `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (32 random bytes, base64 encoded)
+
 Integration-specific secrets (required only when publishing the corresponding
 integration):
 
@@ -130,6 +146,8 @@ Required non-secret configuration:
 - `S3_BUCKET`
 - `ALLOWED_ORIGINS=https://rekindle.website.yandexcloud.net`
 - `YANDEX_FOLDER_ID` (optional when `context.functionFolderId` is present)
+- `MICROSOFT_TODO_CLIENT_ID` (public Microsoft Entra application/client ID)
+- `MICROSOFT_TODO_TENANT` (optional; defaults to `common`)
 
 Supporter-billing configuration (only when Stripe support is enabled):
 

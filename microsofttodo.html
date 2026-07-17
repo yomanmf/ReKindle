@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title data-i18n="app.microsofttodo.name">Microsoft To Do</title>
+    <style>
+        :root {
+            --shadow: 4px 4px 0 #000;
+            --stripe-pattern: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px, #000 4px);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            transition: none !important;
+            animation: none !important;
+        }
+
+        body {
+            background: #e5e5e5;
+            color: #000;
+            font-family: "Geneva", "Verdana", sans-serif;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            border-radius: 0;
+            color: #000;
+            font-family: inherit;
+        }
+
+        button {
+            touch-action: manipulation;
+        }
+
+        .window {
+            width: 95%;
+            max-width: 760px;
+            height: 90vh;
+            background: #fff;
+            border: 2px solid #000;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .title-bar {
+            height: 38px;
+            border-bottom: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .title-stripes {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            bottom: 4px;
+            left: 4px;
+            background-image: var(--stripe-pattern);
+            z-index: 0;
+        }
+
+        .title-text {
+            height: 100%;
+            max-width: 55%;
+            padding: 0 14px;
+            background: #fff;
+            font-size: 1.05rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            z-index: 1;
+        }
+
+        .close-box {
+            position: absolute;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            line-height: 1;
+            z-index: 2;
+        }
+
+        .close-box::before {
+            content: "";
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            bottom: -12px;
+            left: -12px;
+        }
+
+        .title-button {
+            position: absolute;
+            right: 8px;
+            min-width: 74px;
+            height: 28px;
+            padding: 0 7px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            font-size: 0.72rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .title-button::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            right: -6px;
+            bottom: -10px;
+            left: -6px;
+        }
+
+        .close-box:active,
+        .title-button:active,
+        .sys-btn:active,
+        .list-button:active,
+        .task-row:active,
+        .filter-button:active {
+            background: #000;
+            color: #fff;
+            box-shadow: none;
+            transform: translate(2px, 2px);
+        }
+
+        .content-area {
+            flex: 1 1 auto;
+            min-height: 0;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .view.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setup-scroll {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 18px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .setup-intro {
+            display: grid;
+            grid-template-columns: 64px minmax(0, 1fr);
+            column-gap: 14px;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+        }
+
+        .microsoft-mark {
+            width: 58px;
+            height: 58px;
+            border: 2px solid #000;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .setup-intro h1 {
+            margin: 0 0 6px;
+            font-size: 1.22rem;
+        }
+
+        .setup-intro p {
+            margin: 0;
+            font-size: 0.84rem;
+            line-height: 1.35;
+        }
+
+        .instructions {
+            margin: 0 0 16px;
+            padding-left: 24px;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .auth-stage {
+            display: none;
+            border: 2px solid #000;
+            padding: 16px;
+            background: #fff;
+        }
+
+        .auth-stage.active {
+            display: block;
+        }
+
+        .stage-title {
+            margin: 0 0 8px;
+            font-size: 1rem;
+        }
+
+        .stage-note {
+            margin: 0 0 14px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .device-code {
+            display: block;
+            width: 100%;
+            border: 3px double #000;
+            background: #fff;
+            padding: 13px 8px;
+            margin: 12px 0;
+            text-align: center;
+            font-family: "Courier New", monospace;
+            font-size: 1.55rem;
+            font-weight: bold;
+            letter-spacing: 0.12em;
+            user-select: text;
+        }
+
+        .auth-address {
+            display: flex;
+            align-items: center;
+            min-height: 48px;
+            margin: 0 0 12px;
+            padding: 8px;
+            border: 2px solid #000;
+            color: #000;
+            font-size: 0.78rem;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .account-card {
+            border: 3px double #000;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .account-card strong,
+        .account-card span {
+            display: block;
+        }
+
+        .account-card span {
+            margin-top: 5px;
+            font-size: 0.78rem;
+            line-height: 1.35;
+        }
+
+        .button-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .button-row > * {
+            margin-top: 6px;
+        }
+
+        .button-row > * + * {
+            margin-left: 9px;
+        }
+
+        .sys-btn {
+            min-height: 48px;
+            min-width: 92px;
+            padding: 8px 13px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            font-size: 0.82rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .sys-btn.primary {
+            border-width: 3px;
+        }
+
+        .sys-btn:disabled {
+            color: #666;
+            border-color: #777;
+            box-shadow: none;
+            cursor: default;
+        }
+
+        .app-layout {
+            display: grid;
+            grid-template-columns: 166px minmax(0, 1fr);
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .sidebar {
+            min-width: 0;
+            border-right: 2px solid #000;
+            background: #eee;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .sidebar-title {
+            min-height: 44px;
+            padding: 13px 10px 8px;
+            border-bottom: 1px solid #000;
+            font-size: 0.74rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .list-nav {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 6px;
+        }
+
+        .list-button {
+            width: 100%;
+            min-height: 48px;
+            margin-bottom: 6px;
+            padding: 7px 8px;
+            border: 1px solid transparent;
+            background: transparent;
+            text-align: left;
+            font-size: 0.78rem;
+            line-height: 1.25;
+            cursor: pointer;
+            overflow-wrap: anywhere;
+        }
+
+        .list-button.active {
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            font-weight: bold;
+        }
+
+        .sidebar-action {
+            width: calc(100% - 12px);
+            min-height: 48px;
+            margin: 6px;
+            padding: 7px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            font-size: 0.76rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .task-panel {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .task-header {
+            min-height: 54px;
+            border-bottom: 2px solid #000;
+            padding: 9px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .task-header h2 {
+            margin: 0;
+            min-width: 0;
+            font-size: 1.05rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .task-count {
+            margin-left: 10px;
+            border: 1px solid #000;
+            padding: 3px 6px;
+            font-size: 0.68rem;
+            font-family: "Courier New", monospace;
+            white-space: nowrap;
+        }
+
+        .quick-add {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 112px 52px;
+            column-gap: 8px;
+            padding: 10px;
+            border-bottom: 1px solid #000;
+        }
+
+        .text-input,
+        .select-input {
+            width: 100%;
+            min-height: 48px;
+            padding: 9px;
+            border: 2px solid #000;
+            background: #fff;
+            font-size: 0.82rem;
+        }
+
+        textarea.text-input {
+            min-height: 110px;
+            resize: vertical;
+            line-height: 1.4;
+        }
+
+        .add-button {
+            min-height: 48px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            font-size: 1.35rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .filter-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border-bottom: 2px solid #000;
+        }
+
+        .filter-button {
+            min-height: 48px;
+            border: 0;
+            border-right: 1px solid #000;
+            background: #fff;
+            font-size: 0.76rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .filter-button:last-child {
+            border-right: 0;
+        }
+
+        .filter-button.active {
+            background: #000;
+            color: #fff;
+        }
+
+        .task-list {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            background: #fff;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .task-row {
+            min-height: 62px;
+            width: 100%;
+            padding: 7px 10px;
+            border: 0;
+            border-bottom: 1px solid #000;
+            background: #fff;
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr) 22px;
+            column-gap: 8px;
+            align-items: center;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .check-button {
+            width: 48px;
+            height: 48px;
+            border: 2px solid #000;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .task-copy {
+            min-width: 0;
+        }
+
+        .task-title {
+            display: block;
+            font-size: 0.84rem;
+            font-weight: bold;
+            line-height: 1.3;
+            overflow-wrap: anywhere;
+        }
+
+        .task-meta {
+            display: block;
+            margin-top: 4px;
+            font-family: "Courier New", monospace;
+            font-size: 0.66rem;
+            line-height: 1.3;
+        }
+
+        .task-row.completed .task-title {
+            text-decoration: line-through;
+            font-weight: normal;
+        }
+
+        .importance-mark {
+            font-family: "Courier New", monospace;
+            font-size: 1.05rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .empty-state {
+            display: none;
+            padding: 38px 18px;
+            text-align: center;
+        }
+
+        .empty-state.active {
+            display: block;
+        }
+
+        .empty-state svg {
+            display: block;
+            margin: 0 auto 12px;
+        }
+
+        .empty-state strong,
+        .empty-state span {
+            display: block;
+        }
+
+        .empty-state span {
+            margin-top: 5px;
+            font-size: 0.76rem;
+            line-height: 1.4;
+        }
+
+        .loading-box {
+            padding: 28px 15px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-bar {
+            min-height: 26px;
+            border-top: 2px solid #000;
+            padding: 5px 9px;
+            background: #fff;
+            font-family: "Courier New", monospace;
+            font-size: 0.68rem;
+            line-height: 1.2;
+            flex-shrink: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 10000;
+            background: rgba(255, 255, 255, 0.84);
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 430px;
+            max-height: 88vh;
+            overflow-y: auto;
+            border: 2px solid #000;
+            box-shadow: 5px 5px 0 #000;
+            background: #fff;
+        }
+
+        .modal-title-bar {
+            min-height: 34px;
+            border-bottom: 2px solid #000;
+            padding: 8px 11px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            background-image: var(--stripe-pattern);
+        }
+
+        .modal-title-bar span {
+            background: #fff;
+            padding: 0 8px;
+        }
+
+        .modal-content {
+            padding: 14px;
+        }
+
+        .field-label {
+            display: block;
+            margin: 12px 0 5px;
+            font-size: 0.74rem;
+            font-weight: bold;
+        }
+
+        .field-label:first-child {
+            margin-top: 0;
+        }
+
+        .modal-message {
+            margin: 0;
+            font-size: 0.84rem;
+            line-height: 1.45;
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 620px) {
+            .window {
+                width: 98%;
+            }
+
+            .app-layout {
+                grid-template-columns: 124px minmax(0, 1fr);
+            }
+
+            .quick-add {
+                grid-template-columns: minmax(0, 1fr) 52px;
+                row-gap: 8px;
+            }
+
+            .quick-date {
+                grid-column: 1 / -1;
+                grid-row: 2;
+            }
+
+            .add-button {
+                grid-column: 2;
+                grid-row: 1;
+            }
+
+            .sidebar-title,
+            .list-button,
+            .sidebar-action {
+                font-size: 0.68rem;
+            }
+        }
+
+        @media (max-height: 540px) {
+            .window {
+                height: calc(100vh - 8px);
+            }
+
+            .status-bar {
+                display: none;
+            }
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"
+        integrity="sha384-+KqYOH8TSu3FKjN3ld86eZMYqq6lk+y2GjV1hyOW+1hT3Pk/aD8JFueZP1W3bPh1"
+        crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"
+        integrity="sha384-+OubPIxtsLCp2uUuSsvWDuBB9oSIEDIYt2qQfYki+vDmSxc6GQsBbBPH6Z6x5wrq"
+        crossorigin="anonymous"></script>
+    <script src="theme.js?v=19"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/rekindle-cloud.js?v=2"></script>
+</head>
+
+<body>
+    <main class="window" id="microsoft-todo-window">
+        <div class="title-bar">
+            <div class="title-stripes"></div>
+            <button type="button" class="close-box" onclick="window.location.href='index.html'" aria-label="Close">X</button>
+            <span class="title-text" data-i18n="app.microsofttodo.name">Microsoft To Do</span>
+            <button type="button" class="title-button" id="account-button" onclick="microsoftTodoApp.openSetup()"
+                data-i18n="microsofttodo.account">Account</button>
+        </div>
+
+        <div class="content-area">
+            <section class="view active" id="setup-view">
+                <div class="setup-scroll">
+                    <div class="setup-intro">
+                        <div class="microsoft-mark" aria-hidden="true">
+                            <svg width="44" height="44" viewBox="0 0 32 32" fill="none" stroke="black" stroke-width="2">
+                                <rect x="4" y="4" width="10" height="10"></rect>
+                                <rect x="18" y="4" width="10" height="10"></rect>
+                                <rect x="4" y="18" width="10" height="10"></rect>
+                                <rect x="18" y="18" width="10" height="10"></rect>
+                                <path d="M7 9 L10 12 L16 6" stroke-width="2"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 data-i18n="microsofttodo.setup.title">Microsoft To Do for ReKindle</h1>
+                            <p data-i18n="microsofttodo.setup.intro">A calm, text-first task list built for E-ink screens.</p>
+                        </div>
+                    </div>
+
+                    <ol class="instructions">
+                        <li data-i18n="microsofttodo.setup.step1">Sign in to your ReKindle account.</li>
+                        <li data-i18n="microsofttodo.setup.step2">Get a short code and enter it on Microsoft's sign-in page.</li>
+                        <li data-i18n="microsofttodo.setup.step3">Your tasks stay in Microsoft To Do; ReKindle stores only an encrypted authorization session.</li>
+                    </ol>
+
+                    <div class="auth-stage" id="stage-signed-out">
+                        <h2 class="stage-title" data-i18n="microsofttodo.auth.rekindle_title">ReKindle sign-in required</h2>
+                        <p class="stage-note" data-i18n="microsofttodo.auth.rekindle_help">Sign in on the ReKindle dashboard before connecting Microsoft To Do.</p>
+                        <div class="button-row">
+                            <button class="sys-btn primary" type="button" onclick="window.location.href='index.html?login=true'"
+                                data-i18n="microsofttodo.auth.rekindle_button">Open ReKindle sign-in</button>
+                        </div>
+                    </div>
+
+                    <div class="auth-stage active" id="stage-start">
+                        <h2 class="stage-title" data-i18n="microsofttodo.auth.connect_title">Connect Microsoft To Do</h2>
+                        <p class="stage-note" data-i18n="microsofttodo.auth.connect_help">Works with personal Microsoft accounts and supported work or school accounts.</p>
+                        <div class="button-row">
+                            <button class="sys-btn primary" id="connect-button" type="button" onclick="microsoftTodoApp.startAuthorization()"
+                                data-i18n="microsofttodo.auth.connect_button">Get sign-in code</button>
+                        </div>
+                    </div>
+
+                    <div class="auth-stage" id="stage-code">
+                        <h2 class="stage-title" data-i18n="microsofttodo.auth.code_title">Enter this code at Microsoft</h2>
+                        <p class="stage-note" data-i18n="microsofttodo.auth.code_help">On another device, open the address below, enter the code, and approve access to your tasks.</p>
+                        <span class="device-code" id="device-code">ABCD-EFGH</span>
+                        <a class="auth-address" id="verification-link" href="https://microsoft.com/devicelogin" target="_blank"
+                            rel="noopener">https://microsoft.com/devicelogin</a>
+                        <div class="button-row">
+                            <button class="sys-btn primary" id="check-button" type="button" onclick="microsoftTodoApp.pollAuthorization(true)"
+                                data-i18n="microsofttodo.auth.check_button">I approved it</button>
+                            <button class="sys-btn" type="button" onclick="microsoftTodoApp.restartAuthorization()"
+                                data-i18n="microsofttodo.auth.restart_button">New code</button>
+                        </div>
+                        <p class="stage-note" id="code-expiry" style="margin-top:12px; margin-bottom:0;">Waiting for approval...</p>
+                    </div>
+
+                    <div class="auth-stage" id="stage-connected">
+                        <h2 class="stage-title" data-i18n="microsofttodo.auth.connected_title">Microsoft To Do connected</h2>
+                        <div class="account-card">
+                            <strong data-i18n="app.microsofttodo.name">Microsoft To Do</strong>
+                            <span data-i18n="microsofttodo.auth.connected_help">Task lists are read from Microsoft Graph only when you open or refresh this app.</span>
+                        </div>
+                        <div class="button-row">
+                            <button class="sys-btn primary" type="button" onclick="microsoftTodoApp.openTasks()"
+                                data-i18n="microsofttodo.auth.open_button">Open tasks</button>
+                            <button class="sys-btn" type="button" onclick="microsoftTodoApp.openLogout()"
+                                data-i18n="microsofttodo.auth.disconnect_button">Disconnect</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="view" id="tasks-view">
+                <div class="app-layout">
+                    <aside class="sidebar">
+                        <div class="sidebar-title" data-i18n="microsofttodo.lists">Lists</div>
+                        <nav class="list-nav" id="list-nav" aria-label="Task lists"></nav>
+                        <button class="sidebar-action" type="button" onclick="microsoftTodoApp.openNewList()"
+                            data-i18n="microsofttodo.new_list">+ New list</button>
+                    </aside>
+
+                    <section class="task-panel">
+                        <header class="task-header">
+                            <h2 id="list-title">Tasks</h2>
+                            <span class="task-count" id="task-count">0 open</span>
+                        </header>
+
+                        <form class="quick-add" id="quick-add-form">
+                            <input class="text-input" id="quick-title" type="text" maxlength="255" autocomplete="off"
+                                placeholder="Add a task" data-i18n-placeholder="microsofttodo.add_placeholder">
+                            <input class="text-input quick-date" id="quick-due" type="text" inputmode="numeric" maxlength="10"
+                                placeholder="YYYY-MM-DD" aria-label="Due date" data-i18n-placeholder="microsofttodo.due_placeholder">
+                            <button class="add-button" id="quick-add-button" type="submit" aria-label="Add task">+</button>
+                        </form>
+
+                        <div class="filter-bar">
+                            <button class="filter-button active" id="filter-all" type="button" onclick="microsoftTodoApp.setFilter('all')"
+                                data-i18n="microsofttodo.filter.all">All</button>
+                            <button class="filter-button" id="filter-active" type="button" onclick="microsoftTodoApp.setFilter('active')"
+                                data-i18n="microsofttodo.filter.active">Active</button>
+                            <button class="filter-button" id="filter-completed" type="button" onclick="microsoftTodoApp.setFilter('completed')"
+                                data-i18n="microsofttodo.filter.completed">Done</button>
+                        </div>
+
+                        <div class="task-list" id="task-list">
+                            <div class="loading-box" id="tasks-loading" data-i18n="microsofttodo.loading">Loading tasks...</div>
+                            <div class="empty-state" id="empty-state">
+                                <svg width="46" height="46" viewBox="0 0 32 32" fill="none" stroke="black" stroke-width="2">
+                                    <rect x="5" y="4" width="22" height="24"></rect>
+                                    <path d="M9 11 L12 14 L17 8"></path>
+                                    <line x1="18" y1="12" x2="23" y2="12"></line>
+                                    <path d="M9 21 L12 24 L17 18"></path>
+                                    <line x1="18" y1="22" x2="23" y2="22"></line>
+                                </svg>
+                                <strong data-i18n="microsofttodo.empty.title">Nothing here</strong>
+                                <span data-i18n="microsofttodo.empty.help">Add a task above or choose another filter.</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+        </div>
+
+        <div class="status-bar" id="status-bar" data-i18n="microsofttodo.status.checking">Checking Microsoft To Do...</div>
+    </main>
+
+    <div class="modal-overlay" id="task-modal">
+        <div class="modal-box">
+            <div class="modal-title-bar"><span data-i18n="microsofttodo.details.title">Task details</span></div>
+            <form class="modal-content" id="task-form">
+                <label class="field-label" for="detail-title" data-i18n="microsofttodo.details.name">Title</label>
+                <input class="text-input" id="detail-title" type="text" maxlength="255">
+
+                <label class="field-label" for="detail-due" data-i18n="microsofttodo.details.due">Due date</label>
+                <input class="text-input" id="detail-due" type="text" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD">
+
+                <label class="field-label" for="detail-importance" data-i18n="microsofttodo.details.importance">Importance</label>
+                <select class="select-input" id="detail-importance">
+                    <option value="low" data-i18n="microsofttodo.importance.low">Low</option>
+                    <option value="normal" data-i18n="microsofttodo.importance.normal">Normal</option>
+                    <option value="high" data-i18n="microsofttodo.importance.high">Important</option>
+                </select>
+
+                <label class="field-label" for="detail-notes" data-i18n="microsofttodo.details.notes">Notes</label>
+                <textarea class="text-input" id="detail-notes" maxlength="5000"></textarea>
+
+                <div class="button-row">
+                    <button class="sys-btn primary" id="save-task-button" type="submit"
+                        data-i18n="microsofttodo.details.save">Save</button>
+                    <button class="sys-btn" type="button" onclick="microsoftTodoApp.closeModal('task-modal')"
+                        data-i18n="common.cancel">Cancel</button>
+                    <button class="sys-btn" type="button" onclick="microsoftTodoApp.openDelete()"
+                        data-i18n="common.delete">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="new-list-modal">
+        <div class="modal-box">
+            <div class="modal-title-bar"><span data-i18n="microsofttodo.new_list_title">New task list</span></div>
+            <form class="modal-content" id="new-list-form">
+                <label class="field-label" for="new-list-name" data-i18n="microsofttodo.new_list_name">List name</label>
+                <input class="text-input" id="new-list-name" type="text" maxlength="255">
+                <div class="button-row">
+                    <button class="sys-btn primary" id="create-list-button" type="submit"
+                        data-i18n="common.create">Create</button>
+                    <button class="sys-btn" type="button" onclick="microsoftTodoApp.closeModal('new-list-modal')"
+                        data-i18n="common.cancel">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="delete-modal">
+        <div class="modal-box">
+            <div class="modal-title-bar"><span data-i18n="microsofttodo.delete.title">Delete task?</span></div>
+            <div class="modal-content">
+                <p class="modal-message" data-i18n="microsofttodo.delete.help">This removes the task from Microsoft To Do.</p>
+                <div class="button-row">
+                    <button class="sys-btn primary" id="delete-task-button" type="button" onclick="microsoftTodoApp.deleteTask()"
+                        data-i18n="common.delete">Delete</button>
+                    <button class="sys-btn" type="button" onclick="microsoftTodoApp.closeModal('delete-modal')"
+                        data-i18n="common.cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="logout-modal">
+        <div class="modal-box">
+            <div class="modal-title-bar"><span data-i18n="microsofttodo.logout.title">Disconnect Microsoft To Do?</span></div>
+            <div class="modal-content">
+                <p class="modal-message" data-i18n="microsofttodo.logout.help">ReKindle will delete its encrypted Microsoft session. Your Microsoft tasks will not be deleted.</p>
+                <div class="button-row">
+                    <button class="sys-btn primary" id="logout-button" type="button" onclick="microsoftTodoApp.logout()"
+                        data-i18n="microsofttodo.auth.disconnect_button">Disconnect</button>
+                    <button class="sys-btn" type="button" onclick="microsoftTodoApp.closeModal('logout-modal')"
+                        data-i18n="common.cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="error-modal">
+        <div class="modal-box">
+            <div class="modal-title-bar"><span data-i18n="common.error">Error</span></div>
+            <div class="modal-content">
+                <p class="modal-message" id="error-message">Could not reach Microsoft To Do.</p>
+                <div class="button-row">
+                    <button class="sys-btn primary" type="button" onclick="microsoftTodoApp.closeModal('error-modal')"
+                        data-i18n="common.ok">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.rekindleMicrosoftTodoFirebaseConfig = {
+            apiKey: "__REKINDLE_FIREBASE_API_KEY__",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork",
+            storageBucket: "rekindle-fork.firebasestorage.app",
+            messagingSenderId: "136525921771",
+            appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
+        };
+    </script>
+    <script src="js/microsoft-todo.js?v=1"></script>
+</body>
+
+</html>

@@ -49,6 +49,7 @@ cross-instance cache is required later.
 - listing and deleting objects owned by the authenticated user;
 - authenticated AI, OCR, mail, content proxies, Suggestions reports, and billing.
 - an authenticated Telegram MTProto client with encrypted per-user sessions and optional MTProxy routing.
+- an authenticated Microsoft To Do client using Microsoft Graph device authorization and encrypted per-user OAuth sessions.
 - a public GET/HEAD content proxy with SSRF protection, IP rate limits and a
   5 MB response cap, plus the NRL scoreboard route used by local apps.
 
@@ -65,10 +66,13 @@ The function requires these secret-backed environment variables:
 - `TELEGRAM_API_ID`
 - `TELEGRAM_API_HASH`
 - `TELEGRAM_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
+- `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
 
 It also requires the non-secret variables `S3_BUCKET`, `ALLOWED_ORIGINS`,
 `YANDEX_FOLDER_ID`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, and
-`STRIPE_PRICE_LIFETIME`. `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` are
+`STRIPE_PRICE_LIFETIME`. Microsoft To Do additionally requires the public
+`MICROSOFT_TODO_CLIENT_ID`; `MICROSOFT_TODO_TENANT` is optional and defaults to
+`common`. `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` are
 optional; without them, Suggestions reports are still stored but no Discord embed is
 sent. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
 use the IAM token supplied to the function through its attached service account.
@@ -80,6 +84,13 @@ Telegram authorization sessions are stored in the server-only Firestore
 browser cannot access that collection directly. Login codes and 2FA passwords
 are never persisted. User-supplied MTProxy hosts are DNS-resolved and rejected
 if any result is private or local before the encrypted configuration is saved.
+
+Microsoft device codes and OAuth sessions are stored in the server-only
+`microsoft_todo_sessions/{firebaseUid}` collection after AES-256-GCM encryption.
+The app registration must allow public-client device flow and delegated
+`Tasks.ReadWrite`; do not configure a client secret or application-wide task
+permission. Task content remains in Microsoft Graph and is not copied to
+Firestore.
 
 The runtime service account needs only these folder roles:
 

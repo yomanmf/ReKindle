@@ -248,6 +248,8 @@
   "app.suggestions.desc": "为新功能投票！",
   "app.suggestions.name": "建议",
   "app.tasks.name": "任务",
+  "app.microsofttodo.desc": "适合电子墨水屏的 Microsoft 任务。",
+  "app.microsofttodo.name": "Microsoft To Do",
   "app.teleprompter.desc": "逐行滚动笔记。",
   "app.teleprompter.name": "提词器",
   "app.telegram.desc": "适用于电子墨水屏的 Telegram。",
