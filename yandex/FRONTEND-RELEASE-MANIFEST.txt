@@ -15,6 +15,7 @@ index_old.html
 interactive.html
 js/rekindle-cloud.js
 js/reddit-comments.js
+js/reddit-feed-settings.js
 js/telegram.js
 js/microsoft-todo.js
 login.html

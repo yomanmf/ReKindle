@@ -503,6 +503,8 @@ before removing the obsolete `users_public` and `user_cards` trees.
 
 **Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, Telegram, Microsoft To Do, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
+**Reddit feed preference contract:** Sorting preferences are per subreddit, not global. `reddit.html` stores the normalized map locally and in `users/{uid}/apps/reddit.feed_preferences`; keep the allowed values and URL/cache construction in `js/reddit-feed-settings.js`. Reddit's non-default feeds use `/r/{sub}/{sort}` and `top`/`controversial` add the `t` period. Every cache key must include subreddit, sort, and the applicable period so an offline fallback cannot display a different feed.
+
 **Telegram is a server-side MTProto client:** `telegram.html` talks only to the
 authenticated `/api/rekindle/telegram/{action}` routes. The Yandex backend uses
 `teleproto` and a Telegram application `api_id`/`api_hash`; it is not a Bot API

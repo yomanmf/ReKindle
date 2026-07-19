@@ -276,6 +276,52 @@
             margin-left: 10px;
         }
 
+        .feed-settings-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 6px 10px;
+            background: white;
+            border-bottom: 2px solid black;
+            flex-shrink: 0;
+            font-size: 0.85rem;
+        }
+
+        .feed-settings-row.hidden {
+            display: none;
+        }
+
+        .feed-setting {
+            display: flex;
+            align-items: center;
+            min-height: 48px;
+        }
+
+        .feed-setting + .feed-setting {
+            margin-left: 18px;
+        }
+
+        .feed-setting-label {
+            font-weight: bold;
+            margin-right: 7px;
+        }
+
+        .feed-select {
+            min-height: 48px;
+            border: 2px solid black;
+            border-radius: 0;
+            background: white;
+            color: black;
+            padding: 5px 28px 5px 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        #feed-time-setting.hidden {
+            display: none;
+        }
+
         .nav-btn {
             background: white;
             border: 2px solid black;
@@ -549,6 +595,7 @@
     <script src="js/i18n.js"></script>
     <script src="js/rekindle-cloud.js"></script>
     <script src="js/reddit-comments.js?v=3"></script>
+    <script src="js/reddit-feed-settings.js?v=1"></script>
 </head>
 
 <body>
@@ -584,6 +631,30 @@
                     <button class="nav-btn next-thread-btn" id="next-thread-btn" type="button"
                         onclick="ui.goToNextThread()" aria-label="Next thread"
                         data-i18n-title="reddit.thread.next" title="Next thread">&gt;</button>
+                </div>
+
+                <div id="feed-settings-row" class="feed-settings-row">
+                    <label class="feed-setting" for="feed-sort-select">
+                        <span class="feed-setting-label" data-i18n="reddit.feed.sort">Sort</span>
+                        <select id="feed-sort-select" class="feed-select" onchange="ui.changeFeedSort()">
+                            <option value="hot" data-i18n="reddit.feed.sort.hot">Hot</option>
+                            <option value="new" data-i18n="reddit.feed.sort.new">New</option>
+                            <option value="top" data-i18n="reddit.feed.sort.top">Top</option>
+                            <option value="rising" data-i18n="reddit.feed.sort.rising">Rising</option>
+                            <option value="controversial" data-i18n="reddit.feed.sort.controversial">Controversial</option>
+                        </select>
+                    </label>
+                    <label id="feed-time-setting" class="feed-setting hidden" for="feed-time-select">
+                        <span class="feed-setting-label" data-i18n="reddit.feed.time">Period</span>
+                        <select id="feed-time-select" class="feed-select" onchange="ui.changeFeedTime()">
+                            <option value="hour" data-i18n="reddit.feed.time.hour">Past hour</option>
+                            <option value="day" data-i18n="reddit.feed.time.day">Today</option>
+                            <option value="week" data-i18n="reddit.feed.time.week">This week</option>
+                            <option value="month" data-i18n="reddit.feed.time.month">This month</option>
+                            <option value="year" data-i18n="reddit.feed.time.year">This year</option>
+                            <option value="all" data-i18n="reddit.feed.time.all">All time</option>
+                        </select>
+                    </label>
                 </div>
 
                 <div id="rate-limit-message"
@@ -798,16 +869,14 @@
             },
 
             async getSubreddit(sub, after) {
-                let url = `/r/${sub}`;
-                if (after) url += `?after=${after}&limit=25`;
-                else url += `?limit=25`;
+                const preference = arguments[2];
+                const url = window.RekindleRedditFeedSettings.buildFeedEndpoint(sub, preference, after, false);
                 return this.request(url);
             },
 
             async getSubredditJson(sub, after) {
-                let url = `/r/${sub}.json`;
-                if (after) url += `?after=${after}&limit=25`;
-                else url += `?limit=25`;
+                const preference = arguments[2];
+                const url = window.RekindleRedditFeedSettings.buildFeedEndpoint(sub, preference, after, true);
                 return this.request(url);
             },
 
@@ -1001,6 +1070,7 @@
             commentNavLastScrollTop: 0,
             feedPosts: [],
             currentPostIndex: -1,
+            feedPreferences: {},
 
             init() {
                 if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
@@ -1011,7 +1081,10 @@
                 if (localSubs) this.savedSubs = JSON.parse(localSubs);
                 else this.savedSubs = ['BestOf', 'News', 'Technology', 'Kindle', 'eInk'];
 
+                this.loadLocalFeedPreferences();
+
                 this.renderSidebar();
+                this.updateFeedControls();
                 this.initScrollListener();
 
                 if (this.restoreReturnState()) {
@@ -1039,6 +1112,16 @@
                             this.renderSidebar();
                             document.getElementById('sync-status').innerText = "Synced";
                         }
+                        if (data.feed_preferences && typeof data.feed_preferences === 'object') {
+                            const previousPreference = this.getFeedPreference(this.currentSub);
+                            this.feedPreferences = window.RekindleRedditFeedSettings.normalizePreferences(data.feed_preferences);
+                            this.saveLocalFeedPreferences();
+                            this.updateFeedControls();
+                            const syncedPreference = this.getFeedPreference(this.currentSub);
+                            if (!this.currentThread && (previousPreference.sort !== syncedPreference.sort || previousPreference.time !== syncedPreference.time)) {
+                                this.loadCurrentSub();
+                            }
+                        }
                     } else {
                         // First time: Push local to server
                         this.pushSavedSubs();
@@ -1053,6 +1136,7 @@
                 const userRef = db.collection('users').doc(currentUser.uid).collection('apps').doc('reddit');
                 userRef.set({
                     saved_subs: this.savedSubs,
+                    feed_preferences: this.feedPreferences,
                     last_updated: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true }).then(() => {
                     document.getElementById('sync-status').innerText = "Synced";
@@ -1099,6 +1183,65 @@
 
             saveLocal() {
                 localStorage.setItem('reddit_saved_subs', JSON.stringify(this.savedSubs));
+            },
+
+            loadLocalFeedPreferences() {
+                try {
+                    const raw = localStorage.getItem('reddit_feed_preferences_v1');
+                    this.feedPreferences = window.RekindleRedditFeedSettings.normalizePreferences(raw ? JSON.parse(raw) : {});
+                } catch (e) {
+                    console.warn('Failed to read Reddit feed preferences:', e);
+                    this.feedPreferences = {};
+                }
+            },
+
+            saveLocalFeedPreferences() {
+                try {
+                    localStorage.setItem('reddit_feed_preferences_v1', JSON.stringify(this.feedPreferences));
+                } catch (e) {
+                    console.warn('Failed to save Reddit feed preferences:', e);
+                }
+            },
+
+            getFeedPreference(sub) {
+                const key = window.RekindleRedditFeedSettings.subredditKey(sub || this.currentSub);
+                return window.RekindleRedditFeedSettings.normalizePreference(this.feedPreferences[key]);
+            },
+
+            setFeedPreference(sub, preference) {
+                const key = window.RekindleRedditFeedSettings.subredditKey(sub);
+                this.feedPreferences[key] = window.RekindleRedditFeedSettings.normalizePreference(preference);
+                this.saveLocalFeedPreferences();
+                this.pushSavedSubs();
+            },
+
+            updateFeedControls() {
+                const row = document.getElementById('feed-settings-row');
+                const sortSelect = document.getElementById('feed-sort-select');
+                const timeSetting = document.getElementById('feed-time-setting');
+                const timeSelect = document.getElementById('feed-time-select');
+                if (!row || !sortSelect || !timeSetting || !timeSelect) return;
+
+                const preference = this.getFeedPreference(this.currentSub);
+                sortSelect.value = preference.sort;
+                timeSelect.value = preference.time;
+                row.classList.toggle('hidden', !!this.currentThread);
+                timeSetting.classList.toggle('hidden', !window.RekindleRedditFeedSettings.usesTime(preference.sort));
+            },
+
+            changeFeedSort() {
+                const sort = document.getElementById('feed-sort-select').value;
+                const current = this.getFeedPreference(this.currentSub);
+                this.setFeedPreference(this.currentSub, { sort: sort, time: current.time });
+                this.updateFeedControls();
+                this.loadCurrentSub();
+            },
+
+            changeFeedTime() {
+                const time = document.getElementById('feed-time-select').value;
+                const current = this.getFeedPreference(this.currentSub);
+                this.setFeedPreference(this.currentSub, { sort: current.sort, time: time });
+                this.loadCurrentSub();
             },
 
             updateSaveBtn() {
@@ -1366,12 +1509,13 @@
                 content.appendChild(loader);
 
                 try {
-                    let responseText = await api.getSubreddit(this.currentSub, this.afterToken);
+                    const preference = this.getFeedPreference(this.currentSub);
+                    let responseText = await api.getSubreddit(this.currentSub, this.afterToken, preference);
                     console.log('Load more RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
                     let posts = parseRssPosts(responseText);
                     console.log('Load more RSS posts:', posts.length);
                     if (posts.length === 0) {
-                        responseText = await api.getSubredditJson(this.currentSub, this.afterToken);
+                        responseText = await api.getSubredditJson(this.currentSub, this.afterToken, preference);
                         console.log('Load more JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
                         posts = parseJsonPosts(responseText);
                         console.log('Load more JSON posts:', posts.length);
@@ -1418,6 +1562,7 @@
                 this.currentPostIndex = -1;
                 this.resetCommentNavigation();
                 this.updateThreadNavigation();
+                this.updateFeedControls();
 
                 document.getElementById('back-btn').style.display = 'none';
                 this.renderSidebar();
@@ -1426,18 +1571,20 @@
                 content.innerHTML = `<div class="loading">Loading r/${escapeHtml(sub)}...</div>`;
 
                 try {
-                    let responseText = await api.getSubreddit(sub);
+                    const preference = this.getFeedPreference(sub);
+                    const cacheKey = window.RekindleRedditFeedSettings.cacheKey(sub, preference);
+                    let responseText = await api.getSubreddit(sub, null, preference);
                     console.log('RSS response length:', responseText.length, 'preview:', responseText.substring(0, 200));
                     let posts = parseRssPosts(responseText);
                     console.log('RSS posts parsed:', posts.length);
                     if (posts.length === 0) {
-                        responseText = await api.getSubredditJson(sub);
+                        responseText = await api.getSubredditJson(sub, null, preference);
                         console.log('JSON response length:', responseText.length, 'preview:', responseText.substring(0, 200));
                         posts = parseJsonPosts(responseText);
                         console.log('JSON posts parsed:', posts.length);
                     }
                     try {
-                        localStorage.setItem('reddit_feed_xml_' + sub, responseText);
+                        localStorage.setItem(cacheKey, responseText);
                     } catch (e) {
                         console.warn('Failed to cache feed:', e);
                     }
@@ -1445,7 +1592,10 @@
 
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
-                    const cached = localStorage.getItem('reddit_feed_xml_' + sub);
+                    const preference = this.getFeedPreference(sub);
+                    const cacheKey = window.RekindleRedditFeedSettings.cacheKey(sub, preference);
+                    const legacyCache = preference.sort === 'hot' ? localStorage.getItem('reddit_feed_xml_' + sub) : null;
+                    const cached = localStorage.getItem(cacheKey) || legacyCache;
                     if (cached) {
                         let posts = parseRssPosts(cached);
                         if (posts.length === 0) posts = parseJsonPosts(cached);
@@ -1463,6 +1613,7 @@
                 this.scrollTimeout = null;
                 this.afterToken = null;
                 this.currentThread = permalink;
+                this.updateFeedControls();
                 this.currentPostIndex = window.RekindleRedditComments.findPostIndex(this.feedPosts, permalink);
                 this.isThreadLoading = true;
                 this.updateThreadNavigation();
