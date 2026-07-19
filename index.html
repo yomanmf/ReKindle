@@ -785,12 +785,46 @@
             text-transform: uppercase;
         }
 
+        .dashboard-weather-hourly-row {
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr) 48px;
+            gap: 6px;
+            align-items: stretch;
+        }
+
         .dashboard-weather-hourly {
             display: grid;
-            grid-template-columns: repeat(8, minmax(64px, 1fr));
+            grid-auto-flow: column;
+            grid-auto-columns: calc((100% - 42px) / 8);
             gap: 6px;
-            overflow-x: auto;
+            overflow-x: hidden;
             padding-bottom: 4px;
+            scroll-behavior: auto;
+        }
+
+        .dashboard-weather-hour-nav {
+            min-width: 48px;
+            min-height: 88px;
+            padding: 0;
+            border: 2px solid black;
+            background: white;
+            box-shadow: 2px 2px 0 black;
+            color: black;
+            font-family: inherit;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .dashboard-weather-hour-nav:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+            background: black;
+            color: white;
+        }
+
+        .dashboard-weather-hour-nav:disabled {
+            visibility: hidden;
         }
 
         .dashboard-weather-hour {
@@ -825,6 +859,12 @@
             font-size: 0.75rem;
             font-weight: bold;
             white-space: nowrap;
+        }
+
+        @media (max-width: 600px) {
+            .dashboard-weather-hourly {
+                grid-auto-columns: 64px;
+            }
         }
 
         .dashboard-weather-week {
@@ -1248,7 +1288,15 @@
                                 </div>
                             </div>
                             <div class="dashboard-weather-hour-title" data-i18n="dashboard.weather.hourly">Hourly forecast</div>
-                            <div id="db-weather-hourly" class="dashboard-weather-hourly"></div>
+                            <div class="dashboard-weather-hourly-row">
+                                <button id="db-weather-hour-prev" class="dashboard-weather-hour-nav" type="button"
+                                    onclick="scrollDashboardWeatherHours(-1)" title="Previous hours"
+                                    data-i18n-title="dashboard.weather.previous_hours" disabled>&lt;</button>
+                                <div id="db-weather-hourly" class="dashboard-weather-hourly"></div>
+                                <button id="db-weather-hour-next" class="dashboard-weather-hour-nav" type="button"
+                                    onclick="scrollDashboardWeatherHours(1)" title="Next hours"
+                                    data-i18n-title="dashboard.weather.next_hours" disabled>&gt;</button>
+                            </div>
                             <div class="dashboard-weather-week-title" data-i18n="dashboard.weather.week">7-day forecast</div>
                             <div id="db-weather-week" class="dashboard-weather-week"></div>
                         </div>
@@ -2535,6 +2583,26 @@
             }
             return (hour < 10 ? '0' : '') + hour + ':00';
         }
+
+        function updateDashboardWeatherHourNav() {
+            const container = document.getElementById('db-weather-hourly');
+            const previousButton = document.getElementById('db-weather-hour-prev');
+            const nextButton = document.getElementById('db-weather-hour-next');
+            if (!container || !previousButton || !nextButton) return;
+            const maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
+            previousButton.disabled = container.scrollLeft <= 1;
+            nextButton.disabled = maxScroll <= 1 || container.scrollLeft >= maxScroll - 1;
+        }
+
+        function scrollDashboardWeatherHours(direction) {
+            const container = document.getElementById('db-weather-hourly');
+            if (!container) return;
+            const maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
+            const pageWidth = container.clientWidth + 6;
+            const target = container.scrollLeft + (direction * pageWidth);
+            container.scrollLeft = Math.max(0, Math.min(maxScroll, target));
+            updateDashboardWeatherHourNav();
+        }
         
         async function fetchDashboardWeather() {
             try {
@@ -2618,7 +2686,7 @@
                                 break;
                             }
                         }
-                        for (let i = startIndex; i < data.hourly.time.length && i < startIndex + 8; i++) {
+                        for (let i = startIndex; i < data.hourly.time.length && i < startIndex + 24; i++) {
                             const isCurrent = i === startIndex;
                             const timeLabel = isCurrent
                                 ? (window.t ? window.t('dashboard.weather.now', 'Now') : 'Now')
@@ -2630,6 +2698,8 @@
                                 '</div>';
                         }
                         hourlyContainer.innerHTML = hourlyHtml;
+                        hourlyContainer.scrollLeft = 0;
+                        updateDashboardWeatherHourNav();
                     }
 
                     const weekContainer = document.getElementById('db-weather-week');
@@ -2912,6 +2982,7 @@
         window.toggleHidden = toggleHidden;
         window.changeDashboardCalendar = changeDashboardCalendar;
         window.selectDashboardCalendarDay = selectDashboardCalendarDay;
+        window.scrollDashboardWeatherHours = scrollDashboardWeatherHours;
     })();
     </script>
     <script src="https://cdn.counter.dev/script.js" data-id="4e551911-0e5d-4c48-91a6-b828c3301675" data-utcoffset="11"
