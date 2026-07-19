@@ -1195,6 +1195,21 @@
         const gridEl = document.getElementById('pixel-grid');
         const labelEl = document.getElementById('preset-label');
 
+        function updateSettingsSelectValue(selectId, value) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            select.value = value;
+
+            // custom-select.js refreshes its visible trigger on a change event.
+            // Temporarily detach the inline save handler so loading a saved
+            // value updates the UI without writing the setting again.
+            const changeHandler = select.onchange;
+            select.onchange = null;
+            select.dispatchEvent(new Event('change'));
+            select.onchange = changeHandler;
+        }
+
         window.onload = () => {
             initGrid();
 
@@ -1228,7 +1243,7 @@
 
             document.getElementById('caldav-url').value = localStorage.getItem('rekindle_caldav_url') || '';
             document.getElementById('unit-system').value = localStorage.getItem('rekindle_unit_system') || 'auto';
-            document.getElementById('display-mode-select').value = localStorage.getItem('rekindle_display_mode') || 'led';
+            updateSettingsSelectValue('display-mode-select', localStorage.getItem('rekindle_display_mode') || 'led');
             const autoEnabled = (localStorage.getItem('rekindle_scale_auto') !== 'false');
             document.getElementById('toggle-scaling').checked = autoEnabled;
             document.getElementById('manual-scale-section').style.display = autoEnabled ? 'none' : 'block';
@@ -1792,10 +1807,7 @@
 
             // Load Display Mode
             const displayMode = localStorage.getItem('rekindle_display_mode') || 'led';
-            const displayModeSelect = document.getElementById('display-mode-select');
-            if (displayModeSelect) {
-                displayModeSelect.value = displayMode;
-            }
+            updateSettingsSelectValue('display-mode-select', displayMode);
 
             // Load Location
             updateLocationDisplay();
@@ -1996,7 +2008,7 @@
 
                     if (data.displayMode) {
                         localStorage.setItem('rekindle_display_mode', data.displayMode);
-                        document.getElementById('display-mode-select').value = data.displayMode;
+                        updateSettingsSelectValue('display-mode-select', data.displayMode);
                         if (window.rekindleInjectEInkStyles) window.rekindleInjectEInkStyles();
                     }
                 }

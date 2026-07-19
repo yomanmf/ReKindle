@@ -257,6 +257,16 @@ When creating modals or popups dynamically from shared JavaScript (e.g., `time.j
 
 Without these resets, host-page styles will leak into your injected modal.
 
+**Custom-select value gotcha:** `js/custom-select.js` refreshes its visible
+trigger when the hidden native `<select>` emits `change`. Assigning
+`select.value` programmatically does not emit that event, and a
+`MutationObserver` cannot observe a form control's live `value` property. This
+can make a saved setting look as though it reverted even though `localStorage`
+contains the correct value. In `settings.html`, load programmatic values through
+`updateSettingsSelectValue(selectId, value)`, which suppresses the inline save
+handler while notifying the custom control. Apply the same pattern on other
+pages that restore custom-select values after `DOMContentLoaded`.
+
 ### 6a. Cross-page dark theme
 
 All root HTML pages load `theme.js`, so dark mode must stay centralized there
