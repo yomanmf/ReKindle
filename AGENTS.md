@@ -999,6 +999,17 @@ production `theme.js` was stale because the shared asset was absent from the
 release manifest, so Reddit opened an empty Browser tab even though its target
 URL had been encoded correctly.
 
+**Browser Reader Reddit fallback:** Yandex-hosted requests from the generic
+Reader backend can receive HTTP 403 from `www.reddit.com` even when the same
+public permalink works in a desktop browser. Before fetching an article,
+`yandex/rekindle-backend/index.js` normalizes exact Reddit web hosts
+(`reddit.com`, `www.reddit.com`, `new.reddit.com`, and `sh.reddit.com`) to
+`old.reddit.com` and sends the browser-like headers used by the dedicated Reddit
+proxy. Keep this host check exact so lookalike domains are not rewritten, and
+continue to pass the normalized URL through `validatePublicHttpUrl()` and its
+redirect revalidation. This fallback belongs in the Reader backend rather than
+the frontend because Reddit links can enter Browser from several pages.
+
 ## Git Workflow
 
 After successfully completing any task that changes code:

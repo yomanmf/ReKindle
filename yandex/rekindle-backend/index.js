@@ -504,15 +504,21 @@ async function readerContentProxy(event, path) {
         return { query: term, results: results };
     }
 
-    var targetUrl = String(query.url || "");
+    var targetUrl = normalizeReaderTargetUrl(String(query.url || ""));
     if (!targetUrl) throw httpError(400, "invalid-target", "An article URL is required.");
+    var articleHeaders = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9"
+    };
+    try {
+        if (new URL(targetUrl).hostname.toLowerCase() === "old.reddit.com") {
+            articleHeaders.Referer = "https://www.reddit.com/";
+        }
+    } catch (ignore) {}
     var fetched = await safeFetchHtml(targetUrl, {
         method: "GET",
-        headers: {
-            "User-Agent": "Mozilla/5.0 ReKindle-Yandex/1.0",
-            "Accept": "text/html,application/xhtml+xml",
-            "Accept-Language": "en-US,en;q=0.5"
-        }
+        headers: articleHeaders
     }, 3 * 1024 * 1024);
     var parsed = parseHTML(fetched.body);
     var document = parsed.document;
@@ -540,6 +546,16 @@ async function readerContentProxy(event, path) {
         siteName: article.siteName,
         excerpt: article.excerpt
     };
+}
+
+function normalizeReaderTargetUrl(value) {
+    var parsed;
+    try { parsed = new URL(String(value || "")); } catch (error) { return value; }
+    var host = parsed.hostname.toLowerCase();
+    if (host === "reddit.com" || host === "www.reddit.com" || host === "new.reddit.com" || host === "sh.reddit.com") {
+        parsed.hostname = "old.reddit.com";
+    }
+    return parsed.toString();
 }
 
 async function publicContentProxy(event, method, origin) {
@@ -1518,6 +1534,7 @@ module.exports.testHooks = {
     releaseDailyLimitRef: releaseDailyLimitRef,
     withReservedDailyLimit: withReservedDailyLimit,
     fetchWithTimeout: fetchWithTimeout,
+    normalizeReaderTargetUrl: normalizeReaderTargetUrl,
     generateWithYandex: generateWithYandex,
     aiUpstreamError: aiUpstreamError
 };

@@ -99,6 +99,22 @@ test("public content proxy returns bounded binary responses", async function () 
     }
 });
 
+test("reader routes Reddit pages through the stable old Reddit HTML interface", function () {
+    var normalize = backend.testHooks.normalizeReaderTargetUrl;
+    assert.equal(
+        normalize("https://www.reddit.com/r/MadeMeSmile/comments/abc123/example/?utm_source=test#comments"),
+        "https://old.reddit.com/r/MadeMeSmile/comments/abc123/example/?utm_source=test#comments"
+    );
+    assert.equal(
+        normalize("https://reddit.com/r/test/comments/abc123/example/"),
+        "https://old.reddit.com/r/test/comments/abc123/example/"
+    );
+    assert.equal(
+        normalize("https://notreddit.com/article"),
+        "https://notreddit.com/article"
+    );
+});
+
 test("registration validates input before accessing credentials", async function () {
     var result = await backend.handler(event(
         "POST",
