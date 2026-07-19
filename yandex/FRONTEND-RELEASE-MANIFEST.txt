@@ -55,3 +55,4 @@ locales/pt.json
 locales/ru.json
 locales/vi.json
 locales/zh.json
+theme.js

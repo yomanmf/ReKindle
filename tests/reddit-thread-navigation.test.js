@@ -62,3 +62,9 @@ test('ships the versioned navigation helper with the Yandex frontend release', f
     assert.match(releaseManifest, /^js\/reddit-comments\.js$/m);
     assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=3"><\/script>/);
 });
+
+test('keeps external thread links on the extensionless browser route', function () {
+    assert.match(redditHtml, /window\.location\.href = 'browser\?lite=true&return=\/reddit&url=' \+ encodeURIComponent\(url\)/);
+    assert.doesNotMatch(redditHtml, /browser\.html\?lite=true/);
+    assert.match(releaseManifest, /^theme\.js$/m);
+});

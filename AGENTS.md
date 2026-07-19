@@ -956,6 +956,17 @@ navigation helpers. When that API changes, bump its query version in
 `reddit.html`, keep `js/reddit-comments.js` in
 `yandex/FRONTEND-RELEASE-MANIFEST.txt`, and publish the helper before the page.
 
+**Pretty-URL query preservation:** `theme.js` removes `.html` with
+`history.replaceState()`. The replacement URL must always append
+`window.location.search` and `window.location.hash`; using only the pathname
+silently deletes startup parameters before page initialization. Prefer the
+extensionless `browser?...` route for internal Browser handoffs, keep
+`theme.js` in `yandex/FRONTEND-RELEASE-MANIFEST.txt`, and smoke-test that the
+production Browser retains `lite`, `return`, and `url`. On 19 July 2026 the
+production `theme.js` was stale because the shared asset was absent from the
+release manifest, so Reddit opened an empty Browser tab even though its target
+URL had been encoded correctly.
+
 ## Git Workflow
 
 After successfully completing any task that changes code:
