@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v23'; // Remove retired application pages and assets from old caches
+const CACHE_NAME = 'rekindle-cache-v24'; // Ship the restored cross-page dark theme
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=2',
-    './theme.js?v=18',
+    './theme.js?v=20',
     './logo.svg',
     './donate.svg',
     './manifest.json',

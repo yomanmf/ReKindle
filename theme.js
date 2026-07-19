@@ -13,15 +13,11 @@
     var AUTO_END_HOUR = 6;    // 6 AM
     var ROTATION_KEY = 'rekindle_rotation'; // '0', '90', '180', '270'
 
-    // Temporarily force light mode while dark mode is disabled.
-    var storedMode = localStorage.getItem(THEME_KEY);
-    if (storedMode === 'dark' || storedMode === 'auto') {
-        localStorage.setItem(THEME_KEY, 'light');
-    }
-
     function applyTheme() {
-        // Temporarily force light mode regardless of saved preference.
-        var mode = 'light';
+        var mode = localStorage.getItem(THEME_KEY) || 'light';
+        if (mode !== 'light' && mode !== 'dark' && mode !== 'auto') {
+            mode = 'light';
+        }
         var isDark = false;
 
         if (mode === 'dark') {
@@ -29,6 +25,10 @@
         } else if (mode === 'auto') {
             var now = new Date();
             var hour = now.getHours();
+            var savedOffset = parseFloat(localStorage.getItem('rekindle_timezone_offset'));
+            if (!isNaN(savedOffset)) {
+                hour = new Date(now.getTime() + (savedOffset * 60 * 60 * 1000)).getUTCHours();
+            }
             // Check if it's night time (after start hour OR before end hour)
             if (hour >= AUTO_START_HOUR || hour < AUTO_END_HOUR) {
                 isDark = true;
@@ -39,24 +39,21 @@
 
         var doc = document.documentElement;
         if (isDark) {
-            doc.style.colorScheme = 'dark';
+            // Native controls start light and are darkened by the root inversion too.
+            doc.style.colorScheme = 'light';
             doc.setAttribute('data-theme', 'dark');
             injectDarkStyles();
         } else {
-            doc.style.colorScheme = 'light';
+            doc.style.removeProperty('color-scheme');
             doc.removeAttribute('data-theme');
             removeDarkStyles();
         }
     }
 
     function injectDarkStyles() {
-        // 1. Try to set CSS variables if they exist (modern apps)
-        document.documentElement.style.setProperty('--bg-color', '#000000');
-        document.documentElement.style.setProperty('--text-color', '#ffffff');
-        document.documentElement.style.setProperty('--border-color', '#ffffff');
-        // Invert patterns or set to black
-
-        // 2. Inject global override styles for legacy/non-var apps
+        // A single root inversion covers every legacy page without maintaining
+        // page-specific dark palettes. Media receives the same filter once more
+        // so photos, videos, canvases, and embedded pages keep their own colors.
         var style = document.getElementById('rekindle-dark-theme');
         if (!style) {
             style = document.createElement('style');
@@ -64,8 +61,6 @@
             style.textContent =
                 '/* UNIVERSAL DARK MODE OVERRIDES */\n' +
                 ':root[data-theme="dark"] {\n' +
-                '    --bg-color: #000000;\n' +
-                '    --text-color: #ffffff;\n' +
                 '    background-color: #ffffff;\n' +
                 '    color: #000000;\n' +
                 '    height: 100%;\n' +
@@ -74,6 +69,9 @@
                 ':root[data-theme="dark"] img, \n' +
                 ':root[data-theme="dark"] video, \n' +
                 ':root[data-theme="dark"] canvas,\n' +
+                ':root[data-theme="dark"] iframe,\n' +
+                ':root[data-theme="dark"] object,\n' +
+                ':root[data-theme="dark"] embed,\n' +
                 ':root[data-theme="dark"] .no-invert {\n' +
                 '    filter: invert(1) hue-rotate(180deg);\n' +
                 '}\n' +
@@ -85,10 +83,6 @@
     }
 
     function removeDarkStyles() {
-        document.documentElement.style.removeProperty('--bg-color');
-        document.documentElement.style.removeProperty('--text-color');
-        document.documentElement.style.removeProperty('--border-color');
-
         var style = document.getElementById('rekindle-dark-theme');
         if (style) style.remove();
     }

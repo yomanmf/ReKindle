@@ -50,7 +50,7 @@
     <script src="time.js" defer></script>
     <script src="icons.js?v=2" defer></script>
     <script src="icons-beta.js" defer></script>
-    <script src="theme.js?v=18" defer></script>
+    <script src="theme.js?v=20" defer></script>
     <script src="bad_words.js?v=4" defer></script>
     <script src="js/i18n.js" defer></script>
     <script src="js/rekindle-cloud.js?v=1" defer></script>
@@ -1715,8 +1715,7 @@
                     if (data.manualLocation) localStorage.setItem('rekindle_location_manual', JSON.stringify(data.manualLocation));
                     if (data.unitSystem) localStorage.setItem('rekindle_unit_system', data.unitSystem);
                     if (data.themeMode) {
-                        // Dark mode is temporarily disabled.
-                        var syncedTheme = data.themeMode === 'light' ? 'light' : 'light';
+                        var syncedTheme = data.themeMode;
                         localStorage.setItem('rekindle_theme_mode', syncedTheme);
                         if (window.rekindleApplyTheme) window.rekindleApplyTheme();
                     }

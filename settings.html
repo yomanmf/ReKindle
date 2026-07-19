@@ -587,12 +587,12 @@
             <div class="setting-row">
                 <div class="setting-text">
                     <strong><span data-i18n="settings.theme">Theme</span> <span class="beta-badge">BETA</span></strong>
-                    <div class="setting-desc" data-i18n="settings.desc.theme">Light mode only. Dark mode is temporarily disabled.</div>
+                    <div class="setting-desc" data-i18n="settings.desc.theme">Light, Dark, or Auto (Night Time).</div>
                 </div>
-                <select id="theme-select" onchange="saveTheme()" disabled>
+                <select id="theme-select" onchange="saveTheme()">
                     <option value="light">Light</option>
-                    <option value="dark" disabled>Dark</option>
-                    <option value="auto" disabled>Auto (Night)</option>
+                    <option value="dark">Dark</option>
+                    <option value="auto">Auto (Night)</option>
                 </select>
             </div>
 
@@ -804,7 +804,7 @@
         </div>
     </div>
 
-    <script src="theme.js?v=18"></script> <!-- Inject Theme Script -->
+    <script src="theme.js?v=20"></script> <!-- Inject Theme Script -->
     <script src="js/i18n.js"></script>
     <script src="js/custom-select.js"></script>
 
@@ -1575,8 +1575,6 @@
 
         function saveTheme() {
             var val = document.getElementById('theme-select').value;
-            // Dark mode is temporarily disabled.
-            if (val !== 'light') val = 'light';
             localStorage.setItem('rekindle_theme_mode', val);
             if (window.rekindleApplyTheme) window.rekindleApplyTheme();
 
@@ -1789,7 +1787,7 @@
             }
 
             // Load Theme
-            const theme = 'light'; // Dark mode temporarily disabled
+            const theme = localStorage.getItem('rekindle_theme_mode') || 'light';
             document.getElementById('theme-select').value = theme;
 
             // Load Display Mode
@@ -1954,8 +1952,7 @@
                     }
 
                     if (data.themeMode) {
-                        // Dark mode is temporarily disabled.
-                        var syncedTheme = data.themeMode === 'light' ? 'light' : 'light';
+                        var syncedTheme = data.themeMode;
                         localStorage.setItem('rekindle_theme_mode', syncedTheme);
                         document.getElementById('theme-select').value = syncedTheme;
                         if (window.rekindleApplyTheme) window.rekindleApplyTheme();

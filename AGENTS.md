@@ -255,6 +255,21 @@ When creating modals or popups dynamically from shared JavaScript (e.g., `time.j
 
 Without these resets, host-page styles will leak into your injected modal.
 
+### 6a. Cross-page dark theme
+
+All root HTML pages load `theme.js`, so dark mode must stay centralized there
+instead of growing page-specific color overrides. The shared implementation
+inverts the rendered document at the root; `img`, `video`, `canvas`, `iframe`,
+`object`, and `embed` receive the same filter a second time so their original
+colors are preserved. Add `.no-invert` only to a non-media subtree that must
+also keep its original palette.
+
+Do not set dark-valued CSS variables such as `--bg-color: #000` while the root
+filter is active: the root inversion would turn them back to white. New pages
+must load the current cache-busted `theme.js` URL, and any theme release must
+also update the copy in `sw.js` and increment `CACHE_NAME`; otherwise the
+service worker can keep the light-only script alive across navigation.
+
 ### 7. Branding & Badges
 Standardized "Beta" or status badges.
 
