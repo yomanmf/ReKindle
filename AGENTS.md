@@ -46,7 +46,9 @@ production deployment.
 **macOS/zsh deployment-shell gotcha:** `path` is a special zsh array tied to
 `PATH`. A loop such as `for path in ...` overwrites the executable search path
 after its first iteration, so later `curl`, `jq`, and `yc` calls fail with
-`command not found`. Use a neutral variable such as `route` or `object_key`.
+`command not found`. `status` is also a read-only zsh parameter, so assigning an
+HTTP response code to it aborts the script with `read-only variable: status`.
+Use neutral names such as `route`, `object_key`, or `http_status`.
 
 ## 🚫 Restrictions (Target: Chromium 75)
 
