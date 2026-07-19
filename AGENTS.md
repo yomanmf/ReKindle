@@ -268,7 +268,10 @@ Do not set dark-valued CSS variables such as `--bg-color: #000` while the root
 filter is active: the root inversion would turn them back to white. New pages
 must load the current cache-busted `theme.js` URL, and any theme release must
 also update the copy in `sw.js` and increment `CACHE_NAME`; otherwise the
-service worker can keep the light-only script alive across navigation.
+service worker can keep the light-only script alive across navigation. When a
+theme version bump changes every root page, include all root HTML files in
+`yandex/FRONTEND-RELEASE-MANIFEST.txt`; publishing only `theme.js` and a subset
+of pages leaves the omitted screens requesting the previous cached query URL.
 
 ### 7. Branding & Badges
 Standardized "Beta" or status badges.

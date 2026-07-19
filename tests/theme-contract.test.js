@@ -13,10 +13,12 @@ test('every application page loads the current shared theme script', function ()
     var pages = fs.readdirSync(root).filter(function (name) {
         return name.endsWith('.html');
     });
+    var releaseManifest = read('yandex/FRONTEND-RELEASE-MANIFEST.txt').split(/\r?\n/);
 
     assert.equal(pages.length, 96);
     pages.forEach(function (page) {
         assert.match(read(page), /theme\.js\?v=20/, page + ' must load theme.js?v=20');
+        assert.ok(releaseManifest.includes(page), page + ' must ship in the dark-theme release');
     });
 });
 
