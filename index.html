@@ -774,6 +774,7 @@
             margin-top: 4px;
         }
 
+        .dashboard-weather-hour-title,
         .dashboard-weather-week-title {
             border-top: 2px solid black;
             padding-top: 10px;
@@ -782,6 +783,48 @@
             font-size: 0.8rem;
             font-weight: bold;
             text-transform: uppercase;
+        }
+
+        .dashboard-weather-hourly {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(64px, 1fr));
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .dashboard-weather-hour {
+            border: 1px solid black;
+            min-width: 0;
+            padding: 7px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .dashboard-weather-hour-current {
+            background: black;
+            color: white;
+        }
+
+        .dashboard-weather-hour-current .dashboard-weather-hour-icon svg * {
+            stroke: white;
+        }
+
+        .dashboard-weather-hour-icon {
+            width: 26px;
+            height: 26px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-weather-hour-time,
+        .dashboard-weather-hour-temp {
+            font-size: 0.75rem;
+            font-weight: bold;
+            white-space: nowrap;
         }
 
         .dashboard-weather-week {
@@ -1204,6 +1247,8 @@
                                     <div class="dashboard-weather-highlow" id="db-weather-highlow"></div>
                                 </div>
                             </div>
+                            <div class="dashboard-weather-hour-title" data-i18n="dashboard.weather.hourly">Hourly forecast</div>
+                            <div id="db-weather-hourly" class="dashboard-weather-hourly"></div>
                             <div class="dashboard-weather-week-title" data-i18n="dashboard.weather.week">7-day forecast</div>
                             <div id="db-weather-week" class="dashboard-weather-week"></div>
                         </div>
@@ -2482,6 +2527,15 @@
             if (code <= 99) return `<svg viewBox="0 0 24 24"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9" stroke="black" stroke-width="${s}" fill="none"/><polyline points="13 11 9 17 15 17 11 23" stroke="black" stroke-width="${s}" fill="none"/></svg>`;
             return `<svg viewBox="0 0 24 24"><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" stroke="black" stroke-width="${s}" fill="none"/><line x1="12" y1="15" x2="12" y2="21" stroke="black" stroke-width="${s}" stroke-dasharray="2 2"/></svg>`;
         }
+
+        function formatDashboardWeatherHour(wallTime) {
+            const hour = parseInt(wallTime.slice(11, 13), 10);
+            const lang = (document.documentElement.lang || 'en').toLowerCase();
+            if (lang.indexOf('en') === 0) {
+                return (hour % 12 || 12) + (hour >= 12 ? ' PM' : ' AM');
+            }
+            return (hour < 10 ? '0' : '') + hour + ':00';
+        }
         
         async function fetchDashboardWeather() {
             try {
@@ -2520,7 +2574,7 @@
                 const lEl = document.getElementById('db-weather-loc');
                 if (lEl) lEl.textContent = locName;
                 
-                const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=auto&temperature_unit=' + unit;
+                const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=auto&temperature_unit=' + unit;
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('Weather API failed');
                 const data = await res.json();
@@ -2552,6 +2606,31 @@
                     }
                     if (hl && data.daily && data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
                         hl.textContent = "H:" + Math.round(data.daily.temperature_2m_max[0]) + "° L:" + Math.round(data.daily.temperature_2m_min[0]) + "°";
+                    }
+
+                    const hourlyContainer = document.getElementById('db-weather-hourly');
+                    if (hourlyContainer && data.hourly && data.hourly.time && data.hourly.weathercode && data.hourly.temperature_2m) {
+                        let hourlyHtml = '';
+                        let startIndex = 0;
+                        const currentHour = data.current_weather.time ? data.current_weather.time.slice(0, 13) : '';
+                        for (let i = 0; i < data.hourly.time.length; i++) {
+                            if (!currentHour || data.hourly.time[i].slice(0, 13) >= currentHour) {
+                                startIndex = i;
+                                break;
+                            }
+                        }
+                        for (let i = startIndex; i < data.hourly.time.length && i < startIndex + 8; i++) {
+                            const isCurrent = i === startIndex;
+                            const timeLabel = isCurrent
+                                ? (window.t ? window.t('dashboard.weather.now', 'Now') : 'Now')
+                                : formatDashboardWeatherHour(data.hourly.time[i]);
+                            hourlyHtml += '<div class="dashboard-weather-hour' + (isCurrent ? ' dashboard-weather-hour-current' : '') + '">' +
+                                '<div class="dashboard-weather-hour-time"' + (isCurrent ? ' data-i18n="dashboard.weather.now"' : '') + '>' + timeLabel + '</div>' +
+                                '<div class="dashboard-weather-hour-icon">' + getIcon(data.hourly.weathercode[i], false) + '</div>' +
+                                '<div class="dashboard-weather-hour-temp">' + Math.round(data.hourly.temperature_2m[i]) + '°</div>' +
+                                '</div>';
+                        }
+                        hourlyContainer.innerHTML = hourlyHtml;
                     }
 
                     const weekContainer = document.getElementById('db-weather-week');

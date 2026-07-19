@@ -914,6 +914,8 @@
   "home.btn.ok": "OK",
   "home.btn.reset": "Reset",
   "home.btn.support": "Support",
+  "dashboard.weather.hourly": "Hourly forecast",
+  "dashboard.weather.now": "Now",
   "dashboard.weather.week": "7-day forecast",
   "home.guest_mode": "Guest Mode",
   "home.header.favorites": "★ Favorites",

@@ -794,6 +794,8 @@
   "home.btn.ok": "OK",
   "home.btn.reset": "Zresetuj",
   "home.btn.support": "Wsparcie",
+  "dashboard.weather.hourly": "Prognoza godzinowa",
+  "dashboard.weather.now": "Teraz",
   "dashboard.weather.week": "Prognoza na 7 dni",
   "home.guest_mode": "Tryb Gościa",
   "home.header.favorites": "★ Ulubione",

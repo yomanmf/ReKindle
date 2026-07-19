@@ -92,6 +92,8 @@ test("catalog, source pages and locale bundles omit retired applications", funct
         return /^(?:de|en|es|fr|it|pl|pt|ru|vi|zh)\.json$/.test(name);
     }).forEach(function (name) {
         var locale = JSON.parse(read(path.join("locales", name)));
+        assert.equal(typeof locale["dashboard.weather.hourly"], "string", name);
+        assert.equal(typeof locale["dashboard.weather.now"], "string", name);
         assert.equal(typeof locale["dashboard.weather.week"], "string", name);
         assert.equal(Object.prototype.hasOwnProperty.call(locale, "home.header.all"), false, name);
         Object.keys(locale).forEach(function (key) {
@@ -123,7 +125,9 @@ test("dashboard exposes separate single-player and two-player folders", function
         assert.doesNotMatch(source, /id="category-title"/);
         assert.match(source, /id="edit-done-btn"/);
         assert.match(source, /id="home-widgets"/);
+        assert.match(source, /id="db-weather-hourly"/);
         assert.match(source, /id="db-weather-week"/);
+        assert.match(source, /hourly=temperature_2m,weathercode/);
         assert.match(source, /forecast_days=7/);
         assert.match(source, /id="db-calendar-grid"/);
     });

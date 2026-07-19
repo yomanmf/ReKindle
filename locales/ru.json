@@ -914,6 +914,8 @@
   "home.btn.ok": "OK",
   "home.btn.reset": "Сброс",
   "home.btn.support": "Поддержка",
+  "dashboard.weather.hourly": "Почасовой прогноз",
+  "dashboard.weather.now": "Сейчас",
   "dashboard.weather.week": "Прогноз на 7 дней",
   "home.guest_mode": "Гостевой режим",
   "home.header.favorites": "★ Избранное",

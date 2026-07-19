@@ -794,6 +794,8 @@
   "home.btn.ok": "确定",
   "home.btn.reset": "重置",
   "home.btn.support": "支持",
+  "dashboard.weather.hourly": "每小时预报",
+  "dashboard.weather.now": "现在",
   "dashboard.weather.week": "7天天气预报",
   "home.guest_mode": "访客模式",
   "home.header.favorites": "★ 收藏",

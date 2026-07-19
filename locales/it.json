@@ -794,6 +794,8 @@
   "home.btn.ok": "OK",
   "home.btn.reset": "Ripristina",
   "home.btn.support": "Supporto",
+  "dashboard.weather.hourly": "Previsioni orarie",
+  "dashboard.weather.now": "Ora",
   "dashboard.weather.week": "Previsioni a 7 giorni",
   "home.guest_mode": "Modalità Ospite",
   "home.header.favorites": "★ Preferiti",
