@@ -65,6 +65,9 @@
 
     async function request(path, options) {
         options = options || {};
+        var method = options.method || "GET";
+        var startedAt = Date.now();
+        var safePath = String(path || "/").split("?", 1)[0];
         var headers = options.headers || {};
         headers.Accept = "application/json";
         if (options.body !== undefined) headers["Content-Type"] = "application/json";
@@ -74,15 +77,22 @@
             if (!user) {
                 throw new Error("Please sign in first.");
             }
+            if (window.RekindleAnalytics) window.RekindleAnalytics.identify(user.uid);
             headers["X-Firebase-Token"] = await user.getIdToken();
         }
 
-        var response = await fetch(API_BASE + path, {
-            method: options.method || "GET",
-            headers: headers,
-            body: options.body === undefined ? undefined : JSON.stringify(options.body),
-            signal: options.signal
-        });
+        var response;
+        try {
+            response = await fetch(API_BASE + path, {
+                method: method,
+                headers: headers,
+                body: options.body === undefined ? undefined : JSON.stringify(options.body),
+                signal: options.signal
+            });
+        } catch (requestError) {
+            trackCloudRequest(method, safePath, 0, Date.now() - startedAt, requestError.message || "Network error");
+            throw requestError;
+        }
         var data = {};
         try {
             data = await response.json();
@@ -90,6 +100,7 @@
             data = {};
         }
         if (!response.ok) {
+            trackCloudRequest(method, safePath, response.status, Date.now() - startedAt, data.code || data.error || "Request failed");
             var error = new Error(data.error || "Cloud request failed (" + response.status + ").");
             error.code = data.code || "cloud/error";
             error.status = response.status;
@@ -98,7 +109,21 @@
             error.quota = data.quota || null;
             throw error;
         }
+        trackCloudRequest(method, safePath, response.status, Date.now() - startedAt, "HTTP " + response.status);
         return data;
+    }
+
+    function trackCloudRequest(method, path, status, durationMs, result) {
+        if (!window.RekindleAnalytics) return;
+        window.RekindleAnalytics.track({
+            requestType: "api_request",
+            requestText: method + " " + path,
+            resultText: result,
+            errorText: status >= 200 && status < 400 ? null : result,
+            status: status >= 200 && status < 400 ? "success" : "error",
+            durationMs: durationMs,
+            metadata: { httpStatus: status }
+        });
     }
 
     async function upload(path, blob, contentType) {

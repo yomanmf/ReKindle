@@ -21,12 +21,14 @@ var FIREBASE_DATABASE_URL = "https://rekindle-fork-default-rtdb.europe-west1.fir
 var DEFAULT_ALLOWED_ORIGINS = [
     "https://rekindle.website.yandexcloud.net",
     "https://rekindle-fork.web.app",
-    "https://rekindle-fork.firebaseapp.com"
+    "https://rekindle-fork.firebaseapp.com",
+    "https://tetra.website.yandexcloud.net"
 ];
 var ALLOWED_FOLDERS = { files: true, photos: true };
 var RESERVED_USERNAME = /(ukiyo|rekindle|wantban|root|system|admin|administrator|mod|moderator|support)/i;
 var firebaseApp;
 var s3Client;
+var analyticsRateLimits = new Map();
 
 module.exports.handler = async function (event, context) {
     event = event || {};
@@ -41,6 +43,9 @@ module.exports.handler = async function (event, context) {
     try {
         if (method === "GET" && endsWith(path, "/health")) {
             return response(200, { ok: true, service: "rekindle-backend" }, origin);
+        }
+        if (method === "POST" && endsWith(path, "/analytics/events")) {
+            return response(202, await collectAnalyticsEvent(event, origin), origin);
         }
         if (method === "POST" && endsWith(path, "/auth/register")) {
             return response(200, await registerUser(event), origin);
@@ -107,6 +112,121 @@ module.exports.handler = async function (event, context) {
         return response(normalized.status, errorBody, origin);
     }
 };
+
+async function collectAnalyticsEvent(event, origin) {
+    var sourceId = analyticsSourceForOrigin(origin);
+    if (!sourceId) throw httpError(403, "analytics-origin", "Analytics origin is not allowed.");
+    enforceAnalyticsRateLimit(getSourceIp(event));
+    var body = parseJsonBody(event);
+    if (String(body.sourceId || "") !== sourceId) {
+        throw httpError(400, "analytics-source", "Analytics source does not match the request origin.");
+    }
+    var eventId = analyticsIdentifier(body.eventId, "eventId", 200);
+    if (eventId.indexOf(sourceId + ":") !== 0) {
+        throw httpError(400, "analytics-event", "Analytics event ID has an invalid prefix.");
+    }
+    var status = String(body.status || "");
+    if (["received", "success", "error", "cancelled"].indexOf(status) === -1) {
+        throw httpError(400, "analytics-status", "Analytics status is invalid.");
+    }
+    var startedAt = analyticsDate(body.startedAt, "startedAt") || new Date().toISOString();
+    var finishedAt = analyticsDate(body.finishedAt, "finishedAt");
+    var durationMs = analyticsDuration(body.durationMs);
+    var metadata = body.metadata;
+    if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) metadata = {};
+    if (JSON.stringify(metadata).length > 4000) {
+        throw httpError(400, "analytics-metadata", "Analytics metadata is too large.");
+    }
+    var payload = {
+        eventId: eventId,
+        botId: sourceId,
+        status: status,
+        requestType: analyticsIdentifier(body.requestType, "requestType", 80),
+        userId: analyticsIdentifier(body.userId, "userId", 200),
+        requestText: analyticsText(body.requestText, 2000),
+        resultText: analyticsText(body.resultText, 4000),
+        errorText: analyticsText(body.errorText, 2000),
+        startedAt: startedAt,
+        finishedAt: finishedAt,
+        durationMs: durationMs,
+        metadata: metadata
+    };
+    var analyticsBase = getRequiredEnv("ANALYTICS_URL").replace(/\/+$/, "");
+    var controller = new AbortController();
+    var timeout = setTimeout(function () { controller.abort(); }, 5000);
+    var upstream;
+    try {
+        upstream = await fetch(analyticsBase + "/analytics/events", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + getRequiredEnv("ANALYTICS_INGEST_TOKEN"),
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+    } catch (error) {
+        throw httpError(502, "analytics-unavailable", "Analytics service is unavailable.");
+    } finally {
+        clearTimeout(timeout);
+    }
+    if (!upstream.ok) {
+        throw httpError(502, "analytics-upstream", "Analytics service rejected the event.");
+    }
+    return { ok: true, eventId: eventId };
+}
+
+function analyticsSourceForOrigin(origin) {
+    if (origin === "https://tetra.website.yandexcloud.net") return "tetra";
+    if ([
+        "https://rekindle.website.yandexcloud.net",
+        "https://rekindle-fork.web.app",
+        "https://rekindle-fork.firebaseapp.com"
+    ].indexOf(origin) !== -1) return "rekindle";
+    return "";
+}
+
+function enforceAnalyticsRateLimit(ip) {
+    var key = String(ip || "unknown");
+    var now = Date.now();
+    var bucket = analyticsRateLimits.get(key);
+    if (!bucket || now - bucket.startedAt >= 60000) {
+        analyticsRateLimits.set(key, { startedAt: now, count: 1 });
+        return;
+    }
+    bucket.count += 1;
+    if (bucket.count > 120) throw httpError(429, "analytics-rate-limit", "Too many analytics events.");
+}
+
+function analyticsIdentifier(value, name, maxLength) {
+    var result = String(value || "");
+    var pattern = name === "requestType" ? /^[a-zA-Z0-9._:-]+$/ : /^[a-zA-Z0-9._:@-]+$/;
+    if (!result || result.length > maxLength || !pattern.test(result)) {
+        throw httpError(400, "analytics-" + name.toLowerCase(), "Analytics " + name + " is invalid.");
+    }
+    return result;
+}
+
+function analyticsText(value, maxLength) {
+    if (value === undefined || value === null || value === "") return null;
+    return String(value).replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, maxLength);
+}
+
+function analyticsDate(value, name) {
+    if (value === undefined || value === null || value === "") return null;
+    var parsed = new Date(value);
+    if (isNaN(parsed.getTime())) throw httpError(400, "analytics-date", "Analytics " + name + " is invalid.");
+    return parsed.toISOString();
+}
+
+function analyticsDuration(value) {
+    if (value === undefined || value === null || value === "") return null;
+    var result = Number(value);
+    if (!Number.isSafeInteger(result) || result < 0 || result > 86400000) {
+        throw httpError(400, "analytics-duration", "Analytics duration is invalid.");
+    }
+    return result;
+}
 
 async function registerUser(event) {
     var body = parseJsonBody(event);

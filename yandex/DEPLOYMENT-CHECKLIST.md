@@ -79,6 +79,7 @@ Telegram secrets (required before publishing `telegram.html`):
 Microsoft To Do secret (required before publishing `microsofttodo.html`):
 
 - `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (32 random bytes, base64 encoded)
+- `ANALYTICS_INGEST_TOKEN`
 
 Supporter-billing secrets (required only when Stripe support is enabled):
 
@@ -88,7 +89,8 @@ Supporter-billing secrets (required only when Stripe support is enabled):
 Required non-secret configuration:
 
 - `S3_BUCKET`
-- `ALLOWED_ORIGINS=https://rekindle.website.yandexcloud.net`
+- `ALLOWED_ORIGINS=https://rekindle.website.yandexcloud.net,https://tetra.website.yandexcloud.net`
+- `ANALYTICS_URL` (the shared Kindle analytics service base URL)
 - `YANDEX_FOLDER_ID` (optional when `context.functionFolderId` is present)
 - `MICROSOFT_TODO_CLIENT_ID` (public Microsoft Entra application/client ID)
 - `MICROSOFT_TODO_TENANT` (optional; defaults to `common`)

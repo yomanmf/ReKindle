@@ -17,7 +17,7 @@ test('every application page loads the current shared theme script', function ()
 
     assert.equal(pages.length, 96);
     pages.forEach(function (page) {
-        assert.match(read(page), /theme\.js\?v=20/, page + ' must load theme.js?v=20');
+        assert.match(read(page), /theme\.js\?v=21/, page + ' must load theme.js?v=21');
         assert.ok(releaseManifest.includes(page), page + ' must ship in the dark-theme release');
     });
 });

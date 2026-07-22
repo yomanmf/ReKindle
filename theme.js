@@ -1,5 +1,75 @@
 (function () {
 
+    // --- PRIVACY-SAFE USAGE ANALYTICS ---
+    // Events go through the Yandex backend. The private ingestion token never
+    // reaches the browser, and URL query strings or form contents are omitted.
+    var ANALYTICS_ENDPOINT = 'https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net/api/rekindle/analytics/events';
+    var analyticsUserId = getAnalyticsClientId();
+
+    function getAnalyticsClientId() {
+        var key = 'rekindle_analytics_client_id';
+        try {
+            var current = localStorage.getItem(key);
+            if (current && /^[a-zA-Z0-9._:@-]+$/.test(current)) return current;
+            var created = 'rekindle:anon_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+            localStorage.setItem(key, created);
+            return created;
+        } catch (e) {
+            return 'rekindle:session_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+        }
+    }
+
+    function analyticsEventId() {
+        return 'rekindle:' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+    }
+
+    function trackAnalytics(details) {
+        if (!window.fetch) return '';
+        details = details || {};
+        var eventId = details.eventId || analyticsEventId();
+        var payload = {
+            eventId: eventId,
+            sourceId: 'rekindle',
+            userId: analyticsUserId,
+            requestType: details.requestType || 'page_view',
+            requestText: details.requestText || window.location.pathname || '/',
+            resultText: details.resultText || 'Completed',
+            errorText: details.errorText || null,
+            status: details.status || 'success',
+            startedAt: details.startedAt || new Date().toISOString(),
+            finishedAt: details.finishedAt || new Date().toISOString(),
+            durationMs: typeof details.durationMs === 'number' ? Math.max(0, Math.round(details.durationMs)) : 0,
+            metadata: details.metadata || {}
+        };
+        window.fetch(ANALYTICS_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+        }).catch(function () { /* analytics must never interrupt the app */ });
+        return eventId;
+    }
+
+    window.RekindleAnalytics = {
+        track: trackAnalytics,
+        identify: function (firebaseUid) {
+            if (firebaseUid && /^[a-zA-Z0-9._:@-]+$/.test(firebaseUid)) {
+                analyticsUserId = 'firebase:' + firebaseUid;
+            }
+        }
+    };
+
+    function trackPageView() {
+        trackAnalytics({
+            requestType: 'page_view',
+            requestText: 'GET ' + (window.location.pathname || '/'),
+            resultText: 'Page loaded'
+        });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', trackPageView);
+    else trackPageView();
+
     // --- PRETTY URLS (Global) ---
     // Automatically strip .html from URL bar
     if (window.location.pathname.endsWith('.html')) {

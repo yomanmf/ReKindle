@@ -533,6 +533,17 @@ before removing the obsolete `users_public` and `user_cards` trees.
 
 **Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, Telegram, Microsoft To Do, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
+**Cross-service analytics contract:** ReKindle and TETRA browser events are sent
+to `POST /api/rekindle/analytics/events`. The Yandex backend verifies the
+production origin, maps it to the source ID, rate-limits the caller, and forwards
+the sanitized event using `ANALYTICS_INGEST_TOKEN` from Lockbox. Never expose the
+ingestion token in browser code. `theme.js` records page paths without query
+strings; `js/rekindle-cloud.js` records only the HTTP method, normalized API
+path, status, and duration. Do not add form bodies, credentials, authorization
+codes, AI prompts, Telegram login data, file content, or URL query strings to
+analytics. A `theme.js` analytics change requires a query-version bump on every
+root page plus a `sw.js` cache-name bump and full manifest deployment.
+
 **Reddit feed preference contract:** Sorting preferences are per subreddit, not global. `reddit.html` stores the normalized map locally and in `users/{uid}/apps/reddit.feed_preferences`; keep the allowed values and URL/cache construction in `js/reddit-feed-settings.js`. Reddit's non-default feeds use `/r/{sub}/{sort}` and `top`/`controversial` add the `t` period. Every cache key must include subreddit, sort, and the applicable period so an offline fallback cannot display a different feed.
 
 **Telegram is a server-side MTProto client:** `telegram.html` talks only to the

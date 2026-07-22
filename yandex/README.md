@@ -64,15 +64,22 @@ The function requires these secret-backed environment variables:
 - `TELEGRAM_API_HASH`
 - `TELEGRAM_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
 - `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
+- `ANALYTICS_INGEST_TOKEN` (shared Kindle analytics ingestion token)
 
 It also requires the non-secret variables `S3_BUCKET`, `ALLOWED_ORIGINS`,
-`YANDEX_FOLDER_ID`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, and
+`YANDEX_FOLDER_ID`, `ANALYTICS_URL`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, and
 `STRIPE_PRICE_LIFETIME`. Microsoft To Do additionally requires the public
 `MICROSOFT_TODO_CLIENT_ID`; `MICROSOFT_TODO_TENANT` is optional and defaults to
 `common`. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
 use the IAM token supplied to the function through its attached service account.
 Secrets must be supplied from Yandex Lockbox; never paste them into source files
 or ordinary checked-in configuration.
+
+`POST /api/rekindle/analytics/events` accepts privacy-safe browser usage events
+from the allowlisted ReKindle and TETRA production origins, validates that the
+origin matches the claimed source, and forwards them to the shared analytics
+service. Browser bundles never contain `ANALYTICS_INGEST_TOKEN`; URL query
+strings, credentials, prompts, file contents, and form bodies are not collected.
 
 Telegram authorization sessions are stored in the server-only Firestore
 `telegram_sessions/{firebaseUid}` collection after AES-256-GCM encryption. The

@@ -45,6 +45,57 @@ test("health endpoint is available from the production origin", async function (
     assert.deepEqual(JSON.parse(result.body), { ok: true, service: "rekindle-backend" });
 });
 
+test("browser analytics validates the origin and forwards a sanitized event", async function () {
+    var originalFetch = global.fetch;
+    var originalUrl = process.env.ANALYTICS_URL;
+    var originalToken = process.env.ANALYTICS_INGEST_TOKEN;
+    process.env.ANALYTICS_URL = "https://analytics.example";
+    process.env.ANALYTICS_INGEST_TOKEN = "secret-token";
+    var forwarded;
+    global.fetch = async function (url, options) {
+        forwarded = { url: url, options: options, body: JSON.parse(options.body) };
+        return new Response("{}", { status: 202 });
+    };
+    try {
+        var result = await backend.handler(event(
+            "POST",
+            "/api/rekindle/analytics/events",
+            "https://tetra.website.yandexcloud.net",
+            {
+                eventId: "tetra:session_1",
+                sourceId: "tetra",
+                userId: "anon_1",
+                requestType: "game_finished",
+                requestText: "Game session",
+                resultText: "Score 1200, lines 4",
+                status: "success",
+                durationMs: 42000,
+                metadata: { score: 1200, lines: 4 }
+            }
+        ));
+        assert.equal(result.statusCode, 202);
+        assert.equal(forwarded.url, "https://analytics.example/analytics/events");
+        assert.equal(forwarded.options.headers.Authorization, "Bearer secret-token");
+        assert.equal(forwarded.body.botId, "tetra");
+        assert.equal(forwarded.body.userId, "anon_1");
+        assert.equal(forwarded.body.resultText, "Score 1200, lines 4");
+
+        var mismatch = await backend.handler(event(
+            "POST",
+            "/api/rekindle/analytics/events",
+            "https://rekindle.website.yandexcloud.net",
+            { eventId: "tetra:bad", sourceId: "tetra", userId: "anon_1", requestType: "page_view", status: "success" }
+        ));
+        assert.equal(mismatch.statusCode, 400);
+    } finally {
+        global.fetch = originalFetch;
+        if (originalUrl === undefined) delete process.env.ANALYTICS_URL;
+        else process.env.ANALYTICS_URL = originalUrl;
+        if (originalToken === undefined) delete process.env.ANALYTICS_INGEST_TOKEN;
+        else process.env.ANALYTICS_INGEST_TOKEN = originalToken;
+    }
+});
+
 test("preflight includes application authentication headers", async function () {
     var result = await backend.handler(event(
         "OPTIONS",
