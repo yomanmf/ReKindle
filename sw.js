@@ -2,7 +2,7 @@ const CACHE_NAME = 'rekindle-cache-v25'; // Ship privacy-safe cross-service anal
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=2',
+    './icons.js?v=3',
     './theme.js?v=21',
     './logo.svg',
     './donate.svg',

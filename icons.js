@@ -106,6 +106,7 @@ const APPS = [
         cat: 'tools',
         beta: true,
         desc: 'Microsoft tasks for E-ink.',
+        url: 'https://to-do.office.com/tasks/',
         icon: '<rect x="4" y="4" width="10" height="10" fill="white" stroke="black" stroke-width="2"/><rect x="18" y="4" width="10" height="10" fill="white" stroke="black" stroke-width="2"/><rect x="4" y="18" width="10" height="10" fill="white" stroke="black" stroke-width="2"/><rect x="18" y="18" width="10" height="10" fill="white" stroke="black" stroke-width="2"/><path d="M7 9 L10 12 L16 6" fill="none" stroke="black" stroke-width="2"/>'
     },
     {

@@ -304,6 +304,17 @@ Standardized "Beta" or status badges.
 }
 ```
 
+### 8. External application links
+
+Catalog entries in `icons.js` may define a full `url` when their dashboard icon
+must open an external web application. Both `index.html` and `index_old.html`
+must prefer `app.url` and otherwise fall back to the app's local `.html` path in
+the regular grid and the featured section. Keep navigation in the current tab
+for Kindle compatibility;
+do not depend on `target="_blank"` or popup APIs. When changing a catalog URL,
+bump the `icons.js` query version in both dashboards and the matching entry in
+`sw.js` so an older service-worker response cannot preserve the previous link.
+
 ## 🌍 Localization (i18n.js)
 
 The project uses a custom `i18n.js` loader.

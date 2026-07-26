@@ -48,7 +48,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js" defer></script>
 
     <script src="time.js" defer></script>
-    <script src="icons.js?v=2" defer></script>
+    <script src="icons.js?v=3" defer></script>
     <script src="icons-beta.js" defer></script>
     <script src="theme.js?v=21" defer></script>
     <script src="bad_words.js?v=4" defer></script>
@@ -1953,7 +1953,7 @@
 
         function createAppElement(app) {
             const a = document.createElement('a');
-            a.href = `${app.id}.html`;
+            a.href = app.url || `${app.id}.html`;
             a.className = 'app-icon';
             a.id = `icon-${app.id}`;
 
@@ -2198,7 +2198,7 @@
 
             featuredApps.forEach(app => {
                 const a = document.createElement('a');
-                a.href = `${app.id}.html`;
+                a.href = app.url || `${app.id}.html`;
                 a.className = 'featured-card';
                 const subheading = app.desc || '';
                 let badgeHtml = '';
