@@ -354,7 +354,9 @@ test("retired endpoints are not routed", async function () {
     ["chords", "GET", "/api/rekindle/content/chords"],
     ["NRL scores", "GET", "/api/rekindle/content/nrl-scores"],
     ["mail", "POST", "/api/rekindle/mail/folders"],
-    ["Suggestions reports", "POST", "/api/rekindle/reports/submit"]
+    ["Suggestions reports", "POST", "/api/rekindle/reports/submit"],
+    ["supporter checkout", "POST", "/api/rekindle/billing/checkout"],
+    ["supporter webhook", "POST", "/api/rekindle/billing/webhook"]
 ].forEach(function (item) {
     test("retired " + item[0] + " endpoint is not routed", async function () {
         var result = await backend.handler(event(item[1], item[2], "https://rekindle.website.yandexcloud.net", {}));
@@ -375,8 +377,7 @@ test("Readwise proxy requires a Firebase ID token", async function () {
 
 [
     ["reader", "GET", "/api/rekindle/content/reader"],
-    ["Akinator", "POST", "/api/rekindle/games/akinator/start"],
-    ["supporter checkout", "POST", "/api/rekindle/billing/checkout"]
+    ["Akinator", "POST", "/api/rekindle/games/akinator/start"]
 ].forEach(function (item) {
     test(item[0] + " requires a Firebase ID token", async function () {
         var result = await backend.handler(event(item[1], item[2], "https://rekindle.website.yandexcloud.net", {}));

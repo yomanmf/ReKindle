@@ -3,6 +3,8 @@
 pro-gate.js
 js/anti-tamper.js
 donate.svg
+pay
+pay.html
 kindlechat.html
 kindlechat
 neighbourhood.html

@@ -58,11 +58,6 @@ Microsoft To Do secret (required before publishing `microsofttodo.html`):
 - `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (32 random bytes, base64 encoded)
 - `ANALYTICS_INGEST_TOKEN`
 
-Supporter-billing secrets (required only when Stripe support is enabled):
-
-- `STRIPE_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-
 Required non-secret configuration:
 
 - `S3_BUCKET`
@@ -72,12 +67,6 @@ Required non-secret configuration:
 - `MICROSOFT_TODO_CLIENT_ID` (public Microsoft Entra application/client ID)
 - `MICROSOFT_TODO_TENANT` (optional; defaults to `common`)
 - `KINDLE_DIGEST_ALLOWED_UIDS` (Firebase UIDs allowed to use the worker's Kindle destination)
-
-Supporter-billing configuration (only when Stripe support is enabled):
-
-- `STRIPE_PRICE_MONTHLY`
-- `STRIPE_PRICE_YEARLY`
-- `STRIPE_PRICE_LIFETIME`
 
 Keep `@google-cloud/firestore` pinned as a direct backend dependency. Yandex can
 omit the copy declared as optional by `firebase-admin`, which causes Firestore
@@ -134,7 +123,6 @@ The Gateway must expose:
 - `/api/rekindle/content/*`
 - `/api/rekindle/microsoft-todo/*`
 - `/api/rekindle/games/akinator/*`
-- `/api/rekindle/billing/*`
 - `/api/rekindle/story/*`
 
 ## 5. Legacy Firebase callable functions
@@ -177,20 +165,11 @@ Docs and Photo Frame use the quota-aware Yandex Object Storage backend.
 
 The repository contains only primary Firestore/RTDB rules.
 
-## 7. Stripe
-
-Change the Stripe webhook destination to:
-
-`https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net/api/rekindle/billing/webhook`
-
-Keep the webhook signing secret synchronized with `STRIPE_WEBHOOK_SECRET`.
-ReKindle+ is supporter status only and must never gate app functionality.
-
-## 8. Verification and future releases
+## 7. Verification and future releases
 
 1. `GET /api/rekindle/health` returns HTTP 200.
-2. Authenticated storage E2E can upload, list, download and delete a non-Pro
-   user's object.
+2. Authenticated storage E2E can upload, list, download and delete a user's
+   object.
 3. Authenticated `POST /ai/chat` with `{ "action": "quota" }` returns a quota,
    a shared prompt returns non-empty text and decrements that quota exactly once,
    and a failed provider request releases its reservation. OCR and Reader return
@@ -201,9 +180,6 @@ ReKindle+ is supporter status only and must never gate app functionality.
    and proxies an allowed image without exceeding the 5 MB bound.
 6. Story upload rejects an unauthenticated request, accepts a small Z-code file,
    and its returned `/play/{id}` URL loads.
-7. Stripe test-mode checkout and signed webhook both succeed when optional
-   supporter billing is enabled.
-
 For future releases, run the checks above before publishing the changed frontend
 files and their extensionless Object Storage aliases. No page may restore
 references to `pro-gate.js` or `js/anti-tamper.js`.

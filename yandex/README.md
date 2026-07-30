@@ -47,7 +47,7 @@ cross-instance cache is required later.
 - Firebase ID-token verification;
 - signed upload/download URLs for the private user-files Object Storage bucket;
 - listing and deleting objects owned by the authenticated user;
-- authenticated AI, OCR, content proxies, and billing;
+- authenticated AI, OCR, and content proxies;
 - an authenticated Microsoft To Do client using Microsoft Graph device authorization and encrypted per-user OAuth sessions.
 - authenticated Kindle Digest jobs consumed by the existing outbound-only article worker;
 - a public GET/HEAD content proxy with SSRF protection, IP rate limits and a
@@ -58,15 +58,12 @@ The function requires these secret-backed environment variables:
 - `FIREBASE_SERVICE_ACCOUNT_JSON`
 - `S3_ACCESS_KEY_ID`
 - `S3_SECRET_ACCESS_KEY`
-- `STRIPE_KEY`
-- `STRIPE_WEBHOOK_SECRET`
 - `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
 - `ANALYTICS_INGEST_TOKEN` (shared Kindle analytics ingestion token)
 - `KINDLE_DIGEST_WORKER_SECRET` (shared only with the article worker)
 
 It also requires the non-secret variables `S3_BUCKET`, `ALLOWED_ORIGINS`,
-`YANDEX_FOLDER_ID`, `ANALYTICS_URL`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, and
-`STRIPE_PRICE_LIFETIME`. Microsoft To Do additionally requires the public
+`YANDEX_FOLDER_ID`, and `ANALYTICS_URL`. Microsoft To Do additionally requires the public
 `MICROSOFT_TODO_CLIENT_ID`; `MICROSOFT_TODO_TENANT` is optional and defaults to
 `common`. Kindle Digest additionally requires `KINDLE_DIGEST_ALLOWED_UIDS`, a
 comma-separated list of Firebase accounts allowed to use the worker's global

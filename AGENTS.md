@@ -506,7 +506,7 @@ When adding a new feature that writes to Firebase, you **must** update the corre
 
 Without matching rules, writes will be **silently rejected** by security rules. Always follow the existing patterns in the target file for authenticated-user-only collections.
 
-**Firestore overlapping-match gotcha:** Security-rule `match` blocks are ORed, not ordered by specificity. A restrictive exact match does not override a broader permissive match. For example, both `match /privateSettings/ai` and `match /privateSettings/{docId}` match the `ai` document; if the wildcard rule allows the owner unconditionally, the intended ReKindle+ check in the exact rule is ineffective. Put the conditional in the wildcard rule (for example, branch on `docId == 'ai'`) or exclude the sensitive document from the broad allow. Audit other exact-plus-wildcard pairs the same way.
+**Firestore overlapping-match gotcha:** Security-rule `match` blocks are ORed, not ordered by specificity. A restrictive exact match does not override a broader permissive match. For example, both `match /privateSettings/ai` and `match /privateSettings/{docId}` match the `ai` document; if the wildcard rule allows the owner unconditionally, the intended stricter check in the exact rule is ineffective. Put the conditional in the wildcard rule (for example, branch on `docId == 'ai'`) or exclude the sensitive document from the broad allow. Audit other exact-plus-wildcard pairs the same way.
 
 **Removing a client paywall does not create backend access control:** CORS is not authentication and can be bypassed by non-browser clients. The Yandex routes for AI, OCR, Files, Docs, Photo Frame, and Microsoft To Do therefore verify a primary Firebase ID token and enforce server-side per-user rate limits or storage quotas. Files, Docs, and Photo Frame are open to every authenticated user while retaining path ownership, MIME/type validation, 100 MB per-user storage, and 25 MB per-object limits. Direct Firebase Storage is deliberately denied by `storage.rules`; it has no byte-quota mechanism and must not be reopened as a shortcut.
 
@@ -514,9 +514,11 @@ Without matching rules, writes will be **silently rejected** by security rules. 
 
 **Oracle custom-provider routing:** The old Worker ignored the provider-specific `endpoint` from `chat.html` and always called OpenAI. The Yandex implementation in `yandex/rekindle-backend/index.js` fixes this with an explicit provider endpoint allowlist. Keep model listing and inference on the same validated endpoint policy, and never allow loopback, link-local, or private-network targets.
 
-**Paywall removal state (July 2026):** Dashboard interception and application-level ReKindle+ access checks have been removed. No app registry entry uses `plus: true`. ReKindle+ supporter data may remain for cosmetic profile badges and historical billing records; it must not control app launch, export, categories, storage, AI, or OCR access. When adding an app, do not recreate `pro-gate.js` or introduce an `app.plus` access branch.
-
-**Supporter badges must not trust profile fields or local storage:** Cosmetic supporter styling must come from the server-maintained `config/supporters` document (or equivalent trusted billing record). Never read a self-writable profile field such as `kindlePlus`, and never infer supporter status from `localStorage`.
+**Billing and supporter subsystem retired (July 2026):** ReKindle+ access checks,
+badges, subscription UI, Stripe routes, the `config/supporters` document, Auth
+`pro` claims, and the `isPro`, `proExpiresAt`, `stripeCustomerId`, and
+`subscriptionType` user fields were removed. Do not recreate `pro-gate.js`,
+`app.plus`, supporter cosmetics, checkout/webhook routes, or subscription data.
 
 **Retired internal social subsystem (July 2026):** The separate
 `rekindle-socials` Firebase project is no longer part of the application.
@@ -541,10 +543,8 @@ before removing the obsolete `users_public` and `user_cards` trees.
 **Removing a paywall includes its locale contract:** When a gated component is deleted, remove its unused translation keys too. Stale keys such as `airtype.paywall.*`, `quicknotes.paywall.*`, `quicktodo.pro.*`, and `paywall.popup.*` previously continued to advertise exclusive apps and could be resurrected by cached or legacy markup.
 
 **Donation prompts are retired (July 2026):** Do not add donation buttons, QR
-codes, checkout plans, Ko-fi links, or ReKindle+ upgrade banners back to the
-dashboard, settings, or locale files. `pay.html` remains only so existing
-supporters can view their status and open Stripe's subscription-management
-portal; it must not create new checkout sessions.
+codes, checkout plans, Ko-fi links, upgrade banners, subscription management,
+or supporter status back to the dashboard, settings, or locale files.
 
 **OCR MIME must match the canvas encoding:** Quick ToDo and Quick Notes encode cropped handwriting with `canvas.toDataURL('image/jpeg', ...)`. Their Yandex OCR request must send `mimeType: 'JPEG'`; hard-coding `PNG` in the backend produces invalid or unreliable recognition. The backend accepts only `PNG` and `JPEG` and forwards the validated value to Yandex Vision OCR.
 
@@ -562,7 +562,7 @@ portal; it must not create new checkout sessions.
 
 **Dashboard hourly weather contract:** Both `index.html` and `index_old.html` get the current conditions, apparent temperature, a button-paged 24-hour forecast, and the seven-day forecast from one Open-Meteo request. Keep the modern and classic home-widget implementations synchronized. Use Open-Meteo's modern `current=temperature_2m,apparent_temperature,weather_code` parameter; combining it with legacy `current_weather=true` makes the API omit the `current` object. The hourly response uses local wall-clock strings because the request specifies `timezone=auto`; compare their `YYYY-MM-DDTHH` prefixes with `current.time` and format the hour manually instead of applying another timezone conversion. Paging changes `scrollLeft` directly (never use smooth scrolling on E-ink), while disabled edge buttons remain in the grid with `visibility: hidden` so the forecast cards do not shift. Keep all dashboard weather labels in every main locale bundle when changing this widget.
 
-**Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, Microsoft To Do, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
+**Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, and Microsoft To Do through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
 **Cross-service analytics contract:** ReKindle and TETRA browser events are sent
 to `POST /api/rekindle/analytics/events`. The Yandex backend verifies the

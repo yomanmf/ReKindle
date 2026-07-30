@@ -597,27 +597,6 @@
             font-size: 0.55rem;
         }
 
-        .plus-label {
-            position: absolute;
-            top: 6px;
-            right: 15px;
-            background: white;
-            color: black;
-            font-size: 0.8rem;
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            border: 2px solid black;
-            font-weight: bold;
-            z-index: 5;
-            box-shadow: 1px 1px 0 black;
-            box-sizing: border-box;
-            padding-bottom: 2px;
-        }
-
         .favorite-toggle,
         .hide-toggle {
             position: absolute;
@@ -1203,8 +1182,7 @@
     <div class="sys-menu-bar">
         <div class="sys-menu-left">
             <div class="sys-menu-item logo-item" onclick="openAbout()"><img src="logo.svg"
-                    style="height: 20px; width: 20px; margin-right: 8px; transform: translateY(-1px);">ReKindle<span
-                    id="title-plus" style="vertical-align: super; font-size: 0.6em; display: none;">+</span></div>
+                    style="height: 20px; width: 20px; margin-right: 8px; transform: translateY(-1px);">ReKindle</div>
             <div class="sys-menu-item" onclick="location.href='settings'" data-i18n="home.nav.settings">Settings</div>
             <div class="sys-menu-item" id="exit-btn" onclick="window.close()" data-i18n="home.nav.exit"
                 style="display:none; border-left: 1px solid black;">Exit</div>
@@ -1448,7 +1426,6 @@
 
         let isEditMode = false;
         let isFirebaseAvailable = false;
-        let isPro = (localStorage.getItem('rekindle_is_pro') === 'true');
         const ALLOWED_EXIT_AGENT = "MY_CUSTOM_AGENT";
 
         let auth, db, rtdb;
@@ -1613,7 +1590,6 @@
 
             filterApps('all', document.querySelector('#nav-all'));
             renderAboutContent();
-            updateProUI();
 
             let lastUid = localStorage.getItem('rekindle_uid');
 
@@ -1678,9 +1654,6 @@
         // ... [Helper functions like handleGuestMode, updateNavVisibility, etc. remain unchanged] ...
 
         function handleGuestMode() {
-            const wasPro = isPro;
-            isPro = false;
-            localStorage.setItem('rekindle_is_pro', isPro.toString());
             localStorage.removeItem('rekindle_uid');
 
             document.getElementById('user-display').innerText = window.t ? window.t('home.guest_mode', 'Guest Mode') : "Guest Mode";
@@ -1705,12 +1678,7 @@
                 hiddenApps = [];
             }
 
-            if (wasPro) {
-                renderAppGrid(currentFilter);
-                if (currentFilter === 'all') renderFeaturedSection();
-            }
             renderFavoriteSection();
-            updateProUI();
         }
 
         function updateNavVisibility() {
@@ -1770,34 +1738,17 @@
         function monitorUserProfile(uid) {
             if (!isFirebaseAvailable || !db) return;
             db.collection('users').doc(uid).onSnapshot(doc => {
-                const now = Date.now();
-                let expires = 0;
-                let newProStatus = false;
                 let serverFavTimestamp = 0;
                 let serverSettingsTimestamp = 0;
 
                 if (doc.exists) {
                     const data = doc.data();
-                    if (data.proExpiresAt) {
-                        expires = typeof data.proExpiresAt.toMillis === 'function' ? data.proExpiresAt.toMillis() : new Date(data.proExpiresAt).getTime();
-                    }
-                    newProStatus = (expires > now);
                     if (data.favoritesLastUpdated) {
                         serverFavTimestamp = typeof data.favoritesLastUpdated.toMillis === 'function' ? data.favoritesLastUpdated.toMillis() : new Date(data.favoritesLastUpdated).getTime();
                     }
                     if (data.settingsLastUpdated) {
                         serverSettingsTimestamp = typeof data.settingsLastUpdated.toMillis === 'function' ? data.settingsLastUpdated.toMillis() : new Date(data.settingsLastUpdated).getTime();
                     }
-                }
-
-                const wasPro = isPro;
-                isPro = newProStatus;
-                if (wasPro !== isPro) {
-                    localStorage.setItem('rekindle_is_pro', isPro.toString());
-                    renderAppGrid(currentFilter);
-                    if (currentFilter === 'all') renderFeaturedSection();
-                    renderFavoriteSection();
-                    updateProUI();
                 }
 
                 const localFavTimestamp = parseInt(localStorage.getItem('rekindle_fav_last_sync') || '0');
@@ -1888,14 +1839,14 @@
                 }
                 document.querySelectorAll('.favorite-toggle').forEach(t => t.classList.add('show-toggle'));
                 document.querySelectorAll('.hide-toggle').forEach(t => t.classList.add('show-toggle'));
-                document.querySelectorAll('.beta-label, .new-label, .one-p-label, .two-p-label, .live-label, .disabled-label, .plus-label').forEach(l => l.style.display = 'none');
+                document.querySelectorAll('.beta-label, .new-label, .one-p-label, .two-p-label, .live-label, .disabled-label').forEach(l => l.style.display = 'none');
             } else {
                 btn.innerText = "Edit";
                 if (resetBtn) resetBtn.style.display = 'none';
                 if (featToggle) featToggle.style.display = 'none';
                 document.querySelectorAll('.favorite-toggle').forEach(t => t.classList.remove('show-toggle'));
                 document.querySelectorAll('.hide-toggle').forEach(t => t.classList.remove('show-toggle'));
-                document.querySelectorAll('.beta-label, .new-label, .one-p-label, .two-p-label, .live-label, .disabled-label, .plus-label').forEach(l => l.style.display = 'block');
+                document.querySelectorAll('.beta-label, .new-label, .one-p-label, .two-p-label, .live-label, .disabled-label').forEach(l => l.style.display = 'block');
             }
             if (currentFilter === 'all') renderFeaturedSection();
             renderAppGrid(currentFilter);
@@ -1980,16 +1931,14 @@
                     </svg>
                 </div>`;
 
-            const showPlus = false;
             if (!isEditMode) {
-                if (app.live && !showPlus && !app.isFolder) extraHtml += `<div class="live-label">LIVE</div>`;
-                else if (app.beta && !showPlus && !app.isFolder) extraHtml += `<div class="beta-label">BETA</div>`;
-                else if (app.new && !showPlus && !app.isFolder) extraHtml += `<div class="new-label">NEW</div>`;
-                else if (app.single && !showPlus && !app.isFolder) extraHtml += `<div class="one-p-label" data-i18n="badge.1p">1P</div>`;
+                if (app.live && !app.isFolder) extraHtml += `<div class="live-label">LIVE</div>`;
+                else if (app.beta && !app.isFolder) extraHtml += `<div class="beta-label">BETA</div>`;
+                else if (app.new && !app.isFolder) extraHtml += `<div class="new-label">NEW</div>`;
+                else if (app.single && !app.isFolder) extraHtml += `<div class="one-p-label" data-i18n="badge.1p">1P</div>`;
 
-                if (app.cat === 'two_player' && !showPlus && !app.isFolder) extraHtml += `<div class="two-p-label" data-i18n="badge.2p">2P</div>`;
+                if (app.cat === 'two_player' && !app.isFolder) extraHtml += `<div class="two-p-label" data-i18n="badge.2p">2P</div>`;
                 if (app.disabled) extraHtml += `<div class="disabled-label">CLOSED</div>`;
-                else if (showPlus && !app.isFolder) extraHtml += `<div class="plus-label">+</div>`;
             }
 
             const viewBox = app.viewBox || "0 0 32 32";
@@ -2308,7 +2257,7 @@
             if (isEditMode) {
                 document.getElementById('app-grid').querySelectorAll('.favorite-toggle').forEach(t => t.classList.add('show-toggle'));
                 document.getElementById('app-grid').querySelectorAll('.hide-toggle').forEach(t => t.classList.add('show-toggle'));
-                document.getElementById('app-grid').querySelectorAll('.beta-label, .new-label, .one-p-label, .two-p-label, .folder-label, .live-label, .disabled-label, .plus-label').forEach(l => l.style.display = 'none');
+                document.getElementById('app-grid').querySelectorAll('.beta-label, .new-label, .one-p-label, .two-p-label, .folder-label, .live-label, .disabled-label').forEach(l => l.style.display = 'none');
             }
         }
 
@@ -2330,7 +2279,6 @@
                 if (!allowChildCustomization) {
                     element.querySelectorAll('.favorite-toggle, .hide-toggle').forEach(e => e.remove());
                 }
-                element.querySelectorAll('.plus-label').forEach(e => e.remove());
 
                 fragment.appendChild(element);
             });
@@ -2422,11 +2370,6 @@
             closeModal('logout-modal'); location.reload();
         }
         function autoDetectScale() { if (window.rekindleAutoDetectScale) window.rekindleAutoDetectScale(); }
-        function updateProUI() {
-            const titlePlus = document.getElementById('title-plus');
-            if (isPro) { if (titlePlus) titlePlus.style.display = 'inline-block'; }
-            else { if (titlePlus) titlePlus.style.display = 'none'; }
-        }
         function drawAvatar(canvasOrId, seed) {
             const canvas = typeof canvasOrId === 'string' ? document.getElementById(canvasOrId) : canvasOrId;
             if (!canvas) return;

@@ -8,6 +8,7 @@
         "test:analytics": "node --test tests/analytics-contract.test.js yandex/rekindle-backend/index.test.js",
         "test:microsoft-todo": "node --test tests/microsoft-todo-contract.test.js",
         "test:social-removal": "node --test tests/social-removal-contract.test.js",
+        "test:supporter-removal": "node --test tests/supporter-removal-contract.test.js yandex/rekindle-backend/index.test.js",
         "test:theme": "node --test tests/theme-contract.test.js",
         "test:kindle-digest": "node --test tests/kindle-digest-contract.test.js yandex/rekindle-backend/kindle-digest-service.test.js",
         "test:manga-kindle": "node --test tests/manga-kindle-contract.test.js yandex/rekindle-backend/manga-kindle-service.test.js",
@@ -24,8 +25,7 @@
         "fs-extra": "^11.3.3",
         "glob": "^10.3.0",
         "postcss": "^8.5.10",
-        "postcss-preset-env": "^10.5.0",
-        "stripe": "^20.3.0"
+        "postcss-preset-env": "^10.5.0"
     },
     "overrides": {
         "fast-xml-parser": "^5.7.0",

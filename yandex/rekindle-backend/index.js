@@ -78,12 +78,6 @@ module.exports.handler = async function (event, context) {
         if (method === "POST" && path.indexOf("/games/akinator/") !== -1) {
             return response(200, await akinatorProxy(event, path), origin);
         }
-        if (method === "POST" && endsWith(path, "/billing/checkout")) {
-            return response(200, await createStripeCheckout(event), origin);
-        }
-        if (method === "POST" && endsWith(path, "/billing/webhook")) {
-            return response(200, await handleStripeWebhook(event), origin);
-        }
         if (method === "POST" && endsWith(path, "/ai/chat")) {
             return response(200, await aiChat(event, context || {}, requestId), origin);
         }
@@ -894,135 +888,6 @@ function extractFirstMatch(text, patterns) {
     return null;
 }
 
-async function createStripeCheckout(event) {
-    var user = await requireFirebaseUser(event, false);
-    await enforceUserWindowRateLimit(user.uid, "billing_checkout", 10, 60 * 60 * 1000);
-    var body = parseJsonBody(event);
-    var plan = String(body.plan || "");
-    var priceIds = {
-        monthly: process.env.STRIPE_PRICE_MONTHLY,
-        yearly: process.env.STRIPE_PRICE_YEARLY,
-        lifetime: process.env.STRIPE_PRICE_LIFETIME
-    };
-    if (!priceIds[plan]) throw httpError(400, "invalid-plan", "Invalid supporter plan.");
-    var successUrl = validateBillingReturnUrl(body.success_url, true);
-    var cancelUrl = validateBillingReturnUrl(body.cancel_url, false);
-    var params = buildFormBody({
-        client_reference_id: user.uid,
-        mode: plan === "lifetime" ? "payment" : "subscription",
-        "line_items[0][price]": priceIds[plan],
-        "line_items[0][quantity]": "1",
-        allow_promotion_codes: "true",
-        success_url: successUrl,
-        cancel_url: cancelUrl
-    });
-    var result = await readUpstreamResponse(await fetch("https://api.stripe.com/v1/checkout/sessions", {
-        method: "POST",
-        headers: {
-            "Authorization": "Bearer " + getRequiredEnv("STRIPE_KEY"),
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: params
-    }));
-    if (result.status < 200 || result.status >= 300 || !result.body.url) {
-        throw upstreamError(result, "Stripe checkout creation failed.");
-    }
-    return { url: result.body.url };
-}
-
-async function handleStripeWebhook(event) {
-    var raw = event.body || "";
-    if (event.isBase64Encoded) raw = Buffer.from(raw, "base64").toString("utf8");
-    if (typeof raw !== "string" || Buffer.byteLength(raw, "utf8") > 1024 * 1024) {
-        throw httpError(400, "invalid-webhook", "Invalid Stripe webhook body.");
-    }
-    verifyStripeWebhookSignature(getHeader(event, "stripe-signature"), raw, getRequiredEnv("STRIPE_WEBHOOK_SECRET"));
-    var stripeEvent;
-    try { stripeEvent = JSON.parse(raw); } catch (error) {
-        throw httpError(400, "invalid-webhook", "Stripe webhook is not valid JSON.");
-    }
-    var object = stripeEvent.data && stripeEvent.data.object;
-    if (!object) return { received: true };
-    if (stripeEvent.type === "checkout.session.completed" && object.client_reference_id) {
-        var lifetime = object.mode === "payment";
-        await setSupporterStatus(object.client_reference_id, {
-            active: true,
-            expiresAt: Date.now() + (lifetime ? 36500 : 32) * 24 * 60 * 60 * 1000,
-            stripeCustomerId: object.customer || "",
-            subscriptionType: lifetime ? "lifetime" : "recurring"
-        });
-    } else if (stripeEvent.type === "invoice.payment_succeeded" && object.customer) {
-        var invoiceEnd = object.lines && object.lines.data && object.lines.data[0] && object.lines.data[0].period && object.lines.data[0].period.end;
-        if (invoiceEnd) await updateSupporterByCustomer(object.customer, true, invoiceEnd * 1000 + 2 * 24 * 60 * 60 * 1000);
-    } else if (stripeEvent.type === "customer.subscription.updated" && object.customer) {
-        var periodEnd = object.current_period_end || (object.items && object.items.data && object.items.data[0] && object.items.data[0].current_period_end);
-        if (object.status === "active" || object.status === "trialing") {
-            if (periodEnd) await updateSupporterByCustomer(object.customer, true, periodEnd * 1000 + 2 * 24 * 60 * 60 * 1000);
-        } else if (object.status === "past_due" || object.status === "unpaid") {
-            await updateSupporterByCustomer(object.customer, false, Date.now());
-        }
-    } else if ((stripeEvent.type === "customer.subscription.deleted" || stripeEvent.type === "charge.refunded") && object.customer) {
-        await updateSupporterByCustomer(object.customer, false, Date.now());
-    }
-    return { received: true };
-}
-
-function validateBillingReturnUrl(value, success) {
-    var parsed;
-    try { parsed = new URL(String(value || "")); } catch (error) {
-        throw httpError(400, "invalid-return-url", "Invalid billing return URL.");
-    }
-    if (getAllowedOrigins().indexOf(parsed.origin) === -1) throw httpError(400, "invalid-return-url", "Billing return origin is not allowed.");
-    var page = parsed.pathname.split("/").pop().replace(/\.html$/, "");
-    if (page !== "pay") throw httpError(400, "invalid-return-url", "Billing return page is not allowed.");
-    parsed.hash = "";
-    if (!success) parsed.search = "";
-    return parsed.toString();
-}
-
-function verifyStripeWebhookSignature(header, payload, secret) {
-    var values = {};
-    String(header || "").split(",").forEach(function (item) {
-        var pair = item.split("=");
-        if (pair.length === 2) values[pair[0]] = pair[1];
-    });
-    if (!values.t || !values.v1 || Math.abs(Math.floor(Date.now() / 1000) - Number(values.t)) > 300) {
-        throw httpError(400, "invalid-signature", "Invalid Stripe signature.");
-    }
-    var expected = crypto.createHmac("sha256", secret).update(values.t + "." + payload).digest("hex");
-    var expectedBuffer = Buffer.from(expected, "hex");
-    var actualBuffer;
-    try { actualBuffer = Buffer.from(values.v1, "hex"); } catch (error) { actualBuffer = Buffer.alloc(0); }
-    if (expectedBuffer.length !== actualBuffer.length || !crypto.timingSafeEqual(expectedBuffer, actualBuffer)) {
-        throw httpError(400, "invalid-signature", "Invalid Stripe signature.");
-    }
-}
-
-async function setSupporterStatus(uid, values) {
-    var app = getFirebaseApp();
-    var ref = app.firestore().collection("users").doc(uid);
-    var current = await ref.get();
-    var currentExpiry = current.exists && current.data().proExpiresAt;
-    currentExpiry = currentExpiry && typeof currentExpiry.toMillis === "function" ? currentExpiry.toMillis() : 0;
-    var expiry = values.active ? Math.max(currentExpiry, Number(values.expiresAt || 0)) : Number(values.expiresAt || Date.now());
-    var update = {
-        isPro: values.active === true,
-        proExpiresAt: admin.firestore.Timestamp.fromMillis(expiry)
-    };
-    if (values.stripeCustomerId) update.stripeCustomerId = values.stripeCustomerId;
-    if (values.subscriptionType) update.subscriptionType = values.subscriptionType;
-    await ref.set(update, { merge: true });
-    var user = await app.auth().getUser(uid);
-    var claims = Object.assign({}, user.customClaims || {}, { pro: values.active === true });
-    await app.auth().setCustomUserClaims(uid, claims);
-}
-
-async function updateSupporterByCustomer(customerId, active, expiry) {
-    var snapshot = await getFirebaseApp().firestore().collection("users").where("stripeCustomerId", "==", String(customerId)).limit(1).get();
-    if (snapshot.empty) throw httpError(500, "supporter-not-found", "Stripe customer is not linked to a user.");
-    await setSupporterStatus(snapshot.docs[0].id, { active: active, expiresAt: expiry });
-}
-
 async function handleMicrosoftTodoRequest(event, path) {
     var user = await requireFirebaseUser(event, false);
     var action = path.split("/").pop();
@@ -1611,7 +1476,7 @@ function response(statusCode, body, origin) {
         headers: {
             "Access-Control-Allow-Origin": allowedOrigin,
             "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, X-Firebase-Token, Authorization, X-Readwise-Token, stripe-signature",
+            "Access-Control-Allow-Headers": "Content-Type, X-Firebase-Token, Authorization, X-Readwise-Token",
             "Cache-Control": "no-store",
             "Content-Type": "application/json; charset=utf-8",
             "Vary": "Origin"

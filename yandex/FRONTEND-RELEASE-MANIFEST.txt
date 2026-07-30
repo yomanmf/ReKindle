@@ -65,7 +65,6 @@ nerdle.html
 nonograms.html
 notes.html
 oregontrail.html
-pay.html
 pet.html
 photoframe.html
 pool.html
