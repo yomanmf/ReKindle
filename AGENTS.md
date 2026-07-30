@@ -362,6 +362,11 @@ var text = template.replace('${pName}', 'You').replace('${ship}', shipName).repl
 
 Or use a small helper that replaces all `${key}` occurrences. Many existing HTML files incorrectly pass a variables object as the second argument to `window.t()`, which silently fails on the Kindle browser.
 
+**Dynamic i18n race:** Mark dynamically inserted fallback text with the matching
+`data-i18n` attribute even when it is initially produced through `window.t()`.
+The markup can be created before the locale JSON resolves; without the
+attribute, the English fallback remains after the rest of the page is translated.
+
 ### Icons (SVG)
 Icons are stored as raw SVG strings in `icons.js`.
 *   **Size:** Designed for **32x32** pixel grid.
