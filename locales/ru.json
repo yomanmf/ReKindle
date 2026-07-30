@@ -786,6 +786,8 @@
   "hanoi.title": "Ханойская башня",
   "home.btn.ok": "OK",
   "home.btn.support": "Поддержка",
+  "dashboard.agenda.empty_today": "Сегодня событий нет",
+  "dashboard.agenda.today": "События сегодня",
   "dashboard.weather.hourly": "Почасовой прогноз",
   "weather.label.feels_like": "Ощущается как",
   "dashboard.weather.next_hours": "Следующие часы",

@@ -2511,7 +2511,7 @@
             events.sort((a,b) => new Date(a.start) - new Date(b.start));
 
             if (events.length === 0) {
-                listEl.innerHTML = '<div style="text-align:center; color:#555; padding: 10px;">No events today.</div>';
+                listEl.innerHTML = '<div style="text-align:center; color:#555; padding: 10px;">' + (window.t ? window.t('dashboard.agenda.empty_today', 'No events today') : 'No events today') + '</div>';
                 return;
             }
 
