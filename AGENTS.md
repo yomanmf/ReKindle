@@ -559,6 +559,13 @@ or supporter status back to the dashboard, settings, or locale files.
 
 **Yandex Object Storage recursive-copy gotcha:** Yandex CLI 1.18.0 marks `yc storage s3` as preview. During the 15 July 2026 AI Assistant release, both `yc storage s3 cp <dir> s3://rekindle/ --recursive` commands returned exit code 0 but silently omitted the same alphabetical tail of the 113-object release (42 root HTML objects and aliases). Never accept a recursive-copy exit code as proof of a complete frontend deployment. Read the bucket back and compare every manifest object byte-for-byte; upload any missing objects individually with `yc storage s3api put-object`. Set extensionless page aliases to `Content-Type: text/html` explicitly and verify their public HTTP headers.
 
+**Parallel Object Storage readback gotcha:** With `xargs`, a literal `{}` is
+not replaced unless `-I{}` is present. A command such as
+`xargs -n1 sh -c '...' sh '{}' "$readback_dir"` therefore requests the object
+key `{}` and reports false 404s for the whole release. Use
+`xargs -0 -P12 -I{} sh -c '...' sh '{}' "$readback_dir"`, then compare every
+downloaded file with its staged source.
+
 **Service worker belongs in every static release:** `sw.js` was accidentally absent from `yandex/FRONTEND-RELEASE-MANIFEST.txt` during the 15 July 2026 social-removal rollout. The other 117 objects deployed correctly, but production kept `rekindle-cache-v21`, so existing browsers could continue serving the retired KindleChat catalog from cache. Keep `sw.js` in the manifest, increment `CACHE_NAME` whenever retiring cached pages, upload it with `Cache-Control: no-cache, max-age=0`, and verify both the direct bucket object and public website serve the new cache version.
 
 **Dashboard hourly weather contract:** Both `index.html` and `index_old.html` get the current conditions, apparent temperature, a button-paged 24-hour forecast, and the seven-day forecast from one Open-Meteo request. Keep the modern and classic home-widget implementations synchronized. Use Open-Meteo's modern `current=temperature_2m,apparent_temperature,weather_code` parameter; combining it with legacy `current_weather=true` makes the API omit the `current` object. The hourly response uses local wall-clock strings because the request specifies `timezone=auto`; compare their `YYYY-MM-DDTHH` prefixes with `current.time` and format the hour manually instead of applying another timezone conversion. Paging changes `scrollLeft` directly (never use smooth scrolling on E-ink), while disabled edge buttons remain in the grid with `visibility: hidden` so the forecast cards do not shift. Keep all dashboard weather labels in every main locale bundle when changing this widget.
