@@ -1002,8 +1002,9 @@
 
         function updateUI() {
             const current = userSettings.locations[userSettings.currentIndex];
-            document.getElementById('current-city').innerText = current.city;
-            document.getElementById('current-city').removeAttribute('data-i18n');
+            const cityKey = 'weather.city.' + current.city.toLowerCase();
+            document.getElementById('current-city').setAttribute('data-i18n', cityKey);
+            document.getElementById('current-city').innerText = window.t(cityKey, current.city);
 
             const options = { weekday: 'long', month: 'short', day: 'numeric' };
             document.getElementById('current-date').innerText = window.rekindleFormatTime(new Date(), options);

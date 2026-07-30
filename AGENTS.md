@@ -370,6 +370,11 @@ Icons are stored as raw SVG strings in `icons.js`.
 
 ## JavaScript Global `t` Naming Conflict
 
+Weather location names are saved as external geocoder values and are not
+translated automatically. Add aliases such as `weather.city.moscow` to locale
+bundles and let `weather.html` fall back to the saved name when an alias is
+absent; do not rewrite or discard saved locations just to localize their label.
+
 Do **not** define a global `function t(key, fallback)` in page scripts. `js/i18n.js` already exposes the translation helper as `window.t`. Because a global `function t` declaration also attaches itself to `window.t`, it overwrites the i18n helper and calls itself recursively, causing a `RangeError: Maximum call stack size exceeded`.
 
 **Example of broken code (`akinator.html` before fix):**
