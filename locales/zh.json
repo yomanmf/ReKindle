@@ -792,6 +792,7 @@
   "home.btn.reset": "重置",
   "home.btn.support": "支持",
   "dashboard.weather.hourly": "每小时预报",
+  "weather.label.feels_like": "体感",
   "dashboard.weather.next_hours": "接下来几小时",
   "dashboard.weather.now": "现在",
   "dashboard.weather.previous_hours": "前几小时",

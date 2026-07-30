@@ -300,6 +300,12 @@
             text-transform: capitalize;
         }
 
+        .feels-like {
+            font-family: "Courier New", monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
         .extra-stats {
             margin-top: 25px;
             display: flex;
@@ -758,6 +764,9 @@
                     <div class="temp-group">
                         <div class="temp-big" id="current-temp">--</div>
                         <div class="condition-text" id="current-cond">...</div>
+                        <div class="feels-like"><span data-i18n="weather.label.feels_like">Feels like</span>:
+                            <span id="current-feels">--°</span>
+                        </div>
                         <div class="nowcast-alert" id="nowcast-alert"></div>
                         <div class="gov-alert" id="gov-alert" onclick="openAlertModal()"></div>
                     </div>
@@ -1286,12 +1295,12 @@
 
             try {
                 // ADD minutely_15=precipitation to URL
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLoc.lat}&longitude=${currentLoc.long}&current_weather=true&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&minutely_15=precipitation&timezone=auto&temperature_unit=${unit}&windspeed_unit=${windUnit}`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLoc.lat}&longitude=${currentLoc.long}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min&minutely_15=precipitation&timezone=auto&temperature_unit=${unit}&windspeed_unit=${windUnit}`;
 
                 const res = await fetch(url);
                 const data = await res.json();
 
-                const current = data.current_weather;
+                const current = data.current;
                 const selectedDayIndex = requestedForecastDate ? data.daily.time.indexOf(requestedForecastDate) : -1;
 
                 if (selectedDayIndex !== -1) {
@@ -1302,6 +1311,7 @@
                         ? window.rekindleFormatWallDate(selectedDate, { weekday: 'long', month: 'short', day: 'numeric' })
                         : selectedDate.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
                     document.getElementById('current-temp').innerText = Math.round(data.daily.temperature_2m_max[selectedDayIndex]) + "° / " + Math.round(data.daily.temperature_2m_min[selectedDayIndex]) + "°";
+                    document.getElementById('current-feels').innerText = Math.round(data.daily.apparent_temperature_max[selectedDayIndex]) + "° / " + Math.round(data.daily.apparent_temperature_min[selectedDayIndex]) + "°";
                     document.getElementById('current-cond').innerText = getDescription(data.daily.weathercode[selectedDayIndex]);
                     document.getElementById('current-icon').innerHTML = getIcon(data.daily.weathercode[selectedDayIndex], true);
                     document.querySelector('.extra-stats').style.display = 'none';
@@ -1309,10 +1319,11 @@
                     document.getElementById('gov-alert').style.display = 'none';
                 } else {
                     document.querySelector('.current-wrapper').classList.remove('forecast-day');
-                    document.getElementById('current-temp').innerText = Math.round(current.temperature) + "°";
-                    document.getElementById('current-cond').innerText = getDescription(current.weathercode);
-                    document.getElementById('current-icon').innerHTML = getIcon(current.weathercode, true);
-                    document.getElementById('wind-stat').innerHTML = `<span data-i18n="weather.label.wind">${window.t('weather.label.wind', 'WIND')}</span> ${current.windspeed}${data.current_weather_units.windspeed}`;
+                    document.getElementById('current-temp').innerText = Math.round(current.temperature_2m) + "°";
+                    document.getElementById('current-feels').innerText = Math.round(data.current.apparent_temperature) + "°";
+                    document.getElementById('current-cond').innerText = getDescription(current.weather_code);
+                    document.getElementById('current-icon').innerHTML = getIcon(current.weather_code, true);
+                    document.getElementById('wind-stat').innerHTML = `<span data-i18n="weather.label.wind">${window.t('weather.label.wind', 'WIND')}</span> ${current.wind_speed_10m}${data.current_units.wind_speed_10m}`;
                     document.getElementById('humid-stat').style.display = 'none';
                     document.querySelector('.extra-stats').style.display = 'flex';
                     document.querySelector('.extra-stats').style.borderTop = '1px solid black';

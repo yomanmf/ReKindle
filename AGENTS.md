@@ -559,7 +559,7 @@ portal; it must not create new checkout sessions.
 
 **Service worker belongs in every static release:** `sw.js` was accidentally absent from `yandex/FRONTEND-RELEASE-MANIFEST.txt` during the 15 July 2026 social-removal rollout. The other 117 objects deployed correctly, but production kept `rekindle-cache-v21`, so existing browsers could continue serving the retired KindleChat catalog from cache. Keep `sw.js` in the manifest, increment `CACHE_NAME` whenever retiring cached pages, upload it with `Cache-Control: no-cache, max-age=0`, and verify both the direct bucket object and public website serve the new cache version.
 
-**Dashboard hourly weather contract:** Both `index.html` and `index_old.html` get the current conditions, a button-paged 24-hour forecast, and the seven-day forecast from one Open-Meteo request. Keep the modern and classic home-widget implementations synchronized. The hourly response uses local wall-clock strings because the request specifies `timezone=auto`; compare their `YYYY-MM-DDTHH` prefixes with `current_weather.time` and format the hour manually instead of applying another timezone conversion. Paging changes `scrollLeft` directly (never use smooth scrolling on E-ink), while disabled edge buttons remain in the grid with `visibility: hidden` so the forecast cards do not shift. Keep all `dashboard.weather.*` navigation labels in every main locale bundle when changing this row.
+**Dashboard hourly weather contract:** Both `index.html` and `index_old.html` get the current conditions, apparent temperature, a button-paged 24-hour forecast, and the seven-day forecast from one Open-Meteo request. Keep the modern and classic home-widget implementations synchronized. Use Open-Meteo's modern `current=temperature_2m,apparent_temperature,weather_code` parameter; combining it with legacy `current_weather=true` makes the API omit the `current` object. The hourly response uses local wall-clock strings because the request specifies `timezone=auto`; compare their `YYYY-MM-DDTHH` prefixes with `current.time` and format the hour manually instead of applying another timezone conversion. Paging changes `scrollLeft` directly (never use smooth scrolling on E-ink), while disabled edge buttons remain in the grid with `visibility: hidden` so the forecast cards do not shift. Keep all dashboard weather labels in every main locale bundle when changing this widget.
 
 **Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, Microsoft To Do, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
@@ -1007,8 +1007,9 @@ URL had been encoded correctly.
 **Dashboard weather drilldown:** The seven-day cards in both `index.html` and
 `index_old.html` are native links to `weather?date=YYYY-MM-DD`. Keep the two
 dashboards synchronized. `weather.html` accepts the date only when it exactly
-matches Open-Meteo's `daily.time`, then shows that day's high/low, condition,
-and hourly entries; invalid or expired dates fall back to current conditions.
+matches Open-Meteo's `daily.time`, then shows that day's high/low, apparent
+temperature range, condition, and hourly entries; invalid or expired dates
+fall back to current conditions and current apparent temperature.
 Weather hour labels use Open-Meteo wall-clock strings in 24-hour `HH:MM`
 format. The detail page must keep its 48px previous/next buttons because Kindle
 users cannot reliably reach all 24 cards with touch-only horizontal scrolling.

@@ -792,6 +792,7 @@
   "home.btn.reset": "Zresetuj",
   "home.btn.support": "Wsparcie",
   "dashboard.weather.hourly": "Prognoza godzinowa",
+  "weather.label.feels_like": "Odczuwalna",
   "dashboard.weather.next_hours": "Następne godziny",
   "dashboard.weather.now": "Teraz",
   "dashboard.weather.previous_hours": "Poprzednie godziny",

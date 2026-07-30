@@ -93,6 +93,7 @@ test("catalog, source pages and locale bundles omit retired applications", funct
     }).forEach(function (name) {
         var locale = JSON.parse(read(path.join("locales", name)));
         assert.equal(typeof locale["dashboard.weather.hourly"], "string", name);
+        assert.equal(typeof locale["weather.label.feels_like"], "string", name);
         assert.equal(typeof locale["dashboard.weather.next_hours"], "string", name);
         assert.equal(typeof locale["dashboard.weather.now"], "string", name);
         assert.equal(typeof locale["dashboard.weather.previous_hours"], "string", name);
@@ -128,13 +129,16 @@ test("dashboard exposes separate single-player and two-player folders", function
         assert.match(source, /id="edit-done-btn"/);
         assert.match(source, /id="home-widgets"/);
         assert.match(source, /id="db-weather-hourly"/);
+        assert.match(source, /id="db-weather-feels"/);
         assert.match(source, /id="db-weather-hour-prev"/);
         assert.match(source, /id="db-weather-hour-next"/);
         assert.match(source, /startIndex \+ 24/);
         assert.match(source, /return wallTime\.slice\(11, 16\)/);
         assert.match(source, /window\.scrollDashboardWeatherHours = scrollDashboardWeatherHours/);
         assert.match(source, /id="db-weather-week"/);
-        assert.match(source, /hourly=temperature_2m,weathercode/);
+        assert.match(source, /current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,weathercode/);
+        assert.doesNotMatch(source, /current_weather=true/);
+        assert.match(source, /data\.current\.apparent_temperature/);
         assert.match(source, /forecast_days=7/);
         assert.match(source, /<a class="dashboard-weather-day" href="weather\?date=/);
         assert.match(source, /id="db-calendar-grid"/);
@@ -146,6 +150,10 @@ test("dashboard exposes separate single-player and two-player folders", function
     assert.match(weather, /id="hourly-prev"/);
     assert.match(weather, /id="hourly-next"/);
     assert.match(weather, /const hourLabel = hourly\.time\[i\]\.slice\(11, 16\)/);
+    assert.match(weather, /id="current-feels"/);
+    assert.match(weather, /current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m/);
+    assert.doesNotMatch(weather, /current_weather=true/);
+    assert.match(weather, /apparent_temperature_max,apparent_temperature_min/);
     assert.match(weather, /function scrollHourly\(direction\)/);
     assert.match(weather, /row\.href = 'weather\?date='/);
     assertInlineScriptsParse("weather.html");

@@ -1281,6 +1281,9 @@
                                 <div class="dashboard-weather-details">
                                     <div class="dashboard-weather-desc" id="db-weather-desc"
                                         data-i18n="weather.status.loading">Loading...</div>
+                                    <div class="dashboard-weather-highlow"><span
+                                            data-i18n="weather.label.feels_like">Feels like</span>: <span
+                                            id="db-weather-feels">--°</span></div>
                                     <div class="dashboard-weather-highlow" id="db-weather-highlow"></div>
                                 </div>
                             </div>
@@ -2636,16 +2639,19 @@
                 const lEl = document.getElementById('db-weather-loc');
                 if (lEl) lEl.textContent = locName;
                 
-                const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current_weather=true&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=auto&temperature_unit=' + unit;
+                const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=auto&temperature_unit=' + unit;
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('Weather API failed');
                 const data = await res.json();
-                if (data.current_weather) {
+                if (data.current) {
                     const tw = document.getElementById('db-weather-temp');
                     const dw = document.getElementById('db-weather-desc');
                     const hl = document.getElementById('db-weather-highlow');
-                    if (tw) tw.textContent = Math.round(data.current_weather.temperature) + '°';
-                    const code = data.current_weather.weathercode;
+                    if (tw) tw.textContent = Math.round(data.current.temperature_2m) + '°';
+                    if (data.current && typeof data.current.apparent_temperature === 'number') {
+                        document.getElementById('db-weather-feels').textContent = Math.round(data.current.apparent_temperature) + '°';
+                    }
+                    const code = data.current.weather_code;
 
                     const dbIcon = document.getElementById('db-weather-icon');
                     if (dbIcon) {
@@ -2674,7 +2680,7 @@
                     if (hourlyContainer && data.hourly && data.hourly.time && data.hourly.weathercode && data.hourly.temperature_2m) {
                         let hourlyHtml = '';
                         let startIndex = 0;
-                        const currentHour = data.current_weather.time ? data.current_weather.time.slice(0, 13) : '';
+                        const currentHour = data.current.time ? data.current.time.slice(0, 13) : '';
                         for (let i = 0; i < data.hourly.time.length; i++) {
                             if (!currentHour || data.hourly.time[i].slice(0, 13) >= currentHour) {
                                 startIndex = i;

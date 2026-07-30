@@ -792,6 +792,7 @@
   "home.btn.reset": "Ripristina",
   "home.btn.support": "Supporto",
   "dashboard.weather.hourly": "Previsioni orarie",
+  "weather.label.feels_like": "Percepita",
   "dashboard.weather.next_hours": "Ore successive",
   "dashboard.weather.now": "Ora",
   "dashboard.weather.previous_hours": "Ore precedenti",

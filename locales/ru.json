@@ -792,6 +792,7 @@
   "home.btn.reset": "Сброс",
   "home.btn.support": "Поддержка",
   "dashboard.weather.hourly": "Почасовой прогноз",
+  "weather.label.feels_like": "Ощущается как",
   "dashboard.weather.next_hours": "Следующие часы",
   "dashboard.weather.now": "Сейчас",
   "dashboard.weather.previous_hours": "Предыдущие часы",
