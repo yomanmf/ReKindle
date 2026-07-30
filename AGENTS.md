@@ -322,7 +322,8 @@ inside the virtual Misc folder by both `index.html` and `index_old.html`. The
 single-player Games folder stays at the dashboard root, while the two-player
 Games folder is its final child. AI Assistant, Kindle Digest, and Reddit also
 stay at the root. Keep both dashboard implementations synchronized when
-changing this grouping.
+changing this grouping. Keep the folder's in-code fallback label as `Разное`;
+dynamic tiles can briefly use that fallback before Russian translations load.
 
 `icons-beta.js` is merged into `APPS` at runtime. Keep application IDs unique
 across both registries: duplicating an ID can render one copy inside Misc and a

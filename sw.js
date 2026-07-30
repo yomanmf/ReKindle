@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v32'; // Add Manga to Kindle
+const CACHE_NAME = 'rekindle-cache-v33'; // Use the localized Misc folder fallback
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

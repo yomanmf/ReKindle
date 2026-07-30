@@ -39,7 +39,7 @@ test("Manga to Kindle is routed, catalogued, and released", function () {
     });
     assert.match(read("index.html"), /icons-beta\.js\?v=3/);
     assert.match(read("index_old.html"), /icons-beta\.js\?v=3/);
-    assert.match(read("sw.js"), /rekindle-cache-v32/);
+    assert.match(read("sw.js"), /rekindle-cache-v33/);
 });
 
 test("Manga to Kindle ships English and Russian UI contracts", function () {
