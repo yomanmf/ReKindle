@@ -768,6 +768,13 @@ Important notes:
 
 The production site at `https://rekindle.website.yandexcloud.net` is static hosting. A relative `/api/...` request falls through to the static-site error document. All APIs must use an absolute Yandex Gateway URL.
 
+**HTTPS-only Object Storage:** The production `rekindle` bucket applies
+`yandex/public-site-policy.json`, which explicitly denies every request when
+`aws:SecureTransport` is `false`. The default `*.website.yandexcloud.net`
+hostname cannot provide a configurable server-side HTTP redirect, so plain
+HTTP intentionally returns `403` instead of loading or redirecting the app.
+Keep public links on HTTPS and verify both schemes after every policy change.
+
 The shared public GET/HEAD proxy is `/api/rekindle/content/proxy?url=...`. It validates public DNS destinations, rejects credentials/private networks, follows at most five validated redirects, applies an IP rate limit, strips browser credentials and cookies, and caps responses at 5 MB. Do not weaken it into an unrestricted header-forwarding proxy. `reddit.html` continues to use its dedicated Yandex route because Reddit needs its own allowlist/cache behavior.
 
 **Remote RSS image gotcha:** `rss2json` can return valid BBC thumbnail URLs on
