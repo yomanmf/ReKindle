@@ -351,9 +351,45 @@
 
         .hourly-scroll {
             display: flex;
+            flex: 1;
+            min-width: 0;
             overflow-x: auto;
             padding-bottom: 10px;
             scrollbar-width: none;
+        }
+
+        .hourly-row {
+            display: flex;
+            align-items: center;
+        }
+
+        .hourly-row>*+* {
+            margin-left: 10px;
+        }
+
+        .hourly-nav {
+            min-width: 48px;
+            width: 48px;
+            height: 48px;
+            border: 2px solid black;
+            background: white;
+            box-shadow: 2px 2px 0 black;
+            color: black;
+            font-family: inherit;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .hourly-nav:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+            background: black;
+            color: white;
+        }
+
+        .hourly-nav:disabled {
+            visibility: hidden;
         }
 
         .hourly-scroll>*+* {
@@ -736,7 +772,13 @@
             <!-- HOURLY -->
             <div class="hourly-section">
                 <div class="section-title" data-i18n="weather.header.hourly">24 Hour Forecast</div>
-                <div class="hourly-scroll" id="hourly-container"></div>
+                <div class="hourly-row">
+                    <button id="hourly-prev" class="hourly-nav" type="button" onclick="scrollHourly(-1)"
+                        title="Previous hours" data-i18n-title="dashboard.weather.previous_hours" disabled>&lt;</button>
+                    <div class="hourly-scroll" id="hourly-container" onscroll="updateHourlyNav()"></div>
+                    <button id="hourly-next" class="hourly-nav" type="button" onclick="scrollHourly(1)"
+                        title="Next hours" data-i18n-title="dashboard.weather.next_hours" disabled>&gt;</button>
+                </div>
             </div>
 
             <!-- FORECAST -->
@@ -1378,8 +1420,7 @@
             if (startIdx === -1) return;
 
             for (let i = startIdx; i < startIdx + 24 && i < hourly.time.length && (!selectedDate || hourly.time[i].slice(0, 10) === selectedDate); i++) {
-                const date = new Date(hourly.time[i]);
-                const hourLabel = window.rekindleFormatWallDate ? window.rekindleFormatWallDate(date, { hour: 'numeric', hour12: true }) : (window.rekindleFormatTime ? window.rekindleFormatTime(date, { hour: 'numeric', hour12: true }) : date.toLocaleTimeString([], { hour: 'numeric', hour12: true }));
+                const hourLabel = hourly.time[i].slice(11, 16);
 
                 const temp = Math.round(hourly.temperature_2m[i]);
                 const code = hourly.weathercode[i];
@@ -1393,6 +1434,28 @@
                 `;
                 container.appendChild(item);
             }
+
+            container.scrollLeft = 0;
+            updateHourlyNav();
+        }
+
+        function updateHourlyNav() {
+            const container = document.getElementById('hourly-container');
+            const previousButton = document.getElementById('hourly-prev');
+            const nextButton = document.getElementById('hourly-next');
+            if (!container || !previousButton || !nextButton) return;
+            const maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
+            previousButton.disabled = container.scrollLeft <= 1;
+            nextButton.disabled = maxScroll <= 1 || container.scrollLeft >= maxScroll - 1;
+        }
+
+        function scrollHourly(direction) {
+            const container = document.getElementById('hourly-container');
+            if (!container) return;
+            const maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
+            const target = container.scrollLeft + (direction * (container.clientWidth + 12));
+            container.scrollLeft = Math.max(0, Math.min(maxScroll, target));
+            updateHourlyNav();
         }
 
         function renderForecast(daily, selectedDate) {

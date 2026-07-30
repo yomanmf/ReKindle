@@ -131,6 +131,7 @@ test("dashboard exposes separate single-player and two-player folders", function
         assert.match(source, /id="db-weather-hour-prev"/);
         assert.match(source, /id="db-weather-hour-next"/);
         assert.match(source, /startIndex \+ 24/);
+        assert.match(source, /return wallTime\.slice\(11, 16\)/);
         assert.match(source, /window\.scrollDashboardWeatherHours = scrollDashboardWeatherHours/);
         assert.match(source, /id="db-weather-week"/);
         assert.match(source, /hourly=temperature_2m,weathercode/);
@@ -142,6 +143,10 @@ test("dashboard exposes separate single-player and two-player folders", function
     var weather = read("weather.html");
     assert.match(weather, /new URLSearchParams\(window\.location\.search\)\.get\('date'\)/);
     assert.match(weather, /hourly\.time\[i\]\.slice\(0, 10\) === selectedDate/);
+    assert.match(weather, /id="hourly-prev"/);
+    assert.match(weather, /id="hourly-next"/);
+    assert.match(weather, /const hourLabel = hourly\.time\[i\]\.slice\(11, 16\)/);
+    assert.match(weather, /function scrollHourly\(direction\)/);
     assert.match(weather, /row\.href = 'weather\?date='/);
     assertInlineScriptsParse("weather.html");
 });

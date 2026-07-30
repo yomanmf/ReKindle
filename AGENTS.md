@@ -1026,6 +1026,9 @@ URL had been encoded correctly.
 dashboards synchronized. `weather.html` accepts the date only when it exactly
 matches Open-Meteo's `daily.time`, then shows that day's high/low, condition,
 and hourly entries; invalid or expired dates fall back to current conditions.
+Weather hour labels use Open-Meteo wall-clock strings in 24-hour `HH:MM`
+format. The detail page must keep its 48px previous/next buttons because Kindle
+users cannot reliably reach all 24 cards with touch-only horizontal scrolling.
 
 **Browser Reader Reddit fallback:** Yandex-hosted requests from the generic
 Reader backend can receive HTTP 403 from `www.reddit.com` even when the same

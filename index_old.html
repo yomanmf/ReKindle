@@ -1962,12 +1962,7 @@
         }
 
         function formatDashboardWeatherHour(wallTime) {
-            const hour = parseInt(wallTime.slice(11, 13), 10);
-            const lang = (document.documentElement.lang || 'en').toLowerCase();
-            if (lang.indexOf('en') === 0) {
-                return (hour % 12 || 12) + (hour >= 12 ? ' PM' : ' AM');
-            }
-            return (hour < 10 ? '0' : '') + hour + ':00';
+            return wallTime.slice(11, 16);
         }
 
         function updateDashboardWeatherHourNav() {
