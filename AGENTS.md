@@ -320,8 +320,8 @@ bump the `icons.js` query version in both dashboards and the matching entry in
 Non-game catalog entries assigned `cat: 'misc'` in `icons.js` are rendered
 inside the virtual Misc folder by both `index.html` and `index_old.html`. The
 single-player Games folder stays at the dashboard root, while the two-player
-Games folder is its final child. AI Assistant, Kindle Digest, and Reddit also
-stay at the root. Keep both dashboard implementations synchronized when
+Games folder is its final child. AI Assistant stays in Misc; Kindle Digest and
+Reddit stay at the root. Keep both dashboard implementations synchronized when
 changing this grouping. Keep the folder's in-code fallback label as `Разное`;
 dynamic tiles can briefly use that fallback before Russian translations load.
 

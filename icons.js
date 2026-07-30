@@ -36,7 +36,7 @@ const APPS = [
     {
         id: 'chat',
         name: 'AI Assistant',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<path d="M16 3 L19 11 L27 14 L19 17 L16 25 L13 17 L5 14 L13 11 Z M6 3 L8 7 L12 8 L8 9 L6 13 L4 9 L0 8 L4 7 Z" fill="black" stroke="none"/>'
     },
     {

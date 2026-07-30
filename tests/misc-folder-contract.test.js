@@ -16,7 +16,7 @@ test("screenshot apps live in Misc while requested exceptions stay outside", fun
     var betaApps = vm.runInNewContext(read("icons-beta.js") + "\nAPPS_BETA;");
     apps = Array.from(apps).concat(Array.from(betaApps));
     var expected = [
-        "airtype", "breathing", "browser", "calculator", "calendar", "countdown",
+        "airtype", "breathing", "browser", "calculator", "calendar", "chat", "countdown",
         "dictionary", "docs", "files", "flashcards", "flipbook", "interactive",
         "maps", "microsofttodo", "notes", "photoframe", "quicktodo", "readlater",
         "reader", "readwise", "tasks", "timer", "translate", "weather",
@@ -27,7 +27,7 @@ test("screenshot apps live in Misc while requested exceptions stay outside", fun
 
     assert.equal(actual.join(","), expected.sort().join(","));
     assert.equal(apps.filter(function (app) { return app.id === "readwise"; }).length, 1);
-    ["chat", "kindledigest", "reddit"].forEach(function (id) {
+    ["kindledigest", "reddit"].forEach(function (id) {
         assert.notEqual(apps.find(function (app) { return app.id === id; }).cat, "misc");
     });
 });
@@ -43,7 +43,7 @@ test("both dashboards nest two-player games inside Games and leave Games outside
         assert.match(source, /id: 'folder_misc'[\s\S]*?i18nKey: 'home\.nav\.misc'/);
         assert.ok(source.indexOf("id: 'folder_two_player'") < source.indexOf("id: 'folder_games'"));
         assert.ok(source.indexOf("id: 'folder_games'") < source.indexOf("id: 'folder_misc'"));
-        assert.match(source, /icons\.js\?v=10/);
+        assert.match(source, /icons\.js\?v=11/);
         assert.match(source, /icons-beta\.js\?v=5/);
     });
 });
@@ -56,8 +56,8 @@ test("Misc is localized and the updated catalog bypasses old service-worker cach
     Object.keys(expected).forEach(function (language) {
         assert.equal(JSON.parse(read("locales/" + language + ".json"))["home.nav.misc"], expected[language]);
     });
-    assert.match(read("sw.js"), /rekindle-cache-v39/);
-    assert.match(read("sw.js"), /icons\.js\?v=10/);
+    assert.match(read("sw.js"), /rekindle-cache-v40/);
+    assert.match(read("sw.js"), /icons\.js\?v=11/);
     assert.match(read("sw.js"), /icons-beta\.js\?v=5/);
     assert.match(read("yandex/FRONTEND-RELEASE-MANIFEST.txt"), /^icons-beta\.js$/m);
 });

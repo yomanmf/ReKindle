@@ -1,8 +1,8 @@
-const CACHE_NAME = 'rekindle-cache-v39'; // Refresh dashboard icons
+const CACHE_NAME = 'rekindle-cache-v40'; // Move AI Assistant into Misc
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=10',
+    './icons.js?v=11',
     './icons-beta.js?v=5',
     './theme.js?v=22',
     './logo.svg',
