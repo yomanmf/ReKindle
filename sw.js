@@ -1,11 +1,10 @@
-const CACHE_NAME = 'rekindle-cache-v27'; // Add the Misc dashboard folder
+const CACHE_NAME = 'rekindle-cache-v28'; // Retire donation prompts and QR asset
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=5',
     './theme.js?v=21',
     './logo.svg',
-    './donate.svg',
     './manifest.json',
     './fonts/OpenDyslexic-Regular.woff2',
     './fonts/OpenDyslexic-Bold.woff2'

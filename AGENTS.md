@@ -532,7 +532,13 @@ Before publishing the primary RTDB rules, run
 then with `--force`: it preserves valid Life birthdays under the private path
 before removing the obsolete `users_public` and `user_cards` trees.
 
-**Removing a paywall includes its locale contract:** When a gated component is deleted, remove its unused translation keys too. Stale keys such as `airtype.paywall.*`, `quicknotes.paywall.*`, `quicktodo.pro.*`, and `paywall.popup.*` previously continued to advertise exclusive apps and could be resurrected by cached or legacy markup. The remaining `pay.desc` and `support.desc` text must explicitly state that every app is available without a subscription.
+**Removing a paywall includes its locale contract:** When a gated component is deleted, remove its unused translation keys too. Stale keys such as `airtype.paywall.*`, `quicknotes.paywall.*`, `quicktodo.pro.*`, and `paywall.popup.*` previously continued to advertise exclusive apps and could be resurrected by cached or legacy markup.
+
+**Donation prompts are retired (July 2026):** Do not add donation buttons, QR
+codes, checkout plans, Ko-fi links, or ReKindle+ upgrade banners back to the
+dashboard, settings, or locale files. `pay.html` remains only so existing
+supporters can view their status and open Stripe's subscription-management
+portal; it must not create new checkout sessions.
 
 **OCR MIME must match the canvas encoding:** Quick ToDo and Quick Notes encode cropped handwriting with `canvas.toDataURL('image/jpeg', ...)`. Their Yandex OCR request must send `mimeType: 'JPEG'`; hard-coding `PNG` in the backend produces invalid or unreliable recognition. The backend accepts only `PNG` and `JPEG` and forwards the validated value to Yandex Vision OCR.
 

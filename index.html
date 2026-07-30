@@ -1074,11 +1074,6 @@
             padding: 0;
         }
 
-        #donate-modal .modal-box {
-            width: 240px;
-            padding: 20px;
-        }
-
         /* Large app folders scroll their grid, not the whole modal window. */
         #folder-modal .modal-box {
             width: 82%;
@@ -1381,18 +1376,6 @@
                 <p data-i18n="home.info.data_policy" style="font-size: 0.75rem; color: #666; margin-bottom: 5px; margin-top: 15px;">No data is, or ever
                     will be shared or sold by ReKindle.</p>
                 <a href="privacy" class="privacy-link" data-i18n="home.info.privacy">Privacy Policy</a>
-                <button class="sys-btn" onclick="openDonateModal()" data-i18n="home.btn.donate" style="box-shadow: 2px 2px 0 black; padding: 5px 10px; font-size: 0.8rem; margin-top:10px;">Donate</button>
-            </div>
-        </div>
-
-        <div id="donate-modal" class="modal-overlay" onclick="closeModal('donate-modal')">
-            <div class="modal-box" onclick="event.stopPropagation()">
-                <button class="modal-close" onclick="closeModal('donate-modal')">X</button>
-                <h2 data-i18n="home.info.donate_title">Donate</h2>
-                <div style="margin: 15px auto; width: 120px; height: 120px;" id="qr-container"></div>
-                <div data-i18n="home.info.scan_donate" style="font-size:0.7rem; font-weight:bold; margin-top:5px;">Scan to Donate</div>
-                <a href="http://link.rekindle.ink/donate" target="_blank" class="privacy-link" data-i18n="home.info.buy_coffee"
-                    style="margin-top: 0;">Buy me a coffee</a>
             </div>
         </div>
 
@@ -1734,8 +1717,6 @@
         function renderAboutContent() {
             const logoContainer = document.getElementById('logo-container');
             if (logoContainer) logoContainer.innerHTML = '<img src="logo.svg" class="keep-white" style="width:100%; height:100%;" alt="ReKindle Logo">';
-            const qrContainer = document.getElementById('qr-container');
-            if (qrContainer) qrContainer.innerHTML = '<img src="donate.svg" style="width:100%; height:100%;" alt="Donate QR">';
         }
 
         // ... [Sync functions unchanged] ...
@@ -2355,7 +2336,6 @@
             document.getElementById('folder-modal').style.display = 'flex';
         }
 
-        function openDonateModal() { document.getElementById('donate-modal').style.display = 'flex'; }
         function openLogoutModal() { document.getElementById('logout-modal').style.display = 'flex'; }
         function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
         function showGenericModal(title, message) {
@@ -2983,7 +2963,6 @@
         // Expose functions needed by inline HTML handlers
         window.filterApps = filterApps;
         window.openAbout = openAbout;
-        window.openDonateModal = openDonateModal;
         window.openLogin = openLogin;
         window.openResetModal = openResetModal;
         window.closeModal = closeModal;

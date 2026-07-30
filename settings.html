@@ -527,19 +527,6 @@
         </div>
         <div class="window-content">
 
-
-            <!-- PRO UPGRADE BANNER -->
-            <div id="pro-upgrade-banner"
-                style="display:none; border:2px solid black; padding:15px; margin-bottom:20px; background:white; box-shadow: 4px 4px 0 black; text-align:center;">
-                <h3 style="margin-top:0;">Support ReKindle+</h3>
-                <p style="font-size:0.9rem; margin-bottom:15px;" data-i18n="support.desc">Support ReKindle
-                    development
-                    and help cover the costs of keeping every app available.</p>
-                <button class="sys-btn" onclick="window.location.href='pay.html'"
-                    style="width:100%; max-width:200px; background:black; color:white;" data-i18n="support.get">Support
-                    ReKindle+</button>
-            </div>
-
             <!-- PRO STATUS BANNER -->
             <div id="pro-status-banner"
                 style="display:none; border:2px solid black; padding:15px; margin-bottom:20px; background:white; box-shadow: 4px 4px 0 black; text-align:center;">
@@ -938,7 +925,7 @@
             } else {
                 statusEl.innerText = "Guest Mode";
                 if (pwdRow) pwdRow.style.display = 'none';
-                showUpgradeBanner();
+                hideProStatus();
             }
         });
 
@@ -963,7 +950,6 @@
                 }
 
                 if (isPro) {
-                    document.getElementById('pro-upgrade-banner').style.display = 'none';
                     document.getElementById('pro-status-banner').style.display = 'block';
 
 
@@ -975,16 +961,15 @@
                         document.getElementById('pro-expiry-date').innerText = "Renews: " + dateStr;
                     }
                 } else {
-                    showUpgradeBanner();
+                    hideProStatus();
                 }
             }, error => {
                 console.error("Error listening to pro status update:", error);
-                showUpgradeBanner();
+                hideProStatus();
             });
         }
 
-        function showUpgradeBanner() {
-            document.getElementById('pro-upgrade-banner').style.display = 'block';
+        function hideProStatus() {
             document.getElementById('pro-status-banner').style.display = 'none';
         }
 

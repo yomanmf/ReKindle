@@ -2,6 +2,7 @@
 # updated HTML has been published and verified.
 pro-gate.js
 js/anti-tamper.js
+donate.svg
 kindlechat.html
 kindlechat
 neighbourhood.html

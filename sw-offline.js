@@ -1,11 +1,10 @@
 // 1. Version Bump
-const CACHE_NAME = 'rekindle-os-v10';
+const CACHE_NAME = 'rekindle-os-v11';
 
 // 2. Cache only the shell. Application pages are fetched on demand.
 const ASSETS_TO_CACHE = [
     './',
     './index',  
-    './donate.svg',
     './logo.svg',
 ];
 
