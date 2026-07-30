@@ -884,6 +884,8 @@
             align-items: center;
             text-align: center;
             box-sizing: border-box;
+            color: inherit;
+            text-decoration: none;
         }
 
         .dashboard-weather-day-icon {
@@ -2714,11 +2716,11 @@
                                 : forecastDate.toLocaleDateString(locale, { weekday: 'short' });
                             const high = Math.round(data.daily.temperature_2m_max[i]);
                             const low = Math.round(data.daily.temperature_2m_min[i]);
-                            weekHtml += '<div class="dashboard-weather-day">' +
+                            weekHtml += '<a class="dashboard-weather-day" href="weather?date=' + encodeURIComponent(data.daily.time[i]) + '">' +
                                 '<div class="dashboard-weather-day-name">' + dayLabel + '</div>' +
                                 '<div class="dashboard-weather-day-icon">' + getIcon(data.daily.weathercode[i], false) + '</div>' +
                                 '<div class="dashboard-weather-day-temp">' + high + '° / ' + low + '°</div>' +
-                                '</div>';
+                                '</a>';
                         }
                         weekContainer.innerHTML = weekHtml;
                     }

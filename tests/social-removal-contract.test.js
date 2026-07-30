@@ -135,8 +135,15 @@ test("dashboard exposes separate single-player and two-player folders", function
         assert.match(source, /id="db-weather-week"/);
         assert.match(source, /hourly=temperature_2m,weathercode/);
         assert.match(source, /forecast_days=7/);
+        assert.match(source, /<a class="dashboard-weather-day" href="weather\?date=/);
         assert.match(source, /id="db-calendar-grid"/);
     });
+
+    var weather = read("weather.html");
+    assert.match(weather, /new URLSearchParams\(window\.location\.search\)\.get\('date'\)/);
+    assert.match(weather, /hourly\.time\[i\]\.slice\(0, 10\) === selectedDate/);
+    assert.match(weather, /row\.href = 'weather\?date='/);
+    assertInlineScriptsParse("weather.html");
 });
 
 test("release publishes the remaining editor and deletes retired page objects", function () {

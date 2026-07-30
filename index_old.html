@@ -440,6 +440,8 @@
             align-items: center;
             text-align: center;
             box-sizing: border-box;
+            color: inherit;
+            text-decoration: none;
         }
 
         .dashboard-weather-day-icon {
@@ -2073,11 +2075,11 @@
                     const dayLabel = i === 0
                         ? (window.t ? window.t('weather.day.today', 'Today') : 'Today')
                         : forecastDate.toLocaleDateString(locale, { weekday: 'short' });
-                    weekHtml += '<div class="dashboard-weather-day">' +
+                    weekHtml += '<a class="dashboard-weather-day" href="weather?date=' + encodeURIComponent(data.daily.time[i]) + '">' +
                         '<div class="dashboard-weather-day-name">' + dayLabel + '</div>' +
                         '<div class="dashboard-weather-day-icon">' + getDashboardWeatherIcon(data.daily.weathercode[i]) + '</div>' +
                         '<div class="dashboard-weather-day-temp">' + Math.round(data.daily.temperature_2m_max[i]) + '° / ' + Math.round(data.daily.temperature_2m_min[i]) + '°</div>' +
-                        '</div>';
+                        '</a>';
                 }
                 document.getElementById('db-weather-week').innerHTML = weekHtml;
             } catch (e) {

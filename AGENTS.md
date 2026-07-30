@@ -1021,6 +1021,12 @@ production `theme.js` was stale because the shared asset was absent from the
 release manifest, so Reddit opened an empty Browser tab even though its target
 URL had been encoded correctly.
 
+**Dashboard weather drilldown:** The seven-day cards in both `index.html` and
+`index_old.html` are native links to `weather?date=YYYY-MM-DD`. Keep the two
+dashboards synchronized. `weather.html` accepts the date only when it exactly
+matches Open-Meteo's `daily.time`, then shows that day's high/low, condition,
+and hourly entries; invalid or expired dates fall back to current conditions.
+
 **Browser Reader Reddit fallback:** Yandex-hosted requests from the generic
 Reader backend can receive HTTP 403 from `www.reddit.com` even when the same
 public permalink works in a desktop browser. Before fetching an article,
