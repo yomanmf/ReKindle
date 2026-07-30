@@ -1033,6 +1033,13 @@ reuses its durable JSON queue and checkpoints. `kindle_digest_jobs` and
 global Kindle delivery destination. Source options come from the worker's
 `DAILY_SOURCES`; never hard-code a second source list in the frontend.
 
+**Kindle Digest status-history layout:** use the existing two-column CSS Grid
+for each `.history-item`. Do not float `.history-state`: inline icon badges can
+escape the row and make later statuses accumulate progressively farther left.
+Keep status pictograms as monochrome inline SVG with `currentColor`, preserve
+the one-column status layout below 520px, and keep every hit target at least
+48px for Kindle Scribe Colorsoft and compact Kindle browsers.
+
 ## Git Workflow
 
 After successfully completing any task that changes code:

@@ -5,10 +5,25 @@
     var currentJob = null;
     var signedIn = false;
     var pollTimer = null;
+    var STATUS_ICONS = {
+        waiting: '<circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path>',
+        collecting: '<circle cx="9" cy="10" r="5"></circle><path d="M13 14l6 6M7 8h4M7 11h3"></path>',
+        building: '<path d="M4 7h16v13H4zM4 11h16M8 4v6M16 4v6"></path>',
+        complete: '<circle cx="12" cy="12" r="9"></circle><path d="M7 12l3 3 7-7"></path>',
+        sending: '<path d="M3 11L21 3l-7 18-3-7-8-3zM11 14L21 3"></path>',
+        sent: '<path d="M3 6h18v12H3zM3 7l9 7 9-7M15 18l2 2 4-5"></path>',
+        failed: '<circle cx="12" cy="12" r="9"></circle><path d="M8 8l8 8M16 8l-8 8"></path>',
+        canceled: '<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8zM8 12h8"></path>',
+        running: '<circle cx="12" cy="12" r="9"></circle><path d="M7 12h10M13 8l4 4-4 4"></path>'
+    };
 
     function byId(id) { return document.getElementById(id); }
     function translate(key, fallback) { return typeof window.t === "function" ? window.t(key, fallback) : fallback; }
     function setText(element, value) { if (element) element.textContent = value === undefined || value === null ? "" : String(value); }
+    function setStatusValue(element, icon, value) {
+        element.innerHTML = '<svg class="status-icon" viewBox="0 0 24 24" aria-hidden="true">' + (STATUS_ICONS[icon] || STATUS_ICONS.waiting) + '</svg><span></span>';
+        setText(element.lastChild, value);
+    }
     function selected(name) { var item = document.querySelector('input[name="' + name + '"]:checked'); return item ? item.value : ""; }
     function terminal(job) { return job && (job.state === "sent" || job.state === "failed" || job.state === "canceled"); }
 
@@ -158,8 +173,8 @@
 
         var collection = collectionState(job);
         var delivery = deliveryState(job);
-        setText(byId("collection-state"), collection);
-        setText(byId("delivery-state"), delivery);
+        setStatusValue(byId("collection-state"), collection.icon, collection.text);
+        setStatusValue(byId("delivery-state"), delivery.icon, delivery.text);
         setText(byId("collection-detail"), job.message || job.sourceLabel || "");
         setText(byId("delivery-detail"), resultText(job));
 
@@ -179,19 +194,20 @@
     }
 
     function collectionState(job) {
-        if (job.state === "failed") return translate("kindledigest.failed", "Failed");
-        if (job.state === "canceled") return translate("kindledigest.canceled", "Canceled");
-        if (job.phase === "queued") return translate("kindledigest.waiting", "Waiting");
-        if (job.phase === "collecting") return translate("kindledigest.collecting", "Collecting");
-        if (job.phase === "building") return translate("kindledigest.building", "Building file");
-        return translate("kindledigest.complete", "Complete");
+        if (job.state === "failed") return { icon: "failed", text: translate("kindledigest.failed", "Failed") };
+        if (job.state === "canceled") return { icon: "canceled", text: translate("kindledigest.canceled", "Canceled") };
+        if (job.phase === "queued") return { icon: "waiting", text: translate("kindledigest.waiting", "Waiting") };
+        if (job.phase === "collecting") return { icon: "collecting", text: translate("kindledigest.collecting", "Collecting") };
+        if (job.phase === "building") return { icon: "building", text: translate("kindledigest.building", "Building file") };
+        return { icon: "complete", text: translate("kindledigest.complete", "Complete") };
     }
 
     function deliveryState(job) {
-        if (job.phase === "sending") return translate("kindledigest.sending", "Sending");
-        if (job.state === "sent") return translate("kindledigest.sent", "Sent");
-        if (job.state === "failed" || job.state === "canceled") return translate("kindledigest.not_sent", "Not sent");
-        return translate("kindledigest.waiting", "Waiting");
+        if (job.phase === "sending") return { icon: "sending", text: translate("kindledigest.sending", "Sending") };
+        if (job.state === "sent") return { icon: "sent", text: translate("kindledigest.sent", "Sent") };
+        if (job.state === "failed") return { icon: "failed", text: translate("kindledigest.not_sent", "Not sent") };
+        if (job.state === "canceled") return { icon: "canceled", text: translate("kindledigest.not_sent", "Not sent") };
+        return { icon: "waiting", text: translate("kindledigest.waiting", "Waiting") };
     }
 
     function resultText(job) {
@@ -220,22 +236,23 @@
             setText(name, job.mode === "digest" ? translate("kindledigest.mode_all", "All publications") : job.sourceLabel);
             var state = document.createElement("span");
             state.className = "history-state";
-            setText(state, stateLabel(job.state));
+            var info = stateInfo(job.state);
+            setStatusValue(state, info.icon, info.text);
             row.appendChild(name);
             row.appendChild(state);
             list.appendChild(row);
         });
     }
 
-    function stateLabel(state) {
+    function stateInfo(state) {
         var labels = {
-            queued: translate("kindledigest.waiting", "Waiting"),
-            running: translate("kindledigest.running", "Running"),
-            sent: translate("kindledigest.sent", "Sent"),
-            failed: translate("kindledigest.failed", "Failed"),
-            canceled: translate("kindledigest.canceled", "Canceled")
+            queued: { icon: "waiting", text: translate("kindledigest.waiting", "Waiting") },
+            running: { icon: "running", text: translate("kindledigest.running", "Running") },
+            sent: { icon: "sent", text: translate("kindledigest.sent", "Sent") },
+            failed: { icon: "failed", text: translate("kindledigest.failed", "Failed") },
+            canceled: { icon: "canceled", text: translate("kindledigest.canceled", "Canceled") }
         };
-        return labels[state] || state;
+        return labels[state] || { icon: "waiting", text: state };
     }
 
     async function cancelJob() {
