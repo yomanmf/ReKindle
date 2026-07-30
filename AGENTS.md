@@ -319,9 +319,10 @@ bump the `icons.js` query version in both dashboards and the matching entry in
 
 Non-game catalog entries assigned `cat: 'misc'` in `icons.js` are rendered
 inside the virtual Misc folder by both `index.html` and `index_old.html`. The
-single-player and two-player Games folders stay at the dashboard root. AI
-Assistant, Kindle Digest, and Reddit also stay at the root. Keep both dashboard
-implementations synchronized when changing this grouping.
+single-player Games folder stays at the dashboard root, while the two-player
+Games folder is its final child. AI Assistant, Kindle Digest, and Reddit also
+stay at the root. Keep both dashboard implementations synchronized when
+changing this grouping.
 
 `icons-beta.js` is merged into `APPS` at runtime. Keep application IDs unique
 across both registries: duplicating an ID can render one copy inside Misc and a
@@ -817,12 +818,13 @@ The dashboard (`index.html`) reads the app registry from `icons.js`. Games are g
 | `two_player` | Local pass-and-play multiplayer |
 | `live_game` | Firebase real-time online multiplayer |
 
-**Dashboard game folders:** The home screen separates the registry into two
-virtual tiles: `folder_games` contains only the `games` category, while
-`folder_two_player` contains both `two_player` and `live_game`. Do not render
-favorite or featured games separately on the home screen. Build both folder
-contents from the full game registry so a favorite game is not accidentally
-omitted. The former Games and Multiplayer category tabs no longer exist.
+**Dashboard game folders:** The home screen renders one virtual `folder_games`
+tile. Its direct games use the `games` category, and its final child is the
+virtual `folder_two_player` containing both `two_player` and `live_game`. Do not
+render favorite or featured games separately on the home screen. Build both
+folder contents from the full game registry so a favorite game is not
+accidentally omitted. The former Games and Multiplayer category tabs no longer
+exist.
 
 Virtual folders are not application records and must use `virtualFolder: true`
 so they cannot be favorited or hidden. Grouped game-mode folders must also carry

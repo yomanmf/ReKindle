@@ -108,7 +108,7 @@ test("catalog, source pages and locale bundles omit retired applications", funct
     });
 });
 
-test("dashboard exposes separate single-player and two-player folders", function () {
+test("dashboard nests the two-player folder inside the Games folder", function () {
     ["index.html", "index_old.html"].forEach(function (name) {
         var source = read(name);
         assert.match(source, /id:\s*['"]folder_games['"]/);
@@ -116,6 +116,8 @@ test("dashboard exposes separate single-player and two-player folders", function
         assert.match(source, /virtualFolder:\s*true/);
         assert.match(source, /i18nKey:\s*['"]home\.nav\.games['"]/);
         assert.match(source, /i18nKey:\s*['"]home\.nav\.two_player['"]/);
+        assert.match(source, /singlePlayerGames\.push\(\{\s*id:\s*['"]folder_two_player['"]/);
+        assert.doesNotMatch(source, /fragment\.appendChild\(createAppElement\(\{\s*id:\s*['"]folder_two_player['"]/);
         assert.doesNotMatch(source, />All Games</);
         assert.match(source, /a\.cat !== ['"]misc['"] && a\.cat !== ['"]games['"] && a\.cat !== ['"]two_player['"] && a\.cat !== ['"]live_game['"]/);
         assert.match(source, /#folder-modal \.modal-box\s*\{[^}]*height:\s*82vh;[^}]*overflow:\s*hidden;/s);

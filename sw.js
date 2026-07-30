@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v30'; // Retire Telegram client
+const CACHE_NAME = 'rekindle-cache-v31'; // Nest two-player games inside Games
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

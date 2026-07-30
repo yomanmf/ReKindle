@@ -1772,11 +1772,10 @@
 
             const miscApps = baseList.filter(a => a.cat === 'misc');
             miscApps.sort((a, b) => a.name.localeCompare(b.name));
-            let twoPlayerGames = [];
 
             if (!gamesDisabled) {
                 let singlePlayerGames = APPS.filter(a => a.cat === 'games');
-                twoPlayerGames = APPS.filter(a => a.cat === 'two_player' || a.cat === 'live_game');
+                let twoPlayerGames = APPS.filter(a => a.cat === 'two_player' || a.cat === 'live_game');
                 if (!isEditMode) {
                     singlePlayerGames = singlePlayerGames.filter(a => !hiddenApps.includes(a.id));
                     twoPlayerGames = twoPlayerGames.filter(a => !hiddenApps.includes(a.id));
@@ -1785,6 +1784,20 @@
                 twoPlayerGames = getGroupedApps(twoPlayerGames);
                 singlePlayerGames.sort((a, b) => a.name.localeCompare(b.name));
                 twoPlayerGames.sort((a, b) => a.name.localeCompare(b.name));
+
+                if (twoPlayerGames.length > 0) {
+                    singlePlayerGames.push({
+                        id: 'folder_two_player',
+                        name: 'Two-player Games',
+                        cat: 'two_player',
+                        isFolder: true,
+                        virtualFolder: true,
+                        allowChildCustomization: true,
+                        i18nKey: 'home.nav.two_player',
+                        groupedApps: twoPlayerGames,
+                        icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><circle cx="12" cy="17" r="3" fill="none" stroke="black" stroke-width="2"/><circle cx="22" cy="17" r="3" fill="black" stroke="none"/><path d="M8 24 h8 M18 24 h8" stroke="black" stroke-width="2"/>'
+                    });
+                }
 
                 if (singlePlayerGames.length > 0) {
                     fragment.appendChild(createAppElement({
@@ -1815,19 +1828,6 @@
                 }));
             }
 
-            if (twoPlayerGames.length > 0) {
-                fragment.appendChild(createAppElement({
-                    id: 'folder_two_player',
-                    name: 'Two-player Games',
-                    cat: 'two_player',
-                    isFolder: true,
-                    virtualFolder: true,
-                    allowChildCustomization: true,
-                    i18nKey: 'home.nav.two_player',
-                    groupedApps: twoPlayerGames,
-                    icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><circle cx="12" cy="17" r="3" fill="none" stroke="black" stroke-width="2"/><circle cx="22" cy="17" r="3" fill="black" stroke="none"/><path d="M8 24 h8 M18 24 h8" stroke="black" stroke-width="2"/>'
-                }));
-            }
             grid.appendChild(fragment);
             if (isEditMode) {
                 document.getElementById('app-grid').querySelectorAll('.favorite-toggle').forEach(t => t.classList.add('show-toggle'));
