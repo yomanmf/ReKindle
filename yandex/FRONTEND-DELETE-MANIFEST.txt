@@ -5,6 +5,11 @@ js/anti-tamper.js
 donate.svg
 pay
 pay.html
+kindlearticles.html
+kindlearticles
+js/kindlearticles.js
+locales/kindlearticles-en.json
+locales/kindlearticles-ru.json
 kindlechat.html
 kindlechat
 neighbourhood.html

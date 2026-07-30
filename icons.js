@@ -158,13 +158,6 @@ const APPS = [
         desc: 'Collect articles and send them to Kindle.',
         icon: '<rect x="5" y="4" width="18" height="24" fill="white" stroke="black" stroke-width="2"/><line x1="9" y1="9" x2="19" y2="9" stroke="black" stroke-width="2"/><line x1="9" y1="14" x2="18" y2="14" stroke="black" stroke-width="2"/><line x1="9" y1="19" x2="15" y2="19" stroke="black" stroke-width="2"/><path d="M18 21 L28 21 M24 17 L28 21 L24 25" fill="none" stroke="black" stroke-width="2"/>'
     },
-    {
-        id: 'kindlearticles',
-        name: 'Article to Kindle',
-        cat: 'lifestyle',
-        desc: 'Clean one article into an EPUB and send it to Kindle.',
-        icon: '<rect x="4" y="4" width="17" height="24" fill="white" stroke="black" stroke-width="2"/><path d="M8 9h9M8 14h9M8 19h6M18 22h10M24 18l4 4-4 4" fill="none" stroke="black" stroke-width="2"/>'
-    },
     /*     {
             id: 'beeper',
             name: 'Beeper',

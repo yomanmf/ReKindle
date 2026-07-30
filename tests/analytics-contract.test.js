@@ -18,13 +18,13 @@ test("shared browser analytics excludes query strings and uses the Yandex collec
 
 test("service worker and root pages use the analytics-aware theme version", function () {
     var serviceWorker = fs.readFileSync(path.join(root, "sw.js"), "utf8");
-    assert.match(serviceWorker, /rekindle-cache-v36/);
-    assert.match(serviceWorker, /theme\.js\?v=21/);
+    assert.match(serviceWorker, /rekindle-cache-v38/);
+    assert.match(serviceWorker, /theme\.js\?v=22/);
     var pages = fs.readdirSync(root).filter(function (name) {
         return name.endsWith(".html") && fs.readFileSync(path.join(root, name), "utf8").indexOf("theme.js?v=") !== -1;
     });
     assert.ok(pages.length > 90);
     pages.forEach(function (page) {
-        assert.match(fs.readFileSync(path.join(root, page), "utf8"), /theme\.js\?v=21/, page);
+        assert.match(fs.readFileSync(path.join(root, page), "utf8"), /theme\.js\?v=22/, page);
     });
 });

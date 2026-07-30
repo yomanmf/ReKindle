@@ -1,8 +1,8 @@
-const CACHE_NAME = 'rekindle-cache-v37'; // Upgrade HTTP visits to HTTPS
+const CACHE_NAME = 'rekindle-cache-v38'; // Remove Article to Kindle
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=8',
+    './icons.js?v=9',
     './icons-beta.js?v=4',
     './theme.js?v=22',
     './logo.svg',

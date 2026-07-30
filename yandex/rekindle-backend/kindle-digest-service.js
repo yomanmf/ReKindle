@@ -33,7 +33,7 @@ async function handle(options) {
     if (action === "options") return getOptions(firestore);
     if (action === "create") return createJob(firestore, uid, body);
     if (action === "status") return getStatus(firestore, uid, body);
-    if (action === "history") return getHistory(firestore, uid, body);
+    if (action === "history") return getHistory(firestore, uid);
     if (action === "cancel") return cancelJob(firestore, uid, body);
     if (action === "retry") return retryJob(firestore, uid, body);
     throw serviceError(404, "kindle-digest-action", "Digest action was not found.");
@@ -56,27 +56,18 @@ async function createJob(firestore, uid, body) {
     if (active) return { job: publicJob(active), existing: true };
 
     var mode = String(body.mode || "");
-    if (mode !== "article" && mode !== "daily" && mode !== "digest") {
-        throw serviceError(400, "kindle-digest-mode", "Job mode must be article, daily, or digest.");
+    if (mode !== "daily" && mode !== "digest") {
+        throw serviceError(400, "kindle-digest-mode", "Digest mode must be daily or digest.");
     }
-    var source;
-    var lookbackDays;
-    var filter = "all";
-    var articleLimit = null;
-    if (mode === "article") {
-        var articleUrl = validatePublicHttpUrl(body.url);
-        source = { id: "article", label: new URL(articleUrl).hostname, url: articleUrl };
-    } else {
-        lookbackDays = boundedInteger(body.lookbackDays, 1, 30, "lookbackDays");
-        filter = String(body.filter || "important");
-        if (filter !== "important" && filter !== "all") {
-            throw serviceError(400, "kindle-digest-filter", "Digest filter must be important or all.");
-        }
-        articleLimit = body.articleLimit === null || body.articleLimit === undefined || body.articleLimit === ""
-            ? null
-            : boundedInteger(body.articleLimit, 1, 30, "articleLimit");
-        source = await resolveSource(firestore, mode, body);
+    var lookbackDays = boundedInteger(body.lookbackDays, 1, 30, "lookbackDays");
+    var filter = String(body.filter || "important");
+    if (filter !== "important" && filter !== "all") {
+        throw serviceError(400, "kindle-digest-filter", "Digest filter must be important or all.");
     }
+    var articleLimit = body.articleLimit === null || body.articleLimit === undefined || body.articleLimit === ""
+        ? null
+        : boundedInteger(body.articleLimit, 1, 30, "articleLimit");
+    var source = await resolveSource(firestore, mode, body);
     var now = Date.now();
     var job = {
         id: crypto.randomUUID(),
@@ -91,7 +82,7 @@ async function createJob(firestore, uid, body) {
         articleLimit: articleLimit,
         state: "queued",
         phase: "queued",
-        message: "Waiting for the Kindle worker.",
+        message: "Waiting for the digest worker.",
         cancelRequested: false,
         createdAt: now,
         updatedAt: now
@@ -119,17 +110,14 @@ async function resolveSource(firestore, mode, body) {
 async function getStatus(firestore, uid, body) {
     var jobs = await listJobs(firestore);
     var id = String(body.id || "");
-    var mode = String(body.mode || "");
     var job = id
         ? jobs.find(function (candidate) { return candidate.id === id && candidate.uid === uid; })
-        : jobs.filter(function (candidate) { return candidate.uid === uid && (!mode || candidate.mode === mode); }).sort(newestFirst)[0];
+        : jobs.filter(function (candidate) { return candidate.uid === uid; }).sort(newestFirst)[0];
     return { job: job ? publicJob(job) : null };
 }
 
-async function getHistory(firestore, uid, body) {
-    var mode = String(body.mode || "");
+async function getHistory(firestore, uid) {
     var jobs = (await listJobs(firestore)).filter(function (job) { return job.uid === uid; });
-    if (mode) jobs = jobs.filter(function (job) { return job.mode === mode; });
     jobs.sort(newestFirst);
     return { items: jobs.slice(0, 10).map(publicJob) };
 }
@@ -157,7 +145,7 @@ async function retryJob(firestore, uid, body) {
     await firestore.collection(JOBS_COLLECTION).doc(job.id).update({
         state: "queued",
         phase: "queued",
-        message: "Waiting for the Kindle worker.",
+        message: "Waiting for the digest worker.",
         cancelRequested: false,
         error: null,
         result: null,
@@ -184,7 +172,7 @@ async function pullJob(firestore) {
     return {
         job: {
             id: job.id,
-            mode: job.mode === "article" ? "article" : "digest",
+            mode: "digest",
             url: job.sourceUrl,
             lookbackDays: job.lookbackDays,
             importantOnly: job.importantOnly === true,
@@ -203,7 +191,7 @@ async function updateProgress(firestore, body) {
     var update = {
         state: "running",
         phase: phase,
-        message: cleanText(body.message, 500) || "Kindle worker is running.",
+        message: cleanText(body.message, 500) || "Digest worker is running.",
         updatedAt: Date.now()
     };
     if (body.current !== undefined) update.current = boundedInteger(body.current, 0, 10000, "current");
@@ -227,9 +215,7 @@ async function finishJob(firestore, body) {
     await firestore.collection(JOBS_COLLECTION).doc(job.id).update({
         state: "sent",
         phase: "sent",
-        message: job.mode === "article"
-            ? "Article was sent to Kindle."
-            : cleanText(body.message, 500) || "File was sent to Kindle.",
+        message: cleanText(body.message, 500) || "Digest was sent to Kindle.",
         result: sanitizeResult(body.result),
         updatedAt: Date.now()
     });
@@ -242,8 +228,8 @@ async function failJob(firestore, body) {
     await firestore.collection(JOBS_COLLECTION).doc(job.id).update({
         state: "failed",
         phase: "failed",
-        message: "Kindle job failed.",
-        error: cleanText(body.error, 1000) || "The Kindle worker failed.",
+        message: "Digest failed.",
+        error: cleanText(body.error, 1000) || "The digest worker failed.",
         updatedAt: Date.now()
     });
     return { ok: true };
@@ -255,7 +241,7 @@ async function cancelFromWorker(firestore, body) {
     await firestore.collection(JOBS_COLLECTION).doc(job.id).update({
         state: "canceled",
         phase: "canceled",
-        message: "Kindle job was canceled.",
+        message: "Digest was canceled.",
         cancelRequested: true,
         updatedAt: Date.now()
     });
