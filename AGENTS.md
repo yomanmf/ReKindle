@@ -323,6 +323,11 @@ single-player and two-player Games folders stay at the dashboard root. AI
 Assistant, Kindle Digest, and Reddit also stay at the root. Keep both dashboard
 implementations synchronized when changing this grouping.
 
+`icons-beta.js` is merged into `APPS` at runtime. Keep application IDs unique
+across both registries: duplicating an ID can render one copy inside Misc and a
+second copy at the dashboard root. Move a beta app by changing its existing
+`icons-beta.js` category, and publish/cache-bust that file with the dashboards.
+
 ## 🌍 Localization (i18n.js)
 
 The project uses a custom `i18n.js` loader.

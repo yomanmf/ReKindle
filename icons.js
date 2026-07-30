@@ -201,13 +201,6 @@ const APPS = [
         icon: '<circle cx="16" cy="16" r="14"/><ellipse cx="16" cy="18" rx="10" ry="7"/><circle cx="12" cy="17" r="2" fill="black"/><circle cx="20" cy="17" r="2" fill="black"/><path d="M16 11 L20 6"/>'
     },
     {
-        id: 'readwise',
-        name: 'Readwise',
-        cat: 'misc',
-        beta: true,
-        icon: '<path d="M4 6 h14 v12 h-6 l-5 4 v-4 h-3 z" fill="white" stroke="black" stroke-width="2"/><path d="M14 14 h14 v12 h-3 v4 l-5-4 h-6 z" fill="black" stroke="black" stroke-width="2"/>'
-    },
-    {
         id: 'flipbook',
         name: 'Flipbook',
         cat: 'misc',

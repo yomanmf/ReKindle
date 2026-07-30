@@ -98,6 +98,7 @@ words.html
 wordsearch.html
 yahtzee.html
 icons.js
+icons-beta.js
 sw.js
 js/rekindle-cloud.js
 js/reddit-comments.js

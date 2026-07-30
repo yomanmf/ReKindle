@@ -1,8 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v28'; // Retire donation prompts and QR asset
+const CACHE_NAME = 'rekindle-cache-v29'; // Keep Readwise inside the Misc folder
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=5',
+    './icons.js?v=6',
+    './icons-beta.js?v=2',
     './theme.js?v=21',
     './logo.svg',
     './manifest.json',
