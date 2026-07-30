@@ -98,6 +98,14 @@ test("Kindle Digest runs a direct worker job", async function () {
     await worker("fail", { id: created.job.id, error: "late failure" });
     assert.equal((await user("status", { id: created.job.id })).job.state, "sent");
     assert.equal((await user("history")).items.length, 1);
+
+    var article = await user("create", { mode: "article", url: "https://example.com/story" });
+    assert.equal(article.job.sourceLabel, "example.com");
+    assert.equal((await worker("pull")).job.mode, "article");
+    await worker("finish", { id: article.job.id, message: "Digest was sent to Kindle." });
+    assert.equal((await user("status", { id: article.job.id })).job.message, "Article was sent to Kindle.");
+    assert.equal((await user("status", { mode: "article" })).job.id, article.job.id);
+    assert.deepEqual((await user("history", { mode: "article" })).items.map(function (job) { return job.id; }), [article.job.id]);
 });
 
 test("Kindle Digest rejects unknown users, worker secrets, and unsafe URLs", async function () {

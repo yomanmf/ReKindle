@@ -1,8 +1,8 @@
-const CACHE_NAME = 'rekindle-cache-v35'; // Fix Kindle login and remove Amazon manga auth
+const CACHE_NAME = 'rekindle-cache-v36'; // Add Article to Kindle
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=7',
+    './icons.js?v=8',
     './icons-beta.js?v=4',
     './theme.js?v=21',
     './logo.svg',

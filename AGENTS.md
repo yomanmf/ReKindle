@@ -1100,6 +1100,23 @@ Keep status pictograms as monochrome inline SVG with `currentColor`, preserve
 the one-column status layout below 520px, and keep every hit target at least
 48px for Kindle Scribe Colorsoft and compact Kindle browsers.
 
+**Article to Kindle shares the digest worker:** `kindlearticles.html` submits
+`mode: 'article'` through the existing authenticated
+`/api/rekindle/kindle-digest/{action}` route. The worker receives that mode over
+the outbound-only `/kindle-digest-worker/*` control path and uses its existing
+single-article Readability-to-EPUB pipeline. Keep article and digest jobs in the
+same queue so the one Chromium profile remains sequential. The article UI may
+filter status/history by mode, but it must not call Telegram or add a second
+worker API. Status visuals are Kindle-safe monochrome inline SVG, not Unicode
+emoji, which render as missing-glyph squares on Kindle browsers.
+Initialize this page only after `rekindle:i18n:ready`; otherwise its first
+dynamic worker status can stay in the English fallback while the static Russian
+labels have already been translated.
+Keep `body > .window` at `zoom: 1 !important` on this page. On Kindle Scribe
+Colorsoft a saved `rekindle_scale` below 1 otherwise shrinks nominal 48px
+buttons below the required touch size; the 720px max-width already constrains
+the interface on its 11-inch display.
+
 **Manga to Kindle control path:** `mangakindle.html` uses authenticated
 `/api/rekindle/manga-kindle/{action}` requests. The Yandex backend forwards only
 the allowlisted actions to the orchestrator's protected `/control/{action}`
