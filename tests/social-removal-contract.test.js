@@ -95,9 +95,12 @@ test("catalog, source pages and locale bundles omit retired applications", funct
         assert.equal(typeof locale["dashboard.weather.hourly"], "string", name);
         assert.equal(typeof locale["weather.label.feels_like"], "string", name);
         assert.equal(typeof locale["dashboard.weather.next_hours"], "string", name);
+        assert.equal(typeof locale["dashboard.weather.next_days"], "string", name);
         assert.equal(typeof locale["dashboard.weather.now"], "string", name);
         assert.equal(typeof locale["dashboard.weather.previous_hours"], "string", name);
+        assert.equal(typeof locale["dashboard.weather.previous_days"], "string", name);
         assert.equal(typeof locale["dashboard.weather.week"], "string", name);
+        assert.match(locale["dashboard.weather.week"], /30/, name);
         assert.equal(Object.prototype.hasOwnProperty.call(locale, "home.header.all"), false, name);
         Object.keys(locale).forEach(function (key) {
             assert.doesNotMatch(key, /^(?:app\.)?(?:kindlechat|neighbourhood|topics)\./i, name + ": " + key);
@@ -138,10 +141,17 @@ test("dashboard nests the two-player folder inside the Games folder", function (
         assert.match(source, /return wallTime\.slice\(11, 16\)/);
         assert.match(source, /window\.scrollDashboardWeatherHours = scrollDashboardWeatherHours/);
         assert.match(source, /id="db-weather-week"/);
+        assert.match(source, /id="db-weather-day-prev"/);
+        assert.match(source, /id="db-weather-day-next"/);
+        assert.match(source, /function scrollDashboardWeatherDays\(direction\)/);
         assert.match(source, /current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,weathercode/);
         assert.doesNotMatch(source, /current_weather=true/);
         assert.match(source, /data\.current\.apparent_temperature/);
         assert.match(source, /forecast_days=7/);
+        assert.match(source, /seasonal-api\.open-meteo\.com\/v1\/seasonal/);
+        assert.match(source, /forecast_days=30/);
+        assert.match(source, /models=ecmwf_ec46_ensemble_mean/);
+        assert.match(source, /i < 30/);
         assert.match(source, /<a class="dashboard-weather-day" href="weather\?date=/);
         assert.match(source, /id="db-calendar-grid"/);
     });
@@ -156,6 +166,9 @@ test("dashboard nests the two-player folder inside the Games folder", function (
     assert.match(weather, /current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m/);
     assert.doesNotMatch(weather, /current_weather=true/);
     assert.match(weather, /apparent_temperature_max,apparent_temperature_min/);
+    assert.match(weather, /forecast_days=16/);
+    assert.match(weather, /seasonal-api\.open-meteo\.com\/v1\/seasonal/);
+    assert.match(weather, /models=ecmwf_ec46_ensemble_mean/);
     assert.match(weather, /function scrollHourly\(direction\)/);
     assert.match(weather, /row\.href = 'weather\?date='/);
     assertInlineScriptsParse("weather.html");

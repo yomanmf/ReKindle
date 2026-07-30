@@ -1295,13 +1295,24 @@
 
             try {
                 // ADD minutely_15=precipitation to URL
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLoc.lat}&longitude=${currentLoc.long}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min&minutely_15=precipitation&timezone=auto&temperature_unit=${unit}&windspeed_unit=${windUnit}`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLoc.lat}&longitude=${currentLoc.long}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min&minutely_15=precipitation&forecast_days=16&timezone=auto&temperature_unit=${unit}&windspeed_unit=${windUnit}`;
 
                 const res = await fetch(url);
                 const data = await res.json();
 
+                let daily = data.daily;
+                if (requestedForecastDate && daily.time.indexOf(requestedForecastDate) === -1) {
+                    const monthlyUrl = `https://seasonal-api.open-meteo.com/v1/seasonal?latitude=${currentLoc.lat}&longitude=${currentLoc.long}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min&forecast_days=30&timezone=auto&temperature_unit=${unit}&models=ecmwf_ec46_ensemble_mean`;
+                    const monthlyRes = await fetch(monthlyUrl).catch(function () { return null; });
+                    const monthlyData = monthlyRes && monthlyRes.ok ? await monthlyRes.json() : null;
+                    if (monthlyData && monthlyData.daily && monthlyData.daily.time.indexOf(requestedForecastDate) !== -1) {
+                        daily = monthlyData.daily;
+                    }
+                }
+
                 const current = data.current;
-                const selectedDayIndex = requestedForecastDate ? data.daily.time.indexOf(requestedForecastDate) : -1;
+                const dailyWeatherCodes = daily.weather_code || daily.weathercode;
+                const selectedDayIndex = requestedForecastDate ? daily.time.indexOf(requestedForecastDate) : -1;
 
                 if (selectedDayIndex !== -1) {
                     document.querySelector('.current-wrapper').classList.add('forecast-day');
@@ -1310,10 +1321,10 @@
                     document.getElementById('current-date').innerText = window.rekindleFormatWallDate
                         ? window.rekindleFormatWallDate(selectedDate, { weekday: 'long', month: 'short', day: 'numeric' })
                         : selectedDate.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-                    document.getElementById('current-temp').innerText = Math.round(data.daily.temperature_2m_max[selectedDayIndex]) + "° / " + Math.round(data.daily.temperature_2m_min[selectedDayIndex]) + "°";
-                    document.getElementById('current-feels').innerText = Math.round(data.daily.apparent_temperature_max[selectedDayIndex]) + "° / " + Math.round(data.daily.apparent_temperature_min[selectedDayIndex]) + "°";
-                    document.getElementById('current-cond').innerText = getDescription(data.daily.weathercode[selectedDayIndex]);
-                    document.getElementById('current-icon').innerHTML = getIcon(data.daily.weathercode[selectedDayIndex], true);
+                    document.getElementById('current-temp').innerText = Math.round(daily.temperature_2m_max[selectedDayIndex]) + "° / " + Math.round(daily.temperature_2m_min[selectedDayIndex]) + "°";
+                    document.getElementById('current-feels').innerText = Math.round(daily.apparent_temperature_max[selectedDayIndex]) + "° / " + Math.round(daily.apparent_temperature_min[selectedDayIndex]) + "°";
+                    document.getElementById('current-cond').innerText = getDescription(dailyWeatherCodes[selectedDayIndex]);
+                    document.getElementById('current-icon').innerHTML = getIcon(dailyWeatherCodes[selectedDayIndex], true);
                     document.querySelector('.extra-stats').style.display = 'none';
                     document.getElementById('nowcast-alert').style.display = 'none';
                     document.getElementById('gov-alert').style.display = 'none';
