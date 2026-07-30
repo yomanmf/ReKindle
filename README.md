@@ -112,7 +112,7 @@ ReKindle uses Google Firebase for user authentication and storing app data.
 Enable the **Google Tasks** and **Calendar** APIs in the [Google Cloud Console](https://console.cloud.google.com/). Create an OAuth 2.0 Client ID for a Web Application and add your domain to the authorized origins.
 
 ### 3. Yandex Cloud backend
-ReKindle routes authenticated AI, OCR, storage, billing, Telegram, Microsoft To Do, and third-party API proxy requests through Yandex API Gateway and Yandex Cloud Functions. Interactive Z-code stories use a dedicated Yandex Function backed by Yandex Object Storage. Cloudflare Worker sources and Wrangler manifests have been removed; the frontend must not call `workers.dev`.
+ReKindle routes authenticated AI, OCR, storage, billing, Microsoft To Do, and third-party API proxy requests through Yandex API Gateway and Yandex Cloud Functions. Interactive Z-code stories use a dedicated Yandex Function backed by Yandex Object Storage. Cloudflare Worker sources and Wrangler manifests have been removed; the frontend must not call `workers.dev`.
 
 ## 🛠️ Building & Deployment
 

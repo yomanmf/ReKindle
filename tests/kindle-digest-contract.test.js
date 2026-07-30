@@ -19,7 +19,6 @@ test("Kindle Digest is a Kindle-safe direct control UI", function () {
     assert.match(html, /id="error-modal"/);
     assert.doesNotMatch(html + client, /[\u{1F300}-\u{1FAFF}]/u);
     assert.doesNotMatch(client, /\?\.|\?\?/);
-    assert.doesNotMatch(html + client, /telegram/i);
     assert.doesNotMatch(html, /display:\s*flex[^}]*\bgap\s*:/s);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
     assert.match(client, /setInterval\([^]*10000\)/);
@@ -47,9 +46,9 @@ test("Kindle Digest backend and worker routes are private and released", functio
     assert.ok(manifest.includes("js/kindledigest.js"));
     assert.ok(manifest.includes("locales/kindledigest-en.json"));
     assert.ok(manifest.includes("locales/kindledigest-ru.json"));
-    assert.match(sw, /rekindle-cache-v29/);
-    assert.match(read("index.html"), /icons\.js\?v=6/);
-    assert.match(read("index_old.html"), /icons\.js\?v=6/);
+    assert.match(sw, /rekindle-cache-v30/);
+    assert.match(read("index.html"), /icons\.js\?v=7/);
+    assert.match(read("index_old.html"), /icons\.js\?v=7/);
 });
 
 test("Kindle Digest ships English and Russian UI contracts", function () {

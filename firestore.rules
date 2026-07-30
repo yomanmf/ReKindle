@@ -36,12 +36,6 @@ service cloud.firestore {
 
     // --- Collection Rules ---
 
-    // Server-only encrypted MTProto sessions. Browser clients must never read,
-    // write, or delete Telegram authorization keys directly.
-    match /telegram_sessions/{userId} {
-      allow read, write: if false;
-    }
-
     // Kindle Digest jobs are mediated by the Yandex backend and worker only.
     match /kindle_digest_jobs/{jobId} {
       allow read, write: if false;

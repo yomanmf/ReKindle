@@ -43,7 +43,7 @@ function memoryFirestore() {
     };
 }
 
-test("Kindle Digest runs a direct worker job without Telegram", async function () {
+test("Kindle Digest runs a direct worker job", async function () {
     var firestore = memoryFirestore();
     var env = { KINDLE_DIGEST_ALLOWED_UIDS: "owner-uid", KINDLE_DIGEST_WORKER_SECRET: "worker-secret" };
     var worker = function (action, body) {

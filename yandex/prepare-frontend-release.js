@@ -15,7 +15,9 @@ var retiredFiles = {
     "kindlechat.html": true,
     "neighbourhood.html": true,
     "topics.html": true,
-    "moderation.html": true
+    "moderation.html": true,
+    "telegram.html": true,
+    "js/telegram.js": true
 };
 
 var files = fs.readFileSync(manifestPath, "utf8").split(/\r?\n/).map(function (line) {

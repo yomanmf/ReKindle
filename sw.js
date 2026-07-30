@@ -1,8 +1,8 @@
-const CACHE_NAME = 'rekindle-cache-v29'; // Keep Readwise inside the Misc folder
+const CACHE_NAME = 'rekindle-cache-v30'; // Retire Telegram client
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=6',
+    './icons.js?v=7',
     './icons-beta.js?v=2',
     './theme.js?v=21',
     './logo.svg',

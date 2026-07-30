@@ -507,7 +507,7 @@ Without matching rules, writes will be **silently rejected** by security rules. 
 
 **Firestore overlapping-match gotcha:** Security-rule `match` blocks are ORed, not ordered by specificity. A restrictive exact match does not override a broader permissive match. For example, both `match /privateSettings/ai` and `match /privateSettings/{docId}` match the `ai` document; if the wildcard rule allows the owner unconditionally, the intended ReKindle+ check in the exact rule is ineffective. Put the conditional in the wildcard rule (for example, branch on `docId == 'ai'`) or exclude the sensitive document from the broad allow. Audit other exact-plus-wildcard pairs the same way.
 
-**Removing a client paywall does not create backend access control:** CORS is not authentication and can be bypassed by non-browser clients. The Yandex routes for AI, OCR, Files, Docs, Photo Frame, Telegram, and Microsoft To Do therefore verify a primary Firebase ID token and enforce server-side per-user rate limits or storage quotas. Files, Docs, and Photo Frame are open to every authenticated user while retaining path ownership, MIME/type validation, 100 MB per-user storage, and 25 MB per-object limits. Direct Firebase Storage is deliberately denied by `storage.rules`; it has no byte-quota mechanism and must not be reopened as a shortcut.
+**Removing a client paywall does not create backend access control:** CORS is not authentication and can be bypassed by non-browser clients. The Yandex routes for AI, OCR, Files, Docs, Photo Frame, and Microsoft To Do therefore verify a primary Firebase ID token and enforce server-side per-user rate limits or storage quotas. Files, Docs, and Photo Frame are open to every authenticated user while retaining path ownership, MIME/type validation, 100 MB per-user storage, and 25 MB per-object limits. Direct Firebase Storage is deliberately denied by `storage.rules`; it has no byte-quota mechanism and must not be reopened as a shortcut.
 
 **Yandex-only production architecture:** Browser code must call Yandex Cloud Functions through the `rekindle-api` API Gateway. Cloudflare Worker sources and Wrangler manifests have been removed. Do not restore their endpoints or patch old CORS allowlists. A new server route must be implemented and tested in Yandex before its frontend is published.
 
@@ -561,7 +561,7 @@ portal; it must not create new checkout sessions.
 
 **Dashboard hourly weather contract:** Both `index.html` and `index_old.html` get the current conditions, a button-paged 24-hour forecast, and the seven-day forecast from one Open-Meteo request. Keep the modern and classic home-widget implementations synchronized. The hourly response uses local wall-clock strings because the request specifies `timezone=auto`; compare their `YYYY-MM-DDTHH` prefixes with `current_weather.time` and format the hour manually instead of applying another timezone conversion. Paging changes `scrollLeft` directly (never use smooth scrolling on E-ink), while disabled edge buttons remain in the grid with `visibility: hidden` so the forecast cards do not shift. Keep all `dashboard.weather.*` navigation labels in every main locale bundle when changing this row.
 
-**Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, Telegram, Microsoft To Do, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
+**Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, Microsoft To Do, and billing through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
 **Cross-service analytics contract:** ReKindle and TETRA browser events are sent
 to `POST /api/rekindle/analytics/events`. The Yandex backend verifies the
@@ -570,40 +570,16 @@ the sanitized event using `ANALYTICS_INGEST_TOKEN` from Lockbox. Never expose th
 ingestion token in browser code. `theme.js` records page paths without query
 strings; `js/rekindle-cloud.js` records only the HTTP method, normalized API
 path, status, and duration. Do not add form bodies, credentials, authorization
-codes, AI prompts, Telegram login data, file content, or URL query strings to
+codes, AI prompts, file content, or URL query strings to
 analytics. A `theme.js` analytics change requires a query-version bump on every
 root page plus a `sw.js` cache-name bump and full manifest deployment.
 
 **Reddit feed preference contract:** Sorting preferences are per subreddit, not global. `reddit.html` stores the normalized map locally and in `users/{uid}/apps/reddit.feed_preferences`; keep the allowed values and URL/cache construction in `js/reddit-feed-settings.js`. Reddit's non-default feeds use `/r/{sub}/{sort}` and `top`/`controversial` add the `t` period. Every cache key must include subreddit, sort, and the applicable period so an offline fallback cannot display a different feed.
 
-**Telegram is a server-side MTProto client:** `telegram.html` talks only to the
-authenticated `/api/rekindle/telegram/{action}` routes. The Yandex backend uses
-`teleproto` and a Telegram application `api_id`/`api_hash`; it is not a Bot API
-client and does not depend on Beeper or a home computer. Phone-code login,
-Telegram login-email verification, and 2FA are implemented as short-lived
-authorization stages. Login codes and 2FA passwords must never be logged or
-stored. New Telegram accounts must still be created in an official Telegram
-app.
-
-Authorized MTProto `StringSession` values live only in the server-maintained
-top-level Firestore `telegram_sessions/{firebaseUid}` documents, which have an
-explicit client deny rule in `firestore.rules`. Both completed and pending
-sessions are encrypted with AES-256-GCM, authenticated with UID-specific AAD,
-using the 32-byte base64 `TELEGRAM_SESSION_ENCRYPTION_KEY`. Production also
-requires secret-backed `TELEGRAM_API_ID` and `TELEGRAM_API_HASH`. Chat references
-returned to the browser are HMAC-signed so clients cannot substitute arbitrary
-peer IDs or access hashes. Every route verifies the primary Firebase ID token
-and has a server-side rate limit.
-
-Users may optionally route their server-to-Telegram connection through an
-MTProxy. The proxy host, resolved public IP, port, and normalized secret are
-stored only inside the encrypted session payload; the browser receives only the
-host/port summary and must re-enter the secret to change it. Resolve hostnames
-before connecting and reject every loopback, link-local, private, carrier-grade
-NAT, multicast, and reserved address to prevent the MTProxy setting becoming an
-SSRF path into Yandex infrastructure. The stored resolved public IP prevents DNS
-rebinding on later requests. Keep `telegram.html?demo=1` for complete Kindle UI
-QA without a real Telegram or Firebase account.
+**Retired Telegram integration (July 2026):** The MTProto page, client script,
+backend service and dependency, API Gateway route, Firestore session rule,
+catalog entry, locale contract, and static production objects were removed.
+Do not recreate this integration or add Telegram application credentials.
 
 **Microsoft To Do uses server-side OAuth device authorization:**
 `microsofttodo.html` never loads MSAL, calls Microsoft Graph directly, or puts
@@ -628,18 +604,6 @@ returned through the allowlisted `/me/todo/lists` Graph paths only. Keep
 `microsofttodo.html?demo=1` for full Kindle UI QA without Microsoft or Firebase
 credentials.
 
-**Telegram API application provisioning can be an external blocker:** every
-deployment must use an application `api_id` and `api_hash` created by the
-repository owner at `my.telegram.org/apps`. The portal can accept login and then
-answer every valid create request with only the generic JavaScript alert
-`ERROR`, especially when its anti-abuse checks reject the account or current
-network. Changing valid titles, short names, platforms, URLs, or descriptions
-does not reliably clear that state. Do not substitute Telegram Desktop's shared
-credentials or credentials copied from another project. Leave the frontend
-unpublished until the owner can create the application from a normal mobile or
-matching-country connection, then put both values directly into Lockbox rather
-than source, browser storage, terminal history, or chat.
-
 **Yandex can omit Firebase Admin's Firestore implementation:**
 `firebase-admin` declares `@google-cloud/firestore` as optional. A clean Yandex
 Cloud Functions build may omit that package, causing either a runtime 500 when
@@ -662,8 +626,8 @@ current value for placeholder replacement. Never treat an older file under
 **Extensionless URL cleanup must preserve URL state:** `theme.js` removes the
 `.html` suffix with `history.replaceState()`. The replacement URL must include
 both `window.location.search` and `window.location.hash`; using only the cleaned
-pathname silently drops parameters such as `?lang=ru`, OAuth state, or
-`telegram.html?demo=1` before page scripts read them.
+pathname silently drops parameters such as `?lang=ru` or OAuth state before
+page scripts read them.
 
 **Reddit is not covered by merely deleting its Pages Function:** `reddit.html` needs browser-like upstream headers and proxies Reddit-hosted images as well as RSS/JSON. It continues to use the dedicated Yandex Function behind `/api/reddit`, but derives the Gateway origin from `RekindleCloud.gatewayBase` instead of embedding another absolute URL. The handler validates a fixed Reddit/Imgur hostname allowlist, revalidates every redirect against the same allowlist, uses a bounded warm cache with stale fallback, and caps responses at 5 MB. Do not silently replace it with an unrestricted generic proxy.
 
@@ -1060,8 +1024,7 @@ continue to pass the normalized URL through `validatePublicHttpUrl()` and its
 redirect revalidation. This fallback belongs in the Reader backend rather than
 the frontend because Reddit links can enter Browser from several pages.
 
-**Kindle Digest control path:** `kindledigest.html` must not use the ReKindle
-Telegram client or any Telegram API. Authenticated browser requests go through
+**Kindle Digest control path:** Authenticated browser requests go through
 `/api/rekindle/kindle-digest/{action}`. The existing outbound-only article VM
 polls `/api/rekindle/kindle-digest-worker/{action}` with a Lockbox secret and
 reuses its durable JSON queue and checkpoints. `kindle_digest_jobs` and

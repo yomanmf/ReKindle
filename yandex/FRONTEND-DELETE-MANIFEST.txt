@@ -81,3 +81,6 @@ teleprompter
 watchlist.html
 watchlist
 js/reports.js
+telegram.html
+telegram
+js/telegram.js

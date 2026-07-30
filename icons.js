@@ -152,13 +152,6 @@ const APPS = [
 
     // --- LIFESTYLE ---
     {
-        id: 'telegram',
-        name: 'Telegram',
-        cat: 'misc',
-        desc: 'Telegram for E-ink.',
-        icon: '<path d="M3 15 L29 4 L23 28 L15 21 L10 25 L10 18 Z" fill="white" stroke="black" stroke-width="2" stroke-linejoin="miter"/><path d="M10 18 L23 10 L15 21" fill="none" stroke="black" stroke-width="2" stroke-linejoin="miter"/>'
-    },
-    {
         id: 'kindledigest',
         name: 'Kindle Digest',
         cat: 'lifestyle',

@@ -48,7 +48,6 @@ cross-instance cache is required later.
 - signed upload/download URLs for the private user-files Object Storage bucket;
 - listing and deleting objects owned by the authenticated user;
 - authenticated AI, OCR, content proxies, and billing;
-- an authenticated Telegram MTProto client with encrypted per-user sessions and optional MTProxy routing.
 - an authenticated Microsoft To Do client using Microsoft Graph device authorization and encrypted per-user OAuth sessions.
 - authenticated Kindle Digest jobs consumed by the existing outbound-only article worker;
 - a public GET/HEAD content proxy with SSRF protection, IP rate limits and a
@@ -61,9 +60,6 @@ The function requires these secret-backed environment variables:
 - `S3_SECRET_ACCESS_KEY`
 - `STRIPE_KEY`
 - `STRIPE_WEBHOOK_SECRET`
-- `TELEGRAM_API_ID`
-- `TELEGRAM_API_HASH`
-- `TELEGRAM_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
 - `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
 - `ANALYTICS_INGEST_TOKEN` (shared Kindle analytics ingestion token)
 - `KINDLE_DIGEST_WORKER_SECRET` (shared only with the article worker)
@@ -84,12 +80,6 @@ from the allowlisted ReKindle and TETRA production origins, validates that the
 origin matches the claimed source, and forwards them to the shared analytics
 service. Browser bundles never contain `ANALYTICS_INGEST_TOKEN`; URL query
 strings, credentials, prompts, file contents, and form bodies are not collected.
-
-Telegram authorization sessions are stored in the server-only Firestore
-`telegram_sessions/{firebaseUid}` collection after AES-256-GCM encryption. The
-browser cannot access that collection directly. Login codes and 2FA passwords
-are never persisted. User-supplied MTProxy hosts are DNS-resolved and rejected
-if any result is private or local before the encrypted configuration is saved.
 
 Microsoft device codes and OAuth sessions are stored in the server-only
 `microsoft_todo_sessions/{firebaseUid}` collection after AES-256-GCM encryption.
@@ -120,8 +110,8 @@ Reddit `GET`/`HEAD` routes and its public CORS behavior when changing the file;
 the ReKindle function enforces its own stricter origin allowlist. The browser
 client uses `/api/rekindle/*` through the existing `rekindle-api` gateway.
 
-Kindle Digest never calls Telegram. Browser requests use Firebase auth under
-`/kindle-digest/{action}`; the existing article VM polls
+Kindle Digest browser requests use Firebase auth under `/kindle-digest/{action}`;
+the existing article VM polls
 `/kindle-digest-worker/{action}` with its Lockbox secret. The browser cannot
 read `kindle_digest_jobs` or `kindle_digest_config` directly.
 

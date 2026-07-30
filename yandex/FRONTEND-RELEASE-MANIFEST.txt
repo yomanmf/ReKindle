@@ -83,7 +83,6 @@ spellbound.html
 strands.html
 sudoku.html
 tasks.html
-telegram.html
 tetris.html
 texasholdem.html
 tictactoe.html
@@ -103,7 +102,6 @@ sw.js
 js/rekindle-cloud.js
 js/reddit-comments.js
 js/reddit-feed-settings.js
-js/telegram.js
 js/microsoft-todo.js
 js/kindledigest.js
 locales/kindledigest-en.json
