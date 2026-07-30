@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v38'; // Remove Article to Kindle
+const CACHE_NAME = 'rekindle-cache-v39'; // Refresh dashboard icons
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=9',
-    './icons-beta.js?v=4',
+    './icons.js?v=10',
+    './icons-beta.js?v=5',
     './theme.js?v=22',
     './logo.svg',
     './manifest.json',

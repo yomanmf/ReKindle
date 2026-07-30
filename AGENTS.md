@@ -373,6 +373,11 @@ Icons are stored as raw SVG strings in `icons.js`.
 *   **Stroke:** `stroke-width="2"` (Standard) or `"1.5"` for detail.
 *   **Style:** `fill="none"` `stroke="black"` OR `fill="black"` `stroke="none"`.
 
+Dashboard icon changes must bump the matching `icons.js` or `icons-beta.js`
+query version in both `index.html` and `index_old.html`. Update the matching URL
+in `sw.js` and increment `CACHE_NAME` as well so Kindle does not keep rendering
+the previous SVG from the service-worker cache.
+
 ## JavaScript Global `t` Naming Conflict
 
 Weather location names are saved as external geocoder values and are not

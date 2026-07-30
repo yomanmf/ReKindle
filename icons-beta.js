@@ -7,7 +7,7 @@ const APPS_BETA = [
         name: 'Manga to Kindle',
         cat: 'lifestyle',
         desc: 'Build manga EPUBs and send them to Kindle.',
-        icon: '<path d="M4 5 h13 v22 h-13 z M17 5 l7 4 v18 l-7 -4 z" fill="white" stroke="black" stroke-width="2"/><path d="M9 11 h6 M9 16 h6" stroke="black" stroke-width="2"/><path d="M22 17 h7 M26 13 l4 4 l-4 4" fill="none" stroke="black" stroke-width="2"/>'
+        icon: '<path d="M5 4h22v24H5z" fill="white" stroke="black" stroke-width="2"/><path d="M8 13l2-6 3 3 3-5 3 5 4-3 1 7" fill="none" stroke="black" stroke-width="2" stroke-linejoin="round"/><path d="M8 16q3-3 6 0-3 4-6 0M18 16q3-3 6 0-3 4-6 0" fill="none" stroke="black" stroke-width="2"/><path d="M11 16h1M21 16h1M13 23q3 2 6 0" stroke="black" stroke-width="2" stroke-linecap="round"/>'
     },
     {
         id: 'readwise',

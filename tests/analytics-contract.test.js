@@ -18,7 +18,7 @@ test("shared browser analytics excludes query strings and uses the Yandex collec
 
 test("service worker and root pages use the analytics-aware theme version", function () {
     var serviceWorker = fs.readFileSync(path.join(root, "sw.js"), "utf8");
-    assert.match(serviceWorker, /rekindle-cache-v38/);
+    assert.match(serviceWorker, /rekindle-cache-v39/);
     assert.match(serviceWorker, /theme\.js\?v=22/);
     var pages = fs.readdirSync(root).filter(function (name) {
         return name.endsWith(".html") && fs.readFileSync(path.join(root, name), "utf8").indexOf("theme.js?v=") !== -1;
