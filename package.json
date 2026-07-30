@@ -10,6 +10,7 @@
         "test:social-removal": "node --test tests/social-removal-contract.test.js",
         "test:theme": "node --test tests/theme-contract.test.js",
         "test:kindle-digest": "node --test tests/kindle-digest-contract.test.js yandex/rekindle-backend/kindle-digest-service.test.js",
+        "test:manga-kindle": "node --test tests/manga-kindle-contract.test.js yandex/rekindle-backend/manga-kindle-service.test.js",
         "deploy:beta": "npx wrangler pages deploy . --project-name=rekindle --branch=beta",
         "deploy:rules:firestore": "firebase deploy --only firestore:rules",
         "deploy:rules:rtdb": "firebase deploy --only database:rules",

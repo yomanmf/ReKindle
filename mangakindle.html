@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title data-i18n="mangakindle.title">Manga to Kindle</title>
+    <style>
+        :root {
+            --shadow: 4px 4px 0 #000;
+            --stripe-pattern: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px, #000 4px);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            transition: none !important;
+            animation: none !important;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e5e5e5;
+            color: #000;
+            font-family: "Geneva", "Verdana", sans-serif;
+            image-rendering: pixelated;
+        }
+
+        button, input { border-radius: 0; color: #000; font-family: inherit; }
+        button { touch-action: manipulation; }
+        [hidden] { display: none !important; }
+
+        .window {
+            width: 95%;
+            max-width: 720px;
+            height: 90vh;
+            border: 2px solid #000;
+            box-shadow: var(--shadow);
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .title-bar {
+            height: 38px;
+            border-bottom: 2px solid #000;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .title-stripes {
+            position: absolute;
+            top: 4px; right: 4px; bottom: 4px; left: 4px;
+            background-image: var(--stripe-pattern);
+            z-index: 0;
+        }
+
+        .title-text {
+            height: 100%;
+            padding: 0 15px;
+            background: #fff;
+            font-size: 1.05rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .close-box {
+            position: absolute;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        .close-box::before { content: ""; position: absolute; top: -14px; right: -14px; bottom: -14px; left: -14px; }
+
+        .content-area {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .panel, .notice {
+            border: 2px solid #000;
+            padding: 14px;
+            margin-bottom: 16px;
+            background: #fff;
+        }
+
+        .notice { border-style: dashed; font-size: 0.85rem; }
+        .panel-title { margin: 0 0 12px; font-size: 1rem; text-transform: uppercase; }
+        .field { margin-bottom: 14px; }
+        .field:last-child { margin-bottom: 0; }
+        .field-label { display: block; margin-bottom: 6px; font-size: 0.82rem; font-weight: bold; }
+
+        .text-input {
+            width: 100%;
+            min-height: 48px;
+            border: 2px solid #000;
+            padding: 9px;
+            background: #fff;
+            font-size: 1rem;
+        }
+
+        .sys-btn {
+            min-height: 48px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            padding: 8px 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .sys-btn.primary { background: #000; color: #fff; }
+        .sys-btn:disabled { color: #777; box-shadow: none; cursor: default; }
+        .sys-btn:active:not(:disabled), .close-box:active { transform: translate(2px, 2px); box-shadow: none; }
+        .wide-button { width: 100%; }
+
+        .button-row, .range-grid, .status-grid { display: grid; gap: 10px; }
+        .button-row, .range-grid, .status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .button-row { margin-top: 12px; }
+
+        .result-button {
+            width: 100%;
+            margin-top: 8px;
+            text-align: left;
+        }
+
+        .selection-summary, .status-card {
+            border: 2px solid #000;
+            padding: 10px;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .selection-title, .status-value { display: block; font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
+        .status-label { display: block; font-size: 0.72rem; font-weight: bold; text-transform: uppercase; }
+        .status-detail { display: block; margin-top: 7px; word-break: break-word; white-space: pre-wrap; }
+
+        .check-choice {
+            min-height: 48px;
+            border: 2px solid #000;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .check-choice input { width: 24px; height: 24px; margin: 0 9px 0 0; }
+
+        .status-bar {
+            min-height: 28px;
+            border-top: 2px solid #000;
+            padding: 5px 9px;
+            background: #fff;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: rgba(255, 255, 255, 0.92);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 10000;
+        }
+
+        .modal-box { width: 100%; max-width: 440px; border: 2px solid #000; box-shadow: var(--shadow); background: #fff; }
+        .modal-box .title-text { border: none; }
+        .modal-content { padding: 18px; }
+
+        @media (max-width: 520px) {
+            .range-grid, .status-grid { grid-template-columns: 1fr; }
+            .content-area { padding: 10px; }
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="theme.js?v=21"></script>
+    <script src="js/i18n.js" data-i18n-file="mangakindle"></script>
+    <script src="js/rekindle-cloud.js?v=2"></script>
+</head>
+<body>
+    <main class="window">
+        <div class="title-bar">
+            <div class="title-stripes"></div>
+            <button type="button" class="close-box" onclick="window.location.href='index.html'" aria-label="Close">X</button>
+            <span class="title-text" data-i18n="mangakindle.title">Manga to Kindle</span>
+        </div>
+
+        <div class="content-area">
+            <div class="notice" id="auth-notice" hidden>
+                <span data-i18n="mangakindle.signin">Sign in to ReKindle before sending manga.</span>
+                <div class="button-row"><button class="sys-btn primary" type="button" onclick="window.location.href='index.html?login=true'" data-i18n="mangakindle.signin_button">Open sign in</button></div>
+            </div>
+
+            <section class="panel" id="kindle-panel">
+                <h1 class="panel-title" data-i18n="mangakindle.kindle">Kindle connection</h1>
+                <div class="selection-summary">
+                    <span class="selection-title" id="kindle-state" data-i18n="mangakindle.checking">Checking...</span>
+                    <span id="kindle-detail" data-i18n="mangakindle.kindle_hint">Connect Amazon once, then new books are delivered automatically.</span>
+                </div>
+                <div class="button-row">
+                    <button class="sys-btn primary" type="button" id="kindle-connect" data-i18n="mangakindle.connect">Connect Amazon</button>
+                    <button class="sys-btn" type="button" id="kindle-refresh" data-i18n="mangakindle.refresh">Refresh</button>
+                </div>
+            </section>
+
+            <form class="panel" id="search-form">
+                <h2 class="panel-title" data-i18n="mangakindle.find">Find manga</h2>
+                <div class="field">
+                    <label class="field-label" for="query" data-i18n="mangakindle.query">Title</label>
+                    <input class="text-input" id="query" type="search" minlength="2" maxlength="120" required placeholder="The Fable" data-i18n-placeholder="mangakindle.query_placeholder">
+                </div>
+                <button class="sys-btn primary wide-button" id="search-button" type="submit" data-i18n="mangakindle.search">Search</button>
+                <div id="search-results" hidden></div>
+            </form>
+
+            <form class="panel" id="send-form" hidden>
+                <h2 class="panel-title" data-i18n="mangakindle.send_title">Send to Kindle</h2>
+                <div class="selection-summary field">
+                    <span class="selection-title" id="series-title"></span>
+                    <span id="series-detail"></span>
+                </div>
+                <div class="range-grid field">
+                    <div>
+                        <label class="field-label" for="from-chapter" data-i18n="mangakindle.from">From chapter</label>
+                        <input class="text-input" id="from-chapter" inputmode="decimal" placeholder="first" data-i18n-placeholder="mangakindle.first">
+                    </div>
+                    <div>
+                        <label class="field-label" for="to-chapter" data-i18n="mangakindle.to">To chapter</label>
+                        <input class="text-input" id="to-chapter" inputmode="decimal" placeholder="latest" data-i18n-placeholder="mangakindle.latest">
+                    </div>
+                </div>
+                <label class="check-choice field"><input id="merge-pages" type="checkbox" checked><span data-i18n="mangakindle.merge">Merge vertical pages into right-to-left spreads</span></label>
+                <button class="sys-btn primary wide-button" id="send-button" type="submit" data-i18n="mangakindle.send">Build EPUB and send</button>
+            </form>
+
+            <section class="panel" id="job-panel" hidden>
+                <h2 class="panel-title" data-i18n="mangakindle.current_job">Current job</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <span class="status-label" data-i18n="mangakindle.processing">Processing</span>
+                        <span class="status-value" id="job-state"></span>
+                        <span class="status-detail" id="job-progress"></span>
+                    </div>
+                    <div class="status-card">
+                        <span class="status-label" data-i18n="mangakindle.delivery">Delivery</span>
+                        <span class="status-value" id="delivery-state"></span>
+                        <span class="status-detail" id="job-files"></span>
+                    </div>
+                </div>
+                <div class="button-row">
+                    <button class="sys-btn" type="button" id="job-refresh" data-i18n="mangakindle.refresh">Refresh</button>
+                    <button class="sys-btn" type="button" id="job-action" hidden></button>
+                </div>
+            </section>
+        </div>
+
+        <div class="status-bar" id="status-bar" data-i18n="mangakindle.ready">Ready</div>
+    </main>
+
+    <div class="modal-overlay" id="error-modal" role="dialog" aria-modal="true" aria-labelledby="error-title">
+        <div class="modal-box">
+            <div class="title-bar"><div class="title-stripes"></div><span class="title-text" id="error-title" data-i18n="mangakindle.error_title">Manga to Kindle Error</span></div>
+            <div class="modal-content"><div id="error-message"></div><div class="button-row"><button class="sys-btn primary" type="button" id="error-close" data-i18n="mangakindle.close">OK</button></div></div>
+        </div>
+    </div>
+
+    <script>
+        window.rekindleMangaKindleFirebaseConfig = {
+            apiKey: "__REKINDLE_FIREBASE_API_KEY__",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork"
+        };
+    </script>
+    <script src="js/mangakindle.js?v=1"></script>
+</body>
+</html>

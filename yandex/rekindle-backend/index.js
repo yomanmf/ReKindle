@@ -11,6 +11,7 @@ var crypto = require("node:crypto");
 var firebaseFirestore = require("firebase-admin/firestore");
 var microsoftTodoService = require("./microsoft-todo-service");
 var kindleDigestService = require("./kindle-digest-service");
+var mangaKindleService = require("./manga-kindle-service");
 
 var MAX_USER_STORAGE_BYTES = 100 * 1024 * 1024;
 var MAX_OBJECT_BYTES = 25 * 1024 * 1024;
@@ -97,6 +98,9 @@ module.exports.handler = async function (event, context) {
         }
         if (method === "POST" && path.indexOf("/kindle-digest/") !== -1) {
             return response(200, await handleKindleDigestRequest(event, path), origin);
+        }
+        if (method === "POST" && path.indexOf("/manga-kindle/") !== -1) {
+            return response(200, await handleMangaKindleRequest(event, path), origin);
         }
         return response(404, { error: "Endpoint not found." }, origin);
     } catch (error) {
@@ -1084,6 +1088,22 @@ async function handleKindleDigestWorkerRequest(event, path) {
         worker: true,
         workerToken: getHeader(event, "authorization"),
         firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        env: process.env
+    });
+}
+
+async function handleMangaKindleRequest(event, path) {
+    var user = await requireFirebaseUser(event, false);
+    var action = path.split("/").pop();
+    if (action === "create") {
+        await enforceUserWindowRateLimit(user.uid, "manga_kindle_create", 5, 60 * 60 * 1000);
+    } else {
+        await enforceUserWindowRateLimit(user.uid, "manga_kindle_control", 120, 60 * 1000);
+    }
+    return mangaKindleService.handle({
+        action: action,
+        body: parseJsonBody(event),
+        uid: user.uid,
         env: process.env
     });
 }

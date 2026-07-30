@@ -1043,6 +1043,14 @@ Keep status pictograms as monochrome inline SVG with `currentColor`, preserve
 the one-column status layout below 520px, and keep every hit target at least
 48px for Kindle Scribe Colorsoft and compact Kindle browsers.
 
+**Manga to Kindle control path:** `mangakindle.html` uses authenticated
+`/api/rekindle/manga-kindle/{action}` requests. The Yandex backend forwards only
+the allowlisted actions to the orchestrator's protected `/control/{action}`
+route with a server-held token. The orchestrator stores these as
+`web:rekindle` jobs and suppresses bot notifications for them. Never synthesize
+bot updates or call a messaging API from this page. Search results are selected
+before job creation so the worker never needs an interactive chat callback.
+
 ## Git Workflow
 
 After successfully completing any task that changes code:

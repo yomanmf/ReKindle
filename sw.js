@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v31'; // Nest two-player games inside Games
+const CACHE_NAME = 'rekindle-cache-v32'; // Add Manga to Kindle
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=7',
-    './icons-beta.js?v=2',
+    './icons-beta.js?v=3',
     './theme.js?v=21',
     './logo.svg',
     './manifest.json',
