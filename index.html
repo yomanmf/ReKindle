@@ -385,16 +385,6 @@
             grid-auto-rows: auto;
         }
 
-        #favorites-grid {
-            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-            grid-auto-rows: 90px;
-            margin-bottom: 10px;
-        }
-
-        #favorites-section {
-            margin-bottom: 15px;
-        }
-
         .app-icon {
             display: flex;
             flex-direction: column;
@@ -597,55 +587,6 @@
             font-size: 0.55rem;
         }
 
-        .favorite-toggle,
-        .hide-toggle {
-            position: absolute;
-            top: 0px;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            z-index: 10;
-            display: none;
-        }
-
-        .favorite-toggle {
-            left: 0px;
-        }
-
-        .hide-toggle {
-            right: 0px;
-        }
-
-        .favorite-toggle.show-toggle,
-        .hide-toggle.show-toggle {
-            display: block;
-        }
-
-        .favorite-toggle svg,
-        .hide-toggle svg {
-            width: 100%;
-            height: 100%;
-            fill: none;
-            stroke: black;
-            stroke-width: 2;
-        }
-
-        .favorite-toggle.is-favorite svg {
-            fill: black;
-            stroke-width: 1;
-        }
-
-        .hide-toggle.is-hidden svg {
-            fill: black;
-            stroke-width: 1;
-        }
-
-        .favorite-toggle:active svg,
-        .hide-toggle:active svg {
-            stroke-width: 1;
-            fill: #999;
-        }
-
         svg {
             fill: none;
         }
@@ -678,13 +619,6 @@
 
         .home-widgets .dashboard-widget + .dashboard-widget {
             margin-top: 20px;
-        }
-
-        .edit-toolbar {
-            justify-content: flex-end;
-            border-bottom: 0;
-            padding-bottom: 0;
-            margin-bottom: 10px;
         }
 
         .dashboard-widget {
@@ -997,12 +931,6 @@
                 display: block !important;
             }
 
-            #reset-btn,
-            #edit-done-btn {
-                padding: 4px 10px;
-                font-size: 0.8rem;
-            }
-
             .folder-tab {
                 font-size: 0.8rem;
                 padding: 8px 12px;
@@ -1215,32 +1143,11 @@
                         <div class="grid-container" id="featured-grid"></div>
                     </div>
 
-                    <div id="favorites-section" style="display:none;">
-                        <div class="view-header">
-                            <span id="favorites-title" data-i18n="home.header.favorites">★ Favorites</span>
-                        </div>
-                        <div class="grid-container" id="favorites-grid"></div>
-                    </div>
-
                     <div id="live-games-section" style="display:none; margin-bottom: 20px;">
                         <div class="view-header">
                             <span data-i18n="home.header.live_games">Live Games</span>
                         </div>
                         <div id="live-games-grid" style="display:flex; flex-direction:column;"></div>
-                    </div>
-
-                    <div class="view-header edit-toolbar" id="main-view-header">
-                        <div style="display:flex; align-items:center;">
-                            <button class="sys-btn" id="featured-toggle-btn" onclick="toggleFeaturedSection()"
-                                style="box-shadow: 2px 2px 0 black; display:none; margin-right:10px; font-size:0.8rem; margin-top:-2px;"
-                                data-i18n="home.btn.featured_on">Featured: ON</button>
-                            <button class="sys-btn" id="reset-btn" onclick="openResetModal()"
-                                style="box-shadow: 2px 2px 0 black; display:none; margin-right:10px; font-size:0.8rem; margin-top:-2px;"
-                                data-i18n="home.btn.reset">Reset</button>
-                            <button class="sys-btn" id="edit-done-btn" onclick="toggleEditMode()"
-                                style="box-shadow: 2px 2px 0 black; margin-top:-2px;"
-                                data-i18n="home.btn.edit">Edit</button>
-                        </div>
                     </div>
 
                     <div class="grid-container" id="app-grid"></div>
@@ -1369,18 +1276,6 @@
             </div>
         </div>
 
-        <div id="reset-modal" class="modal-overlay">
-            <div class="modal-box">
-                <h3>Reset Preferences?</h3>
-                <p style="margin-bottom:20px;">This will clear your favorites, unhide hidden apps, and restore the
-                    featured section.</p>
-                <div style="display: flex; justify-content: center">
-                    <button class="sys-btn" onclick="confirmReset()">Yes</button>
-                    <button class="sys-btn" onclick="closeModal('reset-modal')" style="margin-left: 10px">No</button>
-                </div>
-            </div>
-        </div>
-
         <div id="folder-modal" class="modal-overlay">
             <div class="modal-box">
                 <button class="modal-close" onclick="closeModal('folder-modal')"
@@ -1402,29 +1297,6 @@
         let currentFilter = 'all';
         let currentUser = null;
         let gamesDisabled = false;
-        let favoriteApps = [];
-        let hiddenApps = [];
-        let featuredHidden = localStorage.getItem('rekindle_featured_hidden') === 'true';
-
-        try {
-            const cached = JSON.parse(localStorage.getItem('rekindle_favorites'));
-            if (Array.isArray(cached)) {
-                favoriteApps = cached || [];
-                hiddenApps = [];
-            } else if (cached) {
-                favoriteApps = cached.favorites || [];
-                hiddenApps = cached.hidden || [];
-            } else {
-                favoriteApps = [];
-                hiddenApps = [];
-            }
-        } catch (e) {
-            console.error("Error loading favorites from cache", e);
-            favoriteApps = [];
-            hiddenApps = [];
-        }
-
-        let isEditMode = false;
         let isFirebaseAvailable = false;
         const ALLOWED_EXIT_AGENT = "MY_CUSTOM_AGENT";
 
@@ -1621,21 +1493,6 @@
 
                         closeModal('login-modal');
 
-                        const cachedFavs = localStorage.getItem('rekindle_favorites');
-                        if (cachedFavs) {
-                            try {
-                                const parsed = JSON.parse(cachedFavs);
-                                if (Array.isArray(parsed)) {
-                                    favoriteApps = parsed;
-                                    hiddenApps = [];
-                                } else {
-                                    favoriteApps = parsed.favorites || [];
-                                    hiddenApps = parsed.hidden || [];
-                                }
-                                renderFavoriteSection();
-                            } catch (e) { console.error("Error parsing favorites cache", e); }
-                        }
-
                         monitorUserProfile(user.uid);
 
                         RekindleIpBan.enforceOnAuthStateChanged(user);
@@ -1666,19 +1523,6 @@
                 modalAuthBtn.onclick = openLogin;
             }
 
-            const cached = JSON.parse(localStorage.getItem('rekindle_favorites'));
-            if (Array.isArray(cached)) {
-                favoriteApps = cached || [];
-                hiddenApps = [];
-            } else if (cached) {
-                favoriteApps = cached.favorites || [];
-                hiddenApps = cached.hidden || [];
-            } else {
-                favoriteApps = [];
-                hiddenApps = [];
-            }
-
-            renderFavoriteSection();
         }
 
         function updateNavVisibility() {
@@ -1691,23 +1535,6 @@
         }
 
         // ... [Sync functions unchanged] ...
-
-        function syncFavorites() {
-            if (!currentUser || !isFirebaseAvailable || !db) return;
-            db.collection('users').doc(currentUser.uid).collection('settings').doc('favorites')
-                .get().then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        favoriteApps = data.appIds || [];
-                        hiddenApps = data.hiddenIds || [];
-                    } else { favoriteApps = []; hiddenApps = []; }
-                    const cacheData = { favorites: favoriteApps, hidden: hiddenApps };
-                    localStorage.setItem('rekindle_favorites', JSON.stringify(cacheData));
-                    localStorage.setItem('rekindle_fav_last_sync', Date.now().toString());
-                    renderFavoriteSection();
-                    if (currentFilter === 'all') renderAppGrid('all');
-                }).catch(err => console.error("Error fetching favorites:", err));
-        }
 
         function syncGeneralSettings(serverTimestamp = null) {
             if (!currentUser || !isFirebaseAvailable || !db) return;
@@ -1738,22 +1565,13 @@
         function monitorUserProfile(uid) {
             if (!isFirebaseAvailable || !db) return;
             db.collection('users').doc(uid).onSnapshot(doc => {
-                let serverFavTimestamp = 0;
                 let serverSettingsTimestamp = 0;
 
                 if (doc.exists) {
                     const data = doc.data();
-                    if (data.favoritesLastUpdated) {
-                        serverFavTimestamp = typeof data.favoritesLastUpdated.toMillis === 'function' ? data.favoritesLastUpdated.toMillis() : new Date(data.favoritesLastUpdated).getTime();
-                    }
                     if (data.settingsLastUpdated) {
                         serverSettingsTimestamp = typeof data.settingsLastUpdated.toMillis === 'function' ? data.settingsLastUpdated.toMillis() : new Date(data.settingsLastUpdated).getTime();
                     }
-                }
-
-                const localFavTimestamp = parseInt(localStorage.getItem('rekindle_fav_last_sync') || '0');
-                if (serverFavTimestamp > localFavTimestamp || localFavTimestamp === 0) {
-                    syncFavorites();
                 }
 
                 const localSettingsTimestamp = parseInt(localStorage.getItem('rekindle_settings_last_sync') || '0');
@@ -1761,131 +1579,6 @@
                     syncGeneralSettings(serverSettingsTimestamp);
                 }
             });
-        }
-
-        function toggleFavorite(appId, event) {
-            event.preventDefault(); event.stopPropagation();
-            if (favoriteApps.includes(appId)) { favoriteApps = favoriteApps.filter(id => id !== appId); }
-            else {
-                favoriteApps.push(appId);
-                favoriteApps.sort((idA, idB) => {
-                    const a = APPS.find(app => app.id === idA);
-                    const b = APPS.find(app => app.id === idB);
-                    if (!a) return 1; if (!b) return -1;
-                    return a.name.localeCompare(b.name);
-                });
-                if (hiddenApps.includes(appId)) hiddenApps = hiddenApps.filter(id => id !== appId);
-            }
-            saveFavorites(); renderFavoriteSection(); renderAppGrid(currentFilter);
-        }
-
-        function toggleHidden(appId, event) {
-            event.preventDefault(); event.stopPropagation();
-            if (hiddenApps.includes(appId)) { hiddenApps = hiddenApps.filter(id => id !== appId); }
-            else {
-                hiddenApps.push(appId);
-                if (favoriteApps.includes(appId)) favoriteApps = favoriteApps.filter(id => id !== appId);
-            }
-            saveFavorites(); renderFavoriteSection(); renderAppGrid(currentFilter);
-        }
-
-        function saveFavorites() {
-            const cacheData = { favorites: favoriteApps, hidden: hiddenApps };
-            localStorage.setItem('rekindle_favorites', JSON.stringify(cacheData));
-            if (currentUser && isFirebaseAvailable && db) {
-                const now = Date.now();
-                localStorage.setItem('rekindle_fav_last_sync', (now + 10000).toString());
-                const batch = db.batch();
-                const userRef = db.collection('users').doc(currentUser.uid);
-                const favRef = userRef.collection('settings').doc('favorites');
-                batch.set(favRef, { appIds: favoriteApps, hiddenIds: hiddenApps });
-                batch.set(userRef, { favoritesLastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-                batch.commit().catch(e => console.error("Error saving favorites:", e));
-            }
-        }
-
-        function renderFavoriteSection() {
-            const container = document.getElementById('favorites-section');
-            const grid = document.getElementById('favorites-grid');
-            grid.innerHTML = '';
-            const displayApps = favoriteApps.map(id => APPS.find(a => a.id === id)).filter(app => {
-                return app && app.cat !== 'games' && app.cat !== 'two_player' && app.cat !== 'live_game';
-            });
-
-            if (displayApps.length > 0) {
-                container.style.display = 'block';
-                const fragment = document.createDocumentFragment();
-                displayApps.forEach(app => fragment.appendChild(createAppElement(app)));
-                grid.appendChild(fragment);
-            } else {
-                container.style.display = 'none';
-            }
-            if (isEditMode) document.getElementById('favorites-section').querySelectorAll('.favorite-toggle').forEach(t => t.classList.add('show-toggle'));
-        }
-
-        function toggleEditMode() {
-            isEditMode = !isEditMode;
-            const btn = document.getElementById('edit-done-btn');
-            const resetBtn = document.getElementById('reset-btn');
-            const featToggle = document.getElementById('featured-toggle-btn');
-            if (isEditMode) {
-                btn.innerText = "Done";
-                if (resetBtn) resetBtn.style.display = 'block';
-                if (featToggle) {
-                    featToggle.style.display = 'block';
-                    const key = featuredHidden ? 'home.btn.featured_off' : 'home.btn.featured_on';
-                    const def = featuredHidden ? 'Featured: OFF' : 'Featured: ON';
-                    featToggle.innerText = window.t ? window.t(key, def) : def;
-                }
-                document.querySelectorAll('.favorite-toggle').forEach(t => t.classList.add('show-toggle'));
-                document.querySelectorAll('.hide-toggle').forEach(t => t.classList.add('show-toggle'));
-                document.querySelectorAll('.beta-label, .new-label, .one-p-label, .two-p-label, .live-label, .disabled-label').forEach(l => l.style.display = 'none');
-            } else {
-                btn.innerText = "Edit";
-                if (resetBtn) resetBtn.style.display = 'none';
-                if (featToggle) featToggle.style.display = 'none';
-                document.querySelectorAll('.favorite-toggle').forEach(t => t.classList.remove('show-toggle'));
-                document.querySelectorAll('.hide-toggle').forEach(t => t.classList.remove('show-toggle'));
-                document.querySelectorAll('.beta-label, .new-label, .one-p-label, .two-p-label, .live-label, .disabled-label').forEach(l => l.style.display = 'block');
-            }
-            if (currentFilter === 'all') renderFeaturedSection();
-            renderAppGrid(currentFilter);
-            renderFavoriteSection();
-        }
-
-        function toggleFeaturedSection() {
-            featuredHidden = !featuredHidden;
-            localStorage.setItem('rekindle_featured_hidden', featuredHidden.toString());
-            const featToggle = document.getElementById('featured-toggle-btn');
-            if (featToggle) {
-                const key = featuredHidden ? 'home.btn.featured_off' : 'home.btn.featured_on';
-                const def = featuredHidden ? 'Featured: OFF' : 'Featured: ON';
-                featToggle.innerText = window.t ? window.t(key, def) : def;
-            }
-            if (currentFilter === 'all') renderFeaturedSection();
-            renderAppGrid(currentFilter);
-        }
-
-        function openResetModal() {
-            document.getElementById('reset-modal').style.display = 'flex';
-        }
-
-        function confirmReset() {
-            favoriteApps = [];
-            hiddenApps = [];
-            featuredHidden = false;
-            localStorage.setItem('rekindle_featured_hidden', 'false');
-            const featToggle = document.getElementById('featured-toggle-btn');
-            if (featToggle) {
-                const labelOn = window.t ? window.t('home.btn.featured_on', 'Featured: ON') : 'Featured: ON';
-                featToggle.innerText = labelOn;
-            }
-
-            saveFavorites();
-            if (currentFilter === 'all') renderFeaturedSection();
-            renderFavoriteSection();
-            renderAppGrid(currentFilter);
-            closeModal('reset-modal');
         }
 
         function createAppElement(app) {
@@ -1898,7 +1591,7 @@
                 a.onclick = (e) => {
                     e.preventDefault();
                     const folderName = window.t && app.i18nKey ? window.t(app.i18nKey, app.name) : app.name;
-                    openFolderModal(folderName, app.groupedApps, app.allowChildCustomization === true);
+                    openFolderModal(folderName, app.groupedApps);
                 };
                 a.href = "javascript:void(0)";
             }
@@ -1912,34 +1605,14 @@
                 a.classList.add('pro-locked');
             }
 
-            const isFav = favoriteApps.includes(app.id);
-            const isHidden = hiddenApps.includes(app.id);
-            const showToggleClass = isEditMode && currentFilter !== 'featured' ? 'show-toggle' : '';
-            const isFavClass = isFav ? 'is-favorite' : '';
-            const isHiddenClass = isHidden ? 'is-hidden' : '';
+            let extraHtml = '';
+            if (app.live && !app.isFolder) extraHtml += `<div class="live-label">LIVE</div>`;
+            else if (app.beta && !app.isFolder) extraHtml += `<div class="beta-label">BETA</div>`;
+            else if (app.new && !app.isFolder) extraHtml += `<div class="new-label">NEW</div>`;
+            else if (app.single && !app.isFolder) extraHtml += `<div class="one-p-label" data-i18n="badge.1p">1P</div>`;
 
-            if (isHidden) { a.style.opacity = '0.4'; a.style.filter = 'grayscale(100%)'; }
-
-            let extraHtml = app.virtualFolder ? '' : `
-                <div class="favorite-toggle ${isFavClass} ${showToggleClass}" onclick="toggleFavorite('${app.id}', event)">
-                    <svg viewBox="0 0 32 32"><path d="M16 2 L20 12 L30 13 L22 20 L24 30 L16 25 L8 30 L10 20 L2 13 L12 12 Z"/></svg>
-                </div>
-                <div class="hide-toggle ${isHiddenClass} ${showToggleClass}" onclick="toggleHidden('${app.id}', event)">
-                    <svg viewBox="0 0 32 32">
-                         <path d="M2 16C2 16 8 6 16 6C24 6 30 16 30 16C30 16 24 26 16 26C8 26 2 16 2 16Z M16 10C12.6863 10 10 12.6863 10 16C10 19.3137 12.6863 22 16 22C19.3137 22 22 19.3137 22 16C22 12.6863 19.3137 10 16 10Z M16 13C17.6569 13 19 14.3431 19 16C19 17.6569 17.6569 19 16 19C14.3431 19 13 17.6569 13 16C13 14.3431 14.3431 13 16 13Z"/>
-                         <line x1="2" y1="2" x2="30" y2="30" stroke="black" stroke-width="2" class="slash" style="${isHidden ? '' : 'display:none'}"/>
-                    </svg>
-                </div>`;
-
-            if (!isEditMode) {
-                if (app.live && !app.isFolder) extraHtml += `<div class="live-label">LIVE</div>`;
-                else if (app.beta && !app.isFolder) extraHtml += `<div class="beta-label">BETA</div>`;
-                else if (app.new && !app.isFolder) extraHtml += `<div class="new-label">NEW</div>`;
-                else if (app.single && !app.isFolder) extraHtml += `<div class="one-p-label" data-i18n="badge.1p">1P</div>`;
-
-                if (app.cat === 'two_player' && !app.isFolder) extraHtml += `<div class="two-p-label" data-i18n="badge.2p">2P</div>`;
-                if (app.disabled) extraHtml += `<div class="disabled-label">CLOSED</div>`;
-            }
+            if (app.cat === 'two_player' && !app.isFolder) extraHtml += `<div class="two-p-label" data-i18n="badge.2p">2P</div>`;
+            if (app.disabled) extraHtml += `<div class="disabled-label">CLOSED</div>`;
 
             const viewBox = app.viewBox || "0 0 32 32";
             const svgClass = app.filled ? 'icon-img' : 'icon-img outlined-icon';
@@ -1967,16 +1640,10 @@
 
         function filterApps(category, btnElement) {
             updateNavVisibility();
-            if (isEditMode) toggleEditMode();
             category = 'all';
             currentFilter = 'all';
             document.querySelectorAll('.folder-tab').forEach(el => el.classList.remove('active'));
             if (btnElement) btnElement.classList.add('active');
-            const editBtn = document.getElementById('edit-done-btn');
-            if (editBtn) {
-                editBtn.style.display = 'block';
-                editBtn.innerText = isEditMode ? "Done" : "Edit";
-            }
             renderFeaturedSection();
 
             const liveGamesSection = document.getElementById('live-games-section');
@@ -2115,10 +1782,6 @@
         function renderFeaturedSection() {
             const featuredContainer = document.getElementById('featured-section');
             const featuredGrid = document.getElementById('featured-grid');
-            if (featuredHidden) {
-                featuredContainer.style.display = 'none';
-                return;
-            }
             featuredContainer.style.display = 'block';
             featuredGrid.innerHTML = '';
             const fragment = document.createDocumentFragment();
@@ -2127,7 +1790,6 @@
 
             if (featuredApps.length === 0) {
                 featuredContainer.style.display = 'none';
-                renderFavoriteSection();
                 return;
             }
 
@@ -2136,15 +1798,11 @@
                 a.href = app.url || `${app.id}.html`;
                 a.className = 'featured-card';
                 const subheading = app.desc || '';
-                let badgeHtml = '';
-                if (!isEditMode) {
-                    if (app.cat === 'two_player') badgeHtml = '<div class="two-p-label" data-i18n="badge.2p">2P</div>';
-                }
+                const badgeHtml = app.cat === 'two_player' ? '<div class="two-p-label" data-i18n="badge.2p">2P</div>' : '';
                 a.innerHTML = `<div class="featured-icon"><svg viewBox="0 0 32 32" style="width:100%;height:100%;">${app.icon}</svg></div><div class="featured-info"><span class="featured-title" data-i18n="app.${app.id}.name">${app.name}</span><span class="featured-sub" data-i18n="app.${app.id}.desc">${subheading}</span></div>${badgeHtml}`;
                 fragment.appendChild(a);
             });
             featuredGrid.appendChild(fragment);
-            renderFavoriteSection();
         }
         function getGroupedApps(appList) {
             const gameCats = ['games', 'two_player', 'live_game'];
@@ -2173,7 +1831,6 @@
                     folderApp.id = 'folder_' + primaryApp.id;
                     folderApp.isFolder = true;
                     folderApp.virtualFolder = true;
-                    folderApp.allowChildCustomization = true;
                     folderApp.i18nKey = 'app.' + primaryApp.id + '.name';
                     folderApp.groupedApps = group;
                     result.push(folderApp);
@@ -2188,8 +1845,7 @@
             const grid = document.getElementById('app-grid');
             grid.innerHTML = '';
             const fragment = document.createDocumentFragment();
-            let baseList = APPS.filter(a => (!a.featured || featuredHidden) && !favoriteApps.includes(a.id));
-            if (!isEditMode) baseList = baseList.filter(a => !hiddenApps.includes(a.id));
+            const baseList = APPS.filter(a => !a.featured);
 
             const apps = baseList.filter(a => a.cat !== 'misc' && a.cat !== 'games' && a.cat !== 'two_player' && a.cat !== 'live_game');
             apps.sort((a, b) => a.name.localeCompare(b.name));
@@ -2201,10 +1857,6 @@
             if (!gamesDisabled) {
                 let singlePlayerGames = APPS.filter(a => a.cat === 'games');
                 let twoPlayerGames = APPS.filter(a => a.cat === 'two_player' || a.cat === 'live_game');
-                if (!isEditMode) {
-                    singlePlayerGames = singlePlayerGames.filter(a => !hiddenApps.includes(a.id));
-                    twoPlayerGames = twoPlayerGames.filter(a => !hiddenApps.includes(a.id));
-                }
                 singlePlayerGames = getGroupedApps(singlePlayerGames);
                 twoPlayerGames = getGroupedApps(twoPlayerGames);
                 singlePlayerGames.sort((a, b) => a.name.localeCompare(b.name));
@@ -2217,7 +1869,6 @@
                         cat: 'two_player',
                         isFolder: true,
                         virtualFolder: true,
-                        allowChildCustomization: true,
                         i18nKey: 'home.nav.two_player',
                         groupedApps: twoPlayerGames,
                         icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><circle cx="12" cy="17" r="3" fill="none" stroke="black" stroke-width="2"/><circle cx="22" cy="17" r="3" fill="black" stroke="none"/><path d="M8 24 h8 M18 24 h8" stroke="black" stroke-width="2"/>'
@@ -2231,7 +1882,6 @@
                         cat: 'games',
                         isFolder: true,
                         virtualFolder: true,
-                        allowChildCustomization: true,
                         i18nKey: 'home.nav.games',
                         groupedApps: singlePlayerGames,
                         icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><path d="M10 17 h6 M13 14 v6" stroke="black" stroke-width="2"/><circle cx="22" cy="16" r="1.5" fill="black" stroke="none"/><circle cx="25" cy="20" r="1.5" fill="black" stroke="none"/>'
@@ -2246,7 +1896,6 @@
                     cat: 'misc',
                     isFolder: true,
                     virtualFolder: true,
-                    allowChildCustomization: true,
                     i18nKey: 'home.nav.misc',
                     groupedApps: miscApps,
                     icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><circle cx="11" cy="18" r="1.5" fill="black" stroke="none"/><circle cx="16" cy="18" r="1.5" fill="black" stroke="none"/><circle cx="21" cy="18" r="1.5" fill="black" stroke="none"/>'
@@ -2254,18 +1903,13 @@
             }
 
             grid.appendChild(fragment);
-            if (isEditMode) {
-                document.getElementById('app-grid').querySelectorAll('.favorite-toggle').forEach(t => t.classList.add('show-toggle'));
-                document.getElementById('app-grid').querySelectorAll('.hide-toggle').forEach(t => t.classList.add('show-toggle'));
-                document.getElementById('app-grid').querySelectorAll('.beta-label, .new-label, .one-p-label, .two-p-label, .folder-label, .live-label, .disabled-label').forEach(l => l.style.display = 'none');
-            }
         }
 
         // ... [Remaining helper functions openLogin, openAbout, etc. unchanged] ...
         function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
         function openAbout() { document.getElementById('about-modal').style.display = 'flex'; }
 
-        function openFolderModal(appName, groupedAppsArray, allowChildCustomization) {
+        function openFolderModal(appName, groupedAppsArray) {
             document.getElementById('folder-title').innerText = appName;
             const container = document.getElementById('folder-options');
             container.innerHTML = '';
@@ -2275,10 +1919,6 @@
                 const clonedApp = Object.assign({}, app);
                 const element = createAppElement(clonedApp);
                 element.id = 'modal-icon-' + clonedApp.id;
-
-                if (!allowChildCustomization) {
-                    element.querySelectorAll('.favorite-toggle, .hide-toggle').forEach(e => e.remove());
-                }
 
                 fragment.appendChild(element);
             });
@@ -2366,7 +2006,7 @@
         }
         function confirmLogout() {
             if (isFirebaseAvailable && auth) auth.signOut().catch(e => console.error("Sign out error:", e));
-            localStorage.removeItem('rekindle_uid'); localStorage.removeItem('rekindle_favorites');
+            localStorage.removeItem('rekindle_uid');
             closeModal('logout-modal'); location.reload();
         }
         function autoDetectScale() { if (window.rekindleAutoDetectScale) window.rekindleAutoDetectScale(); }
@@ -2913,16 +2553,10 @@
         window.filterApps = filterApps;
         window.openAbout = openAbout;
         window.openLogin = openLogin;
-        window.openResetModal = openResetModal;
         window.closeModal = closeModal;
         window.confirmLogout = confirmLogout;
-        window.confirmReset = confirmReset;
         window.doLogin = doLogin;
         window.doRegister = doRegister;
-        window.toggleEditMode = toggleEditMode;
-        window.toggleFeaturedSection = toggleFeaturedSection;
-        window.toggleFavorite = toggleFavorite;
-        window.toggleHidden = toggleHidden;
         window.changeDashboardCalendar = changeDashboardCalendar;
         window.selectDashboardCalendarDay = selectDashboardCalendarDay;
         window.scrollDashboardWeatherHours = scrollDashboardWeatherHours;

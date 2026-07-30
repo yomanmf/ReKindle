@@ -300,10 +300,11 @@ async function transpileHtml(htmlContent, filename = '') {
                 // --- INJECT ES6 WARNING LOGIC (Pre-Transpilation) ---
                 if (filename === 'index.html') {
                     // Target 1: createAppElement (Main Grid)
-                    const mainGridTargetOriginal = 'const isFav = favoriteApps.includes(app.id);';
+                    const mainGridTargetOriginal = "a.className = 'app-icon';";
                     if (code.includes(mainGridTargetOriginal)) {
                         // console.log("    [Index] Injecting ES6 Warning (Grid)...");
                         const mainGridInjection = `
+                        a.className = 'app-icon';
                         if (app.es6) {
                             a.classList.add('es6-disabled');
                             a.onclick = function (e) {
@@ -312,7 +313,6 @@ async function transpileHtml(htmlContent, filename = '') {
                             };
                             a.href = "javascript:void(0)";
                         }
-                        const isFav = favoriteApps.includes(app.id);
                        `;
                         code = code.replace(mainGridTargetOriginal, mainGridInjection);
                     }
@@ -1034,27 +1034,22 @@ async function transpileLegacyHtml(htmlContent, filename = '') {
 
         // Patch Main Grid
         // Minified variations for Legacy (Babel might convert const -> var or keep const, + minification removes spaces)
-        const mainGridTargetOriginal = 'const isFav = favoriteApps.includes(app.id);';
-        const mainGridTargetMinifiedConst = 'const isFav=favoriteApps.includes(app.id);';
-        const mainGridTargetMinifiedVar = 'var isFav=favoriteApps.includes(app.id);';
+        const mainGridTargetOriginal = "a.className = 'app-icon';";
+        const mainGridTargetMinified = 'a.className="app-icon";';
 
         const mainGridInjection = `
+            a.className="app-icon";
             if (app.es6) {
                 a.classList.add('es6-disabled');
                 a.onclick = function (e) { e.preventDefault(); showEs6Warning(app.id); };
                 a.href = "javascript:void(0)";
             }
-            const isFav=favoriteApps.includes(app.id); /* Re-add original line */
         `;
 
-        // Check for minified const first, then var, then original
-        if (finalHtml.includes(mainGridTargetMinifiedConst)) {
-            finalHtml = finalHtml.replace(mainGridTargetMinifiedConst, mainGridInjection);
-        } else if (finalHtml.includes(mainGridTargetMinifiedVar)) {
-            // If var, we need to inject with var
-            finalHtml = finalHtml.replace(mainGridTargetMinifiedVar, mainGridInjection.replace('const isFav=', 'var isFav='));
+        if (finalHtml.includes(mainGridTargetMinified)) {
+            finalHtml = finalHtml.replace(mainGridTargetMinified, mainGridInjection);
         } else if (finalHtml.includes(mainGridTargetOriginal)) {
-            finalHtml = finalHtml.replace(mainGridTargetOriginal, mainGridInjection.replace('const isFav=', 'const isFav = '));
+            finalHtml = finalHtml.replace(mainGridTargetOriginal, mainGridInjection);
         }
 
         // Patch Featured

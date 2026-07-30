@@ -330,6 +330,14 @@ across both registries: duplicating an ID can render one copy inside Misc and a
 second copy at the dashboard root. Move a beta app by changing its existing
 `icons-beta.js` category, and publish/cache-bust that file with the dashboards.
 
+### 10. Dashboard customization is retired
+
+`index.html` and `index_old.html` intentionally have no edit mode, favorites,
+hidden apps, featured-section toggle, or reset-preferences UI. Do not restore
+the old `rekindle_favorites` / `rekindle_featured_hidden` state or Firestore
+sync. The Lite/Legacy ES6-warning injection in `build-automation.js` is anchored
+to the app icon class assignment, not to removed favorite-state code.
+
 ## 🌍 Localization (i18n.js)
 
 The project uses a custom `i18n.js` loader.

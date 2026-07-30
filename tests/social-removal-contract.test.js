@@ -128,7 +128,7 @@ test("dashboard nests the two-player folder inside the Games folder", function (
         assert.match(source, /window\.closeModal\s*=\s*closeModal/);
         assert.doesNotMatch(source, /id="nav-(?:dashboard|essentials|tools|lifestyle|games|two_player)"/);
         assert.doesNotMatch(source, /id="category-title"/);
-        assert.match(source, /id="edit-done-btn"/);
+        assert.doesNotMatch(source, /id="edit-done-btn"/);
         assert.match(source, /id="home-widgets"/);
         assert.match(source, /id="db-weather-hourly"/);
         assert.match(source, /id="db-weather-feels"/);
