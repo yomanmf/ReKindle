@@ -577,6 +577,13 @@ or supporter status back to the dashboard, settings, or locale files.
 
 **Yandex Object Storage recursive-copy gotcha:** Yandex CLI 1.18.0 marks `yc storage s3` as preview. During the 15 July 2026 AI Assistant release, both `yc storage s3 cp <dir> s3://rekindle/ --recursive` commands returned exit code 0 but silently omitted the same alphabetical tail of the 113-object release (42 root HTML objects and aliases). Never accept a recursive-copy exit code as proof of a complete frontend deployment. Read the bucket back and compare every manifest object byte-for-byte; upload any missing objects individually with `yc storage s3api put-object`. Set extensionless page aliases to `Content-Type: text/html` explicitly and verify their public HTTP headers.
 
+**Concurrent frontend staging gotcha:**
+`yandex/prepare-frontend-release.js` defaults to the shared
+`/private/tmp/rekindle-yandex-release` directory. Parallel tasks can replace its
+stage and zip between preparation and upload. Set a task-specific
+`REKINDLE_YANDEX_RELEASE_DIR`, then recheck its object count immediately before
+publishing.
+
 **Parallel Object Storage readback gotcha:** With `xargs`, a literal `{}` is
 not replaced unless `-I{}` is present. A command such as
 `xargs -n1 sh -c '...' sh '{}' "$readback_dir"` therefore requests the object
