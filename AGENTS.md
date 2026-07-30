@@ -1100,8 +1100,10 @@ route with a server-held token. The orchestrator stores these as
 `web:rekindle` jobs and suppresses bot notifications for them. Never synthesize
 bot updates or call a messaging API from this page. Search results are selected
 before job creation so the worker never needs an interactive chat callback.
-Web jobs are delivered through the existing Kindle SMTP address and must not
-expose Amazon login actions; Telegram jobs keep their existing Amazon uploader.
+Web jobs use the same server-side Amazon Send to Kindle uploader and saved
+session as Telegram jobs, but must not call the Telegram API or expose Amazon
+login actions in the Kindle browser. If the shared server session expires,
+restore it operationally on the uploader instead of redirecting the user.
 
 ## Git Workflow
 
