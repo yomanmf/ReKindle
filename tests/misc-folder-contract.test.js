@@ -1,0 +1,54 @@
+"use strict";
+
+var test = require("node:test");
+var assert = require("node:assert/strict");
+var fs = require("node:fs");
+var path = require("node:path");
+var vm = require("node:vm");
+
+var root = path.resolve(__dirname, "..");
+function read(file) { return fs.readFileSync(path.join(root, file), "utf8"); }
+
+test("screenshot apps live in Misc while requested exceptions stay outside", function () {
+    var apps = vm.runInNewContext(read("icons.js") + "\nAPPS;", {
+        localStorage: { getItem: function () { return null; } }
+    });
+    var expected = [
+        "airtype", "breathing", "browser", "calculator", "calendar", "countdown",
+        "dictionary", "docs", "files", "flashcards", "flipbook", "interactive",
+        "maps", "microsofttodo", "notes", "photoframe", "quicktodo", "readlater",
+        "reader", "readwise", "tasks", "telegram", "timer", "translate", "weather",
+        "wikipedia"
+    ];
+    var actual = apps.filter(function (app) { return app.cat === "misc"; })
+        .map(function (app) { return app.id; }).sort();
+
+    assert.equal(actual.join(","), expected.sort().join(","));
+    ["chat", "kindledigest", "reddit"].forEach(function (id) {
+        assert.notEqual(apps.find(function (app) { return app.id === id; }).cat, "misc");
+    });
+});
+
+test("both dashboards leave both Games folders outside Misc", function () {
+    ["index.html", "index_old.html"].forEach(function (file) {
+        var source = read(file);
+        assert.match(source, /const miscApps = baseList\.filter\(a => a\.cat === 'misc'\)/);
+        assert.match(source, /fragment\.appendChild\(createAppElement\(\{\s*id: 'folder_games'/);
+        assert.match(source, /id: 'folder_misc'[\s\S]*?i18nKey: 'home\.nav\.misc'/);
+        assert.ok(source.indexOf("id: 'folder_games'") < source.indexOf("id: 'folder_misc'"));
+        assert.ok(source.indexOf("id: 'folder_misc'") < source.indexOf("id: 'folder_two_player'"));
+        assert.match(source, /icons\.js\?v=5/);
+    });
+});
+
+test("Misc is localized and the updated catalog bypasses old service-worker caches", function () {
+    var expected = {
+        de: "Verschiedenes", en: "Misc", es: "Varios", fr: "Divers", it: "Varie",
+        pl: "Różne", pt: "Diversos", ru: "Разное", vi: "Khác", zh: "其他"
+    };
+    Object.keys(expected).forEach(function (language) {
+        assert.equal(JSON.parse(read("locales/" + language + ".json"))["home.nav.misc"], expected[language]);
+    });
+    assert.match(read("sw.js"), /rekindle-cache-v27/);
+    assert.match(read("sw.js"), /icons\.js\?v=5/);
+});

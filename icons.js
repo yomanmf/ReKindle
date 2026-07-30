@@ -6,13 +6,13 @@ const APPS = [
     {
         id: 'browser',
         name: 'Browser',
-        cat: 'essentials',
+        cat: 'misc',
         icon: '<circle cx="16" cy="16" r="14"/><path d="M2 16 H30"/><path d="M16 3 C22 10 22 22 16 29"/><path d="M16 3 C10 10 10 22 16 29"/>'
     },
     {
         id: 'calendar',
         name: 'Calendar',
-        cat: 'essentials',
+        cat: 'misc',
         get icon() {
             const date = typeof window.rekindleGetZonedDate === 'function' ? window.rekindleGetZonedDate().getDate() : new Date().getDate();
             return '<rect x="4" y="8" width="24" height="22"/><rect x="4" y="8" width="24" height="6" fill="black" stroke="none"/><text x="16" y="26" font-size="14" text-anchor="middle" fill="black" stroke="none">' + date + '</text>';
@@ -21,7 +21,7 @@ const APPS = [
     {
         id: 'weather',
         name: 'Weather',
-        cat: 'essentials',
+        cat: 'misc',
         icon: '<circle cx="16" cy="16" r="7" stroke-width="2"/><path d="M16 4v2M16 26v2M4 16h2M26 16h2M7.5 7.5l1.4 1.4M23 23l1.4 1.4M23 9l1.4-1.4M9 23l-1.4 1.4" stroke-width="2"/>'
     },
 
@@ -29,7 +29,7 @@ const APPS = [
     {
         id: 'readlater',
         name: 'Read Later',
-        cat: 'tools',
+        cat: 'misc',
         desc: 'Save links for later.',
         icon: '<path d="M8 4 h16 v24 l-8 -6 l-8 6 z" fill="none" stroke="black" stroke-width="2"/>'
     },
@@ -42,32 +42,32 @@ const APPS = [
     {
         id: 'maps',
         name: 'Maps',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<path d="M4 8 L10 4 L22 8 L28 4 V24 L22 28 L10 24 L4 28 Z"/><line x1="10" y1="4" x2="10" y2="24"/><line x1="22" y1="8" x2="22" y2="28"/>'
     },
     {
         id: 'calculator',
         name: 'Calculator',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<rect x="6" y="4" width="20" height="24"/><rect x="10" y="8" width="12" height="6" fill="black" stroke="none"/>'
     },
     {
         id: 'files',
         name: 'Files',
-        cat: 'tools',
+        cat: 'misc',
         // Folder Icon
         icon: '<path d="M4 6 h8 l2 2 h14 v16 h-24 z" fill="white" stroke="black" stroke-width="2"/><line x1="4" y1="11" x2="28" y2="11" stroke="black" stroke-width="2"/>'
     },
     {
         id: 'docs',
         name: 'Docs',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<path d="M6 4 h14 l6 6 v18 h-20 z" fill="white" stroke="black" stroke-width="2"/><polyline points="20 4 20 10 26 10" fill="none" stroke="black" stroke-width="2"/><line x1="10" y1="14" x2="22" y2="14" stroke="black" stroke-width="2"/><line x1="10" y1="18" x2="22" y2="18" stroke="black" stroke-width="2"/><line x1="10" y1="22" x2="18" y2="22" stroke="black" stroke-width="2"/>'
     },
     {
         id: 'countdown',
         name: 'Countdown',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<rect x="4" y="6" width="24" height="20"/><text x="16" y="24" font-size="10" text-anchor="middle" stroke="none" fill="black">00</text>'
     },
     /*     {
@@ -79,31 +79,31 @@ const APPS = [
     {
         id: 'flashcards',
         name: 'Flashcards',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<rect x="6" y="8" width="20" height="14" fill="white" stroke="black" stroke-width="2"/><rect x="8" y="10" width="20" height="14" fill="white" stroke="black" stroke-width="2"/><text x="18" y="21" font-size="10" text-anchor="middle" stroke="none" fill="black">A</text>'
     },
     {
         id: 'timer',
         name: 'Timers',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<circle cx="16" cy="18" r="10" stroke-width="2" /> <path d="M16 18 V8 M16 8 L20 4 M16 8 L12 4" stroke-width="2"/>'
     },
     {
         id: 'notes',
         name: 'Notes',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<path d="M6 4h16l6 6v18h-22z"/><polyline points="22 4 22 10 28 10"/>'
     },
     {
         id: 'tasks',
         name: 'Tasks',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<rect x="6" y="4" width="20" height="24"/><polyline points="9 10 11 12 15 8" fill="none" stroke="black"/><line x1="18" y1="10" x2="22" y2="10"/><polyline points="9 18 11 20 15 16" fill="none" stroke="black"/><line x1="18" y1="18" x2="22" y2="18"/>'
     },
     {
         id: 'microsofttodo',
         name: 'Microsoft To Do',
-        cat: 'tools',
+        cat: 'misc',
         beta: true,
         desc: 'Microsoft tasks for E-ink.',
         url: 'https://to-do.office.com/tasks/',
@@ -113,7 +113,7 @@ const APPS = [
         id: 'quicktodo',
         name: 'Quick ToDo',
         es6: true,
-        cat: 'tools',
+        cat: 'misc',
         desc: 'Handwritten, sync-able todos!',
         icon: '<rect x="6" y="4" width="20" height="24" fill="white" stroke="black" stroke-width="2"/><path d="M9 10l3 3 7-7" fill="none" stroke="black" stroke-width="2"/><line x1="9" y1="18" x2="23" y2="18" stroke="black" stroke-width="2"/><line x1="9" y1="24" x2="18" y2="24" stroke="black" stroke-width="2"/><path d="M28 8h2 M28 16h3 M27 24h3" stroke="black" stroke-width="2" stroke-linecap="round"/>'
     },
@@ -127,25 +127,25 @@ const APPS = [
     {
         id: 'translate',
         name: 'Translator',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<rect x="4" y="6" width="14" height="12" fill="white"/><text x="11" y="15" font-size="10" text-anchor="middle" stroke="none" fill="black">A</text><rect x="14" y="14" width="14" height="12" fill="black"/><text x="21" y="23" font-size="10" text-anchor="middle" stroke="none" fill="white">文</text>'
     },
     {
         id: 'breathing',
         name: 'Breathing',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<circle cx="16" cy="16" r="12"/><circle cx="16" cy="16" r="5" fill="black"/>'
     },
     {
         id: 'dictionary',
         name: 'Dictionary',
-        cat: 'tools',
+        cat: 'misc',
         icon: '<rect x="6" y="4" width="20" height="24"/><text x="16" y="22" font-size="14" text-anchor="middle" stroke="none" fill="black" font-family="serif" font-weight="bold">Az</text>'
     },
     {
         id: 'airtype',
         name: 'AirType',
-        cat: 'tools',
+        cat: 'misc',
         desc: 'Phone-based typewriter',
         icon: '<path d="M4 24 L 28 12 L 4 4 L 10 14 L 4 24 Z M 10 14 L 28 12" fill="white" stroke="black" stroke-width="2" stroke-linejoin="round"/>',
     },
@@ -154,7 +154,7 @@ const APPS = [
     {
         id: 'telegram',
         name: 'Telegram',
-        cat: 'lifestyle',
+        cat: 'misc',
         desc: 'Telegram for E-ink.',
         icon: '<path d="M3 15 L29 4 L23 28 L15 21 L10 25 L10 18 Z" fill="white" stroke="black" stroke-width="2" stroke-linejoin="miter"/><path d="M10 18 L23 10 L15 21" fill="none" stroke="black" stroke-width="2" stroke-linejoin="miter"/>'
     },
@@ -175,14 +175,14 @@ const APPS = [
     {
         id: 'reader',
         name: 'Reader',
-        cat: 'lifestyle',
+        cat: 'misc',
         desc: 'Free reading!',
         icon: '<g transform="translate(0, 2)"><path d="M6 4 h18 v24 h-18 z M6 4 l-2 2 v24 l2 -2 M24 4 l2 2 v24 l-2 -2" fill="none" stroke="black" stroke-width="2"/><line x1="10" y1="10" x2="20" y2="10" stroke="black" stroke-width="2"/><line x1="10" y1="14" x2="20" y2="14" stroke="black" stroke-width="2"/><line x1="10" y1="18" x2="20" y2="18" stroke="black" stroke-width="2"/></g>'
     },
     {
         id: 'interactive',
         name: 'Interactive Reader',
-        cat: 'lifestyle',
+        cat: 'misc',
         desc: 'Choose Your Own Adventure',
         icon: '<path d="M6 4 h18 v24 h-18 z" fill="none" stroke="black" stroke-width="2"/><line x1="6" y1="4" x2="4" y2="6"/><line x1="4" y1="6" x2="4" y2="28"/><line x1="4" y1="28" x2="6" y2="26"/><path d="M10 16 L21 16 M18 13 L21 16 L18 19" stroke="black" stroke-width="1.5" fill="none"/><path d="M10 16 Q13 16 18 8 M14 9 L18 8 L17 11" stroke="black" stroke-width="1.5" fill="none"/><path d="M10 16 Q13 16 18 24 M14 23 L18 24 L17 21" stroke="black" stroke-width="1.5" fill="none"/>'
     },
@@ -201,16 +201,23 @@ const APPS = [
         icon: '<circle cx="16" cy="16" r="14"/><ellipse cx="16" cy="18" rx="10" ry="7"/><circle cx="12" cy="17" r="2" fill="black"/><circle cx="20" cy="17" r="2" fill="black"/><path d="M16 11 L20 6"/>'
     },
     {
+        id: 'readwise',
+        name: 'Readwise',
+        cat: 'misc',
+        beta: true,
+        icon: '<path d="M4 6 h14 v12 h-6 l-5 4 v-4 h-3 z" fill="white" stroke="black" stroke-width="2"/><path d="M14 14 h14 v12 h-3 v4 l-5-4 h-6 z" fill="black" stroke="black" stroke-width="2"/>'
+    },
+    {
         id: 'flipbook',
         name: 'Flipbook',
-        cat: 'lifestyle',
+        cat: 'misc',
         icon: '<rect x="8" y="5" width="20" height="18" fill="white" stroke="black" stroke-width="2"/><rect x="4" y="9" width="20" height="18" fill="white" stroke="black" stroke-width="2"/><circle cx="14" cy="15" r="2" fill="black"/><line x1="14" y1="17" x2="14" y2="21" stroke="black" stroke-width="1.5"/><path d="M11 19 l6 -1" stroke="black" stroke-width="1.5"/><path d="M11 25 l3 -4 l3 4" stroke="black" stroke-width="1.5" fill="none"/>',
         desc: 'Create pixel animations.'
     },
     {
         id: 'wikipedia',
         name: 'Wikipedia',
-        cat: 'lifestyle',
+        cat: 'misc',
         icon: '<circle cx="16" cy="16" r="14"/><text x="16" y="23" font-size="22" text-anchor="middle" stroke="none" fill="black" font-weight="bold">W</text>'
     },
 
@@ -218,7 +225,7 @@ const APPS = [
     {
         id: 'photoframe',
         name: 'Photo Frame',
-        cat: 'lifestyle',
+        cat: 'misc',
         desc: 'Digital photo slideshow.',
         icon: '<rect x="4" y="6" width="24" height="20" fill="none" stroke="black" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="black"/><path d="M4 26 l8 -8 l4 4 l6 -6 l6 6" fill="none" stroke="black" stroke-width="2"/>'
     },

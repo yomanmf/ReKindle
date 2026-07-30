@@ -201,13 +201,13 @@ test("Microsoft To Do is present in catalog, release, locales, and privacy", fun
     var modernDashboard = read("index.html");
     var classicDashboard = read("index_old.html");
     assert.match(catalog, /id:\s*['"]microsofttodo['"]/);
-    assert.match(catalog, /cat:\s*['"]tools['"]/);
+    assert.match(catalog, /cat:\s*['"]misc['"]/);
     assert.match(catalog, /url:\s*['"]https:\/\/to-do\.office\.com\/tasks\/['"]/);
     assert.doesNotMatch(catalog.match(/\{\s*id:\s*['"]microsofttodo['"][\s\S]*?\n\s*\}/)[0], /plus:\s*true/);
     assert.match(modernDashboard, /a\.href\s*=\s*app\.url\s*\|\|\s*`\$\{app\.id\}\.html`/);
     assert.match(classicDashboard, /a\.href\s*=\s*app\.url\s*\|\|\s*`\$\{app\.id\}\.html`/);
-    assert.match(modernDashboard, /icons\.js\?v=4/);
-    assert.match(classicDashboard, /icons\.js\?v=4/);
+    assert.match(modernDashboard, /icons\.js\?v=5/);
+    assert.match(classicDashboard, /icons\.js\?v=5/);
     assert.ok(manifestEntries().includes("microsofttodo.html"));
     assert.ok(manifestEntries().includes("js/microsoft-todo.js"));
 

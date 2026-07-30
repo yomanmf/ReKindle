@@ -116,7 +116,7 @@ test("dashboard exposes separate single-player and two-player folders", function
         assert.match(source, /i18nKey:\s*['"]home\.nav\.games['"]/);
         assert.match(source, /i18nKey:\s*['"]home\.nav\.two_player['"]/);
         assert.doesNotMatch(source, />All Games</);
-        assert.match(source, /app\.cat !== ['"]games['"] && app\.cat !== ['"]two_player['"] && app\.cat !== ['"]live_game['"]/);
+        assert.match(source, /a\.cat !== ['"]misc['"] && a\.cat !== ['"]games['"] && a\.cat !== ['"]two_player['"] && a\.cat !== ['"]live_game['"]/);
         assert.match(source, /#folder-modal \.modal-box\s*\{[^}]*height:\s*82vh;[^}]*overflow:\s*hidden;/s);
         assert.match(source, /#folder-options\s*\{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
         assert.match(source, /class="modal-close" onclick="closeModal\('folder-modal'\)"/);

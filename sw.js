@@ -1,8 +1,8 @@
-const CACHE_NAME = 'rekindle-cache-v26'; // Add direct Kindle Digest control
+const CACHE_NAME = 'rekindle-cache-v27'; // Add the Misc dashboard folder
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=4',
+    './icons.js?v=5',
     './theme.js?v=21',
     './logo.svg',
     './donate.svg',

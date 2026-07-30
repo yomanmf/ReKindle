@@ -47,9 +47,9 @@ test("Kindle Digest backend and worker routes are private and released", functio
     assert.ok(manifest.includes("js/kindledigest.js"));
     assert.ok(manifest.includes("locales/kindledigest-en.json"));
     assert.ok(manifest.includes("locales/kindledigest-ru.json"));
-    assert.match(sw, /rekindle-cache-v26/);
-    assert.match(read("index.html"), /icons\.js\?v=4/);
-    assert.match(read("index_old.html"), /icons\.js\?v=4/);
+    assert.match(sw, /rekindle-cache-v27/);
+    assert.match(read("index.html"), /icons\.js\?v=5/);
+    assert.match(read("index_old.html"), /icons\.js\?v=5/);
 });
 
 test("Kindle Digest ships English and Russian UI contracts", function () {

@@ -315,6 +315,14 @@ do not depend on `target="_blank"` or popup APIs. When changing a catalog URL,
 bump the `icons.js` query version in both dashboards and the matching entry in
 `sw.js` so an older service-worker response cannot preserve the previous link.
 
+### 9. Dashboard Misc folder
+
+Non-game catalog entries assigned `cat: 'misc'` in `icons.js` are rendered
+inside the virtual Misc folder by both `index.html` and `index_old.html`. The
+single-player and two-player Games folders stay at the dashboard root. AI
+Assistant, Kindle Digest, and Reddit also stay at the root. Keep both dashboard
+implementations synchronized when changing this grouping.
+
 ## 🌍 Localization (i18n.js)
 
 The project uses a custom `i18n.js` loader.
