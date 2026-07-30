@@ -82,19 +82,6 @@ All applications are available without a paid subscription.
 
 ---
 
-## ⚡ ReKindle+
-
-ReKindle+ is an optional supporter membership. It helps cover AI, storage, and development costs; it does not control access to applications or features.
-
-**Pricing:**
-*   **Monthly:** $2/mo
-*   **Yearly:** $15/yr
-*   **Lifetime:** $30 (One-time payment)
-
-[**Subscribe at rekindle.ink/pay**](https://rekindle.ink/pay)
-
----
-
 ## Privacy
 
 ReKindle is designed with privacy as a priority.

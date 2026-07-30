@@ -13,6 +13,7 @@ test("donation prompts and checkout entry points stay retired", function () {
         assert.doesNotMatch(read(file), /donate\.svg|openDonateModal|support\.get|billing\/checkout/);
     });
     assert.match(read("pay.html"), /billing\.stripe\.com/);
+    assert.doesNotMatch(read("README.md"), /rekindle\.ink\/pay|subscribe at/i);
     assert.match(read("yandex/FRONTEND-DELETE-MANIFEST.txt"), /^donate\.svg$/m);
 });
 
