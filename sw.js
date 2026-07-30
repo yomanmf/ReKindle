@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v33'; // Use the localized Misc folder fallback
+const CACHE_NAME = 'rekindle-cache-v34'; // Remove Manga to Kindle beta badge
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=7',
-    './icons-beta.js?v=3',
+    './icons-beta.js?v=4',
     './theme.js?v=21',
     './logo.svg',
     './manifest.json',

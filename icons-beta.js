@@ -6,7 +6,6 @@ const APPS_BETA = [
         id: 'mangakindle',
         name: 'Manga to Kindle',
         cat: 'lifestyle',
-        beta: true,
         desc: 'Build manga EPUBs and send them to Kindle.',
         icon: '<path d="M4 5 h13 v22 h-13 z M17 5 l7 4 v18 l-7 -4 z" fill="white" stroke="black" stroke-width="2"/><path d="M9 11 h6 M9 16 h6" stroke="black" stroke-width="2"/><path d="M22 17 h7 M26 13 l4 4 l-4 4" fill="none" stroke="black" stroke-width="2"/>'
     },

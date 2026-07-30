@@ -34,12 +34,13 @@ test("Manga to Kindle is routed, catalogued, and released", function () {
     assert.match(backend, /requireFirebaseUser[\s\S]*?mangaKindleService\.handle/);
     assert.match(service, /MANGA_KINDLE_ALLOWED_UIDS/);
     assert.match(catalog, /id:\s*['"]mangakindle['"]/);
+    assert.doesNotMatch(catalog, /id:\s*['"]mangakindle['"][\s\S]{0,160}beta:\s*true/);
     ["mangakindle.html", "js/mangakindle.js", "locales/mangakindle-en.json", "locales/mangakindle-ru.json"].forEach(function (file) {
         assert.ok(manifest.includes(file), file);
     });
-    assert.match(read("index.html"), /icons-beta\.js\?v=3/);
-    assert.match(read("index_old.html"), /icons-beta\.js\?v=3/);
-    assert.match(read("sw.js"), /rekindle-cache-v33/);
+    assert.match(read("index.html"), /icons-beta\.js\?v=4/);
+    assert.match(read("index_old.html"), /icons-beta\.js\?v=4/);
+    assert.match(read("sw.js"), /rekindle-cache-v34/);
 });
 
 test("Manga to Kindle ships English and Russian UI contracts", function () {
