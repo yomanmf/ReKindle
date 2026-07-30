@@ -11,6 +11,7 @@ var crypto = require("node:crypto");
 var firebaseFirestore = require("firebase-admin/firestore");
 var telegramService = require("./telegram-service");
 var microsoftTodoService = require("./microsoft-todo-service");
+var kindleDigestService = require("./kindle-digest-service");
 
 var MAX_USER_STORAGE_BYTES = 100 * 1024 * 1024;
 var MAX_OBJECT_BYTES = 25 * 1024 * 1024;
@@ -94,6 +95,12 @@ module.exports.handler = async function (event, context) {
         }
         if (method === "POST" && path.indexOf("/microsoft-todo/") !== -1) {
             return response(200, await handleMicrosoftTodoRequest(event, path), origin);
+        }
+        if (method === "POST" && path.indexOf("/kindle-digest-worker/") !== -1) {
+            return response(200, await handleKindleDigestWorkerRequest(event, path), origin);
+        }
+        if (method === "POST" && path.indexOf("/kindle-digest/") !== -1) {
+            return response(200, await handleKindleDigestRequest(event, path), origin);
         }
         return response(404, { error: "Endpoint not found." }, origin);
     } catch (error) {
@@ -1087,6 +1094,39 @@ async function handleMicrosoftTodoRequest(event, path) {
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,
+        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        env: process.env
+    });
+}
+
+async function handleKindleDigestRequest(event, path) {
+    var user = await requireFirebaseUser(event, false);
+    var action = path.split("/").pop();
+    var allowedActions = { options: true, create: true, status: true, history: true, cancel: true, retry: true };
+    if (!allowedActions[action]) throw httpError(404, "kindle-digest-action", "Digest action was not found.");
+    if (action === "create") {
+        await enforceUserWindowRateLimit(user.uid, "kindle_digest_create", 5, 60 * 60 * 1000);
+    } else if (action === "cancel" || action === "retry") {
+        await enforceUserWindowRateLimit(user.uid, "kindle_digest_write", 20, 60 * 1000);
+    } else {
+        await enforceUserWindowRateLimit(user.uid, "kindle_digest_read", 120, 60 * 1000);
+    }
+    return kindleDigestService.handle({
+        action: action,
+        body: parseJsonBody(event),
+        uid: user.uid,
+        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        env: process.env
+    });
+}
+
+async function handleKindleDigestWorkerRequest(event, path) {
+    var action = path.split("/").pop();
+    return kindleDigestService.handle({
+        action: action,
+        body: parseJsonBody(event),
+        worker: true,
+        workerToken: getHeader(event, "authorization"),
         firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
         env: process.env
     });

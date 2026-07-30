@@ -41,6 +41,7 @@ index.html
 index_old.html
 interactive.html
 jigsaw.html
+kindledigest.html
 lightsout.html
 livecheckers.html
 livechess.html
@@ -103,6 +104,9 @@ js/reddit-comments.js
 js/reddit-feed-settings.js
 js/telegram.js
 js/microsoft-todo.js
+js/kindledigest.js
+locales/kindledigest-en.json
+locales/kindledigest-ru.json
 locales/privacy-de.json
 locales/privacy-en.json
 locales/privacy-es.json

@@ -158,6 +158,13 @@ const APPS = [
         desc: 'Telegram for E-ink.',
         icon: '<path d="M3 15 L29 4 L23 28 L15 21 L10 25 L10 18 Z" fill="white" stroke="black" stroke-width="2" stroke-linejoin="miter"/><path d="M10 18 L23 10 L15 21" fill="none" stroke="black" stroke-width="2" stroke-linejoin="miter"/>'
     },
+    {
+        id: 'kindledigest',
+        name: 'Kindle Digest',
+        cat: 'lifestyle',
+        desc: 'Collect articles and send them to Kindle.',
+        icon: '<rect x="5" y="4" width="18" height="24" fill="white" stroke="black" stroke-width="2"/><line x1="9" y1="9" x2="19" y2="9" stroke="black" stroke-width="2"/><line x1="9" y1="14" x2="18" y2="14" stroke="black" stroke-width="2"/><line x1="9" y1="19" x2="15" y2="19" stroke="black" stroke-width="2"/><path d="M18 21 L28 21 M24 17 L28 21 L24 25" fill="none" stroke="black" stroke-width="2"/>'
+    },
     /*     {
             id: 'beeper',
             name: 'Beeper',

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title data-i18n="kindledigest.title">Kindle Digest</title>
+    <style>
+        :root {
+            --shadow: 4px 4px 0 #000;
+            --stripe-pattern: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px, #000 4px);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            transition: none !important;
+            animation: none !important;
+        }
+
+        body {
+            background: #e5e5e5;
+            color: #000;
+            font-family: "Geneva", "Verdana", sans-serif;
+            image-rendering: pixelated;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button, input, select {
+            border-radius: 0;
+            color: #000;
+            font-family: inherit;
+        }
+
+        button { touch-action: manipulation; }
+
+        .window {
+            width: 95%;
+            max-width: 720px;
+            height: 90vh;
+            background: #fff;
+            border: 2px solid #000;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .title-bar {
+            height: 38px;
+            border-bottom: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .title-stripes {
+            position: absolute;
+            top: 4px; right: 4px; bottom: 4px; left: 4px;
+            background-image: var(--stripe-pattern);
+            z-index: 0;
+        }
+
+        .title-text {
+            height: 100%;
+            padding: 0 15px;
+            background: #fff;
+            font-size: 1.05rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .close-box {
+            position: absolute;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        .close-box::before {
+            content: "";
+            position: absolute;
+            top: -12px; right: -12px; bottom: -12px; left: -12px;
+        }
+
+        .content-area {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .panel {
+            border: 2px solid #000;
+            padding: 14px;
+            margin-bottom: 16px;
+            background: #fff;
+        }
+
+        .panel-title {
+            margin: 0 0 12px;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        .field { margin-bottom: 14px; }
+        .field:last-child { margin-bottom: 0; }
+
+        .field-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        .choice-grid, .preset-grid, .status-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .preset-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 8px; }
+        .status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+        .choice {
+            min-height: 48px;
+            border: 2px solid #000;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .choice input { width: 22px; height: 22px; margin: 0 8px 0 0; }
+
+        .text-input, .select-input {
+            width: 100%;
+            min-height: 48px;
+            border: 2px solid #000;
+            padding: 9px;
+            background: #fff;
+            font-size: 1rem;
+        }
+
+        .sys-btn {
+            min-height: 48px;
+            border: 2px solid #000;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            padding: 8px 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .sys-btn.primary { background: #000; color: #fff; }
+        .sys-btn:disabled { color: #777; box-shadow: none; cursor: default; }
+        .sys-btn:active:not(:disabled), .close-box:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .submit-button { width: 100%; min-height: 54px; }
+
+        .button-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .notice {
+            border: 2px dashed #000;
+            padding: 10px;
+            margin-bottom: 14px;
+            font-size: 0.85rem;
+        }
+
+        .status-card {
+            min-height: 112px;
+            border: 2px solid #000;
+            padding: 10px;
+        }
+
+        .status-label { display: block; font-size: 0.72rem; font-weight: bold; text-transform: uppercase; }
+        .status-value { display: block; margin-top: 7px; font-size: 1rem; font-weight: bold; }
+        .status-detail { display: block; margin-top: 7px; font-size: 0.78rem; overflow-wrap: anywhere; }
+
+        .history-item {
+            border-top: 1px solid #000;
+            padding: 10px 0;
+        }
+        .history-item:first-child { border-top: 0; padding-top: 0; }
+        .history-item:last-child { padding-bottom: 0; }
+        .history-name { font-weight: bold; }
+        .history-state { float: right; text-transform: uppercase; font-size: 0.75rem; }
+
+        .status-bar {
+            min-height: 28px;
+            border-top: 2px solid #000;
+            padding: 5px 9px;
+            background: #fff;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: rgba(255, 255, 255, 0.92);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 10000;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 440px;
+            border: 2px solid #000;
+            box-shadow: var(--shadow);
+            background: #fff;
+        }
+
+        .modal-box .title-text { border: none; }
+        .modal-content { padding: 18px; }
+
+        [hidden] { display: none !important; }
+
+        @media (max-width: 520px) {
+            .choice-grid, .status-grid { grid-template-columns: 1fr; }
+            .content-area { padding: 10px; }
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="theme.js?v=21"></script>
+    <script src="js/i18n.js" data-i18n-file="kindledigest"></script>
+    <script src="js/rekindle-cloud.js?v=2"></script>
+</head>
+
+<body>
+    <main class="window">
+        <div class="title-bar">
+            <div class="title-stripes"></div>
+            <button type="button" class="close-box" onclick="window.location.href='index.html'" aria-label="Close">X</button>
+            <span class="title-text" data-i18n="kindledigest.title">Kindle Digest</span>
+        </div>
+
+        <div class="content-area">
+            <div class="notice" id="auth-notice" hidden>
+                <span data-i18n="kindledigest.signin">Sign in to ReKindle before creating a digest.</span>
+                <div class="button-row">
+                    <button class="sys-btn primary" type="button" onclick="window.location.href='index.html?login=true'" data-i18n="kindledigest.signin_button">Open sign in</button>
+                </div>
+            </div>
+            <div class="notice" id="worker-notice" hidden data-i18n="kindledigest.worker_offline">The worker is offline. New jobs will stay queued until it returns.</div>
+
+            <form class="panel" id="digest-form">
+                <h1 class="panel-title" data-i18n="kindledigest.new_job">New digest</h1>
+
+                <div class="field">
+                    <span class="field-label" data-i18n="kindledigest.mode">Digest type</span>
+                    <div class="choice-grid">
+                        <label class="choice"><input type="radio" name="mode" value="daily" checked><span data-i18n="kindledigest.mode_daily">One source</span></label>
+                        <label class="choice"><input type="radio" name="mode" value="digest"><span data-i18n="kindledigest.mode_all">All publications</span></label>
+                    </div>
+                </div>
+
+                <div class="field" id="source-field">
+                    <label class="field-label" for="source-select" data-i18n="kindledigest.source">Source</label>
+                    <select class="select-input" id="source-select"></select>
+                </div>
+
+                <div class="field" id="custom-field" hidden>
+                    <label class="field-label" for="custom-url" data-i18n="kindledigest.custom_url">Site or RSS/Atom URL</label>
+                    <input class="text-input" id="custom-url" type="url" inputmode="url" maxlength="1000" placeholder="https://example.com/feed">
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="lookback-days" data-i18n="kindledigest.period">Recent days</label>
+                    <div class="preset-grid">
+                        <button class="sys-btn day-preset" type="button" data-days="1">1</button>
+                        <button class="sys-btn day-preset" type="button" data-days="2">2</button>
+                        <button class="sys-btn day-preset" type="button" data-days="3">3</button>
+                        <button class="sys-btn day-preset" type="button" data-days="7">7</button>
+                    </div>
+                    <input class="text-input" id="lookback-days" type="number" inputmode="numeric" min="1" max="30" value="3" required>
+                </div>
+
+                <div class="field">
+                    <span class="field-label" data-i18n="kindledigest.filter">Articles</span>
+                    <div class="choice-grid">
+                        <label class="choice"><input type="radio" name="filter" value="important" checked><span data-i18n="kindledigest.important">Only important</span></label>
+                        <label class="choice"><input type="radio" name="filter" value="all"><span data-i18n="kindledigest.all_articles">All articles</span></label>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="article-limit" data-i18n="kindledigest.limit">Maximum per source</label>
+                    <select class="select-input" id="article-limit">
+                        <option value="3">3</option>
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="30">30</option>
+                        <option value="" data-i18n="kindledigest.all_available">All available</option>
+                    </select>
+                </div>
+
+                <button class="sys-btn primary submit-button" id="submit-button" type="submit" data-i18n="kindledigest.submit">Collect and send</button>
+            </form>
+
+            <section class="panel" id="job-panel" hidden>
+                <h2 class="panel-title" data-i18n="kindledigest.current_job">Current job</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <span class="status-label" data-i18n="kindledigest.collection">Collection</span>
+                        <span class="status-value" id="collection-state">Waiting</span>
+                        <span class="status-detail" id="collection-detail"></span>
+                    </div>
+                    <div class="status-card">
+                        <span class="status-label" data-i18n="kindledigest.delivery">Delivery</span>
+                        <span class="status-value" id="delivery-state">Waiting</span>
+                        <span class="status-detail" id="delivery-detail"></span>
+                    </div>
+                </div>
+                <div class="button-row">
+                    <button class="sys-btn" type="button" id="refresh-button" data-i18n="kindledigest.refresh">Refresh</button>
+                    <button class="sys-btn" type="button" id="job-action-button" hidden></button>
+                </div>
+            </section>
+
+            <section class="panel" id="history-panel" hidden>
+                <h2 class="panel-title" data-i18n="kindledigest.history">Recent jobs</h2>
+                <div id="history-list"></div>
+            </section>
+        </div>
+
+        <div class="status-bar" id="status-bar" data-i18n="kindledigest.ready">Ready</div>
+    </main>
+
+    <div class="modal-overlay" id="error-modal" role="dialog" aria-modal="true" aria-labelledby="error-title">
+        <div class="modal-box">
+            <div class="title-bar">
+                <div class="title-stripes"></div>
+                <span class="title-text" id="error-title" data-i18n="kindledigest.error_title">Kindle Digest Error</span>
+            </div>
+            <div class="modal-content">
+                <div id="error-message"></div>
+                <div class="button-row">
+                    <button class="sys-btn primary" type="button" id="error-close" data-i18n="kindledigest.close">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.rekindleKindleDigestFirebaseConfig = {
+            apiKey: "__REKINDLE_FIREBASE_API_KEY__",
+            authDomain: "rekindle-fork.firebaseapp.com",
+            projectId: "rekindle-fork"
+        };
+    </script>
+    <script src="js/kindledigest.js?v=1"></script>
+</body>
+</html>

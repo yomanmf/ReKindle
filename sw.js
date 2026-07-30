@@ -1,8 +1,8 @@
-const CACHE_NAME = 'rekindle-cache-v25'; // Ship privacy-safe cross-service analytics
+const CACHE_NAME = 'rekindle-cache-v26'; // Add direct Kindle Digest control
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=3',
+    './icons.js?v=4',
     './theme.js?v=21',
     './logo.svg',
     './donate.svg',

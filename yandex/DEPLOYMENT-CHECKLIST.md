@@ -69,6 +69,7 @@ Required secrets:
 - `FIREBASE_SERVICE_ACCOUNT_JSON`
 - `S3_ACCESS_KEY_ID`
 - `S3_SECRET_ACCESS_KEY`
+- `KINDLE_DIGEST_WORKER_SECRET`
 
 Telegram secrets (required before publishing `telegram.html`):
 
@@ -94,6 +95,7 @@ Required non-secret configuration:
 - `YANDEX_FOLDER_ID` (optional when `context.functionFolderId` is present)
 - `MICROSOFT_TODO_CLIENT_ID` (public Microsoft Entra application/client ID)
 - `MICROSOFT_TODO_TENANT` (optional; defaults to `common`)
+- `KINDLE_DIGEST_ALLOWED_UIDS` (Firebase UIDs allowed to use the worker's Kindle destination)
 
 Supporter-billing configuration (only when Stripe support is enabled):
 

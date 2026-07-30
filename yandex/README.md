@@ -50,6 +50,7 @@ cross-instance cache is required later.
 - authenticated AI, OCR, content proxies, and billing;
 - an authenticated Telegram MTProto client with encrypted per-user sessions and optional MTProxy routing.
 - an authenticated Microsoft To Do client using Microsoft Graph device authorization and encrypted per-user OAuth sessions.
+- authenticated Kindle Digest jobs consumed by the existing outbound-only article worker;
 - a public GET/HEAD content proxy with SSRF protection, IP rate limits and a
   5 MB response cap.
 
@@ -65,12 +66,15 @@ The function requires these secret-backed environment variables:
 - `TELEGRAM_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
 - `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
 - `ANALYTICS_INGEST_TOKEN` (shared Kindle analytics ingestion token)
+- `KINDLE_DIGEST_WORKER_SECRET` (shared only with the article worker)
 
 It also requires the non-secret variables `S3_BUCKET`, `ALLOWED_ORIGINS`,
 `YANDEX_FOLDER_ID`, `ANALYTICS_URL`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`, and
 `STRIPE_PRICE_LIFETIME`. Microsoft To Do additionally requires the public
 `MICROSOFT_TODO_CLIENT_ID`; `MICROSOFT_TODO_TENANT` is optional and defaults to
-`common`. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
+`common`. Kindle Digest additionally requires `KINDLE_DIGEST_ALLOWED_UIDS`, a
+comma-separated list of Firebase accounts allowed to use the worker's global
+Kindle destination. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
 use the IAM token supplied to the function through its attached service account.
 Secrets must be supplied from Yandex Lockbox; never paste them into source files
 or ordinary checked-in configuration.
@@ -115,6 +119,11 @@ deployed `rekindle-backend` function and the existing Reddit proxy. Preserve the
 Reddit `GET`/`HEAD` routes and its public CORS behavior when changing the file;
 the ReKindle function enforces its own stricter origin allowlist. The browser
 client uses `/api/rekindle/*` through the existing `rekindle-api` gateway.
+
+Kindle Digest never calls Telegram. Browser requests use Firebase auth under
+`/kindle-digest/{action}`; the existing article VM polls
+`/kindle-digest-worker/{action}` with its Lockbox secret. The browser cannot
+read `kindle_digest_jobs` or `kindle_digest_config` directly.
 
 The former relative `/api/proxy`, `/api/maps`, `/api/price`, and
 `/api/nrl-scores` Pages Functions have been removed. Frontend pages use the

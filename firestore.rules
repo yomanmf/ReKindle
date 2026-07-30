@@ -42,6 +42,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Kindle Digest jobs are mediated by the Yandex backend and worker only.
+    match /kindle_digest_jobs/{jobId} {
+      allow read, write: if false;
+    }
+
+    match /kindle_digest_config/{docId} {
+      allow read, write: if false;
+    }
+
     // Server-only Microsoft OAuth device-flow state and refresh tokens.
     // Task data remains in Microsoft Graph and is never copied here.
     match /microsoft_todo_sessions/{userId} {

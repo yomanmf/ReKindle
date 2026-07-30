@@ -1038,6 +1038,16 @@ continue to pass the normalized URL through `validatePublicHttpUrl()` and its
 redirect revalidation. This fallback belongs in the Reader backend rather than
 the frontend because Reddit links can enter Browser from several pages.
 
+**Kindle Digest control path:** `kindledigest.html` must not use the ReKindle
+Telegram client or any Telegram API. Authenticated browser requests go through
+`/api/rekindle/kindle-digest/{action}`. The existing outbound-only article VM
+polls `/api/rekindle/kindle-digest-worker/{action}` with a Lockbox secret and
+reuses its durable JSON queue and checkpoints. `kindle_digest_jobs` and
+`kindle_digest_config` are server-only Firestore collections. Keep
+`KINDLE_DIGEST_ALLOWED_UIDS` restricted because the worker currently has one
+global Kindle delivery destination. Source options come from the worker's
+`DAILY_SOURCES`; never hard-code a second source list in the frontend.
+
 ## Git Workflow
 
 After successfully completing any task that changes code:
