@@ -1,5 +1,14 @@
 (function () {
 
+    // Yandex's static website endpoint cannot issue a protocol-only redirect.
+    // Upgrade normal HTTP visits before the app reads origin-scoped state.
+    if (window.location.protocol === 'http:' &&
+        window.location.hostname === 'rekindle.website.yandexcloud.net') {
+        window.location.replace('https://rekindle.website.yandexcloud.net' +
+            window.location.pathname + window.location.search + window.location.hash);
+        return;
+    }
+
     // --- PRIVACY-SAFE USAGE ANALYTICS ---
     // Events go through the Yandex backend. The private ingestion token never
     // reaches the browser, and URL query strings or form contents are omitted.

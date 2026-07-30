@@ -1,10 +1,10 @@
-const CACHE_NAME = 'rekindle-cache-v36'; // Add Article to Kindle
+const CACHE_NAME = 'rekindle-cache-v37'; // Upgrade HTTP visits to HTTPS
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=8',
     './icons-beta.js?v=4',
-    './theme.js?v=21',
+    './theme.js?v=22',
     './logo.svg',
     './manifest.json',
     './fonts/OpenDyslexic-Regular.woff2',

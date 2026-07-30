@@ -16,9 +16,19 @@ test('every application page loads the current shared theme script', function ()
     var releaseManifest = read('yandex/FRONTEND-RELEASE-MANIFEST.txt').split(/\r?\n/);
 
     pages.forEach(function (page) {
-        assert.match(read(page), /theme\.js\?v=21/, page + ' must load theme.js?v=21');
+        assert.match(read(page), /theme\.js\?v=22/, page + ' must load theme.js?v=22');
         assert.ok(releaseManifest.includes(page), page + ' must ship in the dark-theme release');
     });
+});
+
+test('production HTTP visits upgrade before origin-scoped state is read', function () {
+    var theme = read('theme.js');
+    var redirect = theme.indexOf("window.location.protocol === 'http:'");
+
+    assert.ok(redirect > -1);
+    assert.match(theme, /window\.location\.hostname === 'rekindle\.website\.yandexcloud\.net'/);
+    assert.match(theme, /window\.location\.replace\('https:\/\/rekindle\.website\.yandexcloud\.net'/);
+    assert.ok(redirect < theme.indexOf('localStorage.getItem'));
 });
 
 test('dark and automatic modes remain enabled across local and cloud settings', function () {

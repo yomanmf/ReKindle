@@ -774,8 +774,11 @@ Yandex's website proxy evaluates that condition on its internal hop, so the
 policy returns `403` for external HTTPS as well as HTTP. The default
 `*.website.yandexcloud.net` hostname has no configurable HTTP-to-HTTPS redirect;
 true HTTPS-only hosting requires an edge/custom domain that sees the original
-protocol. Client-side redirects are not a security boundary. After any edge or
-bucket-policy change, smoke-test both schemes before testing application flows.
+protocol. `theme.js` provides a best-effort same-host upgrade for ordinary HTTP
+visits before reading origin-scoped state; keep it restricted to the exact
+production hostname so local HTTP development still works. Client-side
+redirects are not a security boundary. After any edge, theme, or bucket-policy
+change, smoke-test both schemes before testing application flows.
 
 The shared public GET/HEAD proxy is `/api/rekindle/content/proxy?url=...`. It validates public DNS destinations, rejects credentials/private networks, follows at most five validated redirects, applies an IP rate limit, strips browser credentials and cookies, and caps responses at 5 MB. Do not weaken it into an unrestricted header-forwarding proxy. `reddit.html` continues to use its dedicated Yandex route because Reddit needs its own allowlist/cache behavior.
 
