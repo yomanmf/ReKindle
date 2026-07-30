@@ -778,6 +778,13 @@ result before rejecting an authenticated request. Keep the immediate
 signed-out rejection. The regression contract is
 `tests/newspaper-reliability.test.js`.
 
+**Kindle dashboard login ordering:** `index.html` and `index_old.html` must set
+Firebase Auth `LOCAL` persistence and keep the login modal open until
+`RekindleIpBan.checkOnLogin()` succeeds. The auth-state callback can fire as
+soon as Firebase accepts the password; closing the modal there makes a later
+security-check failure look like a page refresh. If that check fails, sign the
+new session out and leave the error visible.
+
 **Reddit's current Yandex deployment:** `yandex/reddit-function/index.js` runs as the public Node.js 22 Cloud Function `rekindle-reddit` (`d4egfe65qmv2774tec7m`). The `rekindle-api` API Gateway (`d5dmoqrf9kg552lo4g69`) exposes it at `https://d5dmoqrf9kg552lo4g69.tmjd4m4j.apigw.yandexcloud.net/api/reddit`. `reddit.html` uses this absolute endpoint for both feeds and images. The checked-in Gateway specification is `yandex/reddit-api-gateway.yaml`.
 
 **Yandex console Monaco gotcha:** Calling automation-style `fill()` on the Cloud Functions or API Gateway Monaco editor can insert the new source without deleting the generated sample. If the sample contains a second `module.exports.handler`, it silently overrides the intended handler. Focus the `textarea[aria-label="Editor content"]`, send `ControlOrMeta+A`, then type the complete source. Before saving, verify that `Hello World` is absent and that the visible final line number matches the source file.
@@ -1083,6 +1090,8 @@ route with a server-held token. The orchestrator stores these as
 `web:rekindle` jobs and suppresses bot notifications for them. Never synthesize
 bot updates or call a messaging API from this page. Search results are selected
 before job creation so the worker never needs an interactive chat callback.
+Web jobs are delivered through the existing Kindle SMTP address and must not
+expose Amazon login actions; Telegram jobs keep their existing Amazon uploader.
 
 ## Git Workflow
 

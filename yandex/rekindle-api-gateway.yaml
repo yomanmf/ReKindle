@@ -34,7 +34,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [search, series, create, status, cancel, retry, kindle-status, kindle-connect]
+            enum: [search, series, create, status, cancel, retry]
       responses:
         '200':
           description: Manga to Kindle control response

@@ -56,6 +56,7 @@
     <script src="theme.js?v=21" defer></script>
     <script src="bad_words.js?v=4" defer></script>
     <script src="js/i18n.js" defer></script>
+    <script src="js/rekindle-cloud.js?v=2" defer></script>
     <script src="js/ip-ban.js" defer></script>
 
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -1120,6 +1121,7 @@
         let currentUser = null;
         let gamesDisabled = false;
         let isFirebaseAvailable = false;
+        let loginSecurityCheckPending = false;
         const ALLOWED_EXIT_AGENT = "MY_CUSTOM_AGENT";
 
         let auth, db;
@@ -1197,7 +1199,7 @@
                             modalAuthBtn.onclick = openLogoutModal;
                         }
 
-                        closeModal('login-modal');
+                        if (!loginSecurityCheckPending) closeModal('login-modal');
 
                         monitorUserProfile(user.uid);
                     } else {
@@ -1521,19 +1523,31 @@
             if (!u || !p) { document.getElementById('login-msg').innerText = "Error: Please enter a valid username and password."; return; }
 
             document.getElementById('login-msg').innerText = "Connecting...";
+            let signedInThisAttempt = false;
+            loginSecurityCheckPending = true;
             try {
                 const email = u.includes('@') ? u : u + "@rekindle.ink";
+                await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 await auth.signInWithEmailAndPassword(email, p);
+                signedInThisAttempt = true;
                 const ipResult = await RekindleIpBan.checkOnLogin();
                 if (ipResult.banned) {
                     await auth.signOut();
                     document.getElementById('login-msg').innerText = "Error: Your IP address has been banned from this network.";
+                    return;
                 }
+                closeModal('login-modal');
             } catch (e) {
-                const msg = (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found')
+                if (signedInThisAttempt && auth.currentUser) {
+                    await auth.signOut().catch(() => {});
+                }
+                const msg = (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found')
                     ? "Invalid username or password."
                     : (e.message || "Login failed.");
                 document.getElementById('login-msg').innerText = "Error: " + msg;
+                document.getElementById('login-modal').style.display = 'flex';
+            } finally {
+                loginSecurityCheckPending = false;
             }
         }
         const isForbiddenUsername = (u) => { const forbidden = ["root", "system", "admin", "administrator", "mod", "moderator", "support", "ukiyo", "rekindle", "wantban"]; const lowerU = u.toLowerCase(); return forbidden.some(word => lowerU.includes(word)); };

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v34'; // Remove Manga to Kindle beta badge
+const CACHE_NAME = 'rekindle-cache-v35'; // Fix Kindle login and remove Amazon manga auth
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

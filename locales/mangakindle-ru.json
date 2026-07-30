@@ -2,10 +2,6 @@
   "mangakindle.title": "Манга на Kindle",
   "mangakindle.signin": "Войдите в ReKindle, чтобы отправлять мангу.",
   "mangakindle.signin_button": "Открыть вход",
-  "mangakindle.kindle": "Подключение Kindle",
-  "mangakindle.checking": "Проверяю...",
-  "mangakindle.kindle_hint": "Подключите Amazon один раз — новые книги будут доставляться автоматически.",
-  "mangakindle.connect": "Подключить Amazon",
   "mangakindle.refresh": "Обновить",
   "mangakindle.find": "Найти мангу",
   "mangakindle.query": "Название",
@@ -41,13 +37,9 @@
   "mangakindle.waiting": "Ожидание",
   "mangakindle.processing_now": "Сборка EPUB",
   "mangakindle.sending": "Отправка",
-  "mangakindle.needs_auth": "Нужен вход в Amazon",
   "mangakindle.complete": "Готово",
   "mangakindle.failed": "Ошибка",
   "mangakindle.cancelled": "Отменено",
   "mangakindle.sent": "Отправлено",
-  "mangakindle.no_files": "Файлов пока нет.",
-  "mangakindle.connected": "Подключено",
-  "mangakindle.not_connected": "Не подключено",
-  "mangakindle.opening_amazon": "Открываю вход в Amazon..."
+  "mangakindle.no_files": "Файлов пока нет."
 }

@@ -6,9 +6,7 @@ var ACTIONS = {
     create: true,
     status: true,
     cancel: true,
-    retry: true,
-    "kindle-status": true,
-    "kindle-connect": true
+    retry: true
 };
 
 async function handle(options) {

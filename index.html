@@ -1345,6 +1345,7 @@
         let currentUser = null;
         let gamesDisabled = false;
         let isFirebaseAvailable = false;
+        let loginSecurityCheckPending = false;
         const ALLOWED_EXIT_AGENT = "MY_CUSTOM_AGENT";
 
         let auth, db, rtdb;
@@ -1538,7 +1539,7 @@
                             modalAuthBtn.onclick = openLogoutModal;
                         }
 
-                        closeModal('login-modal');
+                        if (!loginSecurityCheckPending) closeModal('login-modal');
 
                         monitorUserProfile(user.uid);
 
@@ -1989,8 +1990,10 @@
 
             document.getElementById('login-msg').innerText = "Connecting...";
             let signedInThisAttempt = false;
+            loginSecurityCheckPending = true;
             try {
                 const email = u.includes('@') ? u : u + "@rekindle.ink";
+                await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 await auth.signInWithEmailAndPassword(email, p);
                 signedInThisAttempt = true;
                 // After sign-in, call the server to verify the IP. The function uses
@@ -1999,17 +2002,22 @@
                 if (ipResult.banned) {
                     await auth.signOut();
                     document.getElementById('login-msg').innerText = "Error: Your IP address has been banned from this network.";
+                    return;
                 }
+                closeModal('login-modal');
             } catch (e) {
                 // Fail closed if Firebase accepted the credentials but the trusted
                 // server-side IP check could not be completed.
                 if (signedInThisAttempt && auth.currentUser) {
                     await auth.signOut().catch(() => {});
                 }
-                const msg = (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found')
+                const msg = (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found')
                     ? "Invalid username or password."
                     : (e.message || "Login failed.");
                 document.getElementById('login-msg').innerText = "Error: " + msg;
+                document.getElementById('login-modal').style.display = 'flex';
+            } finally {
+                loginSecurityCheckPending = false;
             }
         }
         const isForbiddenUsername = (u) => { const forbidden = ["root", "system", "admin", "administrator", "mod", "moderator", "support", "ukiyo", "rekindle", "wantban"]; const lowerU = u.toLowerCase(); return forbidden.some(word => lowerU.includes(word)); };

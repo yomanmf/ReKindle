@@ -19,6 +19,7 @@ test("Manga to Kindle is a Kindle-safe direct control UI", function () {
     assert.doesNotMatch(html + client, /[\u{1F300}-\u{1FAFF}]/u);
     assert.doesNotMatch(client, /\?\.|\?\?/);
     assert.doesNotMatch(html + client, /telegram/i);
+    assert.doesNotMatch(html + client, /amazon|kindle-connect|kindle-status/i);
     assert.doesNotMatch(html, /display:\s*flex[^}]*\bgap\s*:/s);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
     assert.match(client, /setInterval\([^]*10000\)/);
@@ -33,6 +34,7 @@ test("Manga to Kindle is routed, catalogued, and released", function () {
     assert.match(gateway, /\/api\/rekindle\/manga-kindle\/\{action\}/);
     assert.match(backend, /requireFirebaseUser[\s\S]*?mangaKindleService\.handle/);
     assert.match(service, /MANGA_KINDLE_ALLOWED_UIDS/);
+    assert.doesNotMatch(gateway + service, /kindle-connect|kindle-status/);
     assert.match(catalog, /id:\s*['"]mangakindle['"]/);
     assert.doesNotMatch(catalog, /id:\s*['"]mangakindle['"][\s\S]{0,160}beta:\s*true/);
     ["mangakindle.html", "js/mangakindle.js", "locales/mangakindle-en.json", "locales/mangakindle-ru.json"].forEach(function (file) {
@@ -40,13 +42,13 @@ test("Manga to Kindle is routed, catalogued, and released", function () {
     });
     assert.match(read("index.html"), /icons-beta\.js\?v=4/);
     assert.match(read("index_old.html"), /icons-beta\.js\?v=4/);
-    assert.match(read("sw.js"), /rekindle-cache-v34/);
+    assert.match(read("sw.js"), /rekindle-cache-v35/);
 });
 
 test("Manga to Kindle ships English and Russian UI contracts", function () {
     ["en", "ru"].forEach(function (language) {
         var locale = JSON.parse(read("locales/mangakindle-" + language + ".json"));
-        ["mangakindle.title", "mangakindle.search", "mangakindle.send", "mangakindle.connect", "mangakindle.cancel", "mangakindle.retry"].forEach(function (key) {
+        ["mangakindle.title", "mangakindle.search", "mangakindle.send", "mangakindle.cancel", "mangakindle.retry"].forEach(function (key) {
             assert.ok(locale[key], language + ": " + key);
         });
     });
