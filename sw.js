@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v45'; // Refresh Exchange Calendar dashboard
+const CACHE_NAME = 'rekindle-cache-v46'; // Nest Games inside Misc
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

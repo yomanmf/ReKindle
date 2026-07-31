@@ -1457,7 +1457,7 @@
                 }
 
                 if (singlePlayerGames.length > 0) {
-                    fragment.appendChild(createAppElement({
+                    miscApps.push({
                         id: 'folder_games',
                         name: 'Games',
                         cat: 'games',
@@ -1466,7 +1466,7 @@
                         i18nKey: 'home.nav.games',
                         groupedApps: singlePlayerGames,
                         icon: '<path d="M4 7 h9 l3 3 h12 v17 h-24 z" fill="white" stroke="black" stroke-width="2"/><path d="M10 17 h6 M13 14 v6" stroke="black" stroke-width="2"/><circle cx="22" cy="16" r="1.5" fill="black" stroke="none"/><circle cx="25" cy="20" r="1.5" fill="black" stroke="none"/>'
-                    }));
+                    });
                 }
             }
 
