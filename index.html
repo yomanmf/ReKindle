@@ -923,6 +923,7 @@
             display: flex;
             border: 1px solid black;
             font-size: 0.9rem;
+            cursor: pointer;
         }
         .dashboard-agenda-time {
             background: black;
@@ -1318,7 +1319,7 @@
             <div class="modal-box">
                 <h2 id="generic-title" style="margin-top:0; border-bottom: 2px solid black; padding-bottom:10px;">Notice
                 </h2>
-                <p id="generic-msg" style="font-size:1.1rem; line-height:1.5; margin: 20px 0;"></p>
+                <p id="generic-msg" style="font-size:1.1rem; line-height:1.5; margin:20px 0; white-space:pre-wrap; overflow-wrap:break-word; max-height:55vh; overflow-y:auto;"></p>
                 <button class="sys-btn" onclick="closeModal('generic-modal')">OK</button>
             </div>
         </div>
@@ -1514,7 +1515,7 @@
             let lastUid = localStorage.getItem('rekindle_uid');
 
             if (isFirebaseAvailable && auth) {
-                auth.onAuthStateChanged(user => {
+                auth.onAuthStateChanged(async user => {
                     const currentUid = user ? user.uid : null;
                     if (currentUid !== lastUid) {
                         clearServiceWorkerCache();
@@ -1543,9 +1544,20 @@
 
                         monitorUserProfile(user.uid);
 
+                        try {
+                            const integrations = await db.collection('users').doc(user.uid).collection('settings').doc('integrations').get();
+                            if (integrations.exists && integrations.data().calendar_provider) {
+                                localStorage.setItem('rekindle_calendar_provider', integrations.data().calendar_provider);
+                                if (dashboardLoaded) fetchDashboardAgenda();
+                            }
+                        } catch (e) {
+                            console.warn('Calendar preference sync failed.', e);
+                        }
+
                         RekindleIpBan.enforceOnAuthStateChanged(user);
 
                     } else {
+                        currentUser = null;
                         handleGuestMode();
                     }
                 });
@@ -2448,6 +2460,8 @@
             if (!listEl) return;
             listEl.innerHTML = '<div style="text-align:center; font-style:italic; font-size:0.9rem;">Loading...</div>';
             
+            let calendarProvider = localStorage.getItem('rekindle_calendar_provider');
+            let exchangeEnabled = calendarProvider === 'exchange';
             let googleEnabled = localStorage.getItem('rekindle_google_calendar_enabled') === 'true';
             let calDavUrl = localStorage.getItem('rekindle_caldav_url');
             let events = [];
@@ -2476,7 +2490,19 @@
             }
 
             try {
-                if (googleEnabled) {
+                if (exchangeEnabled) {
+                    if (!currentUser) {
+                        listEl.innerHTML = '<div style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Sign in to load Exchange Calendar.</div>';
+                        return;
+                    }
+                    let queryStart = new Date(y, m, d - 1);
+                    let queryEnd = new Date(y, m, d + 2);
+                    let result = await RekindleCloud.request('/exchange-calendar/events', {
+                        method: 'POST',
+                        body: { start: queryStart.toISOString(), end: queryEnd.toISOString() }
+                    });
+                    events = result.events || [];
+                } else if (googleEnabled) {
                     let token = localStorage.getItem('google_calendar_token');
                     if (token) {
                         let sel = JSON.parse(localStorage.getItem('rekindle_selected_calendars') || "[]");
@@ -2580,10 +2606,15 @@
                         events = JSON.parse(localStorage.getItem('rekindle_events_local') || "[]");
                     }
                 }
-            } catch(e) {}
+            } catch(e) {
+                if (exchangeEnabled) {
+                    listEl.innerHTML = '<div style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Exchange Calendar is unavailable.<br>Open Calendar to reconnect.</div>';
+                    return;
+                }
+            }
 
             // Filter local/cloud events for today if not already filtered
-            if (!googleEnabled && !calDavUrl) {
+            if (exchangeEnabled || (!googleEnabled && !calDavUrl)) {
                 events = events.filter(e => {
                     let dObj = new Date(e.start);
                     if (typeof window.rekindleGetZonedDate === 'function') dObj = window.rekindleGetZonedDate(dObj);
@@ -2593,6 +2624,7 @@
 
             // Sort
             events.sort((a,b) => new Date(a.start) - new Date(b.start));
+            dashboardAgendaEvents = events;
 
             if (events.length === 0) {
                 listEl.innerHTML = '<div data-i18n="dashboard.agenda.empty_today" style="text-align:center; color:#555; padding: 10px;">' + (window.t ? window.t('dashboard.agenda.empty_today', 'No events today') : 'No events today') + '</div>';
@@ -2600,7 +2632,7 @@
             }
 
             let html = '';
-            events.forEach(e => {
+            events.forEach((e, eventIndex) => {
                 let timeStr = "All Day";
                 if (!e.isAllDay) {
                     let dObj = new Date(e.start);
@@ -2612,12 +2644,40 @@
                     let mm = mi < 10 ? '0' + mi : mi;
                     timeStr = `${h}:${mm}${ampm}`;
                 }
-                html += `<div class="dashboard-agenda-item">
+                html += `<div class="dashboard-agenda-item" onclick="showDashboardAgendaEvent(${eventIndex})">
                             <div class="dashboard-agenda-time">${timeStr}</div>
-                            <div class="dashboard-agenda-title">${e.title}</div>
+                            <div class="dashboard-agenda-title">${escapeDashboardText(e.title || 'Untitled event')}</div>
                          </div>`;
             });
             listEl.innerHTML = html;
+        }
+
+        let dashboardAgendaEvents = [];
+
+        function escapeDashboardText(value) {
+            return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function showDashboardAgendaEvent(index) {
+            const event = dashboardAgendaEvents[index];
+            if (!event) return;
+            let time = event.isAllDay ? 'All day' : formatDashboardEventTime(event.start, event.end);
+            let details = time;
+            if (event.location) details += '\nLocation: ' + event.location;
+            if (event.organizer) details += '\nOrganizer: ' + event.organizer;
+            details += '\n\n' + (event.description || 'No description.');
+            showGenericModal(event.title || 'Untitled event', details);
+        }
+
+        function formatDashboardEventTime(start, end) {
+            function clock(value) {
+                let date = new Date(value);
+                if (typeof window.rekindleGetZonedDate === 'function') date = window.rekindleGetZonedDate(date);
+                let hours = date.getHours();
+                let minutes = date.getMinutes();
+                return (hours < 10 ? '0' : '') + hours + ':' + (minutes < 10 ? '0' : '') + minutes;
+            }
+            return clock(start) + (end ? ' - ' + clock(end) : '');
         }
 
         let dashboardLoaded = false;
@@ -2643,6 +2703,7 @@
         window.doRegister = doRegister;
         window.changeDashboardCalendar = changeDashboardCalendar;
         window.selectDashboardCalendarDay = selectDashboardCalendarDay;
+        window.showDashboardAgendaEvent = showDashboardAgendaEvent;
         window.scrollDashboardWeatherHours = scrollDashboardWeatherHours;
         window.scrollDashboardWeatherDays = scrollDashboardWeatherDays;
     })();

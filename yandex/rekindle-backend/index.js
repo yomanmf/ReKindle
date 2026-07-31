@@ -10,6 +10,7 @@ var net = require("node:net");
 var crypto = require("node:crypto");
 var firebaseFirestore = require("firebase-admin/firestore");
 var microsoftTodoService = require("./microsoft-todo-service");
+var exchangeCalendarService = require("./exchange-calendar-service");
 var kindleDigestService = require("./kindle-digest-service");
 var mangaKindleService = require("./manga-kindle-service");
 var booksKindleService = require("./books-kindle-service");
@@ -87,6 +88,9 @@ module.exports.handler = async function (event, context) {
         }
         if (method === "POST" && path.indexOf("/microsoft-todo/") !== -1) {
             return response(200, await handleMicrosoftTodoRequest(event, path), origin);
+        }
+        if (method === "POST" && path.indexOf("/exchange-calendar/") !== -1) {
+            return response(200, await handleExchangeCalendarRequest(event, path), origin);
         }
         if (method === "POST" && path.indexOf("/kindle-digest-worker/") !== -1) {
             return response(200, await handleKindleDigestWorkerRequest(event, path), origin);
@@ -923,6 +927,27 @@ async function handleMicrosoftTodoRequest(event, path) {
     }
 
     return microsoftTodoService.handle({
+        action: action,
+        body: parseJsonBody(event),
+        uid: user.uid,
+        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        env: process.env
+    });
+}
+
+async function handleExchangeCalendarRequest(event, path) {
+    var user = await requireFirebaseUser(event, false);
+    var action = path.split("/").pop();
+    var allowedActions = { status: true, connect: true, events: true, disconnect: true };
+    if (!allowedActions[action]) throw httpError(404, "exchange-calendar-action-not-found", "Exchange Calendar action was not found.");
+
+    if (action === "connect") {
+        await enforceUserWindowRateLimit(user.uid, "exchange_calendar_connect", 5, 60 * 60 * 1000);
+    } else if (action === "events") {
+        await enforceUserWindowRateLimit(user.uid, "exchange_calendar_read", 120, 60 * 60 * 1000);
+    }
+
+    return exchangeCalendarService.handle({
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,

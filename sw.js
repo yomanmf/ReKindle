@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v44'; // Refresh Books to Kindle icon
+const CACHE_NAME = 'rekindle-cache-v45'; // Refresh Exchange Calendar dashboard
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

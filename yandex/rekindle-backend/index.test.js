@@ -198,6 +198,17 @@ test("Microsoft To Do integration requires a Firebase ID token", async function 
     assert.equal(JSON.parse(result.body).code, "unauthenticated");
 });
 
+test("Exchange Calendar integration requires a Firebase ID token", async function () {
+    var result = await backend.handler(event(
+        "POST",
+        "/api/rekindle/exchange-calendar/status",
+        "https://rekindle.website.yandexcloud.net",
+        {}
+    ));
+    assert.equal(result.statusCode, 401);
+    assert.equal(JSON.parse(result.body).code, "unauthenticated");
+});
+
 test("AI chat requires a Firebase ID token", async function () {
     var result = await backend.handler(event(
         "POST",

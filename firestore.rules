@@ -64,6 +64,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Server-only Exchange app passwords encrypted by the Yandex backend.
+    // Calendar data remains in Exchange and is never copied here.
+    match /exchange_calendar_sessions/{userId} {
+      allow read, write: if false;
+    }
+
     function isDeveloper() {
       return request.auth != null && (
         request.auth.uid == 'ukiyo' ||

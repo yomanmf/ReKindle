@@ -536,6 +536,26 @@ Without matching rules, writes will be **silently rejected** by security rules. 
 
 **Yandex-only production architecture:** Browser code must call Yandex Cloud Functions through the `rekindle-api` API Gateway. Cloudflare Worker sources and Wrangler manifests have been removed. Do not restore their endpoints or patch old CORS allowlists. A new server route must be implemented and tested in Yandex before its frontend is published.
 
+**Corporate Exchange Calendar:** The calendar uses the fixed public EWS endpoint
+`https://mailsec.o3t.ru/EWS/Exchange.asmx` through the authenticated Yandex
+backend route `/api/rekindle/exchange-calendar/{action}`. Browser code must
+never call EWS or build a Basic Authorization header. The backend stores the
+`@ozon.ru` email and app password in the server-only
+`exchange_calendar_sessions` collection using UID-bound AES-256-GCM; direct
+Firestore access stays denied. The feature is intentionally read-only and
+fetches event bodies with EWS `GetItem`. Reuse
+`MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` unless a separate
+`EXCHANGE_CALENDAR_ENCRYPTION_KEY` is configured.
+
+**Calendar guest-state gotcha:** `calendar.html` previously assigned
+`currentUser` only inside the signed-in auth branch, creating an implicit
+global. Guest paths that merely read it then throw `ReferenceError`. Keep
+`auth`, `db`, and `currentUser` explicitly declared and reset `currentUser` to
+`null` when authentication is cleared. For Kindle Scribe Colorsoft responsive
+QA, verify the Exchange modal at a 990x1320 portrait viewport and also at the
+more conservative 632x840 viewport; neither layout may create horizontal
+document overflow.
+
 **Oracle custom-provider routing:** The old Worker ignored the provider-specific `endpoint` from `chat.html` and always called OpenAI. The Yandex implementation in `yandex/rekindle-backend/index.js` fixes this with an explicit provider endpoint allowlist. Keep model listing and inference on the same validated endpoint policy, and never allow loopback, link-local, or private-network targets.
 
 **Billing and supporter subsystem retired (July 2026):** ReKindle+ access checks,

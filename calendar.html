@@ -694,7 +694,9 @@
 
         /* MODAL */
         #modal-overlay,
-        #sync-choice-modal {
+        #sync-choice-modal,
+        #exchange-modal,
+        #event-detail-modal {
             display: none;
             position: fixed;
             /* Changed from absolute to fixed to cover fullscreen */
@@ -733,6 +735,24 @@
 
         .modal-btns>*+* {
             margin-left: 10px;
+        }
+
+        #sync-choice-modal .modal-btns {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        #sync-choice-modal .modal-btns > * + * {
+            margin-left: 0;
+        }
+
+        #source-btn-bottom,
+        #exchange-modal .sys-btn,
+        #event-detail-modal .sys-btn,
+        #sync-choice-modal .sys-btn {
+            min-height: 48px;
+            min-width: 48px;
         }
 
         /* STANDARD MODAL SYSTEM */
@@ -832,6 +852,21 @@
             margin-top: 15px;
         }
 
+        .exchange-help,
+        .event-detail-row {
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .event-detail-description {
+            border-top: 2px solid black;
+            padding-top: 12px;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            max-height: 35vh;
+            overflow-y: auto;
+        }
+
         .input-group {
             display: flex;
             flex-direction: column;
@@ -925,6 +960,8 @@
         <div id="status-bar">
             <span id="status-msg" data-i18n="calendar.status.ready">Ready.</span>
             <div>
+                <button class="sys-btn" id="source-btn-bottom" onclick="openSyncChoice()"
+                    style="margin-right:5px;" data-i18n="calendar.btn.source">Source</button>
                 <button class="sys-btn" id="today-btn-bottom" onclick="goToToday()"
                     style="display:none; margin-right:5px;">Today</button>
                 <button class="sys-btn" id="cal-list-btn-bottom" onclick="openCalendarListModal()"
@@ -1014,14 +1051,68 @@
     <!-- SYNC CHOICE MODAL -->
     <div id="sync-choice-modal">
         <div class="modal-box">
-            <h3 data-i18n="calendar.sync.title">Google Calendar Integration</h3>
-            <p style="margin:15px 0;" data-i18n="calendar.sync.desc">Enable Google Calendar sync or continue with Local
-                Storage?</p>
+            <h3 data-i18n="calendar.sync.title">Calendar Integration</h3>
+            <p style="margin:15px 0;" data-i18n="calendar.sync.desc">Choose a calendar source.</p>
             <div class="modal-btns">
-                <button class="sys-btn" onclick="setSyncPreference(true)" data-i18n="calendar.sync.google">Use
+                <button class="sys-btn" onclick="setSyncPreference('exchange')" data-i18n="calendar.sync.exchange">Use Exchange</button>
+                <button class="sys-btn" onclick="setSyncPreference('google')" data-i18n="calendar.sync.google">Use
                     Google</button>
-                <button class="sys-btn" onclick="setSyncPreference(false)" data-i18n="calendar.sync.local">Use
+                <button class="sys-btn" onclick="setSyncPreference('local')" data-i18n="calendar.sync.local">Use
                     Local</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXCHANGE CONNECTION -->
+    <div id="exchange-modal">
+        <div class="modal-box window-style">
+            <div class="title-bar">
+                <div class="title-stripes"></div>
+                <span class="title-text" data-i18n="calendar.exchange.title">Microsoft Exchange</span>
+            </div>
+            <div class="modal-content">
+                <div id="exchange-connected" style="display:none;">
+                    <div class="event-detail-row"><b data-i18n="calendar.exchange.connected">Connected:</b> <span id="exchange-connected-email"></span></div>
+                    <div class="modal-btns">
+                        <button class="sys-btn" onclick="disconnectExchange()" data-i18n="calendar.exchange.disconnect">Disconnect</button>
+                    </div>
+                </div>
+                <div id="exchange-form">
+                    <div class="input-group">
+                        <label for="exchange-email" data-i18n="calendar.exchange.email">Corporate email</label>
+                        <input id="exchange-email" type="email" autocomplete="username" placeholder="username@ozon.ru">
+                    </div>
+                    <div class="input-group">
+                        <label for="exchange-password" data-i18n="calendar.exchange.password">App password</label>
+                        <input id="exchange-password" type="password" autocomplete="current-password" placeholder="CODE:PASSWORD">
+                    </div>
+                    <div class="exchange-help" data-i18n="calendar.exchange.help">Use the CODE:PASSWORD value issued by the corporate mail bot. ReKindle stores it encrypted on the server.</div>
+                    <div id="exchange-form-status" class="exchange-help"></div>
+                    <div class="modal-btns">
+                        <button class="sys-btn" id="exchange-connect-btn" onclick="connectExchange()" data-i18n="calendar.exchange.connect">Connect</button>
+                        <button class="sys-btn" onclick="closeExchangeModal()" data-i18n="btn.cancel">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- READ-ONLY EVENT DETAILS -->
+    <div id="event-detail-modal">
+        <div class="modal-box window-style">
+            <div class="title-bar">
+                <div class="title-stripes"></div>
+                <span class="title-text" data-i18n="calendar.event.details">Event details</span>
+            </div>
+            <div class="modal-content">
+                <div id="event-detail-title" style="font-weight:bold;"></div>
+                <div id="event-detail-time" class="event-detail-row"></div>
+                <div id="event-detail-location" class="event-detail-row"></div>
+                <div id="event-detail-organizer" class="event-detail-row"></div>
+                <div id="event-detail-description" class="event-detail-description"></div>
+                <div class="modal-btns">
+                    <button class="sys-btn" onclick="closeEventDetails()" data-i18n="btn.ok">OK</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1069,6 +1160,7 @@
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
 
         let googleEnabled = false;
+        let exchangeEnabled = false;
         let calDavUrl = localStorage.getItem('rekindle_caldav_url');
 
         // --- TIMEZONE HANDLING ---
@@ -1113,6 +1205,9 @@
         }
 
         // --- STATE ---
+        let auth = null;
+        let db = null;
+        let currentUser = null;
         let events = []; // Unified structure: { id, title, start: Date, calendarId: String }
         let currentView = 'agenda';
         let viewDate = getZonedDate(); // Tracks currently viewed month/day
@@ -1161,6 +1256,9 @@
                             if (data.google_calendar !== undefined) {
                                 localStorage.setItem('rekindle_google_calendar_enabled', data.google_calendar);
                             }
+                            if (data.calendar_provider) {
+                                localStorage.setItem('rekindle_calendar_provider', data.calendar_provider);
+                            }
                             if (data.calendar_styles_v2) {
                                 calendarStyleAssignments = data.calendar_styles_v2;
                                 localStorage.setItem('rekindle_calendar_styles_v2', JSON.stringify(calendarStyleAssignments));
@@ -1172,6 +1270,7 @@
 
                     checkSyncSettings();
                 } else {
+                    currentUser = null;
                     document.getElementById('status-msg').innerText = "Guest Mode";
                     initNativeMode();
                 }
@@ -1180,13 +1279,20 @@
 
 
         function checkSyncSettings() {
+            const provider = localStorage.getItem('rekindle_calendar_provider');
             const setting = localStorage.getItem('rekindle_google_calendar_enabled');
 
-            if (setting === 'true') {
-                googleEnabled = true;
-                initGoogleMode();
-            } else if (setting === 'false') {
+            if (provider === 'exchange') {
+                exchangeEnabled = true;
                 googleEnabled = false;
+                initExchangeMode();
+            } else if (provider === 'google' || setting === 'true') {
+                googleEnabled = true;
+                exchangeEnabled = false;
+                initGoogleMode();
+            } else if (provider === 'local' || setting === 'false') {
+                googleEnabled = false;
+                exchangeEnabled = false;
                 document.getElementById('status-msg').innerText = "Synced: " + currentUser.email;
                 initNativeMode();
             } else {
@@ -1195,16 +1301,35 @@
             }
         }
 
-        function setSyncPreference(enableGoogle) {
+        function openSyncChoice() {
+            document.getElementById('sync-choice-modal').style.display = 'flex';
+        }
+
+        function setSyncPreference(provider) {
             document.getElementById('sync-choice-modal').style.display = 'none';
-            localStorage.setItem('rekindle_google_calendar_enabled', enableGoogle);
+            localStorage.setItem('rekindle_calendar_provider', provider);
+            localStorage.setItem('rekindle_google_calendar_enabled', provider === 'google');
 
             // Save preference to cloud
-            db.collection('users').doc(currentUser.uid).collection('settings').doc('integrations').set({
-                google_calendar: enableGoogle
-            }, { merge: true });
+            if (db && currentUser) {
+                db.collection('users').doc(currentUser.uid).collection('settings').doc('integrations').set({
+                    calendar_provider: provider,
+                    google_calendar: provider === 'google'
+                }, { merge: true }).catch(function (error) {
+                    console.warn('Calendar preference save failed.', error);
+                });
+            }
 
-            if (enableGoogle) {
+            exchangeEnabled = provider === 'exchange';
+            googleEnabled = provider === 'google';
+            if (!exchangeEnabled) {
+                const manageButton = document.getElementById('cal-list-btn-bottom');
+                manageButton.onclick = openCalendarListModal;
+                manageButton.innerText = 'Calendars';
+            }
+            if (exchangeEnabled) {
+                initExchangeMode();
+            } else if (googleEnabled) {
                 googleEnabled = true;
                 initGoogleMode();
             } else {
@@ -1215,10 +1340,149 @@
         }
 
         function refreshData() {
-            if (googleEnabled) loadGoogleEvents();
+            if (exchangeEnabled) loadExchangeEvents();
+            else if (googleEnabled) loadGoogleEvents();
             else if (calDavUrl) loadCalDAVEvents();
             else if (currentUser) loadCloudEvents();
             else loadLocalEvents();
+        }
+
+        function exchangeErrorText(error) {
+            if (error && error.code === 'exchange-calendar-auth') return 'Exchange rejected the email or app password.';
+            if (error && error.code === 'exchange-calendar-not-connected') return 'Connect Exchange Calendar first.';
+            return error && error.message ? error.message : 'Exchange Calendar is unavailable.';
+        }
+
+        async function initExchangeMode() {
+            document.getElementById('app-title').innerText = 'Exchange Calendar';
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('add-btn').style.display = 'none';
+            const manageButton = document.getElementById('cal-list-btn-bottom');
+            manageButton.style.display = 'inline-block';
+            manageButton.innerText = 'Exchange';
+            manageButton.onclick = openExchangeModal;
+            document.getElementById('status-msg').innerText = 'Checking Exchange...';
+            try {
+                const status = await RekindleCloud.request('/exchange-calendar/status', { method: 'POST', body: {} });
+                showExchangeConnection(status);
+                if (!status.connected) {
+                    events = [];
+                    renderView();
+                    openExchangeModal();
+                    document.getElementById('status-msg').innerText = 'Exchange is not connected.';
+                    return;
+                }
+                await loadExchangeEvents();
+            } catch (error) {
+                events = [];
+                renderView();
+                document.getElementById('status-msg').innerText = exchangeErrorText(error);
+                openExchangeModal();
+            }
+        }
+
+        function showExchangeConnection(status) {
+            const connected = status && status.connected;
+            document.getElementById('exchange-connected').style.display = connected ? 'block' : 'none';
+            document.getElementById('exchange-form').style.display = connected ? 'none' : 'block';
+            document.getElementById('exchange-connected-email').textContent = connected ? status.email : '';
+            if (connected) document.getElementById('exchange-email').value = status.email;
+        }
+
+        function openExchangeModal() {
+            document.getElementById('exchange-form-status').textContent = '';
+            document.getElementById('exchange-modal').style.display = 'flex';
+        }
+
+        function closeExchangeModal() {
+            document.getElementById('exchange-password').value = '';
+            document.getElementById('exchange-modal').style.display = 'none';
+        }
+
+        async function connectExchange() {
+            const email = document.getElementById('exchange-email').value.trim();
+            const passwordInput = document.getElementById('exchange-password');
+            const password = passwordInput.value;
+            const status = document.getElementById('exchange-form-status');
+            const button = document.getElementById('exchange-connect-btn');
+            button.disabled = true;
+            status.textContent = 'Connecting...';
+            try {
+                const result = await RekindleCloud.request('/exchange-calendar/connect', {
+                    method: 'POST',
+                    body: { email: email, password: password }
+                });
+                passwordInput.value = '';
+                setSyncPreference('exchange');
+                showExchangeConnection(result);
+                closeExchangeModal();
+            } catch (error) {
+                passwordInput.value = '';
+                status.textContent = exchangeErrorText(error);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function disconnectExchange() {
+            const status = document.getElementById('exchange-form-status');
+            try {
+                await RekindleCloud.request('/exchange-calendar/disconnect', { method: 'POST', body: {} });
+                showExchangeConnection({ connected: false });
+                closeExchangeModal();
+                setSyncPreference('local');
+            } catch (error) {
+                status.textContent = exchangeErrorText(error);
+            }
+        }
+
+        async function loadExchangeEvents() {
+            document.getElementById('status-msg').innerText = 'Syncing Exchange...';
+            const now = new Date();
+            const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            const end = new Date(now.getTime() + 339 * 24 * 60 * 60 * 1000);
+            try {
+                const result = await RekindleCloud.request('/exchange-calendar/events', {
+                    method: 'POST',
+                    body: { start: start.toISOString(), end: end.toISOString() }
+                });
+                events = (result.events || []).map(function (event) {
+                    event.calendarId = 'exchange';
+                    return event;
+                });
+                renderView();
+                document.getElementById('status-msg').innerText = 'Exchange synced.';
+            } catch (error) {
+                events = [];
+                renderView();
+                document.getElementById('status-msg').innerText = exchangeErrorText(error);
+                if (error.code === 'exchange-calendar-not-connected' || error.code === 'exchange-calendar-session-invalid' || error.code === 'exchange-calendar-auth') {
+                    showExchangeConnection({ connected: false });
+                    openExchangeModal();
+                }
+            }
+        }
+
+        function openEventDetails(event) {
+            const time = event.isAllDay ? 'All day' : formatZonedTime(event.start) + ' - ' + formatZonedTime(event.end);
+            document.getElementById('event-detail-title').textContent = event.title || 'Untitled event';
+            document.getElementById('event-detail-time').textContent = time;
+            document.getElementById('event-detail-location').textContent = event.location ? 'Location: ' + event.location : '';
+            document.getElementById('event-detail-organizer').textContent = event.organizer ? 'Organizer: ' + event.organizer : '';
+            document.getElementById('event-detail-description').textContent = event.description || 'No description.';
+            document.getElementById('event-detail-modal').style.display = 'flex';
+        }
+
+        function closeEventDetails() {
+            document.getElementById('event-detail-modal').style.display = 'none';
+        }
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function encodedEventId(value) {
+            return encodeURIComponent(String(value || ''));
         }
 
         window.onfocus = function () {
@@ -1319,7 +1583,7 @@
 
                 const dayLabel = formatZonedDate(loopDate, { weekday: 'long', month: 'short', day: 'numeric' });
 
-                let html = `<div class="day-header">${dayLabel}</div>`;
+                let html = `<div class="day-header">${escapeHtml(dayLabel)}</div>`;
                 list.forEach(e => {
                     let timeStr;
                     if (e.isAllDay) {
@@ -1334,10 +1598,10 @@
                     const styleIdx = e.calendarId ? getCalendarStyle(e.calendarId) : 0;
                     const styleClass = e.calendarId ? 'cal-style-' + styleIdx : '';
                     html += `
-                        <div class="event ${styleClass}" onclick="editEvent('${e.id}')" style="cursor:pointer">
+                        <div class="event ${styleClass}" onclick="editEvent(decodeURIComponent('${encodedEventId(e.id)}'))" style="cursor:pointer">
                             <div class="cal-bar cal-bar-${styleIdx}"></div>
                             <div class="event-time">${timeStr}</div>
-                            <div class="event-title">${e.title}</div>
+                            <div class="event-title">${escapeHtml(e.title)}</div>
                         </div>
                     `;
                 });
@@ -1420,7 +1684,7 @@
                         const t = formatZonedTime(evt.start);
                         label = t + ' ' + label;
                     }
-                    eventsHtml += `<div class="month-event ${styleClass}" onclick="editEvent('${evt.id}', event)">${label}</div>`;
+                    eventsHtml += `<div class="month-event ${styleClass}" onclick="editEvent(decodeURIComponent('${encodedEventId(evt.id)}'), event)">${escapeHtml(label)}</div>`;
                 }
 
                 cell.innerHTML = `<div class="day-number">${i}</div><div class="day-events">${eventsHtml}</div>`;
@@ -1484,7 +1748,7 @@
                                 timeStr = `${startStr} – ${endStr}`;
                             }
                             const styleClass = e.calendarId ? 'cal-style-' + getCalendarStyle(e.calendarId) : '';
-                            eventHtml += `<div class="day-event-chip ${styleClass}" onclick="editEvent('${e.id}')" style="cursor:pointer">${timeStr} - ${e.title}</div>`;
+                            eventHtml += `<div class="day-event-chip ${styleClass}" onclick="editEvent(decodeURIComponent('${encodedEventId(e.id)}'))" style="cursor:pointer">${escapeHtml(timeStr)} - ${escapeHtml(e.title)}</div>`;
                         });
 
                         slot.innerHTML = `
@@ -2134,6 +2398,11 @@
 
             const evt = events.find(x => x.id === id);
             if (!evt) return;
+
+            if (exchangeEnabled) {
+                openEventDetails(evt);
+                return;
+            }
 
             editingEventId = id;
             editingCalendarId = evt.calendarId; // Get from event object
