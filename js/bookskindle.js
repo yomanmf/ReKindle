@@ -124,8 +124,10 @@
         var detail = job.error || job.message || "";
         if (job.state === "failed" && job.error === "Flibusta search is unavailable") {
             detail = translate("bookskindle.catalog_unavailable", "The book catalog is temporarily unavailable. Try again later.");
-        } else if (job.state === "ready" && job.firstPageOnly === true && !(job.results || []).length) {
-            detail = translate("bookskindle.first_page_only", "No books were found on the first page of results. Try a more specific title.");
+        } else if (job.state === "ready" && !(job.results || []).length) {
+            detail = job.firstPageOnly === true
+                ? translate("bookskindle.first_page_only", "No books were found on the first page of results. Try a more specific title.")
+                : translate("bookskindle.no_results", "No books found.");
         }
         setText(byId("job-detail"), statusText(detail));
         renderResults(job.state === "ready" ? job.results || [] : []);

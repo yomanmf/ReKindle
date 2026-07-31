@@ -45,10 +45,10 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     });
     assert.match(client, /setStatusValue\(byId\("job-state"\), job\.state/);
     assert.match(html, /\.status-icon\s*\{/);
-    assert.match(html, /js\/bookskindle\.js\?v=7/);
+    assert.match(html, /js\/bookskindle\.js\?v=8/);
     assert.match(client, /setStatus\(value\).*statusText\(value\)/);
     assert.match(client, /setText\(byId\("job-detail"\), statusText\(detail\)\)/);
-    assert.match(client, /job\.firstPageOnly === true/);
+    assert.match(client, /job\.firstPageOnly === true[\s\S]*bookskindle\.first_page_only[\s\S]*bookskindle\.no_results/);
     assert.match(client, /job\.error === "Flibusta search is unavailable"/);
 });
 
@@ -80,7 +80,7 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
 test("Books to Kindle ships English and Russian UI contracts", function () {
     ["en", "ru"].forEach(function (language) {
         var locale = JSON.parse(read("locales/bookskindle-" + language + ".json"));
-        ["bookskindle.title", "bookskindle.search", "bookskindle.save", "bookskindle.change", "bookskindle.cancel", "bookskindle.retry", "bookskindle.first_page_only", "bookskindle.catalog_unavailable"].forEach(function (key) {
+        ["bookskindle.title", "bookskindle.search", "bookskindle.save", "bookskindle.change", "bookskindle.cancel", "bookskindle.retry", "bookskindle.no_results", "bookskindle.first_page_only", "bookskindle.catalog_unavailable"].forEach(function (key) {
             assert.ok(locale[key], language + ": " + key);
         });
         assert.equal(locale["bookskindle.legal"], undefined);

@@ -633,7 +633,9 @@ instead of serially exhausting every author and fallback request.
 If an author feed has another page and the bounded lookup finds no books, pass
 `firstPageOnly: true` through the worker result and public job. The frontend
 must translate that flag into an explicit prompt to search by a more specific
-title instead of showing the generic no-results message.
+title instead of showing the generic no-results message. A ready job with no
+results and no `firstPageOnly` flag must show the localized generic no-results
+message, never the ready-state prompt to choose a book.
 Map the worker's exact `Flibusta search is unavailable` failure to the localized
 `bookskindle.catalog_unavailable` message. Do not show the first-page message for
 an upstream outage: no catalog page was successfully searched in that case.

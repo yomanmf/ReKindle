@@ -44,6 +44,7 @@
   "bookskindle.sent": "Отправлено",
   "bookskindle.failed": "Ошибка",
   "bookskindle.canceled": "Отменено",
+  "bookskindle.no_results": "Книги не найдены.",
   "bookskindle.first_page_only": "На первой странице результатов книги не найдены. Попробуйте указать более точное название.",
   "bookskindle.catalog_unavailable": "Каталог книг временно недоступен. Попробуйте повторить позже."
 }
