@@ -4,8 +4,29 @@ var test = require('node:test');
 var assert = require('node:assert/strict');
 var fs = require('node:fs');
 var path = require('node:path');
+var vm = require('node:vm');
 
 var redditHtml = fs.readFileSync(path.join(__dirname, '..', 'reddit.html'), 'utf8');
+
+function createApi(fetchImpl) {
+    var start = redditHtml.indexOf('const REDDIT_PROXY_ENDPOINT');
+    var end = redditHtml.indexOf('function extractPermalinkFromUrl', start);
+    var source = redditHtml.slice(start, end).replace('const api =', 'globalThis.api =');
+    var indicator = { innerText: '', style: {} };
+    var context = {
+        RekindleCloud: { gatewayBase: 'https://gateway.example' },
+        document: { getElementById: function () { return indicator; } },
+        window: {},
+        fetch: fetchImpl,
+        console: { log: function () {}, warn: function () {} },
+        setTimeout: setTimeout,
+        Promise: Promise,
+        Date: Date,
+        URL: URL
+    };
+    vm.runInNewContext(source, context);
+    return context.api;
+}
 
 test('loads the versioned Reddit comment helper used by progressive enrichment', function () {
     assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=4"><\/script>/);
@@ -38,6 +59,33 @@ test('allocates request IDs before the client throttle wait', function () {
     assert.ok(requestIdIndex < throttleIndex);
 });
 
+test('foreground threads bypass the feed throttle', async function () {
+    var sleeps = 0;
+    var api = createApi(async function () {
+        return { ok: true, status: 200, text: async function () { return 'ok'; } };
+    });
+    api.sleep = async function () { sleeps++; };
+
+    api.lastRequestTime = Date.now();
+    await api.getThread('/r/test/comments/abc/example/');
+    assert.equal(sleeps, 0);
+
+    api.lastRequestTime = Date.now();
+    await api.request('/r/test.rss');
+    assert.equal(sleeps, 1);
+});
+
+test('does not repeat proxy failures already retried by the backend', async function () {
+    var fetches = 0;
+    var api = createApi(async function () {
+        fetches++;
+        return { ok: false, status: 503 };
+    });
+
+    await assert.rejects(api.getThread('/r/test/comments/abc/example/'), /Status 503/);
+    assert.equal(fetches, 1);
+});
+
 test('ignores background root metadata after leaving the thread', function () {
     var backgroundStart = redditHtml.indexOf('loadThreadRootsInBackground(permalink, comments)');
     var backgroundEnd = redditHtml.indexOf('async loadMorePosts()', backgroundStart);
@@ -46,4 +94,17 @@ test('ignores background root metadata after leaving the thread', function () {
     assert.match(backgroundSource, /if \(this\.currentThread !== permalink\) return;/);
     assert.match(backgroundSource, /api\.getThreadRoots\(permalink, \{ silent: true \}\)/);
     assert.match(backgroundSource, /this\.applyRootCommentMarkers\(permalink, comments\)/);
+    assert.match(backgroundSource, /rootLoadTimeout = setTimeout/);
+    assert.match(backgroundSource, /}, 2500\);/);
+    assert.ok(backgroundSource.indexOf('setTimeout') < backgroundSource.indexOf('api.getThreadRoots'));
+});
+
+test('cancels delayed root metadata when navigating', function () {
+    var feedStart = redditHtml.indexOf('async loadCurrentSub()');
+    var threadStart = redditHtml.indexOf('async loadThread(permalink)');
+    var feedSource = redditHtml.slice(feedStart, threadStart);
+    var threadSource = redditHtml.slice(threadStart, redditHtml.indexOf('processCommentHtml(html)', threadStart));
+
+    assert.match(feedSource, /this\.cancelThreadRootLoad\(\)/);
+    assert.match(threadSource, /this\.cancelThreadRootLoad\(\)/);
 });

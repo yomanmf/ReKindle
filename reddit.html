@@ -688,7 +688,7 @@
 
                 <div id="rate-limit-message"
                     style="display:none; padding:8px 10px; background:#fff3cd; border-bottom:2px solid black; font-size:0.85rem; text-align:center;">
-                    Reddit is heavily rate limiting access. Leave this window open to continue retrying.
+                    Reddit is rate limiting access. Try again shortly.
                 </div>
 
                 <div id="content-area"></div>
@@ -776,31 +776,14 @@
                 return new Promise(function(resolve) { setTimeout(resolve, ms); });
             },
 
-            retryDelay(response, attempt) {
-                if (response && response.headers) {
-                    var ra = response.headers.get('Retry-After');
-                    if (ra) {
-                        var seconds = parseInt(ra, 10);
-                        if (!isNaN(seconds) && seconds > 0) {
-                            return Math.min(seconds * 1000, 60000);
-                        }
-                    }
-                }
-                return Math.min(2000 * Math.pow(2, attempt), 15000);
-            },
-
-            showRetryStatus(ms) {
-                var indicator = document.getElementById('loading-indicator');
-                if (indicator) indicator.innerText = 'Retrying in ' + Math.ceil(ms / 1000) + 's...';
-            },
-
             async request(endpoint, options) {
                 options = options || {};
                 const silent = options.silent === true;
+                const skipThrottle = options.skipThrottle === true;
                 const requestId = ++this.currentRequestId;
                 var now = Date.now();
                 var timeSinceLast = now - this.lastRequestTime;
-                if (timeSinceLast < this.minRequestInterval) {
+                if (!skipThrottle && timeSinceLast < this.minRequestInterval) {
                     await this.sleep(this.minRequestInterval - timeSinceLast);
                 }
                 this.lastRequestTime = Date.now();
@@ -829,57 +812,41 @@
                 let lastError = null;
                 let lastStatus = null;
                 for (let proxy of PROXIES) {
-                    let lastProxyResponse = null;
-                    for (let attempt = 0; attempt < 3; attempt++) {
-                        if (attempt > 0) {
-                            const delay = this.retryDelay(lastProxyResponse, attempt);
-                            if (!silent) this.showRetryStatus(delay);
-                            await this.sleep(delay);
+                    try {
+                        const target = proxy + encodeURIComponent(publicUrl);
+
+                        if (requestId !== this.currentRequestId) {
+                            throw new Error('Request superseded');
                         }
 
-                        try {
-                            const target = proxy + encodeURIComponent(publicUrl);
+                        if (!silent) document.getElementById('loading-indicator').style.display = 'inline';
+                        const res = await fetch(target);
+                        if (!silent) document.getElementById('loading-indicator').style.display = 'none';
 
-                            if (requestId !== this.currentRequestId) {
-                                throw new Error('Request superseded');
+                        if (requestId !== this.currentRequestId) {
+                            throw new Error('Request superseded');
+                        }
+
+                        if (res.ok) {
+                            if (!silent && typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
+                                ui.hideRateLimitMessage();
                             }
+                            return await res.text();
+                        }
 
-                            if (!silent) document.getElementById('loading-indicator').style.display = 'inline';
-                            const res = await fetch(target);
+                        lastStatus = res.status;
+                        lastError = new Error('Status ' + res.status);
+
+                        if (!silent && res.status === 429 && typeof ui !== 'undefined' && ui.showRateLimitMessage) {
+                            ui.showRateLimitMessage();
+                        }
+                    } catch (e) {
+                        lastError = e;
+                        if (e.message && e.message.indexOf('superseded') !== -1) {
                             if (!silent) document.getElementById('loading-indicator').style.display = 'none';
-
-                            if (requestId !== this.currentRequestId) {
-                                throw new Error('Request superseded');
-                            }
-
-                            if (res.ok) {
-                                if (!silent && typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
-                                    ui.hideRateLimitMessage();
-                                }
-                                return await res.text();
-                            }
-
-                            lastProxyResponse = res;
-                            lastStatus = res.status;
-
-                            if (res.status === 429 || res.status >= 500) {
-                                console.warn('Proxy returned ' + res.status + ', retrying...');
-                                if (!silent && res.status === 429 && typeof ui !== 'undefined' && ui.showRateLimitMessage) {
-                                    ui.showRateLimitMessage();
-                                }
-                                continue;
-                            }
-
-                            lastError = new Error('Status ' + res.status);
-                            break;
-                        } catch (e) {
-                            lastError = e;
-                            if (e.message && e.message.indexOf('superseded') !== -1) {
-                                if (!silent) document.getElementById('loading-indicator').style.display = 'none';
-                                throw e;
-                            }
-                            console.warn('Proxy ' + proxy + ' attempt ' + (attempt + 1) + ' failed:', e);
+                            throw e;
                         }
+                        console.warn('Proxy ' + proxy + ' failed:', e);
                     }
                 }
 
@@ -911,7 +878,7 @@
 
             async getThread(permalink) {
                 const cleanLink = permalink.replace(/\/$/, "");
-                return this.request(cleanLink);
+                return this.request(cleanLink, { skipThrottle: true });
             },
 
             async getThreadRoots(permalink, options) {
@@ -921,7 +888,7 @@
 
             async getThreadJson(permalink) {
                 const cleanLink = permalink.replace(/\/$/, "");
-                return this.request(cleanLink + '.json?raw_json=1&limit=200&depth=10');
+                return this.request(cleanLink + '.json?raw_json=1&limit=200&depth=10', { skipThrottle: true });
             }
         };
 
@@ -1095,6 +1062,7 @@
             isLoadingMore: false,
             isThreadLoading: false,
             scrollTimeout: null,
+            rootLoadTimeout: null,
             commentNavIndex: -1,
             commentNavLastScrollTop: 0,
             feedPosts: [],
@@ -1506,24 +1474,35 @@
                 this.updateCommentNavigation();
             },
 
+            cancelThreadRootLoad() {
+                if (this.rootLoadTimeout !== null) clearTimeout(this.rootLoadTimeout);
+                this.rootLoadTimeout = null;
+            },
+
             loadThreadRootsInBackground(permalink, comments) {
-                api.getThreadRoots(permalink, { silent: true }).then(rootsResponse => {
+                this.cancelThreadRootLoad();
+                this.rootLoadTimeout = setTimeout(() => {
+                    this.rootLoadTimeout = null;
                     if (this.currentThread !== permalink) return;
 
-                    const rootsData = parseRssThread(rootsResponse);
-                    const rootIds = rootsData.comments.map(function(comment) { return comment.id; });
-                    const markedRoots = window.RekindleRedditComments.markTopLevelComments(comments, rootIds);
-                    console.log('Thread RSS top-level comments:', markedRoots);
-                    this.applyRootCommentMarkers(permalink, comments);
-                }).catch(rootsError => {
-                    if (rootsError.message && rootsError.message.indexOf('superseded') !== -1) return;
-                    if (this.currentThread !== permalink) return;
+                    api.getThreadRoots(permalink, { silent: true }).then(rootsResponse => {
+                        if (this.currentThread !== permalink) return;
 
-                    console.warn('Root-only RSS failed; marking only the first comment as top-level:', rootsError);
-                    const firstRootIds = comments.length > 0 ? [comments[0].id] : [];
-                    window.RekindleRedditComments.markTopLevelComments(comments, firstRootIds);
-                    this.applyRootCommentMarkers(permalink, comments);
-                });
+                        const rootsData = parseRssThread(rootsResponse);
+                        const rootIds = rootsData.comments.map(function(comment) { return comment.id; });
+                        const markedRoots = window.RekindleRedditComments.markTopLevelComments(comments, rootIds);
+                        console.log('Thread RSS top-level comments:', markedRoots);
+                        this.applyRootCommentMarkers(permalink, comments);
+                    }).catch(rootsError => {
+                        if (rootsError.message && rootsError.message.indexOf('superseded') !== -1) return;
+                        if (this.currentThread !== permalink) return;
+
+                        console.warn('Root-only RSS failed; marking only the first comment as top-level:', rootsError);
+                        const firstRootIds = comments.length > 0 ? [comments[0].id] : [];
+                        window.RekindleRedditComments.markTopLevelComments(comments, firstRootIds);
+                        this.applyRootCommentMarkers(permalink, comments);
+                    });
+                }, 2500);
             },
 
             async loadMorePosts() {
@@ -1580,6 +1559,7 @@
 
             // FEED
             async loadCurrentSub() {
+                this.cancelThreadRootLoad();
                 const subInput = document.getElementById('sub-input');
                 let sub = subInput.value.trim() || 'popular';
                 sub = sub.replace(/^r\//, '');
@@ -1637,6 +1617,7 @@
 
             async loadThread(permalink) {
                 const content = document.getElementById('content-area');
+                this.cancelThreadRootLoad();
                 this.resetCommentNavigation();
                 if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
                 this.scrollTimeout = null;

@@ -1146,9 +1146,19 @@ setting `isTopLevel` or `data-root-comment="true"`. A normal RSS entry does not
 expose its parent ID, so never treat every entry as top-level.
 
 The Reddit API client's request ID must be allocated before its 1.5-second
-throttle wait. This lets a later foreground navigation supersede a sleeping
-background root request; allocating the ID after the wait can make the old
-background request cancel the user's newer subreddit or thread request.
+throttle wait. Foreground thread RSS and JSON fallback requests skip that wait;
+feed and background metadata requests retain it. This lets user navigation start
+immediately while a later foreground request can still supersede older work.
+The Yandex function already retries Reddit upstream failures, so the browser
+must not repeat 429/5xx responses and multiply the wait.
+
+Schedule the `depth=1` root-metadata request 2.5 seconds after the main thread
+renders and cancel its timer whenever the user loads a feed or another thread.
+Production measurements on 31 July 2026 showed the main thread RSS taking
+roughly 0.6-1.7 seconds while the extra root request could take about 7 seconds
+under Reddit rate limiting. Starting it immediately wastes upstream capacity
+and can slow the next user-selected thread even though it is not on the current
+render's critical path.
 
 `reddit.html` depends on `js/reddit-comments.js` for JSON parsing and progressive
 root enrichment. A production release must upload that helper before the page
