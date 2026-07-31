@@ -619,7 +619,9 @@ credentials.
 OPDS page for each query word. Broad title words such as `история` can contain
 hundreds of author-result pages; scanning all of them leaves the web job in
 `searching` indefinitely. This limit does not apply to normal book search or
-its title/author fallbacks.
+its title/author fallbacks. `start_search` must issue the exact book query before
+author discovery so an unavailable catalog fails after one network timeout
+instead of serially exhausting every author and fallback request.
 
 **Firebase Auth sessions are API-key scoped:** Every checked-in authenticated
 page, including `bookskindle.html`, must use the
