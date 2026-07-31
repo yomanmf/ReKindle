@@ -1179,14 +1179,12 @@ route with a server-held token. The orchestrator stores these as
 bot updates or call a messaging API from this page. Search results are selected
 before job creation so the worker never needs an interactive chat callback.
 
-**Manga to Kindle landscape layout:** Keep the landscape page as a three-column
-CSS Grid: Amazon connection and search share the first column, the chapter form
-uses the second, and job status uses the third. Hide `#search-results` as soon as
-a title is selected so the result list cannot push the controls below the
-Kindle Scribe Colorsoft viewport; restore it only when chapter loading fails.
-The landscape `.window` must override the shared `720px` maximum with
-`max-width: none`; otherwise all three columns are squeezed into that width and
-localized status values overflow their cards.
+**Manga to Kindle layout:** Match Books to Kindle with `data-no-scale`, a
+`720px` maximum window width, and panels in normal document flow in every
+orientation. Do not add a landscape grid: fitting three columns into the shared
+window squeezes localized status values, while removing the maximum makes this
+page visibly wider than Books to Kindle. Hide `#search-results` as soon as a
+title is selected and restore it only when chapter loading fails.
 Status cues are monochrome inline SVG from the trusted `STATUS_ICONS` map, not
 Unicode emoji, because Kindle browsers render many emoji as missing glyphs.
 Web jobs use the same server-side Amazon Send to Kindle uploader and saved

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-no-scale>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
@@ -223,26 +223,6 @@
         .modal-box { width: 100%; max-width: 440px; border: 2px solid #000; box-shadow: var(--shadow); background: #fff; }
         .modal-box .title-text { border: none; }
         .modal-content { padding: 18px; }
-
-        @media (orientation: landscape) and (min-width: 700px) {
-            .window { width: 96%; max-width: none; height: 94vh; }
-            .content-area {
-                display: grid;
-                grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
-                grid-template-rows: auto 1fr;
-                gap: 10px;
-                padding: 10px;
-                align-items: start;
-            }
-            #auth-notice { grid-column: 1 / -1; }
-            #kindle-panel, #search-form { grid-column: 1; }
-            #send-form { grid-column: 2; grid-row: 1 / span 2; }
-            #job-panel { grid-column: 3; grid-row: 1 / span 2; }
-            #search-results { max-height: 168px; overflow-y: auto; }
-            .panel, .notice { margin-bottom: 0; padding: 10px; }
-            .panel-title { margin-bottom: 8px; }
-            .field { margin-bottom: 10px; }
-        }
 
         @media (max-width: 520px) {
             .range-grid, .status-grid { grid-template-columns: 1fr; }

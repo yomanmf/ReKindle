@@ -17,8 +17,9 @@ test("Manga to Kindle is a Kindle-safe direct control UI", function () {
     assert.match(html, /\.close-box\s*\{[^}]*width:\s*48px[^}]*height:\s*48px/s);
     assert.match(html, /class="title-stripes"/);
     assert.match(html, /id="error-modal"/);
-    assert.match(html, /@media \(orientation:\s*landscape\)[\s\S]*#send-form\s*\{\s*grid-column:\s*2[\s\S]*#job-panel\s*\{\s*grid-column:\s*3/);
-    assert.match(html, /@media \(orientation:\s*landscape\)[\s\S]*\.window\s*\{[^}]*max-width:\s*none/);
+    assert.match(html, /<html[^>]*data-no-scale/);
+    assert.match(html, /\.window\s*\{[^}]*max-width:\s*720px/);
+    assert.doesNotMatch(html, /@media \(orientation:\s*landscape\)/);
     assert.match(html + client, /status-icon/);
     assert.match(client, /byId\("search-results"\)\.hidden = true/);
     assert.doesNotMatch(html + client, /[\u{1F300}-\u{1FAFF}]/u);
