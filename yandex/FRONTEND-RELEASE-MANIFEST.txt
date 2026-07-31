@@ -14,6 +14,7 @@ battleship.html
 bindings.html
 blackjack.html
 blockblast.html
+bookskindle.html
 breathing.html
 browser.html
 calculator.html
@@ -100,6 +101,7 @@ icons.js
 icons-beta.js
 sw.js
 js/rekindle-cloud.js
+js/bookskindle.js
 js/reddit-comments.js
 js/reddit-feed-settings.js
 js/microsoft-todo.js
@@ -109,6 +111,8 @@ locales/kindledigest-en.json
 locales/kindledigest-ru.json
 locales/mangakindle-en.json
 locales/mangakindle-ru.json
+locales/bookskindle-en.json
+locales/bookskindle-ru.json
 locales/privacy-de.json
 locales/privacy-en.json
 locales/privacy-es.json

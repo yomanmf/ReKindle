@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v40'; // Move AI Assistant into Misc
+const CACHE_NAME = 'rekindle-cache-v41'; // Add Books to Kindle
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=11',
-    './icons-beta.js?v=5',
+    './icons-beta.js?v=6',
     './theme.js?v=22',
     './logo.svg',
     './manifest.json',

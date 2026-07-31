@@ -572,6 +572,22 @@ or supporter status back to the dashboard, settings, or locale files.
 
 **OCR MIME must match the canvas encoding:** Quick ToDo and Quick Notes encode cropped handwriting with `canvas.toDataURL('image/jpeg', ...)`. Their Yandex OCR request must send `mimeType: 'JPEG'`; hard-coding `PNG` in the backend produces invalid or unreliable recognition. The backend accepts only `PNG` and `JPEG` and forwards the validated value to Yandex Vision OCR.
 
+**Books to Kindle direct-worker contract:** `bookskindle.html` never calls or
+simulates Telegram. Authenticated user actions are stored in the server-only
+`books_kindle_*` Firestore collections by `books-kindle-service.js`; the
+Flibusta worker polls `/api/rekindle/books-kindle-worker/*`, reuses its existing
+catalog/conversion/cover/SMTP pipeline, and reports status back. Keep raw source
+URLs and Kindle addresses out of public job responses, keep all three
+collections denied in `firestore.rules`, and reuse the existing worker secret
+only through the backend's timing-safe bearer check.
+
+**Small title-bar touch targets:** A transparent pseudo-element around a 20px
+`.close-box` is not a reliable touch target in the Kindle browser, and its top
+can also be clipped by `.window { overflow: hidden; }`. In Books to Kindle, the
+button itself is 48px and transparent; `.close-box::after` draws the smaller
+System 7 square. Use the same pattern when a compact visual control still needs
+a real 48px hit box.
+
 **Yandex service identity:** Yandex Foundation Models, Vision OCR, Object Storage, and other managed APIs should use the Cloud Function service-account token exposed as `context.token.access_token`. Keep the function's service-account roles minimal and pass `x-data-logging-enabled: false` for AI/OCR requests containing user content.
 
 **AI Assistant production contract:** Shared AI usage is enforced only by the Yandex backend under `api_daily_limits/{uid}/ai_shared/{UTC-day}`. `chat.html` must read it with `POST /api/rekindle/ai/chat` and `{ "action": "quota" }`; never restore the client-writable Firestore `users/{uid}/chatLimits` counter. A shared request atomically reserves one message and must release that reservation if YandexGPT times out or fails, so provider failures do not consume the user's allowance. Successful shared responses and `daily-limit` errors include a `quota` object with `limit`, `used`, `remaining`, `day`, and `resetAt`.

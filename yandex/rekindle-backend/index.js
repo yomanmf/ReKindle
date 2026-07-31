@@ -12,6 +12,7 @@ var firebaseFirestore = require("firebase-admin/firestore");
 var microsoftTodoService = require("./microsoft-todo-service");
 var kindleDigestService = require("./kindle-digest-service");
 var mangaKindleService = require("./manga-kindle-service");
+var booksKindleService = require("./books-kindle-service");
 
 var MAX_USER_STORAGE_BYTES = 100 * 1024 * 1024;
 var MAX_OBJECT_BYTES = 25 * 1024 * 1024;
@@ -95,6 +96,12 @@ module.exports.handler = async function (event, context) {
         }
         if (method === "POST" && path.indexOf("/manga-kindle/") !== -1) {
             return response(200, await handleMangaKindleRequest(event, path), origin);
+        }
+        if (method === "POST" && path.indexOf("/books-kindle-worker/") !== -1) {
+            return response(200, await handleBooksKindleWorkerRequest(event, path), origin);
+        }
+        if (method === "POST" && path.indexOf("/books-kindle/") !== -1) {
+            return response(200, await handleBooksKindleRequest(event, path), origin);
         }
         return response(404, { error: "Endpoint not found." }, origin);
     } catch (error) {
@@ -969,6 +976,45 @@ async function handleMangaKindleRequest(event, path) {
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,
+        env: process.env
+    });
+}
+
+async function handleBooksKindleRequest(event, path) {
+    var user = await requireFirebaseUser(event, false);
+    var action = path.split("/").pop();
+    var allowedActions = {
+        search: true,
+        create: true,
+        status: true,
+        cancel: true,
+        retry: true,
+        "kindle-status": true,
+        "kindle-set": true,
+        "kindle-forget": true
+    };
+    if (!allowedActions[action]) throw httpError(404, "books-kindle-action", "Books to Kindle action was not found.");
+    if (action === "search" || action === "create") {
+        await enforceUserWindowRateLimit(user.uid, "books_kindle_create", 20, 60 * 60 * 1000);
+    } else {
+        await enforceUserWindowRateLimit(user.uid, "books_kindle_control", 120, 60 * 1000);
+    }
+    return booksKindleService.handle({
+        action: action,
+        body: parseJsonBody(event),
+        uid: user.uid,
+        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        env: process.env
+    });
+}
+
+async function handleBooksKindleWorkerRequest(event, path) {
+    return booksKindleService.handle({
+        action: path.split("/").pop(),
+        body: parseJsonBody(event),
+        worker: true,
+        workerToken: getHeader(event, "authorization"),
+        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
         env: process.env
     });
 }

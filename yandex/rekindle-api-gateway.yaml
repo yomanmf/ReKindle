@@ -25,6 +25,46 @@ x-yc-apigateway:
     maxAge: 3600
 
 paths:
+  /api/rekindle/books-kindle/{action}:
+    post:
+      operationId: booksKindleAction
+      parameters:
+        - name: action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [search, create, status, cancel, retry, kindle-status, kindle-set, kindle-forget]
+      responses:
+        '200':
+          description: Authenticated Books to Kindle operation
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
+  /api/rekindle/books-kindle-worker/{action}:
+    post:
+      operationId: booksKindleWorkerAction
+      parameters:
+        - name: action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [sync, pull, progress, check, search-results, finish, fail, canceled]
+      responses:
+        '200':
+          description: Lockbox-authenticated Books to Kindle worker operation
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ebc0qtt85o8fb1j2c6
+        service_account_id: ajes1g26thkptnonjfdf
+        tag: '$latest'
+        payload_format_version: '1.0'
+
   /api/rekindle/manga-kindle/{action}:
     post:
       operationId: controlMangaKindle
