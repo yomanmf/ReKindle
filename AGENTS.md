@@ -565,9 +565,10 @@ QA, verify the Exchange modal at a 990x1320 portrait viewport and also at the
 more conservative 632x840 viewport; neither layout may create horizontal
 document overflow.
 
-The read-only event-details modal closes when its backdrop is tapped. Keep the
-`event.target === this` guard so taps inside the modal do not close it; do not
-copy this behavior to editing or confirmation dialogs that can discard work.
+The read-only event-details modal and the dashboard's generic event-details
+dialog close when their backdrop is tapped. Keep the `event.target === this`
+guard so taps inside the modal do not close it; do not copy this behavior to
+editing or confirmation dialogs that can discard work.
 
 **Oracle custom-provider routing:** The old Worker ignored the provider-specific `endpoint` from `chat.html` and always called OpenAI. The Yandex implementation in `yandex/rekindle-backend/index.js` fixes this with an explicit provider endpoint allowlist. Keep model listing and inference on the same validated endpoint policy, and never allow loopback, link-local, or private-network targets.
 
