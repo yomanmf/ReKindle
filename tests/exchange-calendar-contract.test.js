@@ -37,6 +37,15 @@ test("Exchange Calendar client remains compatible with Chromium 75", function ()
     assert.doesNotMatch(source, /alert\s*\(|confirm\s*\(|prompt\s*\(/);
 });
 
+test("Exchange Calendar loads only the visible date range", function () {
+    var calendar = read("calendar.html");
+
+    assert.doesNotMatch(calendar, /339 \* 24 \* 60 \* 60 \* 1000/);
+    assert.match(calendar, /currentView === 'month'/);
+    assert.match(calendar, /currentView === 'day'/);
+    assert.match(calendar, /if \(exchangeEnabled\) loadExchangeEvents\(\);/);
+});
+
 test("event details close only when the backdrop is tapped", function () {
     var calendar = read("calendar.html");
     var dashboard = read("index.html");

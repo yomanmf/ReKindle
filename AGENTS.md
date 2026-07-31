@@ -578,6 +578,12 @@ dialog close when their backdrop is tapped. Keep the `event.target === this`
 guard so taps inside the modal do not close it; do not copy this behavior to
 editing or confirmation dialogs that can discard work.
 
+**Exchange query-range gotcha:** Do not load a year of Exchange events in one
+EWS `CalendarView` request. The dashboard succeeds because it requests a small
+window, while the large calendar request can time out before `GetItem` returns.
+`calendar.html` requests only the visible day or month (with timezone padding),
+and reloads Exchange when those views navigate. Keep agenda look-ahead bounded.
+
 **Oracle custom-provider routing:** The old Worker ignored the provider-specific `endpoint` from `chat.html` and always called OpenAI. The Yandex implementation in `yandex/rekindle-backend/index.js` fixes this with an explicit provider endpoint allowlist. Keep model listing and inference on the same validated endpoint policy, and never allow loopback, link-local, or private-network targets.
 
 **Billing and supporter subsystem retired (July 2026):** ReKindle+ access checks,

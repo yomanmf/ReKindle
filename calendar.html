@@ -1455,9 +1455,18 @@
 
         async function loadExchangeEvents() {
             setTranslatedStatus('calendar.status.syncing_exchange', 'Syncing Exchange...');
-            const now = new Date();
-            const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-            const end = new Date(now.getTime() + 339 * 24 * 60 * 60 * 1000);
+            let start;
+            let end;
+            if (currentView === 'month') {
+                start = new Date(viewDate.getFullYear(), viewDate.getMonth(), 0);
+                end = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 2);
+            } else if (currentView === 'day') {
+                start = new Date(viewDate.getFullYear(), viewDate.getMonth(), viewDate.getDate() - 1);
+                end = new Date(viewDate.getFullYear(), viewDate.getMonth(), viewDate.getDate() + 2);
+            } else {
+                start = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                end = new Date(Date.now() + 32 * 24 * 60 * 60 * 1000);
+            }
             try {
                 const result = await RekindleCloud.request('/exchange-calendar/events', {
                     method: 'POST',
@@ -1519,7 +1528,8 @@
                 b.classList.remove('active');
                 if (b.getAttribute('data-view') === view) b.classList.add('active');
             });
-            renderView();
+            if (exchangeEnabled) loadExchangeEvents();
+            else renderView();
         }
 
         function renderView() {
@@ -1788,12 +1798,14 @@
         // --- NAVIGATION LOGIC ---
         function changeMonth(delta) {
             viewDate.setMonth(viewDate.getMonth() + delta);
-            renderView();
+            if (exchangeEnabled) loadExchangeEvents();
+            else renderView();
         }
 
         function changeDay(delta) {
             viewDate.setDate(viewDate.getDate() + delta);
-            renderView();
+            if (exchangeEnabled) loadExchangeEvents();
+            else renderView();
         }
 
         function jumpToDay(dayNum) {
@@ -1803,7 +1815,8 @@
 
         function goToToday() {
             viewDate = getZonedDate();
-            renderView();
+            if (exchangeEnabled) loadExchangeEvents();
+            else renderView();
         }
 
         function updateTodayButtonVisibility() {
