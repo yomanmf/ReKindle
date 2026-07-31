@@ -665,6 +665,12 @@ scrolling on E-ink), while disabled edge buttons remain in the grid with
 `visibility: hidden` so the forecast cards do not shift. Keep all dashboard
 weather labels in every main locale bundle when changing this widget.
 
+**Dashboard agenda layout:** In `index.html`, today's complete agenda is shown
+above the month grid, and the whole calendar widget precedes the weather
+widget. Do not restore an inner `max-height` or `overflow-y` on
+`.dashboard-agenda-list`: the outer dashboard owns scrolling so every meeting
+remains visible. Meeting times use the existing manual 24-hour formatter.
+
 **Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, and Microsoft To Do through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
 
 **Cross-service analytics contract:** ReKindle and TETRA browser events are sent

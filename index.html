@@ -887,7 +887,6 @@
             text-align: center;
             font-family: "Courier New", monospace;
             font-size: 0.8rem;
-            margin-bottom: 15px;
         }
         .dashboard-calendar-day-header {
             font-weight: bold;
@@ -910,12 +909,9 @@
             font-weight: bold;
         }
         .dashboard-agenda-list {
-            border-top: 2px solid black;
-            padding-top: 10px;
             display: flex;
             flex-direction: column;
-            max-height: 200px;
-            overflow-y: auto;
+            margin-bottom: 15px;
         }
         .dashboard-agenda-list > * + * { margin-top: 8px; }
         .dash-header-row > * + * { margin-left: 15px; }
@@ -1193,6 +1189,26 @@
                     <div class="grid-container" id="app-grid"></div>
 
                     <div class="home-widgets" id="home-widgets">
+                        <div class="dashboard-widget dashboard-calendar-widget">
+                            <div class="dashboard-widget-title">
+                                <span id="db-agenda-title" data-i18n="dashboard.agenda.today">Today Events</span>
+                            </div>
+                            <div class="dashboard-agenda-list" id="db-agenda-list">
+                                <div style="text-align:center; font-style:italic; font-size:0.9rem;"
+                                    data-i18n="weather.status.loading">Loading...</div>
+                            </div>
+                            <div class="dashboard-widget-title">
+                                <span id="db-calendar-title">
+                                    <span style="cursor:pointer; padding: 0 5px;"
+                                        onclick="changeDashboardCalendar(-1)">&lt;</span>
+                                    <span id="db-calendar-month-text">Calendar</span>
+                                    <span style="cursor:pointer; padding: 0 5px;"
+                                        onclick="changeDashboardCalendar(1)">&gt;</span>
+                                </span>
+                            </div>
+                            <div class="dashboard-calendar-grid" id="db-calendar-grid"></div>
+                        </div>
+
                         <div class="dashboard-widget dashboard-weather-widget">
                             <div class="dashboard-widget-title">
                                 <span><span data-i18n="app.weather.name">Weather</span> · <span
@@ -1234,24 +1250,6 @@
                             </div>
                         </div>
 
-                        <div class="dashboard-widget dashboard-calendar-widget">
-                            <div class="dashboard-widget-title">
-                                <span id="db-calendar-title">
-                                    <span style="cursor:pointer; padding: 0 5px;"
-                                        onclick="changeDashboardCalendar(-1)">&lt;</span>
-                                    <span id="db-calendar-month-text">Calendar</span>
-                                    <span style="cursor:pointer; padding: 0 5px;"
-                                        onclick="changeDashboardCalendar(1)">&gt;</span>
-                                </span>
-                                <span id="db-agenda-title" style="font-weight:normal; font-size:0.8em;"
-                                    data-i18n="dashboard.agenda.today">Today Events</span>
-                            </div>
-                            <div class="dashboard-calendar-grid" id="db-calendar-grid"></div>
-                            <div class="dashboard-agenda-list" id="db-agenda-list">
-                                <div style="text-align:center; font-style:italic; font-size:0.9rem;"
-                                    data-i18n="weather.status.loading">Loading...</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -2635,14 +2633,7 @@
             events.forEach((e, eventIndex) => {
                 let timeStr = "All Day";
                 if (!e.isAllDay) {
-                    let dObj = new Date(e.start);
-                    if (typeof window.rekindleGetZonedDate === 'function') dObj = window.rekindleGetZonedDate(dObj);
-                    let h = dObj.getHours();
-                    let mi = dObj.getMinutes();
-                    let ampm = h >= 12 ? 'p' : 'a';
-                    h = h % 12 || 12;
-                    let mm = mi < 10 ? '0' + mi : mi;
-                    timeStr = `${h}:${mm}${ampm}`;
+                    timeStr = formatDashboardEventTime(e.start);
                 }
                 html += `<div class="dashboard-agenda-item" onclick="showDashboardAgendaEvent(${eventIndex})">
                             <div class="dashboard-agenda-time">${timeStr}</div>

@@ -36,3 +36,16 @@ test("Exchange Calendar client remains compatible with Chromium 75", function ()
     assert.doesNotMatch(source, /\?\.|\?\?/);
     assert.doesNotMatch(source, /alert\s*\(|confirm\s*\(|prompt\s*\(/);
 });
+
+test("dashboard shows every meeting above the calendar in 24-hour time", function () {
+    var dashboard = read("index.html");
+    var agendaPosition = dashboard.indexOf('id="db-agenda-list"');
+    var calendarPosition = dashboard.indexOf('id="db-calendar-grid"');
+    var weatherPosition = dashboard.indexOf('dashboard-weather-widget');
+
+    assert.ok(agendaPosition > -1 && agendaPosition < calendarPosition);
+    assert.ok(calendarPosition < weatherPosition);
+    assert.doesNotMatch(dashboard, /\.dashboard-agenda-list\s*\{[^}]*max-height/);
+    assert.doesNotMatch(dashboard, /\.dashboard-agenda-list\s*\{[^}]*overflow-y/);
+    assert.match(dashboard, /timeStr = formatDashboardEventTime\(e\.start\)/);
+});
