@@ -44,5 +44,6 @@
   "bookskindle.sent": "Sent",
   "bookskindle.failed": "Failed",
   "bookskindle.canceled": "Canceled",
-  "bookskindle.first_page_only": "No books were found on the first page of results. Try a more specific title."
+  "bookskindle.first_page_only": "No books were found on the first page of results. Try a more specific title.",
+  "bookskindle.catalog_unavailable": "The book catalog is temporarily unavailable. Try again later."
 }

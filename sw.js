@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v48'; // Explain first-page-only book searches
+const CACHE_NAME = 'rekindle-cache-v49'; // Localize Books catalog outages
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

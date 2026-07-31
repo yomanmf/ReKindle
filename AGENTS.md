@@ -630,6 +630,9 @@ If an author feed has another page and the bounded lookup finds no books, pass
 `firstPageOnly: true` through the worker result and public job. The frontend
 must translate that flag into an explicit prompt to search by a more specific
 title instead of showing the generic no-results message.
+Map the worker's exact `Flibusta search is unavailable` failure to the localized
+`bookskindle.catalog_unavailable` message. Do not show the first-page message for
+an upstream outage: no catalog page was successfully searched in that case.
 
 **Firebase Auth sessions are API-key scoped:** Every checked-in authenticated
 page, including `bookskindle.html`, must use the
