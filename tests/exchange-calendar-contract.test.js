@@ -37,6 +37,11 @@ test("Exchange Calendar client remains compatible with Chromium 75", function ()
     assert.doesNotMatch(source, /alert\s*\(|confirm\s*\(|prompt\s*\(/);
 });
 
+test("event details close only when the backdrop is tapped", function () {
+    var calendar = read("calendar.html");
+    assert.match(calendar, /id="event-detail-modal" onclick="if \(event\.target === this\) closeEventDetails\(\)"/);
+});
+
 test("dashboard shows every meeting above the calendar in 24-hour time", function () {
     var dashboard = read("index.html");
     var agendaPosition = dashboard.indexOf('id="db-agenda-list"');
