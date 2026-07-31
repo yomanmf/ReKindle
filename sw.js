@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v49'; // Localize Books catalog outages
+const CACHE_NAME = 'rekindle-cache-v50'; // Require login on dashboards
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

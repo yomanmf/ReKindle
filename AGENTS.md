@@ -1240,8 +1240,10 @@ restore it operationally on the uploader instead of redirecting the user.
 `#login-modal` before Firebase resolves and keep it open for signed-out or
 offline users. Keep both dashboards synchronized: the wall must have no cancel
 action, `handleGuestMode()` must reopen it, and `closeModal()` must refuse to
-hide it without `auth.currentUser`. This is a client-side interface gate; data
-access still belongs in Firebase rules and authenticated Yandex routes.
+hide it without `auth.currentUser`. Bump the `sw.js` cache when changing the
+wall so the precached dashboard cannot preserve guest access offline. This is a
+client-side interface gate; data access still belongs in Firebase rules and
+authenticated Yandex routes.
 
 After successfully completing any task that changes code:
 

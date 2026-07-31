@@ -27,4 +27,5 @@ test("Kindle dashboards keep signed-out users behind the login wall", function (
         assert.match(source, /function handleGuestMode\(\) \{[\s\S]*?openLogin\(\);/);
         assert.match(source, /modalId === 'login-modal' && \(!auth \|\| !auth\.currentUser\)/);
     });
+    assert.match(fs.readFileSync(path.join(root, "sw.js"), "utf8"), /rekindle-cache-v50/);
 });

@@ -65,7 +65,7 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
     });
     assert.match(read("index.html"), /icons-beta\.js\?v=9/);
     assert.match(read("index_old.html"), /icons-beta\.js\?v=9/);
-    assert.match(read("sw.js"), /rekindle-cache-v49/);
+    assert.match(read("sw.js"), /rekindle-cache-v50/);
 });
 
 test("Books to Kindle ships English and Russian UI contracts", function () {
