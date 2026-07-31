@@ -48,4 +48,15 @@ test("dashboard shows every meeting above the calendar in 24-hour time", functio
     assert.doesNotMatch(dashboard, /\.dashboard-agenda-list\s*\{[^}]*max-height/);
     assert.doesNotMatch(dashboard, /\.dashboard-agenda-list\s*\{[^}]*overflow-y/);
     assert.match(dashboard, /timeStr = formatDashboardEventTime\(e\.start\)/);
+    assert.match(dashboard, /id="db-agenda-refresh"[^>]*onclick="refreshDashboardAgenda\(this\)"/);
+    assert.match(dashboard, /\.dashboard-agenda-refresh\s*\{[^}]*min-height:\s*64px/);
+    assert.match(dashboard, /window\.refreshDashboardAgenda = refreshDashboardAgenda/);
+});
+
+test("both dashboard calendars start the week on Monday", function () {
+    [read("index.html"), read("index_old.html")].forEach(function (dashboard) {
+        assert.match(dashboard, /getDay\(\) \+ 6\) % 7/);
+        assert.match(dashboard, /new Date\(2024, 0, 8 \+ weekday\)/);
+        assert.doesNotMatch(dashboard, /new Date\(2024, 0, 7 \+ weekday\)/);
+    });
 });

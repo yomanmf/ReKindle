@@ -1798,12 +1798,12 @@
             const locale = document.documentElement.lang || navigator.language || 'en';
             const monthDate = new Date(homeCalYear, homeCalMonth, 1);
             document.getElementById('db-calendar-month-text').textContent = monthDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
-            const firstDay = monthDate.getDay();
+            const firstDay = (monthDate.getDay() + 6) % 7;
             const daysInMonth = new Date(homeCalYear, homeCalMonth + 1, 0).getDate();
             const today = now.getMonth() === homeCalMonth && now.getFullYear() === homeCalYear ? now.getDate() : -1;
             let html = '';
             for (let weekday = 0; weekday < 7; weekday++) {
-                const weekdayLabel = new Date(2024, 0, 7 + weekday).toLocaleDateString(locale, { weekday: 'short' });
+                const weekdayLabel = new Date(2024, 0, 8 + weekday).toLocaleDateString(locale, { weekday: 'short' });
                 html += '<div class="dashboard-calendar-day-header">' + weekdayLabel + '</div>';
             }
             for (let i = 0; i < firstDay; i++) html += '<div class="dashboard-calendar-day"></div>';
