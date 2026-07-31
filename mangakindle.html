@@ -156,8 +156,20 @@
             line-height: 1.45;
         }
 
-        .selection-title, .status-value { display: block; font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
+        .selection-title { display: block; font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
         .status-label { display: block; font-size: 0.72rem; font-weight: bold; text-transform: uppercase; }
+        .status-value { display: flex; align-items: center; margin: 5px 0; font-weight: bold; font-size: 1rem; }
+        .status-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 7px;
+            flex: 0 0 auto;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: square;
+            stroke-linejoin: miter;
+        }
         .status-detail { display: block; margin-top: 7px; word-break: break-word; white-space: pre-wrap; }
 
         .check-choice {
@@ -197,6 +209,26 @@
         .modal-box { width: 100%; max-width: 440px; border: 2px solid #000; box-shadow: var(--shadow); background: #fff; }
         .modal-box .title-text { border: none; }
         .modal-content { padding: 18px; }
+
+        @media (orientation: landscape) and (min-width: 700px) {
+            .window { width: 96%; max-width: none; height: 94vh; }
+            .content-area {
+                display: grid;
+                grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
+                grid-template-rows: auto 1fr;
+                gap: 10px;
+                padding: 10px;
+                align-items: start;
+            }
+            #auth-notice { grid-column: 1 / -1; }
+            #kindle-panel, #search-form { grid-column: 1; }
+            #send-form { grid-column: 2; grid-row: 1 / span 2; }
+            #job-panel { grid-column: 3; grid-row: 1 / span 2; }
+            #search-results { max-height: 168px; overflow-y: auto; }
+            .panel, .notice { margin-bottom: 0; padding: 10px; }
+            .panel-title { margin-bottom: 8px; }
+            .field { margin-bottom: 10px; }
+        }
 
         @media (max-width: 520px) {
             .range-grid, .status-grid { grid-template-columns: 1fr; }
@@ -291,6 +323,6 @@
             projectId: "rekindle-fork"
         };
     </script>
-    <script src="js/mangakindle.js?v=2"></script>
+    <script src="js/mangakindle.js?v=3"></script>
 </body>
 </html>
