@@ -615,6 +615,12 @@ through VM metadata key `books-kindle-lockbox-secret-id`. Do not grant the VM
 access to the shared backend secret because it also contains Firebase and S3
 credentials.
 
+**Books worker author lookup:** Limit Flibusta author discovery to the first
+OPDS page for each query word. Broad title words such as `история` can contain
+hundreds of author-result pages; scanning all of them leaves the web job in
+`searching` indefinitely. This limit does not apply to normal book search or
+its title/author fallbacks.
+
 **Firebase Auth sessions are API-key scoped:** Every checked-in authenticated
 page, including `bookskindle.html`, must use the
 `__REKINDLE_FIREBASE_API_KEY__` placeholder. A hard-coded key can initialize the
