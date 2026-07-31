@@ -27,6 +27,8 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     assert.doesNotMatch(html, /display:\s*flex[^}]*\bgap\s*:/s);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
     assert.match(client, /setInterval\([^]*8000\)/);
+    assert.match(client, /byId\("kindle-settings"\)\.hidden = result\.connected === true/);
+    assert.match(client, /byId\("kindle-change"\)\.hidden = result\.connected !== true/);
 });
 
 test("Books to Kindle is routed, catalogued, isolated, and released", function () {
@@ -57,7 +59,7 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
 test("Books to Kindle ships English and Russian UI contracts", function () {
     ["en", "ru"].forEach(function (language) {
         var locale = JSON.parse(read("locales/bookskindle-" + language + ".json"));
-        ["bookskindle.title", "bookskindle.search", "bookskindle.save", "bookskindle.cancel", "bookskindle.retry"].forEach(function (key) {
+        ["bookskindle.title", "bookskindle.search", "bookskindle.save", "bookskindle.change", "bookskindle.cancel", "bookskindle.retry"].forEach(function (key) {
             assert.ok(locale[key], language + ": " + key);
         });
     });

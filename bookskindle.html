@@ -227,19 +227,22 @@
             </div>
 
             <section class="panel" id="kindle-panel">
-                <h1 class="panel-title" data-i18n="bookskindle.kindle">Kindle delivery</h1>
-                <div class="field">
-                    <label class="field-label" for="kindle-email" data-i18n="bookskindle.email">Send to Kindle address</label>
-                    <input class="text-input" id="kindle-email" type="email" maxlength="254" autocomplete="email" placeholder="reader@kindle.com" data-i18n-placeholder="bookskindle.email_placeholder">
+                <div id="kindle-settings">
+                    <h1 class="panel-title" data-i18n="bookskindle.kindle">Kindle delivery</h1>
+                    <div class="field">
+                        <label class="field-label" for="kindle-email" data-i18n="bookskindle.email">Send to Kindle address</label>
+                        <input class="text-input" id="kindle-email" type="email" maxlength="254" autocomplete="email" placeholder="reader@kindle.com" data-i18n-placeholder="bookskindle.email_placeholder">
+                    </div>
+                    <div class="summary">
+                        <span class="summary-title" id="kindle-state" data-i18n="bookskindle.checking">Checking...</span>
+                        <span id="kindle-detail" data-i18n="bookskindle.kindle_hint">Add the sender address to Amazon's Approved Personal Document E-mail List.</span>
+                    </div>
+                    <div class="button-row">
+                        <button class="sys-btn primary" type="button" id="kindle-save" data-i18n="bookskindle.save">Save address</button>
+                        <button class="sys-btn" type="button" id="kindle-forget" data-i18n="bookskindle.forget">Forget address</button>
+                    </div>
                 </div>
-                <div class="summary">
-                    <span class="summary-title" id="kindle-state" data-i18n="bookskindle.checking">Checking...</span>
-                    <span id="kindle-detail" data-i18n="bookskindle.kindle_hint">Add the sender address to Amazon's Approved Personal Document E-mail List.</span>
-                </div>
-                <div class="button-row">
-                    <button class="sys-btn primary" type="button" id="kindle-save" data-i18n="bookskindle.save">Save address</button>
-                    <button class="sys-btn" type="button" id="kindle-forget" data-i18n="bookskindle.forget">Forget address</button>
-                </div>
+                <button class="sys-btn primary wide-button" type="button" id="kindle-change" data-i18n="bookskindle.change" hidden>Change address</button>
             </section>
 
             <div class="notice" data-i18n="bookskindle.legal">Download and send only books that you have the right to use. Catalog availability depends on your region.</div>
@@ -301,6 +304,6 @@
             projectId: "rekindle-fork"
         };
     </script>
-    <script src="js/bookskindle.js?v=1"></script>
+    <script src="js/bookskindle.js?v=2"></script>
 </body>
 </html>

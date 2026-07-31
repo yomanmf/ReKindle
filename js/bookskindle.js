@@ -74,6 +74,8 @@
 
     function renderKindle(result) {
         byId("kindle-email").value = result.email || "";
+        byId("kindle-settings").hidden = result.connected === true;
+        byId("kindle-change").hidden = result.connected !== true;
         setText(byId("kindle-state"), result.connected ? translate("bookskindle.connected", "Address saved") : translate("bookskindle.not_connected", "Address not saved"));
         var sender = result.sender ? translate("bookskindle.sender", "Approved sender") + ": " + result.sender : translate("bookskindle.sender_waiting", "Waiting for the delivery worker.");
         if (result.online !== true) sender += " " + translate("bookskindle.offline", "The worker is offline.");
@@ -188,6 +190,11 @@
 
     byId("kindle-save").addEventListener("click", saveKindle);
     byId("kindle-forget").addEventListener("click", forgetKindle);
+    byId("kindle-change").addEventListener("click", function () {
+        byId("kindle-settings").hidden = false;
+        byId("kindle-change").hidden = true;
+        byId("kindle-email").focus();
+    });
     byId("search-form").addEventListener("submit", search);
     byId("job-refresh").addEventListener("click", refreshJob);
     byId("error-close").addEventListener("click", closeError);
