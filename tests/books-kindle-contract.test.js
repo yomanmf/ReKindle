@@ -14,6 +14,7 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     assert.match(html, /font-family:\s*"Geneva",\s*"Verdana",\s*sans-serif/);
     assert.match(html, /animation:\s*none\s*!important/);
     assert.match(html, /min-height:\s*48px/);
+    assert.match(html, /<html[^>]*data-no-scale/);
     assert.match(html, /\.close-box\s*\{[^}]*width:\s*48px[^}]*height:\s*48px/s);
     assert.match(html, /\.close-box::after\s*\{[^}]*content:\s*"X"/s);
     assert.match(html, /class="title-stripes"/);
