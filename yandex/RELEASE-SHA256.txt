@@ -3,5 +3,5 @@ eb4cb2d3c860bbdd210d267a2f1d12e0b42b0a63366f904d1c9f2890ef9bfa98  rekindle-backe
 0b0126d3745e01e64209b9f072b8d8181ef93f64f93fe76c834392a986a7aaad  rekindle-reddit.zip
 b6d68c8c040ccb9899e4b2766f61331148c72e0d7efe31ae73b335d78766abd4  rekindle-story.zip
 6a1dd9e59aefc2364f18279e9c26b7296ecc44e8f2554557c12ce72a3f7c3956  rekindle-config.zip
-# Frontend verified 2026-07-31 under /private/tmp/rekindle-icon-release-artifacts-82c88844
-45bbd4859e84b01fc918bcdaf9c0292fa7676258306c20aec2e6d83a6575a7a5  rekindle-frontend.zip
+# Frontend verified 2026-07-31 under /private/tmp/rekindle-address-release-artifacts-7c9dfec8
+41b6b712e4eddb10c0521cccd31717d5b205c18dd6e548678d62698ab50f6ea3  rekindle-frontend.zip
