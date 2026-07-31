@@ -86,6 +86,30 @@ test('does not repeat proxy failures already retried by the backend', async func
     assert.equal(fetches, 1);
 });
 
+test('does not render a feed response superseded while its body is loading', async function () {
+    var releaseFirstBody;
+    var fetches = 0;
+    var api = createApi(async function () {
+        fetches++;
+        if (fetches === 1) {
+            return {
+                ok: true,
+                status: 200,
+                text: function () {
+                    return new Promise(function (resolve) { releaseFirstBody = resolve; });
+                }
+            };
+        }
+        return { ok: true, status: 200, text: async function () { return 'new'; } };
+    });
+
+    var staleRequest = api.request('/r/kindle?limit=25');
+    while (!releaseFirstBody) await Promise.resolve();
+    assert.equal(await api.getThread('/r/kindle/comments/new/thread/'), 'new');
+    releaseFirstBody('stale');
+    await assert.rejects(staleRequest, /superseded/);
+});
+
 test('ignores background root metadata after leaving the thread', function () {
     var backgroundStart = redditHtml.indexOf('loadThreadRootsInBackground(permalink, comments)');
     var backgroundEnd = redditHtml.indexOf('async loadMorePosts()', backgroundStart);
@@ -107,4 +131,17 @@ test('cancels delayed root metadata when navigating', function () {
 
     assert.match(feedSource, /this\.cancelThreadRootLoad\(\)/);
     assert.match(threadSource, /this\.cancelThreadRootLoad\(\)/);
+});
+
+test('renders a cached subreddit feed before refreshing it', function () {
+    var feedStart = redditHtml.indexOf('async loadCurrentSub()');
+    var feedEnd = redditHtml.indexOf('async loadThread(permalink)', feedStart);
+    var feedSource = redditHtml.slice(feedStart, feedEnd);
+    var cachedRenderIndex = feedSource.indexOf('this.renderPostList(cachedPosts, sub, false)');
+    var requestIndex = feedSource.indexOf('await api.getSubreddit(sub, null, preference)');
+
+    assert.notEqual(cachedRenderIndex, -1);
+    assert.notEqual(requestIndex, -1);
+    assert.ok(cachedRenderIndex < requestIndex);
+    assert.match(feedSource, /if \(cachedPosts\.length === 0\) \{/);
 });

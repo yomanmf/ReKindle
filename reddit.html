@@ -831,7 +831,11 @@
                             if (!silent && typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
                                 ui.hideRateLimitMessage();
                             }
-                            return await res.text();
+                            const responseText = await res.text();
+                            if (requestId !== this.currentRequestId) {
+                                throw new Error('Request superseded');
+                            }
+                            return responseText;
                         }
 
                         lastStatus = res.status;
@@ -1577,11 +1581,16 @@
                 this.renderSidebar();
 
                 const content = document.getElementById('content-area');
-                content.innerHTML = `<div class="loading">Loading r/${escapeHtml(sub)}...</div>`;
+                const preference = this.getFeedPreference(sub);
+                const cacheKey = window.RekindleRedditFeedSettings.cacheKey(sub, preference);
+                const legacyCache = preference.sort === 'hot' ? localStorage.getItem('reddit_feed_xml_' + sub) : null;
+                const cached = localStorage.getItem(cacheKey) || legacyCache;
+                let cachedPosts = cached ? parseRssPosts(cached) : [];
+                if (cached && cachedPosts.length === 0) cachedPosts = parseJsonPosts(cached);
+                if (cachedPosts.length > 0) this.renderPostList(cachedPosts, sub, false);
+                else content.innerHTML = `<div class="loading">Loading r/${escapeHtml(sub)}...</div>`;
 
                 try {
-                    const preference = this.getFeedPreference(sub);
-                    const cacheKey = window.RekindleRedditFeedSettings.cacheKey(sub, preference);
                     let responseText = await api.getSubreddit(sub, null, preference);
                     console.log('RSS response length:', responseText.length, 'preview:', responseText.substring(0, 200));
                     let posts = parseRssPosts(responseText);
@@ -1601,15 +1610,7 @@
 
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
-                    const preference = this.getFeedPreference(sub);
-                    const cacheKey = window.RekindleRedditFeedSettings.cacheKey(sub, preference);
-                    const legacyCache = preference.sort === 'hot' ? localStorage.getItem('reddit_feed_xml_' + sub) : null;
-                    const cached = localStorage.getItem(cacheKey) || legacyCache;
-                    if (cached) {
-                        let posts = parseRssPosts(cached);
-                        if (posts.length === 0) posts = parseJsonPosts(cached);
-                        this.renderPostList(posts, sub, true);
-                    } else {
+                    if (cachedPosts.length === 0) {
                         content.innerHTML = `<div class="loading" style="color:red">Error loading r/${escapeHtml(sub)}<br>${escapeHtml(e.message)}<br><small>If proxy issues persist, try reloading.</small></div>`;
                     }
                 }

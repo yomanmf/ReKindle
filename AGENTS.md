@@ -1141,6 +1141,15 @@ contains `__REKINDLE_FIREBASE_API_KEY__`. Publishing raw source produces
 
 ## Reddit comment-tree navigation
 
+`loadCurrentSub()` uses the existing per-feed `localStorage` entry as a
+stale-while-revalidate preview: parse and render non-empty cached posts before
+awaiting Reddit, then replace them with the fresh response. If refresh fails,
+leave the already rendered cache in place; only show the blocking error when
+there was no usable cache. Keep the network request active so the API client's
+request ID can supersede it when the user opens a thread or another feed. The
+client must recheck that ID after `await res.text()` as well as after `fetch()`;
+otherwise a response body that finishes late can overwrite the newer screen.
+
 `reddit.html` uses two RSS requests for a Reddit thread: the normal feed supplies
 all displayed comments, while the same `.rss` URL with `depth=1` supplies only
 top-level comments. The normal feed is the critical path and must be rendered
