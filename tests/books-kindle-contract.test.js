@@ -49,9 +49,9 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
     ["bookskindle.html", "js/bookskindle.js", "locales/bookskindle-en.json", "locales/bookskindle-ru.json"].forEach(function (file) {
         assert.ok(manifest.includes(file), file);
     });
-    assert.match(read("index.html"), /icons-beta\.js\?v=7/);
-    assert.match(read("index_old.html"), /icons-beta\.js\?v=7/);
-    assert.match(read("sw.js"), /rekindle-cache-v42/);
+    assert.match(read("index.html"), /icons-beta\.js\?v=8/);
+    assert.match(read("index_old.html"), /icons-beta\.js\?v=8/);
+    assert.match(read("sw.js"), /rekindle-cache-v43/);
 });
 
 test("Books to Kindle ships English and Russian UI contracts", function () {

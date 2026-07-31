@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v42'; // Fix Books to Kindle shared sign-in
+const CACHE_NAME = 'rekindle-cache-v43'; // Refresh Books to Kindle icon
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=11',
-    './icons-beta.js?v=7',
+    './icons-beta.js?v=8',
     './theme.js?v=22',
     './logo.svg',
     './manifest.json',
