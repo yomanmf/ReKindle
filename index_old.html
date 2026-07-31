@@ -953,9 +953,8 @@
                 <div style="flex-grow:1"></div>
 
                 <div class="nav-item" onclick="location.href='settings'" data-i18n="home.nav.settings">Settings</div>
-                <div class="nav-account-menu" id="sys-account-menu">
-                    <div class="nav-item" id="auth-btn" onclick="openLogin()" data-i18n="home.nav.login"
-                        aria-haspopup="true" aria-expanded="false">LOG IN / REGISTER</div>
+                <div class="nav-account-menu" id="sys-account-menu" hidden>
+                    <div class="nav-item" id="auth-btn" aria-haspopup="true" aria-expanded="false"></div>
                     <div class="account-menu-dropdown" id="account-menu-dropdown" hidden>
                         <button type="button" onclick="closeAccountMenu(); openLogoutModal()">Log Out</button>
                     </div>
@@ -1147,6 +1146,7 @@
                         if (user.email.endsWith("@rekindle.ink")) {
                             displayUser = user.email.replace("@rekindle.ink", "");
                         }
+                        document.getElementById('sys-account-menu').hidden = false;
                         document.getElementById('auth-btn').removeAttribute('data-i18n');
                         document.getElementById('auth-btn').innerText = displayUser;
                         document.getElementById('auth-btn').onclick = toggleAccountMenu;
@@ -1170,10 +1170,8 @@
             localStorage.removeItem('rekindle_uid');
             openLogin();
 
-            document.getElementById('auth-btn').setAttribute('data-i18n', 'home.nav.login');
-            document.getElementById('auth-btn').innerText = window.t ? window.t('home.nav.login', 'LOG IN / REGISTER') : "LOG IN / REGISTER";
-            document.getElementById('auth-btn').onclick = openLogin;
             closeAccountMenu();
+            document.getElementById('sys-account-menu').hidden = true;
 
         }
 

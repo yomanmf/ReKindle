@@ -1170,9 +1170,9 @@
                 style="display:none; border-left: 1px solid black;">Exit</div>
         </div>
         <div class="sys-menu-right">
-            <div class="sys-account-menu" id="sys-account-menu">
-                <div class="sys-menu-item" id="auth-btn" onclick="openLogin()" data-i18n="home.nav.login"
-                    aria-haspopup="true" aria-expanded="false" style="border-left: 1px solid black;">LOG IN</div>
+            <div class="sys-account-menu" id="sys-account-menu" hidden>
+                <div class="sys-menu-item" id="auth-btn" aria-haspopup="true" aria-expanded="false"
+                    style="border-left: 1px solid black;"></div>
                 <div class="account-menu-dropdown" id="account-menu-dropdown" hidden>
                     <button type="button" onclick="closeAccountMenu(); openLogoutModal()">Log Out</button>
                 </div>
@@ -1472,6 +1472,7 @@
                             displayUser = user.email.replace("@rekindle.ink", "");
                         }
 
+                        document.getElementById('sys-account-menu').hidden = false;
                         document.getElementById('auth-btn').removeAttribute('data-i18n');
                         document.getElementById('auth-btn').innerText = displayUser;
                         document.getElementById('auth-btn').onclick = toggleAccountMenu;
@@ -1509,10 +1510,8 @@
             localStorage.removeItem('rekindle_uid');
             openLogin();
 
-            document.getElementById('auth-btn').setAttribute('data-i18n', 'home.nav.login');
-            document.getElementById('auth-btn').innerText = window.t ? window.t('home.nav.login', 'LOG IN / REGISTER') : "LOG IN / REGISTER";
-            document.getElementById('auth-btn').onclick = openLogin;
             closeAccountMenu();
+            document.getElementById('sys-account-menu').hidden = true;
 
         }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v52'; // Retire the dashboard guest-mode control
+const CACHE_NAME = 'rekindle-cache-v53'; // Hide the redundant signed-out account control
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

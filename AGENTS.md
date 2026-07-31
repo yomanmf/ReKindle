@@ -343,9 +343,11 @@ is intentionally static, and the old dashboard no longer has its former info
 button. Do not restore `openAbout`, `about-modal`, or their locale keys.
 
 The dashboards have no guest-mode label or control. Signed-out users stay
-behind the mandatory login wall. After sign-in, the username occupies the
-former Log Out `#auth-btn` slot; tapping it toggles `#account-menu-dropdown`,
-whose Log Out action opens the existing confirmation modal.
+behind the mandatory login wall, and `#sys-account-menu` remains hidden: do not
+restore a redundant Log In / Register control outside the modal. After sign-in,
+the username occupies the former Log Out `#auth-btn` slot; tapping it toggles
+`#account-menu-dropdown`, whose Log Out action opens the existing confirmation
+modal.
 
 **Dashboard top-spacing gotcha:** `index.html` keeps `.desktop-wrapper` aligned
 to the top of the body's content box instead of vertically centering it. The
