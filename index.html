@@ -1256,7 +1256,7 @@
         </div>
     </div>
 
-    <div id="login-modal" class="modal-overlay">
+    <div id="login-modal" class="modal-overlay" style="display:flex" role="dialog" aria-modal="true">
             <div class="modal-box">
                 <h2>Login / Register</h2>
                 <p id="login-msg" style="font-size:0.8rem; margin-bottom:15px;">Enter your username &amp; password.</p>
@@ -1265,10 +1265,6 @@
                 <div style="display: flex; justify-content: center">
                     <button class="sys-btn" onclick="doLogin()">Login</button>
                     <button class="sys-btn" onclick="doRegister()" style="margin-left: 10px">Register</button>
-                </div>
-                <div style="margin-top:15px;">
-                    <button style="border:none; background:none; text-decoration:underline; cursor:pointer;"
-                        onclick="closeModal('login-modal')">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1570,6 +1566,7 @@
 
         function handleGuestMode() {
             localStorage.removeItem('rekindle_uid');
+            openLogin();
 
             document.getElementById('user-display').innerText = window.t ? window.t('home.guest_mode', 'Guest Mode') : "Guest Mode";
             document.getElementById('auth-btn').innerText = window.t ? window.t('home.nav.login', 'LOG IN / REGISTER') : "LOG IN / REGISTER";
@@ -1986,7 +1983,10 @@
         }
 
         function openLogoutModal() { document.getElementById('logout-modal').style.display = 'flex'; }
-        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        function closeModal(modalId) {
+            if (modalId === 'login-modal' && (!auth || !auth.currentUser)) return;
+            document.getElementById(modalId).style.display = 'none';
+        }
         function showGenericModal(title, message) {
             document.getElementById('generic-title').innerText = title;
             document.getElementById('generic-msg').innerText = message;

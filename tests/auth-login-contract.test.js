@@ -18,3 +18,13 @@ test("Kindle dashboards keep login visible until the server check succeeds", fun
     });
     assert.match(fs.readFileSync(path.join(root, "index_old.html"), "utf8"), /js\/rekindle-cloud\.js\?v=2/);
 });
+
+test("Kindle dashboards keep signed-out users behind the login wall", function () {
+    ["index.html", "index_old.html"].forEach(function (file) {
+        var source = fs.readFileSync(path.join(root, file), "utf8");
+        assert.match(source, /id="login-modal"[^>]*style="display:flex"[^>]*aria-modal="true"/);
+        assert.doesNotMatch(source, /onclick="closeModal\('login-modal'\)"/);
+        assert.match(source, /function handleGuestMode\(\) \{[\s\S]*?openLogin\(\);/);
+        assert.match(source, /modalId === 'login-modal' && \(!auth \|\| !auth\.currentUser\)/);
+    });
+});
