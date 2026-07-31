@@ -7,7 +7,7 @@ const APPS_BETA = [
         name: 'Books to Kindle',
         cat: 'lifestyle',
         desc: 'Find books and send them to Kindle.',
-        icon: '<path d="M2 21h14v6H2z" fill="white" stroke="black" stroke-width="2"/><path d="M4 14h12v6H4z" fill="black" stroke="black" stroke-width="2"/><path d="M2 7h13v6H2z" fill="white" stroke="black" stroke-width="2"/><path d="M18 3h12v26H18z" fill="white" stroke="black" stroke-width="2"/><path d="M21 6h6v16h-6zM22 25h4" fill="none" stroke="black" stroke-width="2"/><path d="M13 15h7v-3l4 4-4 4v-3h-7z" fill="black" stroke="white" stroke-width="1"/>'
+        icon: '<path d="M3 12h7c3 0 6 2 6 5v11c0-3-3-5-6-5H3zM29 12h-7c-3 0-6 2-6 5v11c0-3 3-5 6-5h7z"/><path d="M16 2v11M11 8l5 5 5-5"/>'
     },
     {
         id: 'mangakindle',

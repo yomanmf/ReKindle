@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v43'; // Refresh Books to Kindle icon
+const CACHE_NAME = 'rekindle-cache-v44'; // Refresh Books to Kindle icon
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=11',
-    './icons-beta.js?v=8',
+    './icons-beta.js?v=9',
     './theme.js?v=22',
     './logo.svg',
     './manifest.json',
