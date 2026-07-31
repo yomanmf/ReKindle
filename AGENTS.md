@@ -663,6 +663,9 @@ button itself is 48px and transparent; `.close-box::after` draws the smaller
 System 7 square. Use the same pattern when a compact visual control still needs
 a real 48px hit box. `bookskindle.html` also uses `data-no-scale`: global zoom
 below 1 otherwise shrinks every nominal 48px control below the Kindle minimum.
+Keep `#kindle-change-panel` outside `.content-area` as the compact, non-scrolling
+footer above the status bar; the button remains 48px tall but must not regain
+the full-width `.wide-button` class.
 
 **Yandex service identity:** Yandex Foundation Models, Vision OCR, Object Storage, and other managed APIs should use the Cloud Function service-account token exposed as `context.token.access_token`. Keep the function's service-account roles minimal and pass `x-data-logging-enabled: false` for AI/OCR requests containing user content.
 

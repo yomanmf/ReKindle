@@ -36,6 +36,10 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     assert.doesNotMatch(client, /byId\("kindle-panel"\)\.hidden = !signedIn/);
     assert.match(client, /byId\("kindle-panel"\)\.hidden = result\.connected === true/);
     assert.match(client, /byId\("kindle-change-panel"\)\.hidden = result\.connected !== true/);
+    assert.match(html, /\.change-action\s*\{[^}]*justify-content:\s*center[^}]*flex-shrink:\s*0/s);
+    assert.match(html, /class="sys-btn primary"[^>]*id="kindle-change"/);
+    assert.doesNotMatch(html, /class="[^"]*wide-button[^"]*"[^>]*id="kindle-change"/);
+    assert.match(html, /<\/div>\s*<section class="change-action" id="kindle-change-panel" hidden>/);
     ["queued", "running", "ready", "sent", "failed", "canceled"].forEach(function (status) {
         assert.match(client, new RegExp(status + ": '<"));
     });

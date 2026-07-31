@@ -152,6 +152,7 @@
         .sys-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
         .close-box:active::after { transform: translate(2px, 2px); box-shadow: none; }
         .wide-button { width: 100%; }
+        .change-action { display: flex; justify-content: center; padding: 10px 16px; flex-shrink: 0; }
 
         .button-row, .status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
         .button-row { margin-top: 12px; }
@@ -286,11 +287,11 @@
                     <button class="sys-btn" type="button" id="job-action"></button>
                 </div>
             </section>
-
-            <section class="panel" id="kindle-change-panel" hidden>
-                <button class="sys-btn primary wide-button" type="button" id="kindle-change" data-i18n="bookskindle.change">Change address</button>
-            </section>
         </div>
+
+        <section class="change-action" id="kindle-change-panel" hidden>
+            <button class="sys-btn primary" type="button" id="kindle-change" data-i18n="bookskindle.change">Change address</button>
+        </section>
 
         <div class="status-bar" id="status-bar" data-i18n="bookskindle.loading">Loading Books to Kindle...</div>
     </main>
