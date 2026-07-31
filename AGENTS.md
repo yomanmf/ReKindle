@@ -581,6 +581,19 @@ URLs and Kindle addresses out of public job responses, keep all three
 collections denied in `firestore.rules`, and reuse the existing worker secret
 only through the backend's timing-safe bearer check.
 
+**Firebase Auth sessions are API-key scoped:** Every checked-in authenticated
+page, including `bookskindle.html`, must use the
+`__REKINDLE_FIREBASE_API_KEY__` placeholder. A hard-coded key can initialize the
+same Firebase project but read a different local Auth persistence slot, making
+an already signed-in user appear signed out. Let
+`yandex/prepare-frontend-release.js` inject the shared production key.
+
+**Scope cross-feature route tests:** The shared API Gateway contains actions
+for several Kindle applications. A contract for one application must inspect
+that application's route block or service instead of rejecting an action name
+across the entire Gateway; `kindle-status`, for example, belongs to Books to
+Kindle and must not fail Manga to Kindle tests.
+
 **Small title-bar touch targets:** A transparent pseudo-element around a 20px
 `.close-box` is not a reliable touch target in the Kindle browser, and its top
 can also be clipped by `.window { overflow: hidden; }`. In Books to Kindle, the

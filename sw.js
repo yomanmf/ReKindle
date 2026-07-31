@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v41'; // Add Books to Kindle
+const CACHE_NAME = 'rekindle-cache-v42'; // Fix Books to Kindle shared sign-in
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=11',
-    './icons-beta.js?v=6',
+    './icons-beta.js?v=7',
     './theme.js?v=22',
     './logo.svg',
     './manifest.json',

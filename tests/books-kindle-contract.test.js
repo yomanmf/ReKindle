@@ -22,6 +22,8 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     assert.doesNotMatch(html + client, /[\u{1F300}-\u{1FAFF}]/u);
     assert.doesNotMatch(client, /\?\.|\?\?/);
     assert.doesNotMatch(html + client, /telegram/i);
+    assert.match(html, /apiKey:\s*"__REKINDLE_FIREBASE_API_KEY__"/);
+    assert.doesNotMatch(html, /apiKey:\s*"AIza/);
     assert.doesNotMatch(html, /display:\s*flex[^}]*\bgap\s*:/s);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
     assert.match(client, /setInterval\([^]*8000\)/);
@@ -43,12 +45,13 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
     assert.match(rules, /match \/books_kindle_jobs\/\{jobId\}[\s\S]*?allow read, write: if false/);
     assert.match(rules, /match \/books_kindle_settings\/\{userId\}[\s\S]*?allow read, write: if false/);
     assert.match(catalog, /id:\s*['"]bookskindle['"][\s\S]{0,500}<path/);
+    assert.doesNotMatch(catalog, /id:\s*['"]bookskindle['"][\s\S]{0,160}beta:\s*true/);
     ["bookskindle.html", "js/bookskindle.js", "locales/bookskindle-en.json", "locales/bookskindle-ru.json"].forEach(function (file) {
         assert.ok(manifest.includes(file), file);
     });
-    assert.match(read("index.html"), /icons-beta\.js\?v=6/);
-    assert.match(read("index_old.html"), /icons-beta\.js\?v=6/);
-    assert.match(read("sw.js"), /rekindle-cache-v41/);
+    assert.match(read("index.html"), /icons-beta\.js\?v=7/);
+    assert.match(read("index_old.html"), /icons-beta\.js\?v=7/);
+    assert.match(read("sw.js"), /rekindle-cache-v42/);
 });
 
 test("Books to Kindle ships English and Russian UI contracts", function () {
