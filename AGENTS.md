@@ -626,6 +626,10 @@ hundreds of author-result pages; scanning all of them leaves the web job in
 its title/author fallbacks. `start_search` must issue the exact book query before
 author discovery so an unavailable catalog fails after one network timeout
 instead of serially exhausting every author and fallback request.
+If an author feed has another page and the bounded lookup finds no books, pass
+`firstPageOnly: true` through the worker result and public job. The frontend
+must translate that flag into an explicit prompt to search by a more specific
+title instead of showing the generic no-results message.
 
 **Firebase Auth sessions are API-key scoped:** Every checked-in authenticated
 page, including `bookskindle.html`, must use the

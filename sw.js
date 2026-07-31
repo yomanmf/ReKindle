@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v47'; // Refine Kindle Digest icon
+const CACHE_NAME = 'rekindle-cache-v48'; // Explain first-page-only book searches
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

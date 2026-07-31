@@ -78,6 +78,7 @@ test("Books to Kindle searches and delivers through the private worker queue", a
     });
     var ready = (await user("status", { id: search.job.id })).job;
     assert.equal(ready.state, "ready");
+    assert.equal(ready.firstPageOnly, false);
     assert.deepEqual(ready.results[0].formats, ["EPUB"]);
     assert.equal(ready.results[0].epubUrl, undefined);
 
@@ -88,6 +89,16 @@ test("Books to Kindle searches and delivers through the private worker queue", a
     await worker("progress", { id: search.job.id, phase: "sending", message: "Sending" });
     await worker("finish", { id: search.job.id, format: "epub" });
     assert.equal((await user("status", { id: search.job.id })).job.state, "sent");
+
+    var limitedSearch = await user("search", { query: "Unknown Book" });
+    await worker("search-results", {
+        id: limitedSearch.job.id,
+        results: [],
+        firstPageOnly: true
+    });
+    var limitedReady = (await user("status", { id: limitedSearch.job.id })).job;
+    assert.equal(limitedReady.state, "ready");
+    assert.equal(limitedReady.firstPageOnly, true);
 });
 
 test("Books to Kindle rejects unknown users and invalid worker data", async function () {

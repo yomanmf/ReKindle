@@ -120,7 +120,11 @@
         }
         setStatusValue(byId("job-state"), job.state, stateLabel(job.state));
         setText(byId("job-book"), job.selectedBook ? job.selectedBook.title : job.query);
-        setText(byId("job-detail"), job.error || job.message || "");
+        var detail = job.error || job.message || "";
+        if (job.state === "ready" && job.firstPageOnly === true && !(job.results || []).length) {
+            detail = translate("bookskindle.first_page_only", "No books were found on the first page of results. Try a more specific title.");
+        }
+        setText(byId("job-detail"), detail);
         renderResults(job.state === "ready" ? job.results || [] : []);
 
         var action = byId("job-action");

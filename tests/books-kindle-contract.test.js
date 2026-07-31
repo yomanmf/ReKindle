@@ -38,7 +38,8 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     });
     assert.match(client, /setStatusValue\(byId\("job-state"\), job\.state/);
     assert.match(html, /\.status-icon\s*\{/);
-    assert.match(html, /js\/bookskindle\.js\?v=4/);
+    assert.match(html, /js\/bookskindle\.js\?v=5/);
+    assert.match(client, /job\.firstPageOnly === true/);
 });
 
 test("Books to Kindle is routed, catalogued, isolated, and released", function () {
@@ -63,13 +64,13 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
     });
     assert.match(read("index.html"), /icons-beta\.js\?v=9/);
     assert.match(read("index_old.html"), /icons-beta\.js\?v=9/);
-    assert.match(read("sw.js"), /rekindle-cache-v47/);
+    assert.match(read("sw.js"), /rekindle-cache-v48/);
 });
 
 test("Books to Kindle ships English and Russian UI contracts", function () {
     ["en", "ru"].forEach(function (language) {
         var locale = JSON.parse(read("locales/bookskindle-" + language + ".json"));
-        ["bookskindle.title", "bookskindle.search", "bookskindle.save", "bookskindle.change", "bookskindle.cancel", "bookskindle.retry"].forEach(function (key) {
+        ["bookskindle.title", "bookskindle.search", "bookskindle.save", "bookskindle.change", "bookskindle.cancel", "bookskindle.retry", "bookskindle.first_page_only"].forEach(function (key) {
             assert.ok(locale[key], language + ": " + key);
         });
         assert.equal(locale["bookskindle.legal"], undefined);

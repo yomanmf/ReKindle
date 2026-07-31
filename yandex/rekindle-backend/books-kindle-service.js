@@ -208,11 +208,13 @@ async function finishSearch(firestore, body) {
     var job = await jobById(firestore, body.id);
     if (job.cancelRequested || job.state === "canceled") return { cancelRequested: true };
     var results = Array.isArray(body.results) ? body.results.slice(0, 20).map(validateWorkerBook) : [];
+    var firstPageOnly = body.firstPageOnly === true && results.length === 0;
     await firestore.collection(JOBS_COLLECTION).doc(job.id).update({
         state: "ready",
         phase: "ready",
         message: results.length ? "Choose a book." : "No books found.",
         results: results,
+        firstPageOnly: firstPageOnly,
         updatedAt: Date.now()
     });
     return { ok: true, count: results.length };
@@ -294,6 +296,7 @@ function publicJob(job) {
         state: job.state,
         phase: job.phase,
         message: job.message || "",
+        firstPageOnly: job.firstPageOnly === true,
         results: Array.isArray(job.results) ? job.results.map(publicBook) : [],
         selectedBook: job.selectedBook ? publicBook(job.selectedBook) : null,
         error: job.error || null,
