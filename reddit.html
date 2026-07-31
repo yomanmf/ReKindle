@@ -779,6 +779,7 @@
             async request(endpoint, options) {
                 options = options || {};
                 const silent = options.silent === true;
+                const showLoading = !silent && options.showLoading !== false;
                 const skipThrottle = options.skipThrottle === true;
                 const requestId = ++this.currentRequestId;
                 var now = Date.now();
@@ -792,7 +793,7 @@
                     ui.hideRateLimitMessage();
                 }
 
-                if (!silent) document.getElementById('loading-indicator').innerText = 'Loading...';
+                if (showLoading) document.getElementById('loading-indicator').innerText = 'Loading...';
                 let path = endpoint;
                 let query = "";
 
@@ -819,9 +820,9 @@
                             throw new Error('Request superseded');
                         }
 
-                        if (!silent) document.getElementById('loading-indicator').style.display = 'inline';
+                        if (showLoading) document.getElementById('loading-indicator').style.display = 'inline';
                         const res = await fetch(target);
-                        if (!silent) document.getElementById('loading-indicator').style.display = 'none';
+                        if (showLoading) document.getElementById('loading-indicator').style.display = 'none';
 
                         if (requestId !== this.currentRequestId) {
                             throw new Error('Request superseded');
@@ -847,14 +848,14 @@
                     } catch (e) {
                         lastError = e;
                         if (e.message && e.message.indexOf('superseded') !== -1) {
-                            if (!silent) document.getElementById('loading-indicator').style.display = 'none';
+                            if (showLoading) document.getElementById('loading-indicator').style.display = 'none';
                             throw e;
                         }
                         console.warn('Proxy ' + proxy + ' failed:', e);
                     }
                 }
 
-                if (!silent) document.getElementById('loading-indicator').style.display = 'none';
+                if (showLoading) document.getElementById('loading-indicator').style.display = 'none';
                 let msg = "Connection failed.";
                 if (lastStatus === 404) {
                     msg = "Reddit proxy endpoint was not found. Check the Yandex API Gateway configuration.";
@@ -882,7 +883,7 @@
 
             async getThread(permalink) {
                 const cleanLink = permalink.replace(/\/$/, "");
-                return this.request(cleanLink, { skipThrottle: true });
+                return this.request(cleanLink, { skipThrottle: true, showLoading: false });
             },
 
             async getThreadRoots(permalink, options) {
@@ -892,7 +893,7 @@
 
             async getThreadJson(permalink) {
                 const cleanLink = permalink.replace(/\/$/, "");
-                return this.request(cleanLink + '.json?raw_json=1&limit=200&depth=10', { skipThrottle: true });
+                return this.request(cleanLink + '.json?raw_json=1&limit=200&depth=10', { skipThrottle: true, showLoading: false });
             }
         };
 

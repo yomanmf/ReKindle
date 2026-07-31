@@ -25,8 +25,23 @@ function createApi(fetchImpl) {
         URL: URL
     };
     vm.runInNewContext(source, context);
+    context.api.indicator = indicator;
     return context.api;
 }
+
+test('keeps the toolbar loading label hidden while opening a thread', async function () {
+    var displays = [];
+    var api = createApi(async function () {
+        return { ok: true, status: 200, text: async function () { return 'ok'; } };
+    });
+    Object.defineProperty(api.indicator.style, 'display', {
+        set: function (value) { displays.push(value); }
+    });
+
+    await api.getThread('/r/test/comments/abc/example/');
+    await api.getThreadJson('/r/test/comments/abc/example/');
+    assert.deepEqual(displays, []);
+});
 
 test('loads the versioned Reddit comment helper used by progressive enrichment', function () {
     assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=4"><\/script>/);

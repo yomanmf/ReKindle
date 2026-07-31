@@ -389,6 +389,11 @@ Or use a small helper that replaces all `${key}` occurrences. Many existing HTML
 The markup can be created before the locale JSON resolves; without the
 attribute, the English fallback remains after the rest of the page is translated.
 
+**Reddit loading-indicator gotcha:** `reddit.html` uses the toolbar indicator for
+feed requests, but thread requests already render their own loading state in
+`#content-area`. Pass `showLoading: false` for thread RSS/JSON requests; do not
+use `silent`, because it also suppresses rate-limit handling.
+
 **Translated-control identity gotcha:** Never derive application state from a
 translated label (for example, comparing a tab's `innerText` with `"agenda"`).
 Russian translation changes the label and breaks the comparison. Keep a stable
