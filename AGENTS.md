@@ -342,6 +342,11 @@ The dashboard About modal is also retired. The ReKindle logo in `index.html`
 is intentionally static, and the old dashboard no longer has its former info
 button. Do not restore `openAbout`, `about-modal`, or their locale keys.
 
+The dashboards have no guest-mode label or control. Signed-out users stay
+behind the mandatory login wall. After sign-in, the username occupies the
+former Log Out `#auth-btn` slot; tapping it toggles `#account-menu-dropdown`,
+whose Log Out action opens the existing confirmation modal.
+
 **Dashboard top-spacing gotcha:** `index.html` keeps `.desktop-wrapper` aligned
 to the top of the body's content box instead of vertically centering it. The
 body's top padding tracks the scaled 35px system menu bar via
@@ -1281,7 +1286,7 @@ restore it operationally on the uploader instead of redirecting the user.
 ## Git Workflow
 
 **Dashboard login wall:** `index.html` and `index_old.html` keep the existing
-`#login-modal` hidden until Firebase resolves, then `handleGuestMode()` opens it
+`#login-modal` hidden until Firebase resolves, then `requireLogin()` opens it
 only for signed-out or offline users. Keep both dashboards synchronized: the
 wall must have no cancel action, and `closeModal()` must refuse to hide it
 without `auth.currentUser`. Bump the `sw.js` cache when changing the wall so the

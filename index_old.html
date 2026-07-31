@@ -142,15 +142,6 @@
             margin: 0;
         }
 
-        .user-info {
-            font-size: 0.75rem;
-            margin-top: 5px;
-            font-family: monospace;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
         .nav-menu {
             flex-grow: 1;
             padding: 20px 10px;
@@ -185,6 +176,40 @@
 
         .nav-item.hidden {
             display: none;
+        }
+
+        .nav-account-menu {
+            position: relative;
+        }
+
+        .account-menu-dropdown {
+            position: absolute;
+            right: 0;
+            bottom: 100%;
+            min-width: 140px;
+            margin-bottom: 4px;
+            background: white;
+            border: 2px solid black;
+            box-shadow: 2px 2px 0 black;
+            z-index: 3;
+        }
+
+        .account-menu-dropdown button {
+            width: 100%;
+            min-height: 48px;
+            padding: 0 12px;
+            border: 0;
+            background: white;
+            color: black;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .account-menu-dropdown button:active {
+            background: black;
+            color: white;
         }
 
         #exit-btn {
@@ -743,6 +768,10 @@
                 display: none !important;
             }
 
+            .nav-menu>.nav-account-menu {
+                display: none !important;
+            }
+
             .nav-menu div[style*="flex-grow:1"] {
                 display: none;
             }
@@ -915,7 +944,6 @@
         <div class="sidebar">
             <div class="system-header">
                 <h1 class="os-title">ReKindle</h1>
-                <div class="user-info" id="user-display" data-i18n="home.guest_mode">Guest Mode</div>
             </div>
 
             <div class="nav-menu">
@@ -925,7 +953,13 @@
                 <div style="flex-grow:1"></div>
 
                 <div class="nav-item" onclick="location.href='settings'" data-i18n="home.nav.settings">Settings</div>
-                <div class="nav-item" id="auth-btn" onclick="openLogin()" data-i18n="home.nav.login">LOG IN / REGISTER</div>
+                <div class="nav-account-menu" id="sys-account-menu">
+                    <div class="nav-item" id="auth-btn" onclick="openLogin()" data-i18n="home.nav.login"
+                        aria-haspopup="true" aria-expanded="false">LOG IN / REGISTER</div>
+                    <div class="account-menu-dropdown" id="account-menu-dropdown" hidden>
+                        <button type="button" onclick="closeAccountMenu(); openLogoutModal()">Log Out</button>
+                    </div>
+                </div>
                 <div class="nav-item" id="exit-btn" onclick="window.close()" data-i18n="home.nav.exit">Exit</div>
             </div>
         </div>
@@ -1113,33 +1147,33 @@
                         if (user.email.endsWith("@rekindle.ink")) {
                             displayUser = user.email.replace("@rekindle.ink", "");
                         }
-                        document.getElementById('user-display').innerText = "User: " + displayUser;
-                        document.getElementById('auth-btn').innerText = "Log Out";
-                        document.getElementById('auth-btn').onclick = openLogoutModal;
+                        document.getElementById('auth-btn').removeAttribute('data-i18n');
+                        document.getElementById('auth-btn').innerText = displayUser;
+                        document.getElementById('auth-btn').onclick = toggleAccountMenu;
 
                         if (!loginSecurityCheckPending) closeModal('login-modal');
 
                         monitorUserProfile(user.uid);
                     } else {
-                        handleGuestMode();
+                        requireLogin();
                     }
                 });
             } else {
-                handleGuestMode();
-                document.getElementById('user-display').innerText = "Offline Mode";
+                requireLogin();
             }
             updateNavVisibility();
         };
 
-        // ... [Helper functions like handleGuestMode, updateNavVisibility, etc. remain unchanged] ...
+        // ... [Helper functions like requireLogin, updateNavVisibility, etc. remain unchanged] ...
 
-        function handleGuestMode() {
+        function requireLogin() {
             localStorage.removeItem('rekindle_uid');
             openLogin();
 
-            document.getElementById('user-display').innerText = window.t ? window.t('home.guest_mode', 'Guest Mode') : "Guest Mode";
+            document.getElementById('auth-btn').setAttribute('data-i18n', 'home.nav.login');
             document.getElementById('auth-btn').innerText = window.t ? window.t('home.nav.login', 'LOG IN / REGISTER') : "LOG IN / REGISTER";
             document.getElementById('auth-btn').onclick = openLogin;
+            closeAccountMenu();
 
         }
 
@@ -1416,6 +1450,19 @@
             document.getElementById('folder-modal').style.display = 'flex';
         }
 
+        function toggleAccountMenu() {
+            const menu = document.getElementById('account-menu-dropdown');
+            menu.hidden = !menu.hidden;
+            document.getElementById('auth-btn').setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
+        }
+        function closeAccountMenu() {
+            document.getElementById('account-menu-dropdown').hidden = true;
+            document.getElementById('auth-btn').setAttribute('aria-expanded', 'false');
+        }
+        document.addEventListener('click', event => {
+            const accountMenu = document.getElementById('sys-account-menu');
+            if (accountMenu && !accountMenu.contains(event.target)) closeAccountMenu();
+        });
         function openLogoutModal() { document.getElementById('logout-modal').style.display = 'flex'; }
         function closeModal(modalId) {
             if (modalId === 'login-modal' && (!auth || !auth.currentUser)) return;

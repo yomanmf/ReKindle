@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v51'; // Avoid login-wall flash for signed-in users
+const CACHE_NAME = 'rekindle-cache-v52'; // Retire the dashboard guest-mode control
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

@@ -25,8 +25,17 @@ test("Kindle dashboards keep signed-out users behind the login wall", function (
         assert.match(source, /id="login-modal"[^>]*aria-modal="true"/);
         assert.doesNotMatch(source, /id="login-modal"[^>]*style="display:flex"/);
         assert.doesNotMatch(source, /onclick="closeModal\('login-modal'\)"/);
-        assert.match(source, /function handleGuestMode\(\) \{[\s\S]*?openLogin\(\);/);
+        assert.match(source, /function requireLogin\(\) \{[\s\S]*?openLogin\(\);/);
+        assert.doesNotMatch(source, /home\.guest_mode|Guest Mode|handleGuestMode/);
         assert.match(source, /modalId === 'login-modal' && \(!auth \|\| !auth\.currentUser\)/);
     });
-    assert.match(fs.readFileSync(path.join(root, "sw.js"), "utf8"), /rekindle-cache-v51/);
+    assert.match(fs.readFileSync(path.join(root, "sw.js"), "utf8"), /rekindle-cache-v52/);
+});
+
+test("signed-in dashboard puts the username in the rightmost account menu", function () {
+    ["index.html", "index_old.html"].forEach(function (file) {
+        var source = fs.readFileSync(path.join(root, file), "utf8");
+        assert.match(source, /id="auth-btn"[\s\S]*?id="account-menu-dropdown" hidden[\s\S]*?>Log Out<\/button>/);
+        assert.match(source, /getElementById\('auth-btn'\)\.innerText = displayUser;[\s\S]*?onclick = toggleAccountMenu;/);
+    });
 });
