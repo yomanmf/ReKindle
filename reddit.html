@@ -594,7 +594,7 @@
     <script src="theme.js?v=22"></script>
     <script src="js/i18n.js"></script>
     <script src="js/rekindle-cloud.js"></script>
-    <script src="js/reddit-comments.js?v=3"></script>
+    <script src="js/reddit-comments.js?v=4"></script>
     <script src="js/reddit-feed-settings.js?v=1"></script>
 </head>
 
@@ -1664,6 +1664,8 @@
 
                     if (post.contentHtml) {
                         let body = this.decodeHtml(post.contentHtml);
+                        const previewUrl = window.RekindleRedditComments.findPostPreviewUrl(body);
+                        const contentUrl = window.RekindleRedditComments.findPostContentUrl(body);
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = body.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 
@@ -1679,8 +1681,12 @@
                         if (remainingText.length > 0) {
                             body = this.processCommentHtml(tempDiv.innerHTML);
                             html += `<div class="thread-body">${body}</div>`;
-                        } else if (post.permalink) {
-                            html += `<div class="thread-body"><a href="https://www.reddit.com${post.permalink}" target="_blank" style="color:blue; text-decoration:underline;">[Open Post on Reddit]</a></div>`;
+                        } else if (previewUrl) {
+                            const previewSrc = REDDIT_PROXY_ENDPOINT + '?url=' + encodeURIComponent(previewUrl);
+                            html += `<div class="thread-body"><img src="${escapeHtml(previewSrc)}" alt="${escapeHtml(post.title)}" class="comment-img" style="max-width:100%; display:block; border:2px solid black;"></div>`;
+                        } else if (contentUrl) {
+                            const openLabel = window.t ? window.t('browser.btn.open', 'Open') : 'Open';
+                            html += `<div class="thread-body"><a href="${escapeHtml(contentUrl)}" style="color:blue; text-decoration:underline;">[<span data-i18n="browser.btn.open">${escapeHtml(openLabel)}</span>]</a></div>`;
                         }
                     }
 

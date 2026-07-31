@@ -35,6 +35,17 @@
         return '<p>' + escapeHtml(text).replace(/\r?\n/g, '<br>') + '</p>';
     }
 
+    function findPostPreviewUrl(html) {
+        var match = String(html || '').match(/<img\b[^>]*\bsrc=['"]([^'"]*)['"]/i);
+        return match ? decodeHtmlEntities(match[1]) : '';
+    }
+
+    function findPostContentUrl(html) {
+        var match = String(html || '').match(/<a\b[^>]*\bhref=['"]([^'"]*)['"][^>]*>\s*\[link\]\s*<\/a>/i);
+        var value = match ? decodeHtmlEntities(match[1]) : '';
+        return /^https?:\/\//i.test(value) ? value : '';
+    }
+
     function appendComments(children, depth, output) {
         if (!Array.isArray(children)) return;
 
@@ -146,6 +157,8 @@
         getNextRootIndex: getNextRootIndex,
         findPostIndex: findPostIndex,
         getNextPostIndex: getNextPostIndex,
-        markTopLevelComments: markTopLevelComments
+        markTopLevelComments: markTopLevelComments,
+        findPostPreviewUrl: findPostPreviewUrl,
+        findPostContentUrl: findPostContentUrl
     };
 }));

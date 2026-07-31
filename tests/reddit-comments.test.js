@@ -94,6 +94,18 @@ test('returns an empty thread for malformed data', function () {
     assert.deepEqual(commentsParser.parseThread('{}'), { post: null, comments: [] });
 });
 
+test('extracts the RSS preview used when Reddit blocks the post page', function () {
+    var html = '<table><a href="https://old.reddit.com/r/test/comments/abc/"><img src="https://preview.redd.it/post.jpeg?width=640&amp;auto=webp"></a><a href="https://example.com/story?ref=reddit&amp;view=full">[link]</a></table>';
+
+    assert.equal(
+        commentsParser.findPostPreviewUrl(html),
+        'https://preview.redd.it/post.jpeg?width=640&auto=webp'
+    );
+    assert.equal(commentsParser.findPostPreviewUrl('<p>Text post</p>'), '');
+    assert.equal(commentsParser.findPostContentUrl(html), 'https://example.com/story?ref=reddit&view=full');
+    assert.equal(commentsParser.findPostContentUrl('<a href="javascript:bad()">[link]</a>'), '');
+});
+
 test('tracks the current root while scrolling and advances one root at a time', function () {
     var rootTops = [300, 700, 1100];
 

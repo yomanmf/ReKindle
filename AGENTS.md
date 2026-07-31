@@ -1134,6 +1134,13 @@ returns `403` through the production proxy, while both RSS variants remain
 available; do not make JSON the primary thread source without verifying the
 deployed proxy first.
 
+Reddit also returns `403` for individual HTML permalinks from Yandex even when
+their RSS feeds work. Media-only RSS entries include a preview image inside the
+metadata table; extract that URL before removing the table and render it through
+the dedicated Reddit proxy. Do not replace the preview with an "Open Post on
+Reddit" link to the same permalink, because Browser's article extractor will
+only repeat the blocked HTML request.
+
 The page flattens the reply tree in document order and stores `depth` plus
 `isTopLevel` on each parsed comment. Rendered top-level comments have
 `data-root-comment="true"`; the bottom-right navigation button uses those markers
