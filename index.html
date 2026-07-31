@@ -913,20 +913,6 @@
             flex-direction: column;
             margin-bottom: 15px;
         }
-        .dashboard-agenda-header {
-            align-items: center;
-        }
-        .dashboard-agenda-refresh {
-            min-height: 40px;
-            margin-top: 0;
-            margin-left: 15px;
-            padding: 0 14px;
-            flex-shrink: 0;
-        }
-        .dashboard-agenda-refresh:disabled {
-            box-shadow: none;
-            color: #666;
-        }
         .dashboard-agenda-list > * + * { margin-top: 8px; }
         .dash-header-row > * + * { margin-left: 15px; }
         .dashboard-agenda-item {
@@ -1204,10 +1190,8 @@
 
                     <div class="home-widgets" id="home-widgets">
                         <div class="dashboard-widget dashboard-calendar-widget">
-                            <div class="dashboard-widget-title dashboard-agenda-header">
+                            <div class="dashboard-widget-title">
                                 <span id="db-agenda-title" data-i18n="dashboard.agenda.today">Today Events</span>
-                                <button id="db-agenda-refresh" class="sys-btn dashboard-agenda-refresh" type="button"
-                                    onclick="refreshDashboardAgenda(this)" data-i18n="common.refresh">Refresh</button>
                             </div>
                             <div class="dashboard-agenda-list" id="db-agenda-list">
                                 <div style="text-align:center; font-style:italic; font-size:0.9rem;"
@@ -2659,15 +2643,6 @@
             listEl.innerHTML = html;
         }
 
-        function refreshDashboardAgenda(button) {
-            button.disabled = true;
-            fetchDashboardAgenda().then(function () {
-                button.disabled = false;
-            }, function () {
-                button.disabled = false;
-            });
-        }
-
         let dashboardAgendaEvents = [];
 
         function escapeDashboardText(value) {
@@ -2720,7 +2695,6 @@
         window.changeDashboardCalendar = changeDashboardCalendar;
         window.selectDashboardCalendarDay = selectDashboardCalendarDay;
         window.showDashboardAgendaEvent = showDashboardAgendaEvent;
-        window.refreshDashboardAgenda = refreshDashboardAgenda;
         window.scrollDashboardWeatherHours = scrollDashboardWeatherHours;
         window.scrollDashboardWeatherDays = scrollDashboardWeatherDays;
     })();
