@@ -594,6 +594,11 @@ window, while the large calendar request can time out before `GetItem` returns.
 `calendar.html` requests only the visible day or month (with timezone padding),
 and reloads Exchange when those views navigate. Keep agenda look-ahead bounded.
 
+**Dashboard Exchange auth-race gotcha:** `index.html` can render the agenda
+before Firebase restores `currentUser`. When Exchange is selected, keep the
+agenda empty during that transient state; do not show a misleading sign-in
+message while the mandatory login session is still loading.
+
 **Oracle custom-provider routing:** The old Worker ignored the provider-specific `endpoint` from `chat.html` and always called OpenAI. The Yandex implementation in `yandex/rekindle-backend/index.js` fixes this with an explicit provider endpoint allowlist. Keep model listing and inference on the same validated endpoint policy, and never allow loopback, link-local, or private-network targets.
 
 **Billing and supporter subsystem retired (July 2026):** ReKindle+ access checks,

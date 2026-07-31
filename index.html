@@ -2439,7 +2439,7 @@
             try {
                 if (exchangeEnabled) {
                     if (!currentUser) {
-                        listEl.innerHTML = '<div data-i18n="calendar.exchange.signin_required" style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Sign in to load Exchange Calendar.</div>';
+                        listEl.innerHTML = '';
                         return;
                     }
                     let queryStart = new Date(y, m, d - 1);
