@@ -5,7 +5,7 @@
   "mangakindle.refresh": "Обновить",
   "mangakindle.find": "Найти мангу",
   "mangakindle.query": "Название",
-  "mangakindle.query_placeholder": "The Fable",
+  "mangakindle.query_placeholder": "Берсерк",
   "mangakindle.search": "Искать",
   "mangakindle.send_title": "Отправить на Kindle",
   "mangakindle.from": "С главы",
@@ -18,10 +18,10 @@
   "mangakindle.processing": "Обработка",
   "mangakindle.delivery": "Доставка",
   "mangakindle.ready": "Готово",
-  "mangakindle.error_title": "Ошибка Manga to Kindle",
-  "mangakindle.close": "OK",
-  "mangakindle.error_connection": "Не удалось подключиться к Manga to Kindle.",
-  "mangakindle.loading": "Загружаю Manga to Kindle...",
+  "mangakindle.error_title": "Ошибка отправки манги на Kindle",
+  "mangakindle.close": "ОК",
+  "mangakindle.error_connection": "Не удалось подключиться к сервису отправки манги на Kindle.",
+  "mangakindle.loading": "Загружаю сервис манги для Kindle...",
   "mangakindle.searching": "Ищу...",
   "mangakindle.choose": "Выберите произведение.",
   "mangakindle.not_found": "Ничего не найдено.",
@@ -41,5 +41,6 @@
   "mangakindle.failed": "Ошибка",
   "mangakindle.cancelled": "Отменено",
   "mangakindle.sent": "Отправлено",
-  "mangakindle.no_files": "Файлов пока нет."
+  "mangakindle.no_files": "Файлов пока нет.",
+  "mangakindle.job_failed": "Не удалось обработать мангу."
 }

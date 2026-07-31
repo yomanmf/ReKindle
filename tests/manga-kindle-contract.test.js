@@ -29,6 +29,9 @@ test("Manga to Kindle is a Kindle-safe direct control UI", function () {
     assert.doesNotMatch(html, /display:\s*flex[^}]*\bgap\s*:/s);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
     assert.match(client, /setInterval\([^]*10000\)/);
+    assert.match(html, /js\/mangakindle\.js\?v=4/);
+    assert.doesNotMatch(client, /job\.progress/);
+    assert.doesNotMatch(client, /file\.status/);
 });
 
 test("Manga to Kindle is routed, catalogued, and released", function () {
@@ -48,14 +51,15 @@ test("Manga to Kindle is routed, catalogued, and released", function () {
     });
     assert.match(read("index.html"), /icons-beta\.js\?v=9/);
     assert.match(read("index_old.html"), /icons-beta\.js\?v=9/);
-    assert.match(read("sw.js"), /rekindle-cache-v47/);
+    assert.match(read("sw.js"), /rekindle-cache-v51/);
 });
 
 test("Manga to Kindle ships English and Russian UI contracts", function () {
     ["en", "ru"].forEach(function (language) {
         var locale = JSON.parse(read("locales/mangakindle-" + language + ".json"));
-        ["mangakindle.title", "mangakindle.search", "mangakindle.send", "mangakindle.cancel", "mangakindle.retry"].forEach(function (key) {
+        ["mangakindle.title", "mangakindle.search", "mangakindle.send", "mangakindle.cancel", "mangakindle.retry", "mangakindle.job_failed"].forEach(function (key) {
             assert.ok(locale[key], language + ": " + key);
         });
     });
+    assert.equal(JSON.parse(read("locales/mangakindle-ru.json"))["mangakindle.close"], "ОК");
 });

@@ -26,8 +26,8 @@
     function terminal(job) { return job && ["ready", "sent", "failed", "canceled"].indexOf(job.state) !== -1; }
 
     function setStatus(value) { setText(byId("status-bar"), statusText(value)); }
-    function showError(error) {
-        setText(byId("error-message"), error && error.message || translate("bookskindle.error_connection", "Could not reach Books to Kindle."));
+    function showError() {
+        setText(byId("error-message"), translate("bookskindle.error_connection", "Could not reach Books to Kindle."));
         byId("error-modal").style.display = "flex";
     }
     function closeError() { byId("error-modal").style.display = "none"; }
@@ -121,7 +121,7 @@
         }
         setStatusValue(byId("job-state"), job.state, stateLabel(job.state));
         setText(byId("job-book"), job.selectedBook ? job.selectedBook.title : job.query);
-        var detail = job.error || job.message || "";
+        var detail = jobDetail(job);
         if (job.state === "failed" && job.error === "Flibusta search is unavailable") {
             detail = translate("bookskindle.catalog_unavailable", "The book catalog is temporarily unavailable. Try again later.");
         } else if (job.state === "ready" && !(job.results || []).length) {
@@ -145,6 +145,18 @@
             action.onclick = null;
         }
         if (terminal(job)) stopPolling(); else startPolling();
+    }
+
+    function jobDetail(job) {
+        var phases = {
+            searching: translate("bookskindle.phase_searching", "Searching the catalog"),
+            downloading: translate("bookskindle.phase_downloading", "Downloading the book"),
+            converting: translate("bookskindle.phase_converting", "Converting the book"),
+            cover: translate("bookskindle.phase_cover", "Preparing the cover"),
+            sending: translate("bookskindle.phase_sending", "Sending to Kindle")
+        };
+        if (job.state === "failed") return translate("bookskindle.job_failed", "The book could not be processed.");
+        return phases[job.phase] || stateLabel(job.state);
     }
 
     function renderResults(items) {

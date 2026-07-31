@@ -80,9 +80,10 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
 test("Books to Kindle ships English and Russian UI contracts", function () {
     ["en", "ru"].forEach(function (language) {
         var locale = JSON.parse(read("locales/bookskindle-" + language + ".json"));
-        ["bookskindle.title", "bookskindle.search", "bookskindle.save", "bookskindle.change", "bookskindle.cancel", "bookskindle.retry", "bookskindle.no_results", "bookskindle.first_page_only", "bookskindle.catalog_unavailable"].forEach(function (key) {
+        ["bookskindle.title", "bookskindle.search", "bookskindle.save", "bookskindle.change", "bookskindle.cancel", "bookskindle.retry", "bookskindle.no_results", "bookskindle.first_page_only", "bookskindle.catalog_unavailable", "bookskindle.phase_searching", "bookskindle.job_failed"].forEach(function (key) {
             assert.ok(locale[key], language + ": " + key);
         });
         assert.equal(locale["bookskindle.legal"], undefined);
     });
+    assert.equal(JSON.parse(read("locales/bookskindle-ru.json"))["bookskindle.title"], "Книги на Kindle");
 });

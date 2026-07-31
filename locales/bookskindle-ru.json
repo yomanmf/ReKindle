@@ -1,5 +1,5 @@
 {
-  "bookskindle.title": "Books to Kindle",
+  "bookskindle.title": "Книги на Kindle",
   "bookskindle.signin": "Войдите в ReKindle, чтобы отправлять книги.",
   "bookskindle.signin_button": "Открыть вход",
   "bookskindle.kindle": "Доставка на Kindle",
@@ -19,10 +19,10 @@
   "bookskindle.state": "Состояние",
   "bookskindle.book": "Книга",
   "bookskindle.refresh": "Обновить",
-  "bookskindle.loading": "Загрузка Books to Kindle...",
-  "bookskindle.error_title": "Ошибка Books to Kindle",
+  "bookskindle.loading": "Загрузка книг для Kindle...",
+  "bookskindle.error_title": "Ошибка отправки книг на Kindle",
   "bookskindle.ok": "ОК",
-  "bookskindle.error_connection": "Не удалось подключиться к Books to Kindle.",
+  "bookskindle.error_connection": "Не удалось подключиться к сервису отправки книг на Kindle.",
   "bookskindle.ready": "Готово",
   "bookskindle.saved": "Адрес Kindle сохранён.",
   "bookskindle.forgotten": "Адрес Kindle удалён.",
@@ -46,5 +46,11 @@
   "bookskindle.canceled": "Отменено",
   "bookskindle.no_results": "Книги не найдены.",
   "bookskindle.first_page_only": "На первой странице результатов книги не найдены. Попробуйте указать более точное название.",
-  "bookskindle.catalog_unavailable": "Каталог книг временно недоступен. Попробуйте повторить позже."
+  "bookskindle.catalog_unavailable": "Каталог книг временно недоступен. Попробуйте повторить позже.",
+  "bookskindle.phase_searching": "Поиск в каталоге",
+  "bookskindle.phase_downloading": "Загрузка книги",
+  "bookskindle.phase_converting": "Преобразование книги",
+  "bookskindle.phase_cover": "Подготовка обложки",
+  "bookskindle.phase_sending": "Отправка на Kindle",
+  "bookskindle.job_failed": "Не удалось обработать книгу."
 }

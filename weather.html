@@ -6,7 +6,7 @@
         content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <meta charset="UTF-8">
 
-    <title>Weather</title>
+    <title data-i18n="app.weather.name">Weather</title>
     <style>
         /* SYSTEM 7 AESTHETICS */
         :root {
@@ -814,7 +814,7 @@
         <div class="modal-box">
             <h3 data-i18n="weather.modal.title">Locations</h3>
 
-            <div id="saved-list" class="saved-locations-list">Loading locations...</div>
+            <div id="saved-list" class="saved-locations-list" data-i18n="weather.status.loading_locations">Loading locations...</div>
 
             <input type="text" id="city-input" placeholder="Search city..." data-i18n-placeholder="weather.ph.city"
                 autocomplete="off" oninput="handleSearchInput(this.value)">
@@ -1190,7 +1190,7 @@
             div.innerHTML = '';
 
             if (!userSettings.locations || userSettings.locations.length === 0) {
-                div.innerHTML = '<div style="padding:10px; color:#666;">No locations saved.</div>';
+                div.innerHTML = '<div style="padding:10px; color:#666;" data-i18n="weather.status.no_locations">' + window.t('weather.status.no_locations', 'No locations saved.') + '</div>';
                 return;
             }
 
@@ -1267,7 +1267,7 @@
                 .then(data => {
                     if (data && data.features && data.features.length > 0) {
                         currentAlertData = data.features[0].properties;
-                        alertBanner.innerText = `⚠️ ${currentAlertData.event}`;
+                        alertBanner.innerText = window.t('weather.alert.prefix', 'Alert:') + ' ' + currentAlertData.event;
                         alertBanner.style.display = 'inline-block';
                     }
                 })
@@ -1278,8 +1278,8 @@
 
         function openAlertModal() {
             if (!currentAlertData) return;
-            document.getElementById('alert-title').innerText = currentAlertData.event || "Alert";
-            document.getElementById('alert-content').innerText = currentAlertData.description || currentAlertData.headline || "No details available.";
+            document.getElementById('alert-title').innerText = currentAlertData.event || window.t('weather.alert.title', 'Alert');
+            document.getElementById('alert-content').innerText = currentAlertData.description || currentAlertData.headline || window.t('weather.alert.no_details', 'No details available.');
             document.getElementById('alert-modal-overlay').style.display = 'flex';
         }
 
@@ -1567,6 +1567,8 @@
                     .catch(e => console.error(e));
             }, 500);
         }
+
+        document.addEventListener('rekindle:i18n:ready', updateUI);
 
 
 

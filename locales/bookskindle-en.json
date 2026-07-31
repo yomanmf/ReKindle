@@ -46,5 +46,11 @@
   "bookskindle.canceled": "Canceled",
   "bookskindle.no_results": "No books found.",
   "bookskindle.first_page_only": "No books were found on the first page of results. Try a more specific title.",
-  "bookskindle.catalog_unavailable": "The book catalog is temporarily unavailable. Try again later."
+  "bookskindle.catalog_unavailable": "The book catalog is temporarily unavailable. Try again later.",
+  "bookskindle.phase_searching": "Searching the catalog",
+  "bookskindle.phase_downloading": "Downloading the book",
+  "bookskindle.phase_converting": "Converting the book",
+  "bookskindle.phase_cover": "Preparing the cover",
+  "bookskindle.phase_sending": "Sending to Kindle",
+  "bookskindle.job_failed": "The book could not be processed."
 }

@@ -34,7 +34,7 @@
     function setStatus(value) { setText(byId("status-bar"), value); }
 
     function showError(error) {
-        setText(byId("error-message"), error && error.message || translate("kindledigest.error_connection", "Could not reach the Kindle Digest service."));
+        setText(byId("error-message"), error && error.localized ? error.message : translate("kindledigest.error_connection", "Could not reach the Kindle Digest service."));
         byId("error-modal").style.display = "flex";
     }
 
@@ -118,14 +118,14 @@
         event.preventDefault();
         var days = Number(byId("lookback-days").value);
         if (!Number.isInteger(days) || days < 1 || days > 30) {
-            showError({ message: translate("kindledigest.error_days", "Recent days must be from 1 to 30.") });
+            showError({ localized: true, message: translate("kindledigest.error_days", "Recent days must be from 1 to 30.") });
             return;
         }
         var mode = selected("mode");
         var sourceId = mode === "daily" ? byId("source-select").value : "";
         var customUrl = byId("custom-url").value.trim();
         if (mode === "daily" && sourceId === "custom" && !/^https?:\/\//i.test(customUrl)) {
-            showError({ message: translate("kindledigest.error_url", "Enter a complete HTTP or HTTPS source URL.") });
+            showError({ localized: true, message: translate("kindledigest.error_url", "Enter a complete HTTP or HTTPS source URL.") });
             return;
         }
         setBusy(true);
@@ -175,7 +175,7 @@
         var delivery = deliveryState(job);
         setStatusValue(byId("collection-state"), collection.icon, collection.text);
         setStatusValue(byId("delivery-state"), delivery.icon, delivery.text);
-        setText(byId("collection-detail"), job.message || job.sourceLabel || "");
+        setText(byId("collection-detail"), job.sourceLabel || "");
         setText(byId("delivery-detail"), resultText(job));
 
         var action = byId("job-action-button");
@@ -211,16 +211,16 @@
     }
 
     function resultText(job) {
-        if (job.error) return job.error;
+        if (job.error) return translate("kindledigest.failed_detail", "The digest could not be prepared.");
         if (!job.result) return "";
         return String(job.result.articleCount || 0) + " " + translate("kindledigest.articles", "articles") + ", " + formatBytes(job.result.sizeBytes || 0);
     }
 
     function formatBytes(value) {
         var bytes = Number(value || 0);
-        if (bytes < 1024) return bytes + " B";
-        if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
-        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+        if (bytes < 1024) return bytes + " " + translate("kindledigest.bytes", "B");
+        if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " " + translate("kindledigest.kilobytes", "KB");
+        return (bytes / (1024 * 1024)).toFixed(1) + " " + translate("kindledigest.megabytes", "MB");
     }
 
     function renderHistory(items) {

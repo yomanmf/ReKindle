@@ -171,6 +171,12 @@ test("dashboard nests the two-player folder inside the Games folder", function (
     assert.match(weather, /models=ecmwf_ec46_ensemble_mean/);
     assert.match(weather, /function scrollHourly\(direction\)/);
     assert.match(weather, /row\.href = 'weather\?date='/);
+    assert.match(weather, /weather\.status\.no_locations/);
+    assert.doesNotMatch(weather, /⚠️/);
+    var russianWeather = JSON.parse(read("locales/ru.json"));
+    ["weather.label.high", "weather.label.low", "weather.status.loading_locations", "weather.alert.no_details", "weather.city.new york", "weather.city.london"].forEach(function (key) {
+        assert.ok(russianWeather[key], key);
+    });
     assertInlineScriptsParse("weather.html");
 });
 

@@ -371,6 +371,11 @@ Or use a small helper that replaces all `${key}` occurrences. Many existing HTML
 The markup can be created before the locale JSON resolves; without the
 attribute, the English fallback remains after the rest of the page is translated.
 
+**Translated-control identity gotcha:** Never derive application state from a
+translated label (for example, comparing a tab's `innerText` with `"agenda"`).
+Russian translation changes the label and breaks the comparison. Keep a stable
+`data-*` value such as `data-view="agenda"` and compare that instead.
+
 ### Icons (SVG)
 Icons are stored as raw SVG strings in `icons.js`.
 *   **Size:** Designed for **32x32** pixel grid.

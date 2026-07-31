@@ -28,7 +28,7 @@
 
     function setStatus(value) { setText(byId("status-bar"), value); }
     function showError(error) {
-        setText(byId("error-message"), error && error.message || translate("mangakindle.error_connection", "Could not reach Manga to Kindle."));
+        setText(byId("error-message"), error && error.localized ? error.message : translate("mangakindle.error_connection", "Could not reach Manga to Kindle."));
         byId("error-modal").style.display = "flex";
     }
     function closeError() { byId("error-modal").style.display = "none"; }
@@ -117,7 +117,7 @@
         var from = boundary(byId("from-chapter").value, "first");
         var to = boundary(byId("to-chapter").value, "latest");
         if (!from || !to || (from !== "first" && to !== "latest" && Number(from) > Number(to))) {
-            showError({ message: translate("mangakindle.error_range", "Enter a valid chapter range.") });
+            showError({ localized: true, message: translate("mangakindle.error_range", "Enter a valid chapter range.") });
             return;
         }
         byId("send-button").disabled = true;
@@ -155,7 +155,7 @@
         byId("job-panel").hidden = !job;
         if (!job) return stopPolling();
         setStatusValue(byId("job-state"), stateInfo(job.status));
-        setText(byId("job-progress"), job.title + "\n" + (job.progress || ""));
+        setText(byId("job-progress"), job.title + "\n" + stateInfo(job.status).text);
         setStatusValue(byId("delivery-state"), deliveryInfo(job));
         setText(byId("job-files"), fileText(job.files || [], job.error));
 
@@ -196,9 +196,9 @@
     }
 
     function fileText(files, error) {
-        if (error) return error;
+        if (error) return translate("mangakindle.job_failed", "The manga could not be processed.");
         if (!files.length) return translate("mangakindle.no_files", "No files yet.");
-        return files.map(function (file) { return file.filename + " - " + file.status; }).join("\n");
+        return files.map(function (file) { return file.filename; }).join("\n");
     }
 
     async function cancelJob() {

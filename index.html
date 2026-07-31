@@ -1179,13 +1179,13 @@
                             </div>
                             <div class="dashboard-agenda-list" id="db-agenda-list">
                                 <div style="text-align:center; font-style:italic; font-size:0.9rem;"
-                                    data-i18n="weather.status.loading">Loading...</div>
+                                    data-i18n="common.loading">Loading...</div>
                             </div>
                             <div class="dashboard-widget-title">
                                 <span id="db-calendar-title">
                                     <span style="cursor:pointer; padding: 0 5px;"
                                         onclick="changeDashboardCalendar(-1)">&lt;</span>
-                                    <span id="db-calendar-month-text">Calendar</span>
+                                    <span id="db-calendar-month-text" data-i18n="app.calendar.name">Calendar</span>
                                     <span style="cursor:pointer; padding: 0 5px;"
                                         onclick="changeDashboardCalendar(1)">&gt;</span>
                                 </span>
@@ -2239,7 +2239,11 @@
                     } catch(e) {}
                 }
                 const lEl = document.getElementById('db-weather-loc');
-                if (lEl) lEl.textContent = locName;
+                if (lEl) {
+                    const locKey = 'weather.city.' + locName.toLowerCase();
+                    lEl.setAttribute('data-i18n', locKey);
+                    lEl.textContent = window.t ? window.t(locKey, locName) : locName;
+                }
                 
                 const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=auto&temperature_unit=' + unit;
                 const monthlyUrl = 'https://seasonal-api.open-meteo.com/v1/seasonal?latitude=' + lat + '&longitude=' + lon + '&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=30&timezone=auto&temperature_unit=' + unit + '&models=ecmwf_ec46_ensemble_mean';
@@ -2279,7 +2283,7 @@
                         dw.textContent = window.t ? window.t(descKey, desc) : desc;
                     }
                     if (hl && data.daily && data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
-                        hl.textContent = "H:" + Math.round(data.daily.temperature_2m_max[0]) + "° L:" + Math.round(data.daily.temperature_2m_min[0]) + "°";
+                        hl.innerHTML = '<span data-i18n="weather.label.high">' + (window.t ? window.t('weather.label.high', 'High') : 'High') + '</span>: ' + Math.round(data.daily.temperature_2m_max[0]) + '° <span data-i18n="weather.label.low">' + (window.t ? window.t('weather.label.low', 'Low') : 'Low') + '</span>: ' + Math.round(data.daily.temperature_2m_min[0]) + '°';
                     }
 
                     const hourlyContainer = document.getElementById('db-weather-hourly');
@@ -2338,7 +2342,10 @@
                 }
             } catch (e) {
                 const dw = document.getElementById('db-weather-desc');
-                if (dw) dw.textContent = "Unavailable";
+                if (dw) {
+                    dw.setAttribute('data-i18n', 'weather.status.error');
+                    dw.textContent = window.t ? window.t('weather.status.error', 'Unavailable') : 'Unavailable';
+                }
             }
         }
 
@@ -2391,7 +2398,7 @@
         async function fetchDashboardAgenda() {
             const listEl = document.getElementById('db-agenda-list');
             if (!listEl) return;
-            listEl.innerHTML = '<div style="text-align:center; font-style:italic; font-size:0.9rem;">Loading...</div>';
+            listEl.innerHTML = '<div data-i18n="common.loading" style="text-align:center; font-style:italic; font-size:0.9rem;">' + (window.t ? window.t('common.loading', 'Loading...') : 'Loading...') + '</div>';
             
             let calendarProvider = localStorage.getItem('rekindle_calendar_provider');
             let exchangeEnabled = calendarProvider === 'exchange';
@@ -2418,14 +2425,14 @@
                 } else {
                     subTitle.removeAttribute('data-i18n');
                     let dateStr = window.rekindleFormatWallDate ? window.rekindleFormatWallDate(startOfDay, {month: 'short', day: 'numeric'}) : startOfDay.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
-                    subTitle.innerText = dateStr + (window.t ? " " + window.t('dashboard.agenda.events', 'Events') : " Events");
+                    subTitle.innerText = dateStr + " " + (window.t ? window.t('dashboard.agenda.events', 'Events') : 'Events');
                 }
             }
 
             try {
                 if (exchangeEnabled) {
                     if (!currentUser) {
-                        listEl.innerHTML = '<div style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Sign in to load Exchange Calendar.</div>';
+                        listEl.innerHTML = '<div data-i18n="calendar.exchange.signin_required" style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Sign in to load Exchange Calendar.</div>';
                         return;
                     }
                     let queryStart = new Date(y, m, d - 1);
@@ -2490,7 +2497,7 @@
                             } while (pageToken);
                         }
                         if (hasAuthError) {
-                            listEl.innerHTML = '<div style="text-align:center; color:#555; padding: 10px; font-size:0.8rem;">Session expired.<br>Please open the Calendar app to reconnect.</div>';
+                            listEl.innerHTML = '<div data-i18n-html="calendar.exchange.session_expired" style="text-align:center; color:#555; padding: 10px; font-size:0.8rem;">Session expired.<br>Please open the Calendar app to reconnect.</div>';
                             return;
                         }
                     }
@@ -2541,7 +2548,7 @@
                 }
             } catch(e) {
                 if (exchangeEnabled) {
-                    listEl.innerHTML = '<div style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Exchange Calendar is unavailable.<br>Open Calendar to reconnect.</div>';
+                    listEl.innerHTML = '<div data-i18n-html="calendar.exchange.reconnect" style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Exchange Calendar is unavailable.<br>Open Calendar to reconnect.</div>';
                     return;
                 }
             }
@@ -2566,13 +2573,13 @@
 
             let html = '';
             events.forEach((e, eventIndex) => {
-                let timeStr = "All Day";
+                let timeStr = window.t ? window.t('calendar.event.all_day', 'All day') : 'All day';
                 if (!e.isAllDay) {
                     timeStr = formatDashboardEventTime(e.start);
                 }
                 html += `<div class="dashboard-agenda-item" onclick="showDashboardAgendaEvent(${eventIndex})">
                             <div class="dashboard-agenda-time">${timeStr}</div>
-                            <div class="dashboard-agenda-title">${escapeDashboardText(e.title || 'Untitled event')}</div>
+                            <div class="dashboard-agenda-title">${escapeDashboardText(e.title || (window.t ? window.t('calendar.event.untitled', 'Untitled event') : 'Untitled event'))}</div>
                          </div>`;
             });
             listEl.innerHTML = html;
@@ -2587,12 +2594,12 @@
         function showDashboardAgendaEvent(index) {
             const event = dashboardAgendaEvents[index];
             if (!event) return;
-            let time = event.isAllDay ? 'All day' : formatDashboardEventTime(event.start, event.end);
+            let time = event.isAllDay ? (window.t ? window.t('calendar.event.all_day', 'All day') : 'All day') : formatDashboardEventTime(event.start, event.end);
             let details = time;
-            if (event.location) details += '\nLocation: ' + event.location;
-            if (event.organizer) details += '\nOrganizer: ' + event.organizer;
-            details += '\n\n' + (event.description || 'No description.');
-            showGenericModal(event.title || 'Untitled event', details);
+            if (event.location) details += '\n' + (window.t ? window.t('calendar.event.location', 'Location:') : 'Location:') + ' ' + event.location;
+            if (event.organizer) details += '\n' + (window.t ? window.t('calendar.event.organizer', 'Organizer:') : 'Organizer:') + ' ' + event.organizer;
+            details += '\n\n' + (event.description || (window.t ? window.t('calendar.event.no_description', 'No description.') : 'No description.'));
+            showGenericModal(event.title || (window.t ? window.t('calendar.event.untitled', 'Untitled event') : 'Untitled event'), details);
         }
 
         function formatDashboardEventTime(start, end) {
@@ -2613,6 +2620,10 @@
                 fetchDashboardWeather();
                 document.addEventListener('rekindle:i18n:ready', function () {
                     renderDashboardCalendar();
+                    fetchDashboardAgenda();
+                    const location = document.getElementById('db-weather-loc');
+                    const locationKey = location && location.getAttribute('data-i18n');
+                    if (locationKey) location.textContent = window.t(locationKey, location.textContent);
                 });
             }
             renderDashboardCalendar();

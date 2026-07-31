@@ -985,7 +985,7 @@
                         <span id="db-calendar-title">
                             <span style="cursor:pointer; padding: 0 5px;"
                                 onclick="changeDashboardCalendar(-1)">&lt;</span>
-                            <span id="db-calendar-month-text">Calendar</span>
+                            <span id="db-calendar-month-text" data-i18n="app.calendar.name">Calendar</span>
                             <span style="cursor:pointer; padding: 0 5px;"
                                 onclick="changeDashboardCalendar(1)">&gt;</span>
                         </span>
@@ -1601,7 +1601,11 @@
                     } catch (e) {}
                 }
                 const locEl = document.getElementById('db-weather-loc');
-                if (locEl) locEl.textContent = locName;
+                if (locEl) {
+                    const locKey = 'weather.city.' + locName.toLowerCase();
+                    locEl.setAttribute('data-i18n', locKey);
+                    locEl.textContent = window.t ? window.t(locKey, locName) : locName;
+                }
 
                 const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=auto&temperature_unit=' + unit;
                 const monthlyUrl = 'https://seasonal-api.open-meteo.com/v1/seasonal?latitude=' + lat + '&longitude=' + lon + '&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=30&timezone=auto&temperature_unit=' + unit + '&models=ecmwf_ec46_ensemble_mean';
@@ -1621,7 +1625,7 @@
                 const weatherDesc = document.getElementById('db-weather-desc');
                 weatherDesc.setAttribute('data-i18n', getDashboardWeatherDescriptionKey(code));
                 weatherDesc.textContent = getDashboardWeatherDescription(code);
-                document.getElementById('db-weather-highlow').textContent = 'H:' + Math.round(data.daily.temperature_2m_max[0]) + '° L:' + Math.round(data.daily.temperature_2m_min[0]) + '°';
+                document.getElementById('db-weather-highlow').innerHTML = '<span data-i18n="weather.label.high">' + (window.t ? window.t('weather.label.high', 'High') : 'High') + '</span>: ' + Math.round(data.daily.temperature_2m_max[0]) + '° <span data-i18n="weather.label.low">' + (window.t ? window.t('weather.label.low', 'Low') : 'Low') + '</span>: ' + Math.round(data.daily.temperature_2m_min[0]) + '°';
                 const currentIcon = document.getElementById('db-weather-icon');
                 currentIcon.innerHTML = getDashboardWeatherIcon(code);
                 currentIcon.style.display = 'block';
@@ -1734,6 +1738,9 @@
                 fetchHomeWeather();
                 document.addEventListener('rekindle:i18n:ready', function () {
                     renderHomeCalendar();
+                    const location = document.getElementById('db-weather-loc');
+                    const locationKey = location && location.getAttribute('data-i18n');
+                    if (locationKey) location.textContent = window.t(locationKey, location.textContent);
                 });
             }
         }

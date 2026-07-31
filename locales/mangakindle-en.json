@@ -41,5 +41,6 @@
   "mangakindle.failed": "Failed",
   "mangakindle.cancelled": "Cancelled",
   "mangakindle.sent": "Sent",
-  "mangakindle.no_files": "No files yet."
+  "mangakindle.no_files": "No files yet.",
+  "mangakindle.job_failed": "The manga could not be processed."
 }

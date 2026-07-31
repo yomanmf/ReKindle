@@ -24,7 +24,7 @@
   "kindledigest.refresh": "Обновить",
   "kindledigest.history": "Недавние задания",
   "kindledigest.ready": "Готово",
-  "kindledigest.loading": "Загрузка Kindle Digest...",
+  "kindledigest.loading": "Загрузка дайджеста для Kindle...",
   "kindledigest.existing": "Уже есть незавершённое задание.",
   "kindledigest.queued": "Дайджест добавлен в очередь.",
   "kindledigest.submit_failed": "Не удалось добавить дайджест в очередь.",
@@ -43,9 +43,13 @@
   "kindledigest.canceled": "Отменено",
   "kindledigest.not_sent": "Не отправлено",
   "kindledigest.articles": "статей",
-  "kindledigest.error_title": "Ошибка Kindle Digest",
-  "kindledigest.error_connection": "Не удалось подключиться к сервису Kindle Digest.",
+  "kindledigest.error_title": "Ошибка дайджеста для Kindle",
+  "kindledigest.error_connection": "Не удалось подключиться к сервису дайджестов для Kindle.",
   "kindledigest.error_days": "Период должен быть от 1 до 30 дней.",
   "kindledigest.error_url": "Введите полный адрес источника с http:// или https://.",
-  "kindledigest.close": "OK"
+  "kindledigest.close": "ОК",
+  "kindledigest.failed_detail": "Не удалось подготовить дайджест.",
+  "kindledigest.bytes": "Б",
+  "kindledigest.kilobytes": "КБ",
+  "kindledigest.megabytes": "МБ"
 }

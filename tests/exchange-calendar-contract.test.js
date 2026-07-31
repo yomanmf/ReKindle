@@ -63,3 +63,17 @@ test("both dashboard calendars start the week on Monday", function () {
         assert.doesNotMatch(dashboard, /new Date\(2024, 0, 7 \+ weekday\)/);
     });
 });
+
+test("calendar and dashboard agenda expose Russian UI contracts", function () {
+    var calendar = read("calendar.html");
+    var dashboard = read("index.html");
+    var ru = JSON.parse(read("locales/ru.json"));
+    [
+        "calendar.btn.today", "calendar.modal.edit", "calendar.event.all_day",
+        "calendar.event.no_description", "calendar.status.syncing", "calendar.style.dark",
+        "calendar.exchange.session_expired", "dashboard.agenda.events"
+    ].forEach(function (key) { assert.ok(ru[key], key); });
+    assert.match(calendar, /data-view="agenda"/);
+    assert.match(calendar, /calendar\.event\.no_upcoming/);
+    assert.match(dashboard, /calendar\.exchange\.session_expired/);
+});

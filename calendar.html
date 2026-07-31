@@ -6,7 +6,7 @@
         content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <meta charset="UTF-8">
 
-    <title>Calendar</title>
+    <title data-i18n="app.calendar.name">Calendar</title>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -939,7 +939,7 @@
             <div class="title-controls">
                 <button class="add-btn" id="add-btn" onclick="openAddModal()" data-i18n="calendar.btn.add">+
                     Add</button>
-                <button class="icon-btn" onclick="toggleFullScreen()" title="Full Screen">
+                <button class="icon-btn" onclick="toggleFullScreen()" title="Full Screen" data-i18n-title="calendar.btn.fullscreen">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
                         stroke-linecap="square" stroke-linejoin="miter">
                         <path class="icon-expand" d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1"></path>
@@ -950,9 +950,9 @@
         </div>
 
         <div class="tabs">
-            <div class="tab-btn active" onclick="switchView('agenda')" data-i18n="calendar.tab.agenda">Agenda</div>
-            <div class="tab-btn" onclick="switchView('day')" data-i18n="calendar.tab.day">Day</div>
-            <div class="tab-btn" onclick="switchView('month')" data-i18n="calendar.tab.month">Month</div>
+            <div class="tab-btn active" data-view="agenda" onclick="switchView('agenda')" data-i18n="calendar.tab.agenda">Agenda</div>
+            <div class="tab-btn" data-view="day" onclick="switchView('day')" data-i18n="calendar.tab.day">Day</div>
+            <div class="tab-btn" data-view="month" onclick="switchView('month')" data-i18n="calendar.tab.month">Month</div>
         </div>
 
         <div id="content-area"></div>
@@ -963,9 +963,9 @@
                 <button class="sys-btn" id="source-btn-bottom" onclick="openSyncChoice()"
                     style="margin-right:5px;" data-i18n="calendar.btn.source">Source</button>
                 <button class="sys-btn" id="today-btn-bottom" onclick="goToToday()"
-                    style="display:none; margin-right:5px;">Today</button>
+                    style="display:none; margin-right:5px;" data-i18n="calendar.btn.today">Today</button>
                 <button class="sys-btn" id="cal-list-btn-bottom" onclick="openCalendarListModal()"
-                    style="display:none; margin-right:5px;">Calendars</button>
+                    style="display:none; margin-right:5px;" data-i18n="calendar.btn.calendars">Calendars</button>
                 <button class="sys-btn" onclick="refreshData()" data-i18n="calendar.btn.sync">Sync</button>
             </div>
         </div>
@@ -983,31 +983,31 @@
         <div class="modal-box window-style">
             <div class="title-bar">
                 <div class="title-stripes"></div>
-                <span class="title-text" id="modal-title">New Event</span>
+                <span class="title-text" id="modal-title" data-i18n="calendar.modal.new">New Event</span>
             </div>
             <div class="modal-content">
                 <div class="input-group">
-                    <label>Event</label>
+                    <label data-i18n="calendar.field.event">Event</label>
                     <input type="text" id="evt-title" placeholder="Untitled Event"
                         data-i18n-placeholder="calendar.modal.ph.title">
                 </div>
 
                 <div class="input-group" id="calendar-select-group" style="display:none;">
-                    <label>Calendar</label>
+                    <label data-i18n="calendar.field.calendar">Calendar</label>
                     <select id="evt-calendar-select"
                         style="width:100%; padding:8px; border:2px solid black; font-family:inherit;"></select>
                 </div>
 
                 <div class="input-group">
-                    <label>Date</label>
+                    <label data-i18n="calendar.field.date">Date</label>
                     <input type="date" id="evt-date">
                 </div>
 
                 <div class="input-group">
-                    <label>Time</label>
+                    <label data-i18n="calendar.field.time">Time</label>
                     <div class="time-inputs">
                         <input type="time" id="evt-time">
-                        <span class="to-label">to</span>
+                        <span class="to-label" data-i18n="calendar.field.to">to</span>
                         <input type="time" id="evt-end-time">
                     </div>
                 </div>
@@ -1016,7 +1016,7 @@
                     <button class="sys-btn" onclick="saveEvent()" data-i18n="btn.save">Save</button>
                     <div id="modal-del-btn" style="display:none;">
                         <button class="sys-btn" style="color:red;"
-                            onclick="deleteEvent(editingEventId); document.getElementById('modal-overlay').style.display='none'">Delete</button>
+                            onclick="deleteEvent(editingEventId); document.getElementById('modal-overlay').style.display='none'" data-i18n="common.delete">Delete</button>
                     </div>
                     <button class="sys-btn" onclick="document.getElementById('modal-overlay').style.display='none'"
                         data-i18n="btn.cancel">Cancel</button>
@@ -1031,7 +1031,7 @@
         <div class="modal-box window-style">
             <div class="title-bar">
                 <div class="title-stripes"></div>
-                <span class="title-text">Calendars</span>
+                <span class="title-text" data-i18n="calendar.btn.calendars">Calendars</span>
                 <div class="close-box" onclick="document.querySelectorAll('.style-dropdown').forEach(d=>d.remove()); document.getElementById('calendar-list-modal').style.display='none'">X
                 </div>
             </div>
@@ -1040,9 +1040,9 @@
                     <!-- Checkboxes injected here -->
                 </div>
                 <div class="modal-btns">
-                    <button class="sys-btn" onclick="saveCalendarSelection()">Save</button>
+                    <button class="sys-btn" onclick="saveCalendarSelection()" data-i18n="btn.save">Save</button>
                     <button class="sys-btn"
-                        onclick="document.querySelectorAll('.style-dropdown').forEach(d=>d.remove()); document.getElementById('calendar-list-modal').style.display='none'">Cancel</button>
+                        onclick="document.querySelectorAll('.style-dropdown').forEach(d=>d.remove()); document.getElementById('calendar-list-modal').style.display='none'" data-i18n="btn.cancel">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1122,6 +1122,22 @@
     <script>
         // --- FIREBASE CONFIG ---
         // --- CONFIG ---
+        function translate(key, fallback) {
+            return typeof window.t === 'function' ? window.t(key, fallback) : fallback;
+        }
+
+        function setTranslatedText(id, key, fallback) {
+            const element = document.getElementById(id);
+            element.setAttribute('data-i18n', key);
+            element.textContent = translate(key, fallback);
+        }
+
+        function setTranslatedStatus(key, fallback, suffix) {
+            const element = document.getElementById('status-msg');
+            element.removeAttribute('data-i18n');
+            element.innerHTML = '<span data-i18n="' + key + '">' + escapeHtml(translate(key, fallback)) + '</span>' + escapeHtml(suffix || '');
+        }
+
         function showModal(msg, isConfirm = false, callback = null) {
             const overlay = document.getElementById('generic-modal-overlay');
             const messageEl = document.getElementById('modal-message');
@@ -1138,7 +1154,7 @@
                 document.getElementById('modal-cancel').onclick = () => { overlay.style.display = 'none'; if (callback) callback(false); };
                 document.getElementById('modal-ok').onclick = () => { overlay.style.display = 'none'; if (callback) callback(true); };
             } else {
-                btnsEl.innerHTML = '<button class="modal-btn" onclick="hideModal()">OK</button>';
+                btnsEl.innerHTML = '<button class="modal-btn" onclick="hideModal()" data-i18n="btn.ok">' + translate('btn.ok', 'OK') + '</button>';
                 if (callback) document.querySelector('.modal-btn').onclick = () => { hideModal(); callback(); };
             }
             overlay.style.display = 'flex';
@@ -1271,7 +1287,7 @@
                     checkSyncSettings();
                 } else {
                     currentUser = null;
-                    document.getElementById('status-msg').innerText = "Guest Mode";
+                    setTranslatedStatus('calendar.status.guest', 'Guest mode');
                     initNativeMode();
                 }
             });
@@ -1293,7 +1309,7 @@
             } else if (provider === 'local' || setting === 'false') {
                 googleEnabled = false;
                 exchangeEnabled = false;
-                document.getElementById('status-msg').innerText = "Synced: " + currentUser.email;
+                setTranslatedStatus('calendar.status.synced', 'Synced:', ' ' + currentUser.email);
                 initNativeMode();
             } else {
                 // Not set
@@ -1325,7 +1341,7 @@
             if (!exchangeEnabled) {
                 const manageButton = document.getElementById('cal-list-btn-bottom');
                 manageButton.onclick = openCalendarListModal;
-                manageButton.innerText = 'Calendars';
+                setTranslatedText('cal-list-btn-bottom', 'calendar.btn.calendars', 'Calendars');
             }
             if (exchangeEnabled) {
                 initExchangeMode();
@@ -1334,7 +1350,7 @@
                 initGoogleMode();
             } else {
                 googleEnabled = false;
-                document.getElementById('status-msg').innerText = "Synced: " + currentUser.email;
+                setTranslatedStatus('calendar.status.synced', 'Synced:', ' ' + currentUser.email);
                 initNativeMode();
             }
         }
@@ -1348,20 +1364,20 @@
         }
 
         function exchangeErrorText(error) {
-            if (error && error.code === 'exchange-calendar-auth') return 'Exchange rejected the email or app password.';
-            if (error && error.code === 'exchange-calendar-not-connected') return 'Connect Exchange Calendar first.';
-            return error && error.message ? error.message : 'Exchange Calendar is unavailable.';
+            if (error && error.code === 'exchange-calendar-auth') return translate('calendar.exchange.auth_error', 'Exchange rejected the email or app password.');
+            if (error && error.code === 'exchange-calendar-not-connected') return translate('calendar.exchange.not_connected_error', 'Connect Exchange Calendar first.');
+            return translate('calendar.exchange.unavailable', 'Exchange Calendar is unavailable.');
         }
 
         async function initExchangeMode() {
-            document.getElementById('app-title').innerText = 'Exchange Calendar';
+            setTranslatedText('app-title', 'calendar.exchange.app_title', 'Exchange Calendar');
             document.getElementById('auth-overlay').style.display = 'none';
             document.getElementById('add-btn').style.display = 'none';
             const manageButton = document.getElementById('cal-list-btn-bottom');
             manageButton.style.display = 'inline-block';
             manageButton.innerText = 'Exchange';
             manageButton.onclick = openExchangeModal;
-            document.getElementById('status-msg').innerText = 'Checking Exchange...';
+            setTranslatedStatus('calendar.status.checking_exchange', 'Checking Exchange...');
             try {
                 const status = await RekindleCloud.request('/exchange-calendar/status', { method: 'POST', body: {} });
                 showExchangeConnection(status);
@@ -1369,7 +1385,7 @@
                     events = [];
                     renderView();
                     openExchangeModal();
-                    document.getElementById('status-msg').innerText = 'Exchange is not connected.';
+                    setTranslatedStatus('calendar.status.exchange_not_connected', 'Exchange is not connected.');
                     return;
                 }
                 await loadExchangeEvents();
@@ -1406,7 +1422,8 @@
             const status = document.getElementById('exchange-form-status');
             const button = document.getElementById('exchange-connect-btn');
             button.disabled = true;
-            status.textContent = 'Connecting...';
+            status.setAttribute('data-i18n', 'calendar.status.connecting');
+            status.textContent = translate('calendar.status.connecting', 'Connecting...');
             try {
                 const result = await RekindleCloud.request('/exchange-calendar/connect', {
                     method: 'POST',
@@ -1437,7 +1454,7 @@
         }
 
         async function loadExchangeEvents() {
-            document.getElementById('status-msg').innerText = 'Syncing Exchange...';
+            setTranslatedStatus('calendar.status.syncing_exchange', 'Syncing Exchange...');
             const now = new Date();
             const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
             const end = new Date(now.getTime() + 339 * 24 * 60 * 60 * 1000);
@@ -1451,7 +1468,7 @@
                     return event;
                 });
                 renderView();
-                document.getElementById('status-msg').innerText = 'Exchange synced.';
+                setTranslatedStatus('calendar.status.exchange_synced', 'Exchange synced.');
             } catch (error) {
                 events = [];
                 renderView();
@@ -1464,12 +1481,12 @@
         }
 
         function openEventDetails(event) {
-            const time = event.isAllDay ? 'All day' : formatZonedTime(event.start) + ' - ' + formatZonedTime(event.end);
-            document.getElementById('event-detail-title').textContent = event.title || 'Untitled event';
+            const time = event.isAllDay ? translate('calendar.event.all_day', 'All day') : formatZonedTime(event.start) + ' - ' + formatZonedTime(event.end);
+            document.getElementById('event-detail-title').textContent = event.title || translate('calendar.event.untitled', 'Untitled event');
             document.getElementById('event-detail-time').textContent = time;
-            document.getElementById('event-detail-location').textContent = event.location ? 'Location: ' + event.location : '';
-            document.getElementById('event-detail-organizer').textContent = event.organizer ? 'Organizer: ' + event.organizer : '';
-            document.getElementById('event-detail-description').textContent = event.description || 'No description.';
+            document.getElementById('event-detail-location').textContent = event.location ? translate('calendar.event.location', 'Location:') + ' ' + event.location : '';
+            document.getElementById('event-detail-organizer').textContent = event.organizer ? translate('calendar.event.organizer', 'Organizer:') + ' ' + event.organizer : '';
+            document.getElementById('event-detail-description').textContent = event.description || translate('calendar.event.no_description', 'No description.');
             document.getElementById('event-detail-modal').style.display = 'flex';
         }
 
@@ -1500,7 +1517,7 @@
 
             document.querySelectorAll('.tab-btn').forEach(b => {
                 b.classList.remove('active');
-                if (b.innerText.toLowerCase() === view) b.classList.add('active');
+                if (b.getAttribute('data-view') === view) b.classList.add('active');
             });
             renderView();
         }
@@ -1550,7 +1567,7 @@
             });
 
             if (filteredEvents.length === 0) {
-                wrapper.innerHTML = '<div style="text-align:center; padding:20px;">No upcoming events.</div>';
+                wrapper.innerHTML = '<div style="text-align:center; padding:20px;" data-i18n="calendar.event.no_upcoming">' + translate('calendar.event.no_upcoming', 'No upcoming events.') + '</div>';
                 container.appendChild(wrapper);
                 return;
             }
@@ -1587,7 +1604,7 @@
                 list.forEach(e => {
                     let timeStr;
                     if (e.isAllDay) {
-                        timeStr = "All day";
+                        timeStr = translate('calendar.event.all_day', 'All day');
                     } else {
                         // Format Start - End
                         const startStr = formatZonedTime(e.start);
@@ -1635,11 +1652,17 @@
             const grid = document.createElement('div');
             grid.className = 'month-grid';
 
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const days = [
+                ['calendar.weekday.sun', 'Sun'], ['calendar.weekday.mon', 'Mon'],
+                ['calendar.weekday.tue', 'Tue'], ['calendar.weekday.wed', 'Wed'],
+                ['calendar.weekday.thu', 'Thu'], ['calendar.weekday.fri', 'Fri'],
+                ['calendar.weekday.sat', 'Sat']
+            ];
             days.forEach(d => {
                 const dayHeader = document.createElement('div');
                 dayHeader.className = 'weekday-label';
-                dayHeader.innerText = d;
+                dayHeader.setAttribute('data-i18n', d[0]);
+                dayHeader.innerText = translate(d[0], d[1]);
                 grid.appendChild(dayHeader);
             });
 
@@ -1721,7 +1744,7 @@
             // Create slots for hours 6 AM to 10 PM (simplified view)
             // Or just list the events sorted
             if (dayEvents.length === 0) {
-                list.innerHTML = '<div style="padding:40px; text-align:center; color:#666;">No events scheduled.</div>';
+                list.innerHTML = '<div style="padding:40px; text-align:center; color:#666;" data-i18n="calendar.event.no_scheduled">' + translate('calendar.event.no_scheduled', 'No events scheduled.') + '</div>';
             } else {
                 // Group by hour for a structured look
                 for (let hour = 0; hour < 24; hour++) {
@@ -1735,13 +1758,13 @@
                         const slot = document.createElement('div');
                         slot.className = 'hour-slot';
 
-                        const displayHour = hour === 0 ? '12 AM' : (hour > 12 ? (hour - 12) + ' PM' : hour + ' AM');
+                        const displayHour = (hour < 10 ? '0' : '') + hour + ':00';
 
                         let eventHtml = '';
                         hourEvents.forEach(e => {
                             let timeStr;
                             if (e.isAllDay) {
-                                timeStr = "All day";
+                                timeStr = translate('calendar.event.all_day', 'All day');
                             } else {
                                 const startStr = formatZonedTime(e.start);
                                 const endStr = e.end ? formatZonedTime(e.end) : formatZonedTime(new Date(new Date(e.start).getTime() + 3600000));
@@ -1828,7 +1851,7 @@
         //  GOOGLE MODE
         // ==========================================
         function initGoogleMode() {
-            document.getElementById('app-title').innerText = "Calendar (Google)";
+            setTranslatedText('app-title', 'calendar.google.app_title', 'Calendar (Google)');
             document.getElementById('add-btn').style.display = 'block'; // Ensure add button is shown
             document.getElementById('cal-list-btn-bottom').style.display = 'inline-block'; // Show calendar list button
 
@@ -1865,7 +1888,7 @@
                     }
                 } catch (e) {
                     console.error('Failed to initialize Google API:', JSON.stringify(e));
-                    document.getElementById('status-msg').innerText = 'Error.';
+                    setTranslatedStatus('calendar.status.error', 'Error.');
                 }
             });
         }
@@ -1982,7 +2005,8 @@
 
                     // Light group
                     const lightLabel = document.createElement('div');
-                    lightLabel.innerText = 'Light';
+                    lightLabel.setAttribute('data-i18n', 'calendar.style.light');
+                    lightLabel.innerText = translate('calendar.style.light', 'Light');
                     lightLabel.style.fontSize = '0.7rem';
                     lightLabel.style.fontWeight = 'bold';
                     lightLabel.style.marginBottom = '5px';
@@ -1997,7 +2021,8 @@
 
                     // Dark group
                     const darkLabel = document.createElement('div');
-                    darkLabel.innerText = 'Dark';
+                    darkLabel.setAttribute('data-i18n', 'calendar.style.dark');
+                    darkLabel.innerText = translate('calendar.style.dark', 'Dark');
                     darkLabel.style.fontSize = '0.7rem';
                     darkLabel.style.fontWeight = 'bold';
                     darkLabel.style.marginBottom = '5px';
@@ -2092,8 +2117,10 @@
             if (now - lastAuth < 5000) {
                 console.error("Auth loop detected.");
                 document.getElementById('auth-overlay').style.display = 'flex';
-                document.querySelector('#auth-overlay h2').innerText = "Login Failed";
-                document.querySelector('#auth-overlay p').innerText = "Please try again manually.";
+                document.querySelector('#auth-overlay h2').setAttribute('data-i18n', 'calendar.auth.failed');
+                document.querySelector('#auth-overlay h2').innerText = translate('calendar.auth.failed', 'Login failed');
+                document.querySelector('#auth-overlay p').setAttribute('data-i18n', 'calendar.auth.retry');
+                document.querySelector('#auth-overlay p').innerText = translate('calendar.auth.retry', 'Please try again manually.');
                 return;
             }
             sessionStorage.setItem('last_auth_attempt', now.toString());
@@ -2133,12 +2160,12 @@
         }
 
         async function loadGoogleEvents() {
-            document.getElementById('status-msg').innerText = "Syncing...";
+            setTranslatedStatus('calendar.status.syncing', 'Syncing...');
 
             if (selectedCalendarIds.length === 0) {
                 events = [];
                 renderView();
-                document.getElementById('status-msg').innerText = "No calendar selected.";
+                setTranslatedStatus('calendar.status.no_calendar', 'No calendar selected.');
                 return;
             }
 
@@ -2192,10 +2219,10 @@
 
                 events = allEvents;
                 renderView();
-                document.getElementById('status-msg').innerText = "Synced.";
+                setTranslatedStatus('calendar.status.synced_short', 'Synced.');
             } catch (e) {
                 console.error(e);
-                document.getElementById('status-msg').innerText = "Error.";
+                setTranslatedStatus('calendar.status.error', 'Error.');
                 if (e.status === 401 || e.status === 403) {
                     // Token expired during use -> Re-auth
                     handleUnauthorized();
@@ -2207,7 +2234,7 @@
         //  NATIVE / CALDAV MODE
         // ==========================================
         function initNativeMode() {
-            document.getElementById('app-title').innerText = "Calendar";
+            setTranslatedText('app-title', 'app.calendar.name', 'Calendar');
 
             // If CalDAV is set, hide Add button (read-only)
             if (calDavUrl) {
@@ -2251,7 +2278,7 @@
 
 
         async function loadCalDAVEvents() {
-            document.getElementById('status-msg').innerText = "Fetching CalDAV...";
+            setTranslatedStatus('calendar.status.fetching_caldav', 'Fetching CalDAV...');
             // We use the same proxy pattern as other apps to bypass CORS
             const proxyUrl = RekindleCloud.apiBase + '/content/proxy?url=' + encodeURIComponent(calDavUrl);
 
@@ -2262,11 +2289,11 @@
                 if (!text || text.trim() === "") throw new Error("Empty response");
 
                 events = parseICS(text);
-                document.getElementById('status-msg').innerText = "Synced (CalDAV)";
+                setTranslatedStatus('calendar.status.caldav_synced', 'Synced (CalDAV)');
                 renderView();
             } catch (e) {
                 console.error(e);
-                document.getElementById('status-msg').innerText = "CalDAV Error";
+                setTranslatedStatus('calendar.status.caldav_error', 'CalDAV error');
                 // Fallback to local
                 if (!events.length && currentUser) loadCloudEvents();
                 else if (!events.length) loadLocalEvents();
@@ -2340,7 +2367,7 @@
         function openAddModal() {
             editingEventId = null;
             editingCalendarId = null;
-            document.getElementById('modal-title').innerText = "New Event";
+            setTranslatedText('modal-title', 'calendar.modal.new', 'New Event');
             document.getElementById('modal-overlay').style.display = 'flex';
             document.getElementById('evt-title').value = '';
             // Default to currently viewed date if in month/day view
@@ -2407,7 +2434,7 @@
             editingEventId = id;
             editingCalendarId = evt.calendarId; // Get from event object
 
-            document.getElementById('modal-title').innerText = "Edit Event";
+            setTranslatedText('modal-title', 'calendar.modal.edit', 'Edit Event');
             document.getElementById('modal-overlay').style.display = 'flex';
             document.getElementById('modal-del-btn').style.display = 'block';
 
@@ -2464,7 +2491,7 @@
             const endTime = document.getElementById('evt-end-time').value;
             const targetCalendarId = document.getElementById('evt-calendar-select').value;
 
-            if (!title || !date) return showModal("Title and Date required");
+            if (!title || !date) return showModal(translate('calendar.validation.required', 'Title and date are required.'));
 
             let isAllDay = false;
             let startDateTime, endDateTime;
@@ -2520,7 +2547,7 @@
 
                     const calId = targetCalendarId || 'primary';
 
-                    document.getElementById('status-msg').innerText = "Saving to Google...";
+                    setTranslatedStatus('calendar.status.saving_google', 'Saving to Google...');
 
                     if (editingEventId) {
                         // Update
@@ -2579,18 +2606,18 @@
                 }
             } catch (e) {
                 console.error(e);
-                showModal("Error saving event: " + e.message);
-                document.getElementById('status-msg').innerText = "Error saving.";
+                showModal(translate('calendar.error.save', 'Could not save the event.'));
+                setTranslatedStatus('calendar.status.error_saving', 'Could not save.');
             }
         }
 
         async function deleteEvent(id, calendarId) {
-            showModal("Delete event?", true, async (confirmed) => {
+            showModal(translate('calendar.confirm.delete', 'Delete event?'), true, async (confirmed) => {
                 if (!confirmed) return;
 
                 try {
                     if (googleEnabled) {
-                        document.getElementById('status-msg').innerText = "Deleting...";
+                        setTranslatedStatus('calendar.status.deleting', 'Deleting...');
 
                         // Use passed calendarId (from delete btn) or look it up
                         let targetCalId = calendarId;
@@ -2616,7 +2643,7 @@
                     }
                 } catch (e) {
                     console.error(e);
-                    showModal("Error deleting: " + e.message);
+                    showModal(translate('calendar.error.delete', 'Could not delete the event.'));
                 }
             });
         }

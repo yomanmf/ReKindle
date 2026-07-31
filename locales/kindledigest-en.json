@@ -47,5 +47,9 @@
   "kindledigest.error_connection": "Could not reach the Kindle Digest service.",
   "kindledigest.error_days": "Recent days must be from 1 to 30.",
   "kindledigest.error_url": "Enter a complete HTTP or HTTPS source URL.",
-  "kindledigest.close": "OK"
+  "kindledigest.close": "OK",
+  "kindledigest.failed_detail": "The digest could not be prepared.",
+  "kindledigest.bytes": "B",
+  "kindledigest.kilobytes": "KB",
+  "kindledigest.megabytes": "MB"
 }

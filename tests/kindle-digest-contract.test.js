@@ -22,6 +22,9 @@ test("Kindle Digest is a Kindle-safe direct control UI", function () {
     assert.doesNotMatch(html, /display:\s*flex[^}]*\bgap\s*:/s);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
     assert.match(client, /setInterval\([^]*10000\)/);
+    assert.match(html, /js\/kindledigest\.js\?v=3/);
+    assert.doesNotMatch(client, /collection-detail"\), job\.message/);
+    assert.doesNotMatch(client, /if \(job\.error\) return job\.error/);
 });
 
 test("Kindle Digest backend and worker routes are private and released", function () {
@@ -46,7 +49,7 @@ test("Kindle Digest backend and worker routes are private and released", functio
     assert.ok(manifest.includes("js/kindledigest.js"));
     assert.ok(manifest.includes("locales/kindledigest-en.json"));
     assert.ok(manifest.includes("locales/kindledigest-ru.json"));
-    assert.match(sw, /rekindle-cache-v47/);
+    assert.match(sw, /rekindle-cache-v51/);
     assert.match(read("index.html"), /icons\.js\?v=13/);
     assert.match(read("index_old.html"), /icons\.js\?v=13/);
     assert.doesNotMatch(catalog, /id:\s*['"]kindlearticles['"]/);
@@ -62,7 +65,9 @@ test("Kindle Digest ships English and Russian UI contracts", function () {
         [
             "kindledigest.title", "kindledigest.mode_daily", "kindledigest.mode_all",
             "kindledigest.collection", "kindledigest.delivery", "kindledigest.cancel",
-            "kindledigest.retry", "kindledigest.error_connection"
+            "kindledigest.retry", "kindledigest.error_connection", "kindledigest.failed_detail",
+            "kindledigest.bytes", "kindledigest.kilobytes", "kindledigest.megabytes"
         ].forEach(function (key) { assert.ok(locale[key], language + ": " + key); });
     });
+    assert.equal(JSON.parse(read("locales/kindledigest-ru.json"))["kindledigest.close"], "ОК");
 });
