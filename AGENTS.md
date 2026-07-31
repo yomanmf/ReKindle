@@ -601,6 +601,20 @@ URLs and Kindle addresses out of public job responses, keep all three
 collections denied in `firestore.rules`, and reuse the existing worker secret
 only through the backend's timing-safe bearer check.
 
+**Books worker deploy verification:** The production bot routes Telegram through
+`RUNTIME_TELEGRAM_PROXY_URL`. Its VM deploy-agent must pass that proxy to the
+Telegram `getMe` health check too. A direct check times out after the stability
+delay, rolls back a healthy worker image with generic `COMMAND_FAILED`, and
+leaves web jobs indefinitely at `Waiting for the books worker.`
+
+**Books worker runtime secret:** The production VM reads
+`BOOKS_KINDLE_WORKER_SECRET` from the dedicated deletion-protected
+`books-kindle-worker-runtime` Lockbox secret. Its service account has
+`lockbox.payloadViewer` on that one secret only, and the secret ID is exposed
+through VM metadata key `books-kindle-lockbox-secret-id`. Do not grant the VM
+access to the shared backend secret because it also contains Firebase and S3
+credentials.
+
 **Firebase Auth sessions are API-key scoped:** Every checked-in authenticated
 page, including `bookskindle.html`, must use the
 `__REKINDLE_FIREBASE_API_KEY__` placeholder. A hard-coded key can initialize the
