@@ -671,9 +671,8 @@ widget. Do not restore an inner `max-height` or `overflow-y` on
 `.dashboard-agenda-list`: the outer dashboard owns scrolling so every meeting
 remains visible. Meeting times use the existing manual 24-hour formatter. The
 `#db-agenda-refresh` control reuses `fetchDashboardAgenda()` for the currently
-selected day and disables itself until that request settles. Its CSS height is
-64px so the dashboard's common 75% global zoom still leaves a real 48px Kindle
-touch target; do not reduce it to a nominal 48px. Both `index.html` and
+selected day and disables itself until that request settles. It uses a compact
+40px CSS height so it does not enlarge the agenda header. Both `index.html` and
 `index_old.html` render weekday headers and month offsets Monday-first.
 
 **Worker-free frontend rule:** Production frontend code must not contain hard-coded `*.workers.dev` endpoints. Route Oracle, OCR, Reader, Reddit, Readwise, Akinator, Story, and Microsoft To Do through versioned paths on the Yandex API Gateway and keep the gateway base URL in one shared client module.
