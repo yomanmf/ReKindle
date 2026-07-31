@@ -348,7 +348,9 @@ body's top padding tracks the scaled 35px system menu bar via
 `calc(35px * var(--rekindle-scale, 1))`, leaving only the tab container's small
 padding between the clock bar and the Home tab. Do not restore
 `body { align-items: center; }`, which creates a large device-height-dependent
-gap above the dashboard.
+gap above the dashboard. Keep `.desktop-wrapper` at `height: calc(100% - 6px)`;
+the 6px reserve leaves a narrow scaled gap for the dashboard's hard shadow
+instead of the large empty strip caused by percentage heights such as `90%`.
 
 ## 🌍 Localization (i18n.js)
 
