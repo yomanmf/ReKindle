@@ -346,7 +346,8 @@ button. Do not restore `openAbout`, `about-modal`, or their locale keys.
 to the top of the body's content box instead of vertically centering it. The
 body's top padding tracks the scaled 35px system menu bar via
 `calc(35px * var(--rekindle-scale, 1))`, leaving only the tab container's small
-padding between the clock bar and the Home tab. Do not restore
+padding between the system menu bar and the Home tab. The centered top clock is
+intentionally retired; do not restore `top-clock` or its synchronization request. Do not restore
 `body { align-items: center; }`, which creates a large device-height-dependent
 gap above the dashboard. Keep `.desktop-wrapper` at `height: calc(100% - 6px)`;
 the 6px reserve leaves a narrow scaled gap for the dashboard's hard shadow

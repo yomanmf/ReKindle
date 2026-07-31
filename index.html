@@ -1135,10 +1135,6 @@
             <div class="sys-menu-item" id="exit-btn" onclick="window.close()" data-i18n="home.nav.exit"
                 style="display:none; border-left: 1px solid black;">Exit</div>
         </div>
-        <div class="sys-menu-center"
-            style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; height: 100%;">
-            <span id="top-clock" style="font-family: inherit; font-weight: normal;"></span>
-        </div>
         <div class="sys-menu-right">
             <div class="sys-menu-item" id="user-badge" style="display:flex; align-items:center;">
                 <span id="user-display" data-i18n="home.guest_mode">Guest Mode</span>
@@ -1299,43 +1295,6 @@
         const ALLOWED_EXIT_AGENT = "MY_CUSTOM_AGENT";
 
         let auth, db, rtdb;
-        let serverTimeOffset = 0;
-        function syncWithServer() {
-            try {
-                // Fetch current page headers only (HEAD request is fast)
-                fetch(window.location.href, { method: 'HEAD', cache: 'no-cache' })
-                    .then(response => {
-                        const dateHeader = response.headers.get('Date');
-                        if (dateHeader) {
-                            const serverTime = new Date(dateHeader).getTime();
-                            const localTime = Date.now();
-                            serverTimeOffset = serverTime - localTime;
-                            console.log("Time synced! Offset: " + serverTimeOffset + "ms");
-                            updateTopClock(); // Immediate update
-                        }
-                    })
-                    .catch(e => console.warn("Time sync failed, using system time.", e));
-            } catch (e) {
-                console.warn("Time sync error:", e);
-            }
-        }
-
-        function updateTopClock() {
-            const clockEl = document.getElementById('top-clock');
-            if (clockEl) {
-                const nowMs = Date.now() + serverTimeOffset;
-                const now = (typeof rekindleGetZonedDate === 'function') ? rekindleGetZonedDate(new Date(nowMs)) : new Date(nowMs);
-                let h = now.getHours();
-                const m = now.getMinutes().toString().padStart(2, '0');
-                const ampm = h >= 12 ? 'PM' : 'AM';
-                h = h % 12;
-                if (h === 0) h = 12;
-                clockEl.innerText = `${h}:${m} ${ampm}`;
-            }
-        }
-        setInterval(updateTopClock, 60000);
-        updateTopClock();
-        syncWithServer();
         const firebaseConfig = {
             apiKey: "__REKINDLE_FIREBASE_API_KEY__",
             authDomain: "rekindle-fork.firebaseapp.com",
