@@ -342,6 +342,14 @@ The dashboard About modal is also retired. The ReKindle logo in `index.html`
 is intentionally static, and the old dashboard no longer has its former info
 button. Do not restore `openAbout`, `about-modal`, or their locale keys.
 
+**Dashboard top-spacing gotcha:** `index.html` keeps `.desktop-wrapper` aligned
+to the top of the body's content box instead of vertically centering it. The
+body's top padding tracks the scaled 35px system menu bar via
+`calc(35px * var(--rekindle-scale, 1))`, leaving only the tab container's small
+padding between the clock bar and the Home tab. Do not restore
+`body { align-items: center; }`, which creates a large device-height-dependent
+gap above the dashboard.
+
 ## 🌍 Localization (i18n.js)
 
 The project uses a custom `i18n.js` loader.
