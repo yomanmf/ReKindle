@@ -156,7 +156,7 @@ const APPS = [
         name: 'Kindle Digest',
         cat: 'lifestyle',
         desc: 'Collect articles and send them to Kindle.',
-        icon: '<path d="M4 5h20v20a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z" fill="white" stroke="black" stroke-width="2"/><path d="M24 10h4v15a3 3 0 0 1-3 3h-4" fill="white" stroke="black" stroke-width="2"/><path d="M8 9h12v4H8z" fill="black" stroke="none"/><path d="M8 17h5v6H8zM16 17h4M16 20h4M16 23h4M8 26h12" fill="none" stroke="black" stroke-width="2"/>'
+        icon: '<path d="M4 5h21a3 3 0 0 1 3 3v17a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z" fill="white" stroke="black" stroke-width="2"/><path d="M24 5v23" fill="none" stroke="black" stroke-width="2"/><path d="M8 9h12v4H8z" fill="black" stroke="none"/><path d="M8 17h5v6H8zM16 17h4M16 20h4M16 23h4M8 26h12" fill="none" stroke="black" stroke-width="2"/>'
     },
     /*     {
             id: 'beeper',

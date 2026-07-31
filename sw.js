@@ -1,8 +1,8 @@
-const CACHE_NAME = 'rekindle-cache-v46'; // Nest Games inside Misc
+const CACHE_NAME = 'rekindle-cache-v47'; // Refine Kindle Digest icon
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './icons.js?v=11',
+    './icons.js?v=13',
     './icons-beta.js?v=9',
     './theme.js?v=22',
     './logo.svg',
