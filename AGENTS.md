@@ -638,6 +638,11 @@ Map the worker's exact `Flibusta search is unavailable` failure to the localized
 `bookskindle.catalog_unavailable` message. Do not show the first-page message for
 an upstream outage: no catalog page was successfully searched in that case.
 
+Books Kindle status bars and job details omit a single sentence-ending period
+when rendered, while preserving ellipses such as `Searching...`. Keep this in
+the shared `statusText()` display helper so worker-provided messages follow the
+same rule without rewriting stored job data or every locale string.
+
 **Firebase Auth sessions are API-key scoped:** Every checked-in authenticated
 page, including `bookskindle.html`, must use the
 `__REKINDLE_FIREBASE_API_KEY__` placeholder. A hard-coded key can initialize the

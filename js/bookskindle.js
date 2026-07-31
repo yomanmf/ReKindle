@@ -17,6 +17,7 @@
     function byId(id) { return document.getElementById(id); }
     function translate(key, fallback) { return typeof window.t === "function" ? window.t(key, fallback) : fallback; }
     function setText(element, value) { if (element) element.textContent = value === undefined || value === null ? "" : String(value); }
+    function statusText(value) { return String(value || "").replace(/(^|[^.])\.$/, "$1"); }
     function setStatusValue(element, state, value) {
         element.innerHTML = '<svg class="status-icon" viewBox="0 0 24 24" aria-hidden="true">' + (STATUS_ICONS[state] || STATUS_ICONS.queued) + '</svg><span></span>';
         setText(element.lastChild, value);
@@ -24,7 +25,7 @@
     function request(action, body) { return window.RekindleCloud.request(API_PATH + action, { method: "POST", body: body || {} }); }
     function terminal(job) { return job && ["ready", "sent", "failed", "canceled"].indexOf(job.state) !== -1; }
 
-    function setStatus(value) { setText(byId("status-bar"), value); }
+    function setStatus(value) { setText(byId("status-bar"), statusText(value)); }
     function showError(error) {
         setText(byId("error-message"), error && error.message || translate("bookskindle.error_connection", "Could not reach Books to Kindle."));
         byId("error-modal").style.display = "flex";
@@ -126,7 +127,7 @@
         } else if (job.state === "ready" && job.firstPageOnly === true && !(job.results || []).length) {
             detail = translate("bookskindle.first_page_only", "No books were found on the first page of results. Try a more specific title.");
         }
-        setText(byId("job-detail"), detail);
+        setText(byId("job-detail"), statusText(detail));
         renderResults(job.state === "ready" ? job.results || [] : []);
 
         var action = byId("job-action");

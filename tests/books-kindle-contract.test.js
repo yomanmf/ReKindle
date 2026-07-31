@@ -11,6 +11,9 @@ function read(file) { return fs.readFileSync(path.join(root, file), "utf8"); }
 test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     var html = read("bookskindle.html");
     var client = read("js/bookskindle.js");
+    var statusText = Function(client.match(/function statusText\(value\) \{[^}]+\}/)[0] + "; return statusText;")();
+    assert.equal(statusText("Waiting for the books worker."), "Waiting for the books worker");
+    assert.equal(statusText("Searching..."), "Searching...");
     assert.match(html, /font-family:\s*"Geneva",\s*"Verdana",\s*sans-serif/);
     assert.match(html, /animation:\s*none\s*!important/);
     assert.match(html, /min-height:\s*48px/);
@@ -38,7 +41,9 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     });
     assert.match(client, /setStatusValue\(byId\("job-state"\), job\.state/);
     assert.match(html, /\.status-icon\s*\{/);
-    assert.match(html, /js\/bookskindle\.js\?v=6/);
+    assert.match(html, /js\/bookskindle\.js\?v=7/);
+    assert.match(client, /setStatus\(value\).*statusText\(value\)/);
+    assert.match(client, /setText\(byId\("job-detail"\), statusText\(detail\)\)/);
     assert.match(client, /job\.firstPageOnly === true/);
     assert.match(client, /job\.error === "Flibusta search is unavailable"/);
 });
