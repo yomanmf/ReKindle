@@ -4,5 +4,5 @@
 0b0126d3745e01e64209b9f072b8d8181ef93f64f93fe76c834392a986a7aaad  rekindle-reddit.zip
 b6d68c8c040ccb9899e4b2766f61331148c72e0d7efe31ae73b335d78766abd4  rekindle-story.zip
 6a1dd9e59aefc2364f18279e9c26b7296ecc44e8f2554557c12ce72a3f7c3956  rekindle-config.zip
-# Frontend verified 2026-07-31 under /private/tmp/rekindle-agenda-release-ffff50ee
-81d7893af5e1074be5a26992d01a7a7e20cb529e296f9b14b531ff2af2384097  rekindle-frontend.zip
+# Frontend verified 2026-07-31 under /private/tmp/rekindle-refresh-release-7e87d61a
+ab24d4822aa6f08882bfe4ac49790f938918cdf20bb0b418148e18e1ea43bb27  rekindle-frontend.zip
