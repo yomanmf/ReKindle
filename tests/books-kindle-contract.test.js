@@ -33,6 +33,12 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     assert.doesNotMatch(client, /byId\("kindle-panel"\)\.hidden = !signedIn/);
     assert.match(client, /byId\("kindle-panel"\)\.hidden = result\.connected === true/);
     assert.match(client, /byId\("kindle-change-panel"\)\.hidden = result\.connected !== true/);
+    ["queued", "running", "ready", "sent", "failed", "canceled"].forEach(function (status) {
+        assert.match(client, new RegExp(status + ": '<"));
+    });
+    assert.match(client, /setStatusValue\(byId\("job-state"\), job\.state/);
+    assert.match(html, /\.status-icon\s*\{/);
+    assert.match(html, /js\/bookskindle\.js\?v=4/);
 });
 
 test("Books to Kindle is routed, catalogued, isolated, and released", function () {

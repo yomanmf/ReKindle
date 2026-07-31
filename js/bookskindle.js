@@ -5,10 +5,22 @@
     var currentJob = null;
     var signedIn = false;
     var pollTimer = null;
+    var STATUS_ICONS = {
+        queued: '<circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path>',
+        running: '<path d="M4 5h12v14H4zM7 8h6M7 11h6M18 8l3 4-3 4"></path>',
+        ready: '<circle cx="9" cy="10" r="5"></circle><path d="M13 14l6 6M7 8h4M7 11h3"></path>',
+        sent: '<path d="M3 6h18v12H3zM3 7l9 7 9-7M15 18l2 2 4-5"></path>',
+        failed: '<circle cx="12" cy="12" r="9"></circle><path d="M8 8l8 8M16 8l-8 8"></path>',
+        canceled: '<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8zM8 12h8"></path>'
+    };
 
     function byId(id) { return document.getElementById(id); }
     function translate(key, fallback) { return typeof window.t === "function" ? window.t(key, fallback) : fallback; }
     function setText(element, value) { if (element) element.textContent = value === undefined || value === null ? "" : String(value); }
+    function setStatusValue(element, state, value) {
+        element.innerHTML = '<svg class="status-icon" viewBox="0 0 24 24" aria-hidden="true">' + (STATUS_ICONS[state] || STATUS_ICONS.queued) + '</svg><span></span>';
+        setText(element.lastChild, value);
+    }
     function request(action, body) { return window.RekindleCloud.request(API_PATH + action, { method: "POST", body: body || {} }); }
     function terminal(job) { return job && ["ready", "sent", "failed", "canceled"].indexOf(job.state) !== -1; }
 
@@ -106,7 +118,7 @@
             byId("results-panel").hidden = true;
             return stopPolling();
         }
-        setText(byId("job-state"), stateLabel(job.state));
+        setStatusValue(byId("job-state"), job.state, stateLabel(job.state));
         setText(byId("job-book"), job.selectedBook ? job.selectedBook.title : job.query);
         setText(byId("job-detail"), job.error || job.message || "");
         renderResults(job.state === "ready" ? job.results || [] : []);

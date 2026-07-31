@@ -164,6 +164,18 @@
         }
 
         .summary-title, .status-value { display: block; font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
+        .status-value { display: flex; align-items: center; }
+        .status-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 7px;
+            flex: 0 0 auto;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: square;
+            stroke-linejoin: miter;
+        }
         .status-label { display: block; font-size: 0.72rem; font-weight: bold; text-transform: uppercase; }
         .status-detail { display: block; margin-top: 7px; word-break: break-word; white-space: pre-wrap; }
 
@@ -303,6 +315,6 @@
             projectId: "rekindle-fork"
         };
     </script>
-    <script src="js/bookskindle.js?v=3"></script>
+    <script src="js/bookskindle.js?v=4"></script>
 </body>
 </html>
