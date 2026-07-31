@@ -338,6 +338,10 @@ the old `rekindle_favorites` / `rekindle_featured_hidden` state or Firestore
 sync. The Lite/Legacy ES6-warning injection in `build-automation.js` is anchored
 to the app icon class assignment, not to removed favorite-state code.
 
+The dashboard About modal is also retired. The ReKindle logo in `index.html`
+is intentionally static, and the old dashboard no longer has its former info
+button. Do not restore `openAbout`, `about-modal`, or their locale keys.
+
 ## 🌍 Localization (i18n.js)
 
 The project uses a custom `i18n.js` loader.

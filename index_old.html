@@ -151,30 +151,6 @@
             text-overflow: ellipsis;
         }
 
-        .info-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-family: "Times New Roman", serif;
-            font-style: italic;
-            font-weight: bold;
-            font-size: 0.9rem;
-            border: 2px solid black;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            background: white;
-        }
-
-        .info-btn:active {
-            background: black;
-            color: white;
-        }
-
         .nav-menu {
             flex-grow: 1;
             padding: 20px 10px;
@@ -767,10 +743,6 @@
                 display: none !important;
             }
 
-            .mobile-only-btn {
-                display: block !important;
-            }
-
             .nav-menu div[style*="flex-grow:1"] {
                 display: none;
             }
@@ -910,19 +882,6 @@
             transform: translate(3px, 3px);
         }
 
-        .privacy-link {
-            display: block;
-            margin-top: 5px;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-            color: black;
-            text-decoration: underline;
-        }
-
-        .mobile-only-btn {
-            display: none;
-            margin-top: 10px;
-        }
     </style>
 </head>
 
@@ -957,7 +916,6 @@
             <div class="system-header">
                 <h1 class="os-title">ReKindle</h1>
                 <div class="user-info" id="user-display" data-i18n="home.guest_mode">Guest Mode</div>
-                <div class="info-btn" onclick="openAbout()">i</div>
             </div>
 
             <div class="nav-menu">
@@ -1061,34 +1019,6 @@
             </div>
         </div>
 
-        <div id="about-modal" class="modal-overlay" onclick="closeModal('about-modal')">
-            <div class="modal-box" onclick="event.stopPropagation()">
-                <button class="modal-close" onclick="closeModal('about-modal')">X</button>
-                <div id="logo-container" style="width: 60px; height: 60px; margin: 0 auto;"></div>
-                <h1 style="margin-top:5px;">ReKindle</h1>
-                <p data-i18n="home.info.tagline">Your Kindle Upgraded</p>
-                <p data-i18n="home.info.desc" style="font-size: 0.8rem; margin: 15px 10px; line-height: 1.4;">
-                    ReKindle is a web-based dashboard for E-ink devices (Kindle, Kobo, Boox,
-                    etc.). It transforms your e-reader into a powerful productivity tool, gaming device, news hub &
-                    more.
-                </p>
-                <p data-i18n-html="home.info.made_by" style="font-size: 0.8rem; margin-top: 5px;">Made by <a href="https://ukiyomusic.com/links"
-                        target="_blank" style="color: black;">Ukiyo</a></p>
-                <div style="display: flex; justify-content: center; margin-bottom: 15px">
-                    <a href="mailto:support@rekindle.ink" class="sys-btn" data-i18n="home.btn.support"
-                        style="text-decoration:none; box-shadow: 2px 2px 0 black; padding: 5px 10px; font-size: 0.8rem;">Support</a>
-                </div>
-                <div class="mobile-only-btn" style="border-top: 2px solid black; padding-top: 15px; margin-top: 15px;">
-                    <button class="sys-btn" onclick="location.href='settings'"
-                        style="width: 100%; margin-bottom: 10px;" data-i18n="home.nav.settings">Settings</button>
-                    <button class="sys-btn" id="modal-auth-btn" onclick="openLogin()" style="width: 100%;" data-i18n="home.nav.login">LOG IN / REGISTER</button>
-                </div>
-                <p data-i18n="home.info.data_policy" style="font-size: 0.75rem; color: #666; margin-bottom: 5px; margin-top: 15px;">No data is, or ever
-                    will be shared or sold by ReKindle.</p>
-                <a href="privacy" class="privacy-link" data-i18n="home.info.privacy">Privacy Policy</a>
-            </div>
-        </div>
-
         <div id="generic-modal" class="modal-overlay">
             <div class="modal-box">
                 <h2 id="generic-title" style="margin-top:0; border-bottom: 2px solid black; padding-bottom:10px;">Notice
@@ -1165,8 +1095,6 @@
             autoDetectScale();
 
             filterApps('all', document.querySelector('#nav-all'));
-            renderAboutContent();
-
             let lastUid = localStorage.getItem('rekindle_uid');
 
             if (isFirebaseAvailable && auth) {
@@ -1188,12 +1116,6 @@
                         document.getElementById('user-display').innerText = "User: " + displayUser;
                         document.getElementById('auth-btn').innerText = "Log Out";
                         document.getElementById('auth-btn').onclick = openLogoutModal;
-
-                        const modalAuthBtn = document.getElementById('modal-auth-btn');
-                        if (modalAuthBtn) {
-                            modalAuthBtn.innerText = "Log Out";
-                            modalAuthBtn.onclick = openLogoutModal;
-                        }
 
                         if (!loginSecurityCheckPending) closeModal('login-modal');
 
@@ -1219,21 +1141,10 @@
             document.getElementById('auth-btn').innerText = window.t ? window.t('home.nav.login', 'LOG IN / REGISTER') : "LOG IN / REGISTER";
             document.getElementById('auth-btn').onclick = openLogin;
 
-            const modalAuthBtn = document.getElementById('modal-auth-btn');
-            if (modalAuthBtn) {
-                modalAuthBtn.innerText = window.t ? window.t('home.nav.login', 'LOG IN / REGISTER') : "LOG IN / REGISTER";
-                modalAuthBtn.onclick = openLogin;
-            }
-
         }
 
         function updateNavVisibility() {
             gamesDisabled = areGamesDisabled();
-        }
-
-        function renderAboutContent() {
-            const logoContainer = document.getElementById('logo-container');
-            if (logoContainer) logoContainer.innerHTML = '<img src="logo.svg" class="keep-white" style="width:100%; height:100%;" alt="ReKindle Logo">';
         }
 
         // ... [Sync functions unchanged] ...
@@ -1483,9 +1394,8 @@
             grid.appendChild(fragment);
         }
 
-        // ... [Remaining helper functions openLogin, openAbout, etc. unchanged] ...
+        // ... [Remaining helper functions unchanged] ...
         function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
-        function openAbout() { document.getElementById('about-modal').style.display = 'flex'; }
         
         function openFolderModal(appName, groupedAppsArray) {
             document.getElementById('folder-title').innerText = appName;
@@ -1830,7 +1740,6 @@
 
         // Expose functions needed by inline HTML handlers
         window.filterApps = filterApps;
-        window.openAbout = openAbout;
         window.openLogin = openLogin;
         window.closeModal = closeModal;
         window.confirmLogout = confirmLogout;
