@@ -1184,6 +1184,9 @@ CSS Grid: Amazon connection and search share the first column, the chapter form
 uses the second, and job status uses the third. Hide `#search-results` as soon as
 a title is selected so the result list cannot push the controls below the
 Kindle Scribe Colorsoft viewport; restore it only when chapter loading fails.
+The landscape `.window` must override the shared `720px` maximum with
+`max-width: none`; otherwise all three columns are squeezed into that width and
+localized status values overflow their cards.
 Status cues are monochrome inline SVG from the trusted `STATUS_ICONS` map, not
 Unicode emoji, because Kindle browsers render many emoji as missing glyphs.
 Web jobs use the same server-side Amazon Send to Kindle uploader and saved
