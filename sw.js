@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v50'; // Require login on dashboards
+const CACHE_NAME = 'rekindle-cache-v51'; // Avoid login-wall flash for signed-in users
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
