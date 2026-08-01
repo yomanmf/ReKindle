@@ -432,6 +432,10 @@ If it inherits the sidebar's `#fafafa`, root dark-theme inversion produces
 near-black `#050505`; Colorsoft dithers that empty area into visible bands and
 uneven shades below the saved subreddits.
 
+Load `theme.js` before Reddit's blocking external Firebase SDK scripts. If the
+theme script comes afterward, a slow CDN response leaves the initial white
+background visible before the saved dark theme can be applied.
+
 **Reddit Firestore transport gotcha:** Initialize its Firestore instance with
 `experimentalForceLongPolling: true` before the first read or write. Colorsoft
 can leave WebChannel write acknowledgements buffered indefinitely: the sidebar
