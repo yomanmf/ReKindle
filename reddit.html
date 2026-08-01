@@ -1113,7 +1113,6 @@
             isLoadingMore: false,
             isThreadLoading: false,
             scrollTimeout: null,
-            rootLoadTimeout: null,
             commentNavIndex: -1,
             commentNavLastScrollTop: 0,
             feedPosts: [],
@@ -1534,35 +1533,24 @@
                 this.updateCommentNavigation();
             },
 
-            cancelThreadRootLoad() {
-                if (this.rootLoadTimeout !== null) clearTimeout(this.rootLoadTimeout);
-                this.rootLoadTimeout = null;
-            },
-
             loadThreadRootsInBackground(permalink, comments) {
-                this.cancelThreadRootLoad();
-                this.rootLoadTimeout = setTimeout(() => {
-                    this.rootLoadTimeout = null;
+                api.getThreadRoots(permalink, { silent: true, skipThrottle: true }).then(rootsResponse => {
                     if (this.currentThread !== permalink) return;
 
-                    api.getThreadRoots(permalink, { silent: true }).then(rootsResponse => {
-                        if (this.currentThread !== permalink) return;
+                    const rootsData = parseRssThread(rootsResponse);
+                    const rootIds = rootsData.comments.map(function(comment) { return comment.id; });
+                    const markedRoots = window.RekindleRedditComments.markTopLevelComments(comments, rootIds);
+                    console.log('Thread RSS top-level comments:', markedRoots);
+                    this.applyRootCommentMarkers(permalink, comments);
+                }).catch(rootsError => {
+                    if (rootsError.message && rootsError.message.indexOf('superseded') !== -1) return;
+                    if (this.currentThread !== permalink) return;
 
-                        const rootsData = parseRssThread(rootsResponse);
-                        const rootIds = rootsData.comments.map(function(comment) { return comment.id; });
-                        const markedRoots = window.RekindleRedditComments.markTopLevelComments(comments, rootIds);
-                        console.log('Thread RSS top-level comments:', markedRoots);
-                        this.applyRootCommentMarkers(permalink, comments);
-                    }).catch(rootsError => {
-                        if (rootsError.message && rootsError.message.indexOf('superseded') !== -1) return;
-                        if (this.currentThread !== permalink) return;
-
-                        console.warn('Root-only RSS failed; marking only the first comment as top-level:', rootsError);
-                        const firstRootIds = comments.length > 0 ? [comments[0].id] : [];
-                        window.RekindleRedditComments.markTopLevelComments(comments, firstRootIds);
-                        this.applyRootCommentMarkers(permalink, comments);
-                    });
-                }, 2500);
+                    console.warn('Root-only RSS failed; marking only the first comment as top-level:', rootsError);
+                    const firstRootIds = comments.length > 0 ? [comments[0].id] : [];
+                    window.RekindleRedditComments.markTopLevelComments(comments, firstRootIds);
+                    this.applyRootCommentMarkers(permalink, comments);
+                });
             },
 
             async loadMorePosts() {
@@ -1620,7 +1608,6 @@
 
             // FEED
             async loadCurrentSub() {
-                this.cancelThreadRootLoad();
                 const subInput = document.getElementById('sub-input');
                 let sub = subInput.value.trim() || 'popular';
                 sub = sub.replace(/^r\//, '');
@@ -1675,7 +1662,6 @@
 
             async loadThread(permalink) {
                 const content = document.getElementById('content-area');
-                this.cancelThreadRootLoad();
                 this.resetCommentNavigation();
                 if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
                 this.scrollTimeout = null;
@@ -1720,6 +1706,10 @@
                     }
                     const post = data.post;
                     const comments = data.comments;
+
+                    if (shouldLoadRoots) {
+                        this.loadThreadRootsInBackground(permalink, comments);
+                    }
 
                     if (!post) {
                         content.innerHTML = `<div class="loading" style="color:red">No thread data found.</div>`;
@@ -1786,10 +1776,6 @@
                     this.commentNavIndex = -1;
                     this.commentNavLastScrollTop = 0;
                     this.updateCommentNavigation();
-                    if (shouldLoadRoots) {
-                        this.loadThreadRootsInBackground(permalink, comments);
-                    }
-
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
                     content.innerHTML = `<div class="loading" style="color:red">Error loading thread<br>${escapeHtml(e.message)}</div>`;

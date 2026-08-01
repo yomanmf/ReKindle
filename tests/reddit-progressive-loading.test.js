@@ -47,7 +47,7 @@ test('loads the versioned Reddit comment helper used by progressive enrichment',
     assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=5"><\/script>/);
 });
 
-test('renders the main Reddit thread before loading root metadata', function () {
+test('starts root metadata before rendering without blocking the main thread', function () {
     var loadThreadStart = redditHtml.indexOf('async loadThread(permalink)');
     var loadThreadEnd = redditHtml.indexOf('processCommentHtml(html)', loadThreadStart);
     var loadThreadSource = redditHtml.slice(loadThreadStart, loadThreadEnd);
@@ -58,8 +58,8 @@ test('renders the main Reddit thread before loading root metadata', function () 
     assert.notEqual(loadThreadEnd, -1);
     assert.notEqual(renderIndex, -1);
     assert.notEqual(backgroundRootsIndex, -1);
-    assert.ok(renderIndex < backgroundRootsIndex);
-    assert.doesNotMatch(loadThreadSource, /await\s+api\.getThreadRoots/);
+    assert.ok(backgroundRootsIndex < renderIndex);
+    assert.doesNotMatch(loadThreadSource, /await\s+this\.loadThreadRootsInBackground/);
 });
 
 test('allocates request IDs before the client throttle wait', function () {
@@ -131,21 +131,9 @@ test('ignores background root metadata after leaving the thread', function () {
     var backgroundSource = redditHtml.slice(backgroundStart, backgroundEnd);
 
     assert.match(backgroundSource, /if \(this\.currentThread !== permalink\) return;/);
-    assert.match(backgroundSource, /api\.getThreadRoots\(permalink, \{ silent: true \}\)/);
+    assert.match(backgroundSource, /api\.getThreadRoots\(permalink, \{ silent: true, skipThrottle: true \}\)/);
     assert.match(backgroundSource, /this\.applyRootCommentMarkers\(permalink, comments\)/);
-    assert.match(backgroundSource, /rootLoadTimeout = setTimeout/);
-    assert.match(backgroundSource, /}, 2500\);/);
-    assert.ok(backgroundSource.indexOf('setTimeout') < backgroundSource.indexOf('api.getThreadRoots'));
-});
-
-test('cancels delayed root metadata when navigating', function () {
-    var feedStart = redditHtml.indexOf('async loadCurrentSub()');
-    var threadStart = redditHtml.indexOf('async loadThread(permalink)');
-    var feedSource = redditHtml.slice(feedStart, threadStart);
-    var threadSource = redditHtml.slice(threadStart, redditHtml.indexOf('processCommentHtml(html)', threadStart));
-
-    assert.match(feedSource, /this\.cancelThreadRootLoad\(\)/);
-    assert.match(threadSource, /this\.cancelThreadRootLoad\(\)/);
+    assert.doesNotMatch(backgroundSource, /setTimeout/);
 });
 
 test('renders a cached subreddit feed before refreshing it', function () {

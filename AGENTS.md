@@ -1207,13 +1207,15 @@ immediately while a later foreground request can still supersede older work.
 The Yandex function already retries Reddit upstream failures, so the browser
 must not repeat 429/5xx responses and multiply the wait.
 
-Schedule the `depth=1` root-metadata request 2.5 seconds after the main thread
-renders and cancel its timer whenever the user loads a feed or another thread.
-Production measurements on 31 July 2026 showed the main thread RSS taking
-roughly 0.6-1.7 seconds while the extra root request could take about 7 seconds
-under Reddit rate limiting. Starting it immediately wastes upstream capacity
-and can slow the next user-selected thread even though it is not on the current
-render's critical path.
+Start the `depth=1` root-metadata request as soon as the main thread RSS has been
+parsed, before building the thread DOM. Do not await it: the normal thread still
+renders first, while the network request overlaps the synchronous DOM work. Pass
+`skipThrottle: true` because waiting for the feed throttle adds another 1.5
+seconds after the main request has already completed. The request ID and
+`currentThread` guards discard late metadata after navigation, so a separate
+delay timer is unnecessary. Production checks on 1 August 2026 showed JSON
+still returning `403`, normal RSS taking about 0.4 seconds, and `depth=1` RSS
+taking about 2.4 seconds; keep RSS primary until JSON is verified available.
 
 `reddit.html` depends on `js/reddit-comments.js` for JSON parsing and progressive
 root enrichment. A production release must upload that helper before the page
