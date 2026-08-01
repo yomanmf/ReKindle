@@ -428,6 +428,11 @@ hidden native select and immediately closes the custom menu. Use
 toolbar's flexible item, so the fixed margin shrinks that field and preserves a
 safe gap between the saved-subreddit star and the next-post `>` button.
 
+**Reddit last-view gotcha:** `reddit_return_state` is persistent app state, not
+just a short-lived return marker for external links. `reddit.html` saves it on
+`pagehide` and restores the subreddit or open post (including scroll position)
+on the next visit. Do not delete it during restore or add an expiry.
+
 **Translated-control identity gotcha:** Never derive application state from a
 translated label (for example, comparing a tab's `innerText` with `"agenda"`).
 Russian translation changes the label and breaks the comparison. Keep a stable

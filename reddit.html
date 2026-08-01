@@ -1882,10 +1882,8 @@
                 try {
                     const raw = localStorage.getItem('reddit_return_state');
                     if (!raw) return false;
-                    localStorage.removeItem('reddit_return_state');
                     const state = JSON.parse(raw);
                     if (!state || !state.currentSub) return false;
-                    if (state.savedAt && Date.now() - state.savedAt > 600000) return false;
 
                     document.getElementById('sub-input').value = state.currentSub;
                     this.currentSub = state.currentSub;
@@ -1954,6 +1952,7 @@
 
         // Initialize
         ui.init();
+        window.addEventListener('pagehide', function() { ui.saveReturnState(); });
 
     </script>
 </body>

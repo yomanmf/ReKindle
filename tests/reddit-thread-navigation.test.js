@@ -58,6 +58,15 @@ test('shows navigation only in thread mode and restores its feed context', funct
     assert.match(restoreSource, /Array\.isArray\(state\.feedPermalinks\)/);
 });
 
+test('restores the last Reddit view after reopening the app', function () {
+    var restoreStart = redditHtml.indexOf('restoreReturnState()');
+    var restoreSource = redditHtml.slice(restoreStart);
+
+    assert.match(redditHtml, /window\.addEventListener\('pagehide', function\(\) \{ ui\.saveReturnState\(\); \}\)/);
+    assert.doesNotMatch(restoreSource, /localStorage\.removeItem\('reddit_return_state'\)/);
+    assert.doesNotMatch(restoreSource, /Date\.now\(\) - state\.savedAt/);
+});
+
 test('ships the versioned navigation helper with the Yandex frontend release', function () {
     assert.match(releaseManifest, /^js\/reddit-comments\.js$/m);
     assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=5"><\/script>/);
