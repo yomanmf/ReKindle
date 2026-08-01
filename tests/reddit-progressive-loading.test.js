@@ -44,7 +44,7 @@ test('keeps the toolbar loading label hidden while opening a thread', async func
 });
 
 test('loads the versioned Reddit comment helper used by progressive enrichment', function () {
-    assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=4"><\/script>/);
+    assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=5"><\/script>/);
 });
 
 test('renders the main Reddit thread before loading root metadata', function () {

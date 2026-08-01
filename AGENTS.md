@@ -394,6 +394,11 @@ feed requests, but thread requests already render their own loading state in
 `#content-area`. Pass `showLoading: false` for thread RSS/JSON requests; do not
 use `silent`, because it also suppresses rate-limit handling.
 
+**Reddit publication-time gotcha:** Feed and thread timestamps use different
+source fields: RSS uses `pubDate` or namespaced `date`, Atom uses `published` or
+`updated`, and JSON uses `created_utc` in seconds. Normalize all of them to
+`publishedAt` and format with UTC getters; Kindle's local timezone is unreliable.
+
 **Translated-control identity gotcha:** Never derive application state from a
 translated label (for example, comparing a tab's `innerText` with `"agenda"`).
 Russian translation changes the label and breaks the comparison. Keep a stable

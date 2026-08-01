@@ -60,7 +60,7 @@ test('shows navigation only in thread mode and restores its feed context', funct
 
 test('ships the versioned navigation helper with the Yandex frontend release', function () {
     assert.match(releaseManifest, /^js\/reddit-comments\.js$/m);
-    assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=4"><\/script>/);
+    assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=5"><\/script>/);
 });
 
 test('keeps external thread links on the extensionless browser route', function () {

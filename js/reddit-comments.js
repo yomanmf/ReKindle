@@ -85,7 +85,8 @@
                 title: postData.title || '',
                 author: postData.author || '',
                 contentHtml: postData.selftext_html ? decodeHtmlEntities(postData.selftext_html) : fallbackBodyHtml(postData.selftext),
-                permalink: postData.permalink || ''
+                permalink: postData.permalink || '',
+                publishedAt: postData.created_utc ? postData.created_utc * 1000 : ''
             } : null;
             var comments = [];
 
