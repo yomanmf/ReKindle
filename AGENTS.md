@@ -432,6 +432,13 @@ If it inherits the sidebar's `#fafafa`, root dark-theme inversion produces
 near-black `#050505`; Colorsoft dithers that empty area into visible bands and
 uneven shades below the saved subreddits.
 
+**Reddit Firestore transport gotcha:** Initialize its Firestore instance with
+`experimentalForceLongPolling: true` before the first read or write. Colorsoft
+can leave WebChannel write acknowledgements buffered indefinitely: the sidebar
+then stays on `Saving...`, and a refresh restores the old cloud list. Forced
+long-polling closes each response after data arrives and makes saved-subreddit
+writes, including deletions, receive their acknowledgement.
+
 **Reddit thread-navigation spacing:** Keep a fixed left margin on
 `.next-thread-btn` instead of `margin-left: auto`. The subreddit input is the
 toolbar's flexible item, so the fixed margin shrinks that field and preserves a

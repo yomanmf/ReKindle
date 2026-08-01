@@ -38,6 +38,10 @@ test('renders feed controls and persists a map through local and Firebase storag
     assert.match(redditHtml, /RekindleRedditFeedSettings\.cacheKey\(sub, preference\)/);
 });
 
+test('forces long polling before Reddit uses Firestore on Kindle', function () {
+    assert.match(redditHtml, /db = firebase\.firestore\(\);\s*db\.settings\(\{ experimentalForceLongPolling: true \}\);/);
+});
+
 test('ships the feed settings helper in the frontend release', function () {
     assert.match(redditHtml, /<script src="js\/reddit-feed-settings\.js\?v=1"><\/script>/);
     assert.match(releaseManifest, /^js\/reddit-feed-settings\.js$/m);

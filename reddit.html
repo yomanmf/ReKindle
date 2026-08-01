@@ -775,6 +775,7 @@
                     firebase.initializeApp(firebaseConfig);
                     auth = firebase.auth();
                     db = firebase.firestore();
+                    db.settings({ experimentalForceLongPolling: true });
                     isFirebaseAvailable = true;
                     console.log("Firebase initialized.");
 
