@@ -31,7 +31,7 @@ test('production HTTP visits upgrade before origin-scoped state is read', functi
     assert.ok(redirect < theme.indexOf('localStorage.getItem'));
 });
 
-test('dark, automatic, and system modes remain enabled across local and cloud settings', function () {
+test('dark, automatic, and legacy system modes remain supported without exposing system in Settings', function () {
     var theme = read('theme.js');
     var settings = read('settings.html');
     var modernHome = read('index.html');
@@ -44,9 +44,9 @@ test('dark, automatic, and system modes remain enabled across local and cloud se
     assert.match(theme, /prefers-color-scheme: dark/);
     assert.match(theme, /systemThemeQuery\.addListener/);
     assert.match(theme, /getItem\('rekindle_timezone_offset'\)/);
-    assert.match(settings, /option value="system" data-i18n="settings\.theme\.system"/);
     assert.match(settings, /updateSettingsSelectValue\('theme-select', theme\)/);
     assert.match(settings, /updateSettingsSelectValue\('theme-select', syncedTheme\)/);
+    assert.doesNotMatch(settings, /option value="system"/);
     assert.doesNotMatch(settings, /theme-select[^>]+disabled/);
     assert.doesNotMatch(settings, /Dark mode is temporarily disabled/);
     assert.match(settings, /var syncedTheme = data\.themeMode/);
