@@ -449,6 +449,12 @@ just a short-lived return marker for external links. `reddit.html` saves it on
 `pagehide` and restores the subreddit or open post (including scroll position)
 on the next visit. Do not delete it during restore or add an expiry.
 
+The feed and an opened thread share `#content-area`, so their scroll positions
+must remain separate. Capture `ui.feedScrollTop` only when entering a thread
+from the feed, persist it alongside the current-view `scrollTop`, and restore it
+both immediately and after `loadCurrentSub()` finishes when the user goes back.
+Otherwise the thread's scroll offset leaks into the newly rendered feed.
+
 **Translated-control identity gotcha:** Never derive application state from a
 translated label (for example, comparing a tab's `innerText` with `"agenda"`).
 Russian translation changes the label and breaks the comparison. Keep a stable

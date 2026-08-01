@@ -67,6 +67,23 @@ test('restores the last Reddit view after reopening the app', function () {
     assert.doesNotMatch(restoreSource, /Date\.now\(\) - state\.savedAt/);
 });
 
+test('keeps feed scroll separate from thread scroll', function () {
+    var threadStart = redditHtml.indexOf('async loadThread(permalink)');
+    var threadSource = redditHtml.slice(threadStart, redditHtml.indexOf('processCommentHtml(html)', threadStart));
+    var backStart = redditHtml.indexOf('            goBack() {');
+    var backSource = redditHtml.slice(backStart, redditHtml.indexOf('            saveReturnState() {', backStart));
+    var saveStart = redditHtml.indexOf('            saveReturnState() {');
+    var saveSource = redditHtml.slice(saveStart, redditHtml.indexOf('            restoreReturnState() {', saveStart));
+    var restoreStart = redditHtml.indexOf('            restoreReturnState() {');
+    var restoreSource = redditHtml.slice(restoreStart);
+
+    assert.match(threadSource, /if \(!this\.currentThread\) this\.feedScrollTop = content\.scrollTop/);
+    assert.match(backSource, /content\.scrollTop = feedScrollTop/);
+    assert.match(backSource, /if \(!ui\.currentThread\) content\.scrollTop = feedScrollTop/);
+    assert.match(saveSource, /feedScrollTop: this\.currentThread \? this\.feedScrollTop/);
+    assert.match(restoreSource, /state\.feedScrollTop !== undefined/);
+});
+
 test('ships the versioned navigation helper with the Yandex frontend release', function () {
     assert.match(releaseManifest, /^js\/reddit-comments\.js$/m);
     assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=5"><\/script>/);

@@ -1119,6 +1119,7 @@
             commentNavLastScrollTop: 0,
             feedPosts: [],
             currentPostIndex: -1,
+            feedScrollTop: 0,
             feedPreferences: {},
 
             init() {
@@ -1665,6 +1666,7 @@
 
             async loadThread(permalink) {
                 const content = document.getElementById('content-area');
+                if (!this.currentThread) this.feedScrollTop = content.scrollTop;
                 this.resetCommentNavigation();
                 if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
                 this.scrollTimeout = null;
@@ -1872,7 +1874,13 @@
             },
 
             goBack() {
-                this.loadCurrentSub();
+                const content = document.getElementById('content-area');
+                const feedScrollTop = this.feedScrollTop;
+                const loading = this.loadCurrentSub();
+                content.scrollTop = feedScrollTop;
+                loading.then(function() {
+                    if (!ui.currentThread) content.scrollTop = feedScrollTop;
+                });
             },
 
             saveReturnState() {
@@ -1882,6 +1890,7 @@
                     currentThread: this.currentThread,
                     afterToken: this.afterToken,
                     feedPermalinks: this.feedPosts.map(function(post) { return post.permalink; }),
+                    feedScrollTop: this.currentThread ? this.feedScrollTop : (content ? content.scrollTop : 0),
                     scrollTop: content ? content.scrollTop : 0,
                     savedAt: Date.now()
                 };
@@ -1903,6 +1912,10 @@
                     this.currentSub = state.currentSub;
                     this.afterToken = state.afterToken || null;
                     this.currentThread = state.currentThread || null;
+                    const savedFeedScrollTop = state.feedScrollTop !== undefined
+                        ? state.feedScrollTop
+                        : (state.currentThread ? 0 : state.scrollTop);
+                    this.feedScrollTop = Math.max(0, Number(savedFeedScrollTop) || 0);
                     this.feedPosts = Array.isArray(state.feedPermalinks) ? state.feedPermalinks.map(function(permalink) {
                         return { permalink: permalink };
                     }) : [];
