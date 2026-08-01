@@ -16,7 +16,7 @@ test('every application page loads the current shared theme script', function ()
     var releaseManifest = read('yandex/FRONTEND-RELEASE-MANIFEST.txt').split(/\r?\n/);
 
     pages.forEach(function (page) {
-        assert.match(read(page), /theme\.js\?v=22/, page + ' must load theme.js?v=22');
+        assert.match(read(page), /theme\.js\?v=23/, page + ' must load theme.js?v=23');
         assert.ok(releaseManifest.includes(page), page + ' must ship in the dark-theme release');
     });
 });
@@ -31,7 +31,7 @@ test('production HTTP visits upgrade before origin-scoped state is read', functi
     assert.ok(redirect < theme.indexOf('localStorage.getItem'));
 });
 
-test('dark and automatic modes remain enabled across local and cloud settings', function () {
+test('dark, automatic, and system modes remain enabled across local and cloud settings', function () {
     var theme = read('theme.js');
     var settings = read('settings.html');
     var modernHome = read('index.html');
@@ -40,7 +40,13 @@ test('dark and automatic modes remain enabled across local and cloud settings', 
     assert.match(theme, /localStorage\.getItem\(THEME_KEY\) \|\| 'light'/);
     assert.match(theme, /mode === 'dark'/);
     assert.match(theme, /mode === 'auto'/);
+    assert.match(theme, /mode === 'system'/);
+    assert.match(theme, /prefers-color-scheme: dark/);
+    assert.match(theme, /systemThemeQuery\.addListener/);
     assert.match(theme, /getItem\('rekindle_timezone_offset'\)/);
+    assert.match(settings, /option value="system" data-i18n="settings\.theme\.system"/);
+    assert.match(settings, /updateSettingsSelectValue\('theme-select', theme\)/);
+    assert.match(settings, /updateSettingsSelectValue\('theme-select', syncedTheme\)/);
     assert.doesNotMatch(settings, /theme-select[^>]+disabled/);
     assert.doesNotMatch(settings, /Dark mode is temporarily disabled/);
     assert.match(settings, /var syncedTheme = data\.themeMode/);

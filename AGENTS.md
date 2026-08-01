@@ -285,6 +285,10 @@ theme version bump changes every root page, include all root HTML files in
 `yandex/FRONTEND-RELEASE-MANIFEST.txt`; publishing only `theme.js` and a subset
 of pages leaves the omitted screens requesting the previous cached query URL.
 
+The `system` theme follows Kindle's `prefers-color-scheme` media query and uses
+the Chromium 75-compatible `MediaQueryList.addListener` callback for live
+changes. If the browser does not expose that preference, it safely stays light.
+
 ### 7. Branding & Badges
 Standardized "Beta" or status badges.
 

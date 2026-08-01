@@ -563,12 +563,13 @@
             <div class="setting-row">
                 <div class="setting-text">
                     <strong><span data-i18n="settings.theme">Theme</span> <span class="beta-badge">BETA</span></strong>
-                    <div class="setting-desc" data-i18n="settings.desc.theme">Light, Dark, or Auto (Night Time).</div>
+                    <div class="setting-desc" data-i18n="settings.desc.theme">Light, Dark, Auto (Night), or System.</div>
                 </div>
                 <select id="theme-select" onchange="saveTheme()">
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="auto">Auto (Night)</option>
+                    <option value="light" data-i18n="settings.theme.light">Light</option>
+                    <option value="dark" data-i18n="settings.theme.dark">Dark</option>
+                    <option value="auto" data-i18n="settings.theme.auto">Auto (Night)</option>
+                    <option value="system" data-i18n="settings.theme.system">System</option>
                 </select>
             </div>
 
@@ -780,7 +781,7 @@
         </div>
     </div>
 
-    <script src="theme.js?v=22"></script> <!-- Inject Theme Script -->
+    <script src="theme.js?v=23"></script> <!-- Inject Theme Script -->
     <script src="js/i18n.js"></script>
     <script src="js/custom-select.js"></script>
 
@@ -1723,7 +1724,7 @@
 
             // Load Theme
             const theme = localStorage.getItem('rekindle_theme_mode') || 'light';
-            document.getElementById('theme-select').value = theme;
+            updateSettingsSelectValue('theme-select', theme);
 
             // Load Display Mode
             const displayMode = localStorage.getItem('rekindle_display_mode') || 'led';
@@ -1886,7 +1887,7 @@
                     if (data.themeMode) {
                         var syncedTheme = data.themeMode;
                         localStorage.setItem('rekindle_theme_mode', syncedTheme);
-                        document.getElementById('theme-select').value = syncedTheme;
+                        updateSettingsSelectValue('theme-select', syncedTheme);
                         if (window.rekindleApplyTheme) window.rekindleApplyTheme();
                     }
 

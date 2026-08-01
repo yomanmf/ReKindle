@@ -87,20 +87,23 @@
     }
 
     // --- CONFIGURATION ---
-    var THEME_KEY = 'rekindle_theme_mode'; // 'light', 'dark', 'auto'
+    var THEME_KEY = 'rekindle_theme_mode'; // 'light', 'dark', 'auto', 'system'
     var AUTO_START_HOUR = 18; // 6 PM
     var AUTO_END_HOUR = 6;    // 6 AM
     var ROTATION_KEY = 'rekindle_rotation'; // '0', '90', '180', '270'
+    var systemThemeQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
     function applyTheme() {
         var mode = localStorage.getItem(THEME_KEY) || 'light';
-        if (mode !== 'light' && mode !== 'dark' && mode !== 'auto') {
+        if (mode !== 'light' && mode !== 'dark' && mode !== 'auto' && mode !== 'system') {
             mode = 'light';
         }
         var isDark = false;
 
         if (mode === 'dark') {
             isDark = true;
+        } else if (mode === 'system') {
+            isDark = !!(systemThemeQuery && systemThemeQuery.matches);
         } else if (mode === 'auto') {
             var now = new Date();
             var hour = now.getHours();
@@ -168,6 +171,13 @@
 
     // Run immediately
     applyTheme();
+
+    // Chromium 75 exposes MediaQueryList.addListener rather than the newer change event.
+    if (systemThemeQuery && systemThemeQuery.addListener) {
+        systemThemeQuery.addListener(function () {
+            if (localStorage.getItem(THEME_KEY) === 'system') applyTheme();
+        });
+    }
 
     // Export for Settings App to call
     // --- DISPLAY MODE ---

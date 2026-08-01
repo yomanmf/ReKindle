@@ -1,10 +1,10 @@
-const CACHE_NAME = 'rekindle-cache-v53'; // Hide the redundant signed-out account control
+const CACHE_NAME = 'rekindle-cache-v54'; // Add system theme mode
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=13',
     './icons-beta.js?v=9',
-    './theme.js?v=22',
+    './theme.js?v=23',
     './logo.svg',
     './manifest.json',
     './fonts/OpenDyslexic-Regular.woff2',
