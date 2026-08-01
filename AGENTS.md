@@ -427,6 +427,11 @@ these selects in `<label>`: label activation redispatches the click to the
 hidden native select and immediately closes the custom menu. Use
 `aria-labelledby` instead.
 
+**Reddit dark-sidebar gotcha:** Keep `#saved-list` on a pure white background.
+If it inherits the sidebar's `#fafafa`, root dark-theme inversion produces
+near-black `#050505`; Colorsoft dithers that empty area into visible bands and
+uneven shades below the saved subreddits.
+
 **Reddit thread-navigation spacing:** Keep a fixed left margin on
 `.next-thread-btn` instead of `margin-left: auto`. The subreddit input is the
 toolbar's flexible item, so the fixed margin shrinks that field and preserves a
