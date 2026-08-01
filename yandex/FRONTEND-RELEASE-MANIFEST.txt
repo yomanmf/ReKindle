@@ -100,6 +100,8 @@ yahtzee.html
 icons.js
 icons-beta.js
 sw.js
+css/custom-select.css
+js/custom-select.js
 js/rekindle-cloud.js
 js/bookskindle.js
 js/reddit-comments.js

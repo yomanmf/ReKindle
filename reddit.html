@@ -341,6 +341,27 @@
             font-weight: bold;
         }
 
+        .feed-setting .custom-select-trigger,
+        .feed-setting .custom-option {
+            min-height: 52px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        .feed-setting .custom-select-trigger {
+            padding: 10px 38px 10px 12px;
+        }
+
+        .feed-setting .custom-option {
+            padding: 12px;
+        }
+
+        .feed-setting .custom-options {
+            max-height: 312px;
+        }
+
         #feed-time-setting.hidden {
             display: none;
         }
@@ -619,6 +640,8 @@
     <script src="js/rekindle-cloud.js"></script>
     <script src="js/reddit-comments.js?v=5"></script>
     <script src="js/reddit-feed-settings.js?v=1"></script>
+    <link rel="stylesheet" href="css/custom-select.css?v=1">
+    <script src="js/custom-select.js?v=1"></script>
 </head>
 
 <body>
@@ -663,19 +686,21 @@
                 </div>
 
                 <div id="feed-settings-row" class="feed-settings-row">
-                    <label class="feed-setting" for="feed-sort-select">
-                        <span class="feed-setting-label" data-i18n="reddit.feed.sort">Sort</span>
-                        <select id="feed-sort-select" class="feed-select" onchange="ui.changeFeedSort()">
+                    <div class="feed-setting">
+                        <span id="feed-sort-label" class="feed-setting-label" data-i18n="reddit.feed.sort">Sort</span>
+                        <select id="feed-sort-select" class="feed-select" aria-labelledby="feed-sort-label"
+                            onchange="ui.changeFeedSort()">
                             <option value="hot" data-i18n="reddit.feed.sort.hot">Hot</option>
                             <option value="new" data-i18n="reddit.feed.sort.new">New</option>
                             <option value="top" data-i18n="reddit.feed.sort.top">Top</option>
                             <option value="rising" data-i18n="reddit.feed.sort.rising">Rising</option>
                             <option value="controversial" data-i18n="reddit.feed.sort.controversial">Controversial</option>
                         </select>
-                    </label>
-                    <label id="feed-time-setting" class="feed-setting hidden" for="feed-time-select">
-                        <span class="feed-setting-label" data-i18n="reddit.feed.time">Period</span>
-                        <select id="feed-time-select" class="feed-select" onchange="ui.changeFeedTime()">
+                    </div>
+                    <div id="feed-time-setting" class="feed-setting hidden">
+                        <span id="feed-time-label" class="feed-setting-label" data-i18n="reddit.feed.time">Period</span>
+                        <select id="feed-time-select" class="feed-select" aria-labelledby="feed-time-label"
+                            onchange="ui.changeFeedTime()">
                             <option value="hour" data-i18n="reddit.feed.time.hour">Past hour</option>
                             <option value="day" data-i18n="reddit.feed.time.day">Today</option>
                             <option value="week" data-i18n="reddit.feed.time.week">This week</option>
@@ -683,7 +708,7 @@
                             <option value="year" data-i18n="reddit.feed.time.year">This year</option>
                             <option value="all" data-i18n="reddit.feed.time.all">All time</option>
                         </select>
-                    </label>
+                    </div>
                 </div>
 
                 <div id="rate-limit-message"
@@ -1237,10 +1262,18 @@
                 if (!row || !sortSelect || !timeSetting || !timeSelect) return;
 
                 const preference = this.getFeedPreference(this.currentSub);
-                sortSelect.value = preference.sort;
-                timeSelect.value = preference.time;
+                this.updateFeedSelectValue(sortSelect, preference.sort);
+                this.updateFeedSelectValue(timeSelect, preference.time);
                 row.classList.toggle('hidden', !!this.currentThread);
                 timeSetting.classList.toggle('hidden', !window.RekindleRedditFeedSettings.usesTime(preference.sort));
+            },
+
+            updateFeedSelectValue(select, value) {
+                select.value = value;
+                const changeHandler = select.onchange;
+                select.onchange = null;
+                select.dispatchEvent(new Event('change'));
+                select.onchange = changeHandler;
             },
 
             changeFeedSort() {

@@ -42,3 +42,10 @@ test('ships the feed settings helper in the frontend release', function () {
     assert.match(redditHtml, /<script src="js\/reddit-feed-settings\.js\?v=1"><\/script>/);
     assert.match(releaseManifest, /^js\/reddit-feed-settings\.js$/m);
 });
+
+test('uses Kindle-sized custom feed selects', function () {
+    assert.match(redditHtml, /\.feed-setting \.custom-option \{[\s\S]*?min-height: 52px/);
+    assert.match(redditHtml, /<script src="js\/custom-select\.js\?v=1"><\/script>/);
+    assert.match(releaseManifest, /^css\/custom-select\.css$/m);
+    assert.match(releaseManifest, /^js\/custom-select\.js$/m);
+});

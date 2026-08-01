@@ -399,6 +399,15 @@ source fields: RSS uses `pubDate` or namespaced `date`, Atom uses `published` or
 `updated`, and JSON uses `created_utc` in seconds. Normalize all of them to
 `publishedAt` and format with UTC getters; Kindle's local timezone is unreliable.
 
+**Reddit feed-select gotcha:** The sorting and period controls use the shared
+`css/custom-select.css` and `js/custom-select.js` so Kindle gets 52px touch
+targets instead of the browser's small native option popup. When restoring a
+saved value, dispatch `change` with the inline handler temporarily detached so
+the custom trigger refreshes without starting another feed request. Do not wrap
+these selects in `<label>`: label activation redispatches the click to the
+hidden native select and immediately closes the custom menu. Use
+`aria-labelledby` instead.
+
 **Translated-control identity gotcha:** Never derive application state from a
 translated label (for example, comparing a tab's `innerText` with `"agenda"`).
 Russian translation changes the label and breaks the comparison. Keep a stable
