@@ -18,7 +18,7 @@ test('renders an accessible next-thread button in the Reddit toolbar', function 
     assert.match(redditHtml, /data-i18n-title="reddit\.thread\.next"/);
     assert.ok(nextButtonStyles);
     assert.match(nextButtonStyles[1], /display:\s*none/);
-    assert.match(nextButtonStyles[1], /margin-left:\s*auto/);
+    assert.match(nextButtonStyles[1], /margin-left:\s*24px/);
     assert.doesNotMatch(nextButtonStyles[1], /(?:min-)?(?:width|height)|padding|font-size|line-height/);
     assert.match(redditHtml, /\.next-thread-btn\.visible\s*\{[^}]*display:\s*inline-block/);
 });

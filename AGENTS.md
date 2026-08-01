@@ -414,6 +414,11 @@ these selects in `<label>`: label activation redispatches the click to the
 hidden native select and immediately closes the custom menu. Use
 `aria-labelledby` instead.
 
+**Reddit thread-navigation spacing:** Keep a fixed left margin on
+`.next-thread-btn` instead of `margin-left: auto`. The subreddit input is the
+toolbar's flexible item, so the fixed margin shrinks that field and preserves a
+safe gap between the saved-subreddit star and the next-post `>` button.
+
 **Translated-control identity gotcha:** Never derive application state from a
 translated label (for example, comparing a tab's `innerText` with `"agenda"`).
 Russian translation changes the label and breaks the comparison. Keep a stable
