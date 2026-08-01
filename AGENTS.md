@@ -291,9 +291,13 @@ API for its device appearance. Keep theme choices to light, dark, and timed auto
 
 The global bottom-left theme gesture also lives in `theme.js`: two taps within
 600 ms inside the viewport's bottom-left 64x64 pixels switch the effective
-theme and save an explicit `light` or `dark` preference. Do not add page-level gesture
-handlers. The shared script writes the same Firestore setting and parent sync
-timestamp as `settings.html`, retaining `rekindle_theme_pending_sync` until a
+theme and save an explicit `light` or `dark` preference. Kindle's double-tap
+zoom guard suppresses the second synthetic `click`, so touch screens must count
+the gesture from the capture-phase `touchend` event and ignore its following
+synthetic click; `click` remains only as the mouse fallback. Do not add
+page-level gesture handlers. The shared script writes the same Firestore
+setting and parent sync timestamp as `settings.html`, retaining
+`rekindle_theme_pending_sync` until a
 Firebase-capable page can save it. Dashboard and Settings cloud reads must not
 overwrite the local theme while that marker exists. Cache-bust and release the
 shared script plus every root HTML page.

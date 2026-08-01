@@ -209,19 +209,26 @@
     }
 
     var cornerTapAt = 0;
-    document.addEventListener('click', function (event) {
-        if (event.clientX > 64 || event.clientY < window.innerHeight - 64) {
+    var lastTouchEnd = 0;
+
+    function handleCornerTap(clientX, clientY, now) {
+        if (clientX > 64 || clientY < window.innerHeight - 64) {
             cornerTapAt = 0;
             return;
         }
 
-        var now = Date.now();
         if (now - cornerTapAt <= 600) {
             cornerTapAt = 0;
             saveThemePreference(document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark');
         } else {
             cornerTapAt = now;
         }
+    }
+
+    document.addEventListener('click', function (event) {
+        var now = Date.now();
+        if (now - lastTouchEnd <= 1000) return;
+        handleCornerTap(event.clientX, event.clientY, now);
     }, true);
 
     // Run immediately
@@ -832,9 +839,12 @@
         }
     }, { passive: false });
 
-    var lastTouchEnd = 0;
     document.addEventListener('touchend', function (event) {
         var now = (new Date()).getTime();
+        if (event.changedTouches && event.changedTouches.length === 1) {
+            var touch = event.changedTouches[0];
+            handleCornerTap(touch.clientX, touch.clientY, now);
+        }
         // Allow double-tap on editable elements or inputs
         var target = event.target;
         var isEditable = target.isContentEditable ||
@@ -844,7 +854,7 @@
             event.preventDefault();
         }
         lastTouchEnd = now;
-    }, false);
+    }, { capture: true, passive: false });
 
     // --- DETERMINISTIC AVATAR HELPER ---
     // Multiplayer avatars are derived from the stable Firebase UID. They no
