@@ -47,17 +47,25 @@ test('loads the versioned Reddit comment helper used by progressive enrichment',
     assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=5"><\/script>/);
 });
 
-test('starts root metadata before rendering without blocking the main thread', function () {
+test('starts root metadata alongside the main thread without blocking rendering', function () {
     var loadThreadStart = redditHtml.indexOf('async loadThread(permalink)');
     var loadThreadEnd = redditHtml.indexOf('processCommentHtml(html)', loadThreadStart);
     var loadThreadSource = redditHtml.slice(loadThreadStart, loadThreadEnd);
     var renderIndex = loadThreadSource.indexOf('content.innerHTML = html.replace');
-    var backgroundRootsIndex = loadThreadSource.indexOf('this.loadThreadRootsInBackground(permalink, comments)');
+    var threadRequestIndex = loadThreadSource.indexOf('const threadRequest = api.getThread(permalink)');
+    var rootsRequestIndex = loadThreadSource.indexOf('rootsRequest = api.getThreadRoots(permalink');
+    var awaitThreadIndex = loadThreadSource.indexOf('responseText = await threadRequest');
+    var backgroundRootsIndex = loadThreadSource.indexOf('this.loadThreadRootsInBackground(permalink, comments, rootsRequest)');
 
     assert.notEqual(loadThreadStart, -1);
     assert.notEqual(loadThreadEnd, -1);
     assert.notEqual(renderIndex, -1);
+    assert.notEqual(threadRequestIndex, -1);
+    assert.notEqual(rootsRequestIndex, -1);
+    assert.notEqual(awaitThreadIndex, -1);
     assert.notEqual(backgroundRootsIndex, -1);
+    assert.ok(threadRequestIndex < rootsRequestIndex);
+    assert.ok(rootsRequestIndex < awaitThreadIndex);
     assert.ok(backgroundRootsIndex < renderIndex);
     assert.doesNotMatch(loadThreadSource, /await\s+this\.loadThreadRootsInBackground/);
 });
@@ -66,12 +74,60 @@ test('allocates request IDs before the client throttle wait', function () {
     var requestStart = redditHtml.indexOf('async request(endpoint, options)');
     var requestEnd = redditHtml.indexOf('async getSubreddit(sub, after)', requestStart);
     var requestSource = redditHtml.slice(requestStart, requestEnd);
-    var requestIdIndex = requestSource.indexOf('const requestId = ++this.currentRequestId');
+    var requestIdIndex = requestSource.indexOf('const requestId = options.background === true');
     var throttleIndex = requestSource.indexOf('await this.sleep(this.minRequestInterval - timeSinceLast)');
 
     assert.notEqual(requestIdIndex, -1);
     assert.notEqual(throttleIndex, -1);
     assert.ok(requestIdIndex < throttleIndex);
+});
+
+test('keeps concurrent thread and root requests in the same request generation', async function () {
+    var releases = [];
+    var api = createApi(function () {
+        return new Promise(function (resolve) { releases.push(resolve); });
+    });
+    var response = function (body) {
+        return { ok: true, status: 200, text: async function () { return body; } };
+    };
+
+    var thread = api.getThread('/r/test/comments/abc/example/');
+    var roots = api.getThreadRoots('/r/test/comments/abc/example/', {
+        silent: true,
+        skipThrottle: true,
+        background: true
+    });
+
+    assert.equal(releases.length, 2);
+    releases[1](response('roots'));
+    releases[0](response('thread'));
+    assert.equal(await thread, 'thread');
+    assert.equal(await roots, 'roots');
+});
+
+test('supersedes both concurrent responses when another thread opens', async function () {
+    var releases = [];
+    var api = createApi(function () {
+        return new Promise(function (resolve) { releases.push(resolve); });
+    });
+    var response = function (body) {
+        return { ok: true, status: 200, text: async function () { return body; } };
+    };
+
+    var oldThread = api.getThread('/r/test/comments/old/example/');
+    var oldRoots = api.getThreadRoots('/r/test/comments/old/example/', {
+        silent: true,
+        skipThrottle: true,
+        background: true
+    });
+    var newThread = api.getThread('/r/test/comments/new/example/');
+
+    releases[0](response('old-thread'));
+    releases[1](response('old-roots'));
+    releases[2](response('new-thread'));
+    await assert.rejects(oldThread, /superseded/);
+    await assert.rejects(oldRoots, /superseded/);
+    assert.equal(await newThread, 'new-thread');
 });
 
 test('foreground threads bypass the feed throttle', async function () {
@@ -126,12 +182,12 @@ test('does not render a feed response superseded while its body is loading', asy
 });
 
 test('ignores background root metadata after leaving the thread', function () {
-    var backgroundStart = redditHtml.indexOf('loadThreadRootsInBackground(permalink, comments)');
+    var backgroundStart = redditHtml.indexOf('loadThreadRootsInBackground(permalink, comments, rootsRequest)');
     var backgroundEnd = redditHtml.indexOf('async loadMorePosts()', backgroundStart);
     var backgroundSource = redditHtml.slice(backgroundStart, backgroundEnd);
 
     assert.match(backgroundSource, /if \(this\.currentThread !== permalink\) return;/);
-    assert.match(backgroundSource, /api\.getThreadRoots\(permalink, \{ silent: true, skipThrottle: true \}\)/);
+    assert.match(backgroundSource, /rootsRequest\.then\(result/);
     assert.match(backgroundSource, /this\.applyRootCommentMarkers\(permalink, comments\)/);
     assert.doesNotMatch(backgroundSource, /setTimeout/);
 });

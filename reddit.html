@@ -814,7 +814,7 @@
                 const silent = options.silent === true;
                 const showLoading = !silent && options.showLoading !== false;
                 const skipThrottle = options.skipThrottle === true;
-                const requestId = ++this.currentRequestId;
+                const requestId = options.background === true ? this.currentRequestId : ++this.currentRequestId;
                 var now = Date.now();
                 var timeSinceLast = now - this.lastRequestTime;
                 if (!skipThrottle && timeSinceLast < this.minRequestInterval) {
@@ -1533,11 +1533,12 @@
                 this.updateCommentNavigation();
             },
 
-            loadThreadRootsInBackground(permalink, comments) {
-                api.getThreadRoots(permalink, { silent: true, skipThrottle: true }).then(rootsResponse => {
+            loadThreadRootsInBackground(permalink, comments, rootsRequest) {
+                rootsRequest.then(result => {
+                    if (result.error) throw result.error;
                     if (this.currentThread !== permalink) return;
 
-                    const rootsData = parseRssThread(rootsResponse);
+                    const rootsData = parseRssThread(result.responseText);
                     const rootIds = rootsData.comments.map(function(comment) { return comment.id; });
                     const markedRoots = window.RekindleRedditComments.markTopLevelComments(comments, rootIds);
                     console.log('Thread RSS top-level comments:', markedRoots);
@@ -1680,9 +1681,20 @@
                     let data = { post: null, comments: [] };
                     let rssFailure = null;
                     let shouldLoadRoots = false;
+                    let rootsRequest = null;
 
                     try {
-                        responseText = await api.getThread(permalink);
+                        const threadRequest = api.getThread(permalink);
+                        rootsRequest = api.getThreadRoots(permalink, {
+                            silent: true,
+                            skipThrottle: true,
+                            background: true
+                        }).then(function(rootsResponse) {
+                            return { responseText: rootsResponse };
+                        }, function(rootsError) {
+                            return { error: rootsError };
+                        });
+                        responseText = await threadRequest;
                         console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
                         data = parseRssThread(responseText);
                         console.log('Thread RSS has post:', !!data.post, 'comments:', data.comments.length);
@@ -1708,7 +1720,7 @@
                     const comments = data.comments;
 
                     if (shouldLoadRoots) {
-                        this.loadThreadRootsInBackground(permalink, comments);
+                        this.loadThreadRootsInBackground(permalink, comments, rootsRequest);
                     }
 
                     if (!post) {

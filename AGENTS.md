@@ -1212,15 +1212,17 @@ immediately while a later foreground request can still supersede older work.
 The Yandex function already retries Reddit upstream failures, so the browser
 must not repeat 429/5xx responses and multiply the wait.
 
-Start the `depth=1` root-metadata request as soon as the main thread RSS has been
-parsed, before building the thread DOM. Do not await it: the normal thread still
-renders first, while the network request overlaps the synchronous DOM work. Pass
-`skipThrottle: true` because waiting for the feed throttle adds another 1.5
-seconds after the main request has already completed. The request ID and
-`currentThread` guards discard late metadata after navigation, so a separate
-delay timer is unnecessary. Production checks on 1 August 2026 showed JSON
-still returning `403`, normal RSS taking about 0.4 seconds, and `depth=1` RSS
-taking about 2.4 seconds; keep RSS primary until JSON is verified available.
+Start the normal thread RSS first and immediately start `depth=1` with
+`background: true` so both requests share the same request generation and run
+concurrently. Do not await the root request before rendering. Pass
+`skipThrottle: true`; otherwise the feed throttle adds another 1.5 seconds. A
+later foreground request increments the generation and supersedes both old
+responses, while the `currentThread` guard prevents stale DOM updates. Normalize
+the root promise immediately so a fast failure cannot become an unhandled
+rejection while the main RSS is pending. Production checks on 1 August 2026
+showed JSON still returning `403`; a 200-comment thread rendered its main RSS in
+about 1.5 seconds while sequential root metadata needed another 8.1 seconds, so
+keep the two reliable RSS requests concurrent until JSON is verified available.
 
 `reddit.html` depends on `js/reddit-comments.js` for JSON parsing and progressive
 root enrichment. A production release must upload that helper before the page
