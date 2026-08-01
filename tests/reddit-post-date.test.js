@@ -18,9 +18,14 @@ test('parses and formats Reddit publication dates from RSS, Atom, and JSON', fun
     var atom = '<entry><title>Atom</title><published>2026-08-01T12:34:00+00:00</published></entry>';
     var json = JSON.stringify({ data: { children: [{ data: { title: 'JSON', created_utc: 1785587640 } }] } });
 
-    assert.equal(context.formatPostDate(context.parseRssPosts(rss)[0].publishedAt), '2026-08-01 12:34 UTC');
-    assert.equal(context.formatPostDate(context.parseRssPosts(atom)[0].publishedAt), '2026-08-01 12:34 UTC');
-    assert.equal(context.formatPostDate(context.parseJsonPosts(json)[0].publishedAt), '2026-08-01 12:34 UTC');
+    assert.equal(context.formatPostDate(context.parseRssPosts(rss)[0].publishedAt), '2026-08-01 15:34 MSK');
+    assert.equal(context.formatPostDate(context.parseRssPosts(atom)[0].publishedAt), '2026-08-01 15:34 MSK');
+    assert.equal(context.formatPostDate(context.parseJsonPosts(json)[0].publishedAt), '2026-08-01 15:34 MSK');
+});
+
+test('puts the Moscow publication time at the right of every post header', function () {
+    assert.match(html, /\.post-meta\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto/s);
+    assert.equal((html.match(/class="post-date"/g) || []).length, 3);
 });
 
 test('keeps the publication time in the JSON thread fallback', function () {

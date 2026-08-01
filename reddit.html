@@ -483,9 +483,17 @@
         }
 
         .post-meta {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            column-gap: 12px;
             font-size: 0.75rem;
             color: #666;
             margin-bottom: 4px;
+        }
+
+        .post-date {
+            white-space: nowrap;
+            text-align: right;
         }
 
         .post-title {
@@ -955,9 +963,10 @@
         function formatPostDate(value) {
             var date = new Date(value);
             if (!value || isNaN(date.getTime())) return "";
+            var moscowDate = new Date(date.getTime() + 3 * 3600000);
             function pad(number) { return number < 10 ? "0" + number : String(number); }
-            return date.getUTCFullYear() + "-" + pad(date.getUTCMonth() + 1) + "-" + pad(date.getUTCDate())
-                + " " + pad(date.getUTCHours()) + ":" + pad(date.getUTCMinutes()) + " UTC";
+            return moscowDate.getUTCFullYear() + "-" + pad(moscowDate.getUTCMonth() + 1) + "-" + pad(moscowDate.getUTCDate())
+                + " " + pad(moscowDate.getUTCHours()) + ":" + pad(moscowDate.getUTCMinutes()) + " MSK";
         }
 
         function extractTagText(xml, tagName) {
@@ -1334,7 +1343,7 @@
                     const safeTitle = escapeHtml(p.title);
                     const published = formatPostDate(p.publishedAt);
                     el.innerHTML = `
-                        <div class="post-meta">r/${escapeHtml(p.subreddit)} • u/${escapeHtml(p.author)}${published ? ' • ' + published : ''}</div>
+                        <div class="post-meta"><span>r/${escapeHtml(p.subreddit)} • u/${escapeHtml(p.author)}</span>${published ? '<span class="post-date">' + published + '</span>' : ''}</div>
                         <div class="post-title">${safeTitle}</div>
                     `;
                     el.onclick = function() { ui.loadThread(p.permalink); };
@@ -1589,7 +1598,7 @@
                             const published = formatPostDate(p.publishedAt);
 
                             el.innerHTML = `
-                                <div class="post-meta">r/${escapeHtml(p.subreddit)} • u/${escapeHtml(p.author)}${published ? ' • ' + published : ''}</div>
+                                <div class="post-meta"><span>r/${escapeHtml(p.subreddit)} • u/${escapeHtml(p.author)}</span>${published ? '<span class="post-date">' + published + '</span>' : ''}</div>
                                 <div class="post-title">${safeTitle}</div>
                             `;
                             el.onclick = function() { ui.loadThread(p.permalink); };
@@ -1720,7 +1729,7 @@
 
                     let html = '<div class="thread-container">';
                     const published = formatPostDate(post.publishedAt);
-                    html += `<div class="post-meta">u/${escapeHtml(post.author)}${published ? ' • ' + published : ''}</div>`;
+                    html += `<div class="post-meta"><span>u/${escapeHtml(post.author)}</span>${published ? '<span class="post-date">' + published + '</span>' : ''}</div>`;
                     html += `<div class="thread-title">${escapeHtml(post.title)}</div>`;
 
                     if (post.contentHtml) {
