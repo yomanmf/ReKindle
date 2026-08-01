@@ -781,7 +781,7 @@
         </div>
     </div>
 
-    <script src="theme.js?v=23"></script> <!-- Inject Theme Script -->
+    <script src="theme.js?v=24"></script> <!-- Inject Theme Script -->
     <script src="js/i18n.js"></script>
     <script src="js/custom-select.js"></script>
 
@@ -1511,6 +1511,10 @@
 
         function saveTheme() {
             var val = document.getElementById('theme-select').value;
+            if (window.rekindleSaveThemePreference) {
+                window.rekindleSaveThemePreference(val);
+                return;
+            }
             localStorage.setItem('rekindle_theme_mode', val);
             if (window.rekindleApplyTheme) window.rekindleApplyTheme();
 
@@ -1884,7 +1888,7 @@
                         ls.onchange = oc;
                     }
 
-                    if (data.themeMode) {
+                    if (data.themeMode && !localStorage.getItem('rekindle_theme_pending_sync')) {
                         var syncedTheme = data.themeMode;
                         localStorage.setItem('rekindle_theme_mode', syncedTheme);
                         updateSettingsSelectValue('theme-select', syncedTheme);

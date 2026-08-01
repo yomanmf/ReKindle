@@ -50,7 +50,7 @@
     <script src="time.js" defer></script>
     <script src="icons.js?v=13" defer></script>
     <script src="icons-beta.js?v=9" defer></script>
-    <script src="theme.js?v=23" defer></script>
+    <script src="theme.js?v=24" defer></script>
     <script src="bad_words.js?v=4" defer></script>
     <script src="js/i18n.js" defer></script>
     <script src="js/rekindle-cloud.js?v=1" defer></script>
@@ -1528,7 +1528,7 @@
                     const data = doc.data();
                     if (data.manualLocation) localStorage.setItem('rekindle_location_manual', JSON.stringify(data.manualLocation));
                     if (data.unitSystem) localStorage.setItem('rekindle_unit_system', data.unitSystem);
-                    if (data.themeMode) {
+                    if (data.themeMode && !localStorage.getItem('rekindle_theme_pending_sync')) {
                         var syncedTheme = data.themeMode;
                         localStorage.setItem('rekindle_theme_mode', syncedTheme);
                         if (window.rekindleApplyTheme) window.rekindleApplyTheme();

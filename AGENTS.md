@@ -289,6 +289,15 @@ The `system` theme follows Kindle's `prefers-color-scheme` media query and uses
 the Chromium 75-compatible `MediaQueryList.addListener` callback for live
 changes. If the browser does not expose that preference, it safely stays light.
 
+The global bottom-left theme gesture also lives in `theme.js`: two taps within
+600 ms inside the viewport's bottom-left 64x64 pixels switch the effective
+theme and save an explicit `light` or `dark` preference. Do not add page-level gesture
+handlers. The shared script writes the same Firestore setting and parent sync
+timestamp as `settings.html`, retaining `rekindle_theme_pending_sync` until a
+Firebase-capable page can save it. Dashboard and Settings cloud reads must not
+overwrite the local theme while that marker exists. Cache-bust and release the
+shared script plus every root HTML page.
+
 ### 7. Branding & Badges
 Standardized "Beta" or status badges.
 

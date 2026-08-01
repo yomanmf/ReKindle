@@ -88,6 +88,7 @@
 
     // --- CONFIGURATION ---
     var THEME_KEY = 'rekindle_theme_mode'; // 'light', 'dark', 'auto', 'system'
+    var THEME_PENDING_SYNC_KEY = 'rekindle_theme_pending_sync';
     var AUTO_START_HOUR = 18; // 6 PM
     var AUTO_END_HOUR = 6;    // 6 AM
     var ROTATION_KEY = 'rekindle_rotation'; // '0', '90', '180', '270'
@@ -168,6 +169,60 @@
         var style = document.getElementById('rekindle-dark-theme');
         if (style) style.remove();
     }
+
+    var themeSyncListening = false;
+
+    function syncPendingTheme() {
+        if (!localStorage.getItem(THEME_PENDING_SYNC_KEY) || themeSyncListening ||
+            !window.firebase || !firebase.apps || !firebase.apps.length ||
+            typeof firebase.auth !== 'function' || typeof firebase.firestore !== 'function') return;
+
+        themeSyncListening = true;
+        var unsubscribe = function () { };
+        unsubscribe = firebase.auth().onAuthStateChanged(function (user) {
+            if (!user) return;
+            unsubscribe();
+            themeSyncListening = false;
+
+            var mode = localStorage.getItem(THEME_PENDING_SYNC_KEY);
+            if (!mode) return;
+            var userRef = firebase.firestore().collection('users').doc(user.uid);
+            Promise.all([
+                userRef.collection('settings').doc('general').set({ themeMode: mode }, { merge: true }),
+                userRef.set({ settingsLastUpdated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+            ]).then(function () {
+                if (localStorage.getItem(THEME_PENDING_SYNC_KEY) === mode) {
+                    localStorage.removeItem(THEME_PENDING_SYNC_KEY);
+                }
+            }).catch(function (error) {
+                console.warn('Theme preference sync failed.', error);
+            });
+        });
+    }
+
+    function saveThemePreference(mode) {
+        localStorage.setItem(THEME_KEY, mode);
+        localStorage.setItem(THEME_PENDING_SYNC_KEY, mode);
+        applyTheme();
+        if (window.updateSettingsSelectValue) window.updateSettingsSelectValue('theme-select', mode);
+        syncPendingTheme();
+    }
+
+    var cornerTapAt = 0;
+    document.addEventListener('click', function (event) {
+        if (event.clientX > 64 || event.clientY < window.innerHeight - 64) {
+            cornerTapAt = 0;
+            return;
+        }
+
+        var now = Date.now();
+        if (now - cornerTapAt <= 600) {
+            cornerTapAt = 0;
+            saveThemePreference(document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark');
+        } else {
+            cornerTapAt = now;
+        }
+    }, true);
 
     // Run immediately
     applyTheme();
@@ -307,12 +362,15 @@
 
     function init() {
         applyTheme();
+        syncPendingTheme();
         applyScale();
         applyRotation();
         applyViewport();
         injectEInkStyles();
         applyFont();
     }
+
+    window.addEventListener('load', syncPendingTheme);
 
     // Run as soon as possible
     if (document.readyState === 'loading') {
@@ -544,6 +602,7 @@
 
     // Export for Apps to call
     window.rekindleApplyTheme = applyTheme;
+    window.rekindleSaveThemePreference = saveThemePreference;
     window.rekindleGetDisplayMode = getDisplayMode;
     window.rekindleApplyScale = applyScale;
     window.rekindleAutoDetectScale = autoDetectScale;

@@ -1,10 +1,10 @@
-const CACHE_NAME = 'rekindle-cache-v54'; // Add system theme mode
+const CACHE_NAME = 'rekindle-cache-v55'; // Add bottom-left double-tap theme toggle
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=13',
     './icons-beta.js?v=9',
-    './theme.js?v=23',
+    './theme.js?v=24',
     './logo.svg',
     './manifest.json',
     './fonts/OpenDyslexic-Regular.woff2',

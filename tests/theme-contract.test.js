@@ -16,7 +16,7 @@ test('every application page loads the current shared theme script', function ()
     var releaseManifest = read('yandex/FRONTEND-RELEASE-MANIFEST.txt').split(/\r?\n/);
 
     pages.forEach(function (page) {
-        assert.match(read(page), /theme\.js\?v=23/, page + ' must load theme.js?v=23');
+        assert.match(read(page), /theme\.js\?v=24/, page + ' must load theme.js?v=24');
         assert.ok(releaseManifest.includes(page), page + ' must ship in the dark-theme release');
     });
 });
@@ -62,4 +62,32 @@ test('dark theme preserves raster, canvas, and embedded content colors', functio
     assert.match(theme, /canvas,\\n/);
     assert.match(theme, /iframe,\\n/);
     assert.match(theme, /filter: invert\(1\) hue-rotate\(180deg\)/);
+});
+
+test('double tapping the bottom-left corner toggles the effective theme', function () {
+    var theme = read('theme.js');
+
+    assert.match(theme, /document\.addEventListener\('click'/);
+    assert.match(theme, /event\.clientX > 64/);
+    assert.match(theme, /window\.innerHeight - 64/);
+    assert.match(theme, /now - cornerTapAt <= 600/);
+    assert.match(theme, /hasAttribute\('data-theme'\) \? 'light' : 'dark'/);
+    assert.match(theme, /saveThemePreference/);
+});
+
+test('gesture and Settings save the same local and cloud theme preference', function () {
+    var theme = read('theme.js');
+    var settings = read('settings.html');
+    var modernHome = read('index.html');
+    var classicHome = read('index_old.html');
+
+    assert.match(theme, /localStorage\.setItem\(THEME_KEY, mode\)/);
+    assert.match(theme, /localStorage\.setItem\(THEME_PENDING_SYNC_KEY, mode\)/);
+    assert.match(theme, /set\(\{ themeMode: mode \}, \{ merge: true \}\)/);
+    assert.match(theme, /settingsLastUpdated: firebase\.firestore\.FieldValue\.serverTimestamp\(\)/);
+    assert.match(theme, /window\.addEventListener\('load', syncPendingTheme\)/);
+    assert.match(settings, /window\.rekindleSaveThemePreference\(val\)/);
+    assert.match(settings, /data\.themeMode && !localStorage\.getItem\('rekindle_theme_pending_sync'\)/);
+    assert.match(modernHome, /data\.themeMode && !localStorage\.getItem\('rekindle_theme_pending_sync'\)/);
+    assert.match(classicHome, /data\.themeMode && !localStorage\.getItem\('rekindle_theme_pending_sync'\)/);
 });

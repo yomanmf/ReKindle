@@ -16,15 +16,15 @@ test("shared browser analytics excludes query strings and uses the Yandex collec
     assert.match(cloud, /requestType: "api_request"/);
 });
 
-test("service worker and root pages use the analytics-aware theme version", function () {
+test("service worker and root pages use the current theme version", function () {
     var serviceWorker = fs.readFileSync(path.join(root, "sw.js"), "utf8");
-    assert.match(serviceWorker, /rekindle-cache-v54/);
-    assert.match(serviceWorker, /theme\.js\?v=23/);
+    assert.match(serviceWorker, /rekindle-cache-v55/);
+    assert.match(serviceWorker, /theme\.js\?v=24/);
     var pages = fs.readdirSync(root).filter(function (name) {
         return name.endsWith(".html") && fs.readFileSync(path.join(root, name), "utf8").indexOf("theme.js?v=") !== -1;
     });
     assert.ok(pages.length > 90);
     pages.forEach(function (page) {
-        assert.match(fs.readFileSync(path.join(root, page), "utf8"), /theme\.js\?v=23/, page);
+        assert.match(fs.readFileSync(path.join(root, page), "utf8"), /theme\.js\?v=24/, page);
     });
 });
