@@ -68,6 +68,7 @@ test("Books to Kindle searches and delivers through the private worker queue", a
     await worker("progress", { id: search.job.id, phase: "searching", message: "Searching" });
     await worker("search-results", {
         id: search.job.id,
+        message: "Search results received from the Flibusta API.",
         results: [{
             id: "42",
             title: "War and Peace",
@@ -79,6 +80,7 @@ test("Books to Kindle searches and delivers through the private worker queue", a
     var ready = (await user("status", { id: search.job.id })).job;
     assert.equal(ready.state, "ready");
     assert.equal(ready.firstPageOnly, false);
+    assert.equal(ready.message, "Search results received from the Flibusta API.");
     assert.deepEqual(ready.results[0].formats, ["EPUB"]);
     assert.equal(ready.results[0].epubUrl, undefined);
 

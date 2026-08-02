@@ -212,7 +212,7 @@ async function finishSearch(firestore, body) {
     await firestore.collection(JOBS_COLLECTION).doc(job.id).update({
         state: "ready",
         phase: "ready",
-        message: results.length ? "Choose a book." : "No books found.",
+        message: cleanText(body.message, 500) || (results.length ? "Choose a book." : "No books found."),
         results: results,
         firstPageOnly: firstPageOnly,
         updatedAt: Date.now()

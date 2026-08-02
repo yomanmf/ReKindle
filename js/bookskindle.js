@@ -122,7 +122,7 @@
         setStatusValue(byId("job-state"), job.state, stateLabel(job.state));
         setText(byId("job-book"), job.selectedBook ? job.selectedBook.title : job.query);
         var detail = jobDetail(job);
-        if (job.state === "running" && job.message) detail = job.message;
+        if ((job.state === "running" || job.state === "ready") && job.message) detail = job.message;
         if (job.state === "failed" && job.error === "Flibusta search is unavailable") {
             detail = translate("bookskindle.catalog_unavailable", "The book catalog is temporarily unavailable. Try again later.");
         } else if (job.state === "ready" && !(job.results || []).length) {

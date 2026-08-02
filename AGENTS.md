@@ -753,6 +753,9 @@ While a job is running, render its worker-provided `message` before falling back
 to the generic phase label; otherwise detailed retry and health-check progress
 is stored correctly but hidden from the user. Bump the `bookskindle.js` query
 version in `bookskindle.html` whenever this rendering logic changes.
+Search completion can also carry a worker-provided source message. Preserve it
+in `finishSearch()` and render it for ready jobs so the API/web winner remains
+visible after the running job becomes ready.
 
 **Firebase Auth sessions are API-key scoped:** Every checked-in authenticated
 page, including `bookskindle.html`, must use the
