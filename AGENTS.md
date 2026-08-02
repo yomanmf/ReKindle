@@ -791,6 +791,11 @@ the full-width `.wide-button` class.
 
 **Yandex Object Storage recursive-copy gotcha:** Yandex CLI 1.18.0 marks `yc storage s3` as preview. During the 15 July 2026 AI Assistant release, both `yc storage s3 cp <dir> s3://rekindle/ --recursive` commands returned exit code 0 but silently omitted the same alphabetical tail of the 113-object release (42 root HTML objects and aliases). Never accept a recursive-copy exit code as proof of a complete frontend deployment. Read the bucket back and compare every manifest object byte-for-byte; upload any missing objects individually with `yc storage s3api put-object`. Set extensionless page aliases to `Content-Type: text/html` explicitly and verify their public HTTP headers.
 
+When assigning MIME types in a shell release loop, detect an extensionless alias
+from its basename (`[[ "$base_name" != *.* ]]`). A broad glob intended to mean
+"no extension" can also match `.js`, causing Object Storage to serve scripts as
+`text/html`; smoke-test the public MIME type for HTML, JS, and `sw.js`.
+
 **Concurrent frontend staging gotcha:**
 `yandex/prepare-frontend-release.js` defaults to the shared
 `/private/tmp/rekindle-yandex-release` directory. Parallel tasks can replace its
