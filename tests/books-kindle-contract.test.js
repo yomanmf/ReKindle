@@ -45,9 +45,10 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     });
     assert.match(client, /setStatusValue\(byId\("job-state"\), job\.state/);
     assert.match(html, /\.status-icon\s*\{/);
-    assert.match(html, /js\/bookskindle\.js\?v=8/);
+    assert.match(html, /js\/bookskindle\.js\?v=9/);
     assert.match(client, /setStatus\(value\).*statusText\(value\)/);
     assert.match(client, /setText\(byId\("job-detail"\), statusText\(detail\)\)/);
+    assert.match(client, /job\.state === "running" && job\.message/);
     assert.match(client, /job\.firstPageOnly === true[\s\S]*bookskindle\.first_page_only[\s\S]*bookskindle\.no_results/);
     assert.match(client, /job\.error === "Flibusta search is unavailable"/);
 });
@@ -74,7 +75,7 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
     });
     assert.match(read("index.html"), /icons-beta\.js\?v=9/);
     assert.match(read("index_old.html"), /icons-beta\.js\?v=9/);
-    assert.match(read("sw.js"), /rekindle-cache-v54/);
+    assert.match(read("sw.js"), /rekindle-cache-v56/);
 });
 
 test("Books to Kindle ships English and Russian UI contracts", function () {

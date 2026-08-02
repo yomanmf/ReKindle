@@ -749,6 +749,10 @@ Books Kindle status bars and job details omit a single sentence-ending period
 when rendered, while preserving ellipses such as `Searching...`. Keep this in
 the shared `statusText()` display helper so worker-provided messages follow the
 same rule without rewriting stored job data or every locale string.
+While a job is running, render its worker-provided `message` before falling back
+to the generic phase label; otherwise detailed retry and health-check progress
+is stored correctly but hidden from the user. Bump the `bookskindle.js` query
+version in `bookskindle.html` whenever this rendering logic changes.
 
 **Firebase Auth sessions are API-key scoped:** Every checked-in authenticated
 page, including `bookskindle.html`, must use the
