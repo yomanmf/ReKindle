@@ -236,6 +236,17 @@
             background: white;
         }
 
+        .sidebar-top-btn {
+            min-height: 48px;
+            border: 0;
+            border-top: 2px solid black;
+            background: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         .sidebar-item {
             padding: 10px;
             border-bottom: 1px solid #eee;
@@ -676,6 +687,8 @@
             <div class="sidebar">
                 <div class="sidebar-header" data-i18n="reddit.sidebar.saved">Saved Subs</div>
                 <div id="saved-list"></div>
+                <button class="sidebar-top-btn" type="button" onclick="ui.loadTopSubreddits()"
+                    data-i18n="reddit.feed.sort.top">Top</button>
             </div>
 
             <!-- MAIN -->
@@ -1103,6 +1116,14 @@
             var m = String(permalink).match(/\/comments\/([a-z0-9]+)/i);
             if (m && m[1]) return "t3_" + m[1];
             return "";
+        }
+
+        function parseTopSubreddits(responseText) {
+            var data = JSON.parse(responseText);
+            var children = data.data && Array.isArray(data.data.children) ? data.data.children : [];
+            return children.map(function(item) {
+                return item && item.data ? item.data.display_name : "";
+            }).filter(Boolean).slice(0, 100);
         }
 
         // --- UI MANAGER ---
@@ -1661,6 +1682,38 @@
                     if (cachedPosts.length === 0) {
                         content.innerHTML = `<div class="loading" style="color:red">Error loading r/${escapeHtml(sub)}<br>${escapeHtml(e.message)}<br><small>If proxy issues persist, try reloading.</small></div>`;
                     }
+                }
+            },
+
+            async loadTopSubreddits() {
+                const content = document.getElementById('content-area');
+                this.currentThread = null;
+                this.afterToken = null;
+                this.feedPosts = [];
+                this.resetCommentNavigation();
+                this.updateThreadNavigation();
+                document.getElementById('feed-settings-row').classList.add('hidden');
+                document.getElementById('back-btn').style.display = 'block';
+                content.scrollTop = 0;
+                content.innerHTML = '<div class="loading">Loading...</div>';
+
+                try {
+                    const subs = parseTopSubreddits(await api.request('/subreddits/popular.json?limit=100&raw_json=1'));
+                    const topLabel = window.t ? window.t('reddit.feed.sort.top', 'Top') : 'Top';
+                    content.innerHTML = '<div class="sidebar-header">' + escapeHtml(topLabel) + ' 100</div>';
+                    subs.forEach(function(sub, index) {
+                        const item = document.createElement('div');
+                        item.className = 'post-item';
+                        item.innerHTML = '<div class="post-title">' + (index + 1) + '. r/' + escapeHtml(sub) + '</div>';
+                        item.onclick = function() {
+                            document.getElementById('sub-input').value = sub;
+                            ui.loadCurrentSub();
+                        };
+                        content.appendChild(item);
+                    });
+                } catch (e) {
+                    if (e.message && e.message.indexOf('superseded') !== -1) return;
+                    content.innerHTML = '<div class="loading" style="color:red">Error loading Top 100<br>' + escapeHtml(e.message) + '</div>';
                 }
             },
 
