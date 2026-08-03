@@ -312,7 +312,11 @@ async function readSessionDocument(doc) {
     try {
         return await doc.get();
     } catch (error) {
-        throw serviceError(503, "exchange-calendar-storage", "Exchange Calendar storage is unavailable.");
+        try {
+            return await doc.get();
+        } catch (retryError) {
+            throw serviceError(503, "exchange-calendar-storage", "Exchange Calendar storage is unavailable.");
+        }
     }
 }
 

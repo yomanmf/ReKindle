@@ -1402,6 +1402,13 @@ restore it operationally on the uploader instead of redirecting the user.
 
 ## Git Workflow
 
+**Exchange Calendar transient-storage gotcha:** Production can intermittently
+return a Firestore read error while loading `exchange_calendar_sessions`, even
+though the saved Exchange connection is still valid. Keep the single retry in
+`readSessionDocument()` in `yandex/rekindle-backend/exchange-calendar-service.js`;
+both the dashboard agenda and Calendar app use that shared path. Do not turn a
+single storage failure into a reconnect flow or delete the session document.
+
 **Dashboard login wall:** `index.html` and `index_old.html` keep the existing
 `#login-modal` hidden until Firebase resolves, then `requireLogin()` opens it
 only for signed-out or offline users. Keep both dashboards synchronized: the

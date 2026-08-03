@@ -97,6 +97,25 @@ test("Exchange Calendar rejects invalid accounts, passwords, and ranges", functi
     assert.equal(service.testHooks.escapeXml('a<&"\''), "a&lt;&amp;&quot;&apos;");
 });
 
+test("Exchange Calendar retries a transient session read failure", async function () {
+    var store = fakeFirestore();
+    var reads = 0;
+    var get = store.firestore.collection().doc().get;
+    store.firestore.collection().doc().get = async function () {
+        reads += 1;
+        if (reads === 1) throw new Error("temporarily unavailable");
+        return get();
+    };
+
+    assert.deepEqual(await service.handle({
+        action: "status",
+        uid: "uid-one",
+        firestore: store.firestore,
+        env: { EXCHANGE_CALENDAR_ENCRYPTION_KEY: key }
+    }), { connected: false });
+    assert.equal(reads, 2);
+});
+
 function soap(body) {
     return '<?xml version="1.0"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"><s:Body>' + body + '</s:Body></s:Envelope>';
 }
