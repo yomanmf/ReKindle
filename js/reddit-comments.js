@@ -86,6 +86,7 @@
                 author: postData.author || '',
                 contentHtml: postData.selftext_html ? decodeHtmlEntities(postData.selftext_html) : fallbackBodyHtml(postData.selftext),
                 permalink: postData.permalink || '',
+                upvotes: typeof postData.ups === 'number' ? postData.ups : null,
                 publishedAt: postData.created_utc ? postData.created_utc * 1000 : ''
             } : null;
             var comments = [];

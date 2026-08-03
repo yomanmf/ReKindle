@@ -504,8 +504,21 @@
         }
 
         .post-date {
+            margin-left: 12px;
             white-space: nowrap;
             text-align: right;
+        }
+
+        .post-facts,
+        .post-upvotes {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .post-upvotes svg {
+            width: 12px;
+            height: 12px;
+            margin-right: 3px;
         }
 
         .post-title {
@@ -658,7 +671,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/rekindle-cloud.js"></script>
-    <script src="js/reddit-comments.js?v=5"></script>
+    <script src="js/reddit-comments.js?v=6"></script>
     <script src="js/reddit-feed-settings.js?v=1"></script>
     <link rel="stylesheet" href="css/custom-select.css?v=1">
     <script src="js/custom-select.js?v=1"></script>
@@ -984,6 +997,16 @@
                 + " " + pad(moscowDate.getUTCHours()) + ":" + pad(moscowDate.getUTCMinutes());
         }
 
+        function renderPostFacts(post) {
+            var published = formatPostDate(post.publishedAt);
+            var upvotes = typeof post.upvotes === "number"
+                ? '<span class="post-upvotes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14V2M3 7l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' + post.upvotes + '</span>'
+                : '';
+            return upvotes || published
+                ? '<span class="post-facts">' + upvotes + (published ? '<span class="post-date">' + published + '</span>' : '') + '</span>'
+                : '';
+        }
+
         function extractTagText(xml, tagName) {
             var regex = new RegExp("<(?:[a-zA-Z0-9-]+:)?" + tagName + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:[a-zA-Z0-9-]+:)?" + tagName + ">", "i");
             var match = xml.match(regex);
@@ -1101,6 +1124,7 @@
                                 subreddit: child.subreddit || "",
                                 permalink: child.permalink || "",
                                 id: child.name || "",
+                                upvotes: typeof child.ups === "number" ? child.ups : null,
                                 publishedAt: child.created_utc ? child.created_utc * 1000 : ""
                             });
                         }
@@ -1364,9 +1388,8 @@
                     const el = document.createElement('div');
                     el.className = 'post-item';
                     const safeTitle = escapeHtml(p.title);
-                    const published = formatPostDate(p.publishedAt);
                     el.innerHTML = `
-                        <div class="post-meta"><span>r/${escapeHtml(p.subreddit)} • u/${escapeHtml(p.author)}</span>${published ? '<span class="post-date">' + published + '</span>' : ''}</div>
+                        <div class="post-meta"><span>r/${escapeHtml(p.subreddit)} • u/${escapeHtml(p.author)}</span>${renderPostFacts(p)}</div>
                         <div class="post-title">${safeTitle}</div>
                     `;
                     el.onclick = function() { ui.loadThread(p.permalink); };
@@ -1591,15 +1614,22 @@
 
                 try {
                     const preference = this.getFeedPreference(this.currentSub);
-                    let responseText = await api.getSubreddit(this.currentSub, this.afterToken, preference);
-                    console.log('Load more RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                    let posts = parseRssPosts(responseText);
-                    console.log('Load more RSS posts:', posts.length);
-                    if (posts.length === 0) {
+                    let responseText = '';
+                    let posts = [];
+                    try {
                         responseText = await api.getSubredditJson(this.currentSub, this.afterToken, preference);
                         console.log('Load more JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
                         posts = parseJsonPosts(responseText);
                         console.log('Load more JSON posts:', posts.length);
+                    } catch (jsonError) {
+                        if (jsonError.message && jsonError.message.indexOf('superseded') !== -1) throw jsonError;
+                        console.warn('Load more JSON failed, trying RSS:', jsonError);
+                    }
+                    if (posts.length === 0) {
+                        responseText = await api.getSubreddit(this.currentSub, this.afterToken, preference);
+                        console.log('Load more RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                        posts = parseRssPosts(responseText);
+                        console.log('Load more RSS posts:', posts.length);
                     }
 
                     if (posts.length > 0) {
@@ -1608,10 +1638,8 @@
                             const el = document.createElement('div');
                             el.className = 'post-item';
                             const safeTitle = escapeHtml(p.title);
-                            const published = formatPostDate(p.publishedAt);
-
                             el.innerHTML = `
-                                <div class="post-meta"><span>r/${escapeHtml(p.subreddit)} • u/${escapeHtml(p.author)}</span>${published ? '<span class="post-date">' + published + '</span>' : ''}</div>
+                                <div class="post-meta"><span>r/${escapeHtml(p.subreddit)} • u/${escapeHtml(p.author)}</span>${renderPostFacts(p)}</div>
                                 <div class="post-title">${safeTitle}</div>
                             `;
                             el.onclick = function() { ui.loadThread(p.permalink); };
@@ -1660,15 +1688,22 @@
                 else content.innerHTML = `<div class="loading">Loading r/${escapeHtml(sub)}...</div>`;
 
                 try {
-                    let responseText = await api.getSubreddit(sub, null, preference);
-                    console.log('RSS response length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                    let posts = parseRssPosts(responseText);
-                    console.log('RSS posts parsed:', posts.length);
-                    if (posts.length === 0) {
+                    let responseText = '';
+                    let posts = [];
+                    try {
                         responseText = await api.getSubredditJson(sub, null, preference);
                         console.log('JSON response length:', responseText.length, 'preview:', responseText.substring(0, 200));
                         posts = parseJsonPosts(responseText);
                         console.log('JSON posts parsed:', posts.length);
+                    } catch (jsonError) {
+                        if (jsonError.message && jsonError.message.indexOf('superseded') !== -1) throw jsonError;
+                        console.warn('JSON feed failed, trying RSS:', jsonError);
+                    }
+                    if (posts.length === 0) {
+                        responseText = await api.getSubreddit(sub, null, preference);
+                        console.log('RSS response length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                        posts = parseRssPosts(responseText);
+                        console.log('RSS posts parsed:', posts.length);
                     }
                     try {
                         localStorage.setItem(cacheKey, responseText);
@@ -1737,41 +1772,41 @@
                 try {
                     let responseText = '';
                     let data = { post: null, comments: [] };
-                    let rssFailure = null;
+                    let jsonFailure = null;
                     let shouldLoadRoots = false;
                     let rootsRequest = null;
 
                     try {
-                        const threadRequest = api.getThread(permalink);
-                        rootsRequest = api.getThreadRoots(permalink, {
-                            silent: true,
-                            skipThrottle: true,
-                            background: true
-                        }).then(function(rootsResponse) {
-                            return { responseText: rootsResponse };
-                        }, function(rootsError) {
-                            return { error: rootsError };
-                        });
-                        responseText = await threadRequest;
-                        console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                        data = parseRssThread(responseText);
-                        console.log('Thread RSS has post:', !!data.post, 'comments:', data.comments.length);
-                        shouldLoadRoots = !!data.post;
-                    } catch (rssError) {
-                        if (rssError.message && rssError.message.indexOf('superseded') !== -1) throw rssError;
-                        rssFailure = rssError;
-                        console.warn('Thread RSS failed, trying JSON:', rssError);
+                        responseText = await api.getThreadJson(permalink);
+                        console.log('Thread JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                        if (!window.RekindleRedditComments) throw new Error('Reddit comment parser is unavailable');
+                        data = window.RekindleRedditComments.parseThread(responseText);
+                        console.log('Thread JSON has post:', !!data.post, 'comments:', data.comments.length);
+                    } catch (jsonError) {
+                        if (jsonError.message && jsonError.message.indexOf('superseded') !== -1) throw jsonError;
+                        jsonFailure = jsonError;
+                        console.warn('Thread JSON failed, trying RSS:', jsonError);
                     }
 
                     if (!data.post) {
                         try {
-                            responseText = await api.getThreadJson(permalink);
-                            console.log('Thread JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                            if (!window.RekindleRedditComments) throw new Error('Reddit comment parser is unavailable');
-                            data = window.RekindleRedditComments.parseThread(responseText);
-                            console.log('Thread JSON has post:', !!data.post, 'comments:', data.comments.length);
-                        } catch (jsonError) {
-                            throw rssFailure || jsonError;
+                            const threadRequest = api.getThread(permalink);
+                            rootsRequest = api.getThreadRoots(permalink, {
+                                silent: true,
+                                skipThrottle: true,
+                                background: true
+                            }).then(function(rootsResponse) {
+                                return { responseText: rootsResponse };
+                            }, function(rootsError) {
+                                return { error: rootsError };
+                            });
+                            responseText = await threadRequest;
+                            console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                            data = parseRssThread(responseText);
+                            console.log('Thread RSS has post:', !!data.post, 'comments:', data.comments.length);
+                            shouldLoadRoots = !!data.post;
+                        } catch (rssError) {
+                            throw jsonFailure || rssError;
                         }
                     }
                     const post = data.post;
@@ -1788,8 +1823,7 @@
                     }
 
                     let html = '<div class="thread-container">';
-                    const published = formatPostDate(post.publishedAt);
-                    html += `<div class="post-meta"><span>u/${escapeHtml(post.author)}</span>${published ? '<span class="post-date">' + published + '</span>' : ''}</div>`;
+                    html += `<div class="post-meta"><span>u/${escapeHtml(post.author)}</span>${renderPostFacts(post)}</div>`;
                     html += `<div class="thread-title">${escapeHtml(post.title)}</div>`;
 
                     if (post.contentHtml) {

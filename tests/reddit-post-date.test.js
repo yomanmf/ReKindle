@@ -16,23 +16,37 @@ vm.runInNewContext(html.slice(start, end), context);
 test('parses and formats Reddit publication dates from RSS, Atom, and JSON', function () {
     var rss = '<item><title>RSS</title><pubDate>Sat, 01 Aug 2026 12:34:00 GMT</pubDate></item>';
     var atom = '<entry><title>Atom</title><published>2026-08-01T12:34:00+00:00</published></entry>';
-    var json = JSON.stringify({ data: { children: [{ data: { title: 'JSON', created_utc: 1785587640 } }] } });
+    var json = JSON.stringify({ data: { children: [{ data: { title: 'JSON', ups: 321, created_utc: 1785587640 } }] } });
 
     assert.equal(context.formatPostDate(context.parseRssPosts(rss)[0].publishedAt), '2026-08-01 15:34');
     assert.equal(context.formatPostDate(context.parseRssPosts(atom)[0].publishedAt), '2026-08-01 15:34');
     assert.equal(context.formatPostDate(context.parseJsonPosts(json)[0].publishedAt), '2026-08-01 15:34');
+    assert.equal(context.parseJsonPosts(json)[0].upvotes, 321);
 });
 
-test('puts the Moscow publication time at the right of every post header', function () {
+test('puts the upvote counter immediately before the Moscow publication time', function () {
     assert.match(html, /\.post-meta\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto/s);
-    assert.equal((html.match(/class="post-date"/g) || []).length, 3);
+    assert.match(context.renderPostFacts({ upvotes: 321, publishedAt: 1785587640000 }), /class="post-upvotes"[\s\S]*321[\s\S]*class="post-date"[\s\S]*2026-08-01 15:34/);
+    assert.match(html, /class="post-upvotes"[^>]*><svg[^>]*aria-hidden="true"/);
+    assert.equal((html.match(/\$\{renderPostFacts\((?:p|post)\)\}/g) || []).length, 3);
 });
 
-test('keeps the publication time in the JSON thread fallback', function () {
+test('keeps upvotes and publication time in the JSON thread response', function () {
     var payload = JSON.stringify([
-        { data: { children: [{ data: { title: 'Thread', created_utc: 1785587640 } }] } },
+        { data: { children: [{ data: { title: 'Thread', ups: 654, created_utc: 1785587640 } }] } },
         { data: { children: [] } }
     ]);
 
     assert.equal(comments.parseThread(payload).post.publishedAt, 1785587640000);
+    assert.equal(comments.parseThread(payload).post.upvotes, 654);
+});
+
+test('requests score-bearing JSON before the RSS fallbacks', function () {
+    var more = html.slice(html.indexOf('async loadMorePosts()'), html.indexOf('// FEED'));
+    var feed = html.slice(html.indexOf('async loadCurrentSub()'), html.indexOf('async loadTopSubreddits()'));
+    var thread = html.slice(html.indexOf('async loadThread(permalink)'), html.indexOf('processCommentHtml(html)'));
+
+    assert.ok(more.indexOf('api.getSubredditJson(') < more.indexOf('api.getSubreddit('));
+    assert.ok(feed.indexOf('api.getSubredditJson(') < feed.indexOf('api.getSubreddit('));
+    assert.ok(thread.indexOf('api.getThreadJson(') < thread.indexOf('api.getThread('));
 });

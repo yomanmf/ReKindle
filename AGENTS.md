@@ -419,6 +419,12 @@ Kindle's local timezone is unreliable. Keep the Moscow timestamp, without a
 timezone suffix, in a separate
 right-aligned `.post-date` grid cell in both feed cards and opened threads.
 
+**Reddit upvote-count gotcha:** RSS and Atom responses do not expose a reliable
+post score. Prefer the existing JSON feed/thread endpoints and normalize their
+numeric `ups` field to `upvotes`; keep RSS only as the fallback when JSON is
+unavailable. Render the counter and publication date together through
+`renderPostFacts()` so the arrow/count stays immediately left of the date.
+
 **Reddit feed-select gotcha:** The sorting and period controls use the shared
 `css/custom-select.css` and `js/custom-select.js` so Kindle gets 52px touch
 targets instead of the browser's small native option popup. When restoring a

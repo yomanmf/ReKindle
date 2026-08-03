@@ -86,7 +86,7 @@ test('keeps feed scroll separate from thread scroll', function () {
 
 test('ships the versioned navigation helper with the Yandex frontend release', function () {
     assert.match(releaseManifest, /^js\/reddit-comments\.js$/m);
-    assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=5"><\/script>/);
+    assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=6"><\/script>/);
 });
 
 test('keeps external thread links on the extensionless browser route', function () {
