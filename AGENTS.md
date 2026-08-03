@@ -1421,6 +1421,13 @@ though the saved Exchange connection is still valid. Keep the single retry in
 both the dashboard agenda and Calendar app use that shared path. Do not turn a
 single storage failure into a reconnect flow or delete the session document.
 
+**Yandex Firestore transport gotcha:** The shared backend's default gRPC/HTTP2
+Firestore transport can hang until the 30-second function timeout, affecting
+Exchange Calendar and both Kindle worker queues at once. All backend Firestore
+callers must go through `getBackendFirestore()` in
+`yandex/rekindle-backend/index.js`, which initializes Firebase Admin with
+`preferRest: true`. Do not restore direct `getFirestore()` calls.
+
 **Dashboard login wall:** `index.html` and `index_old.html` keep the existing
 `#login-modal` hidden until Firebase resolves, then `requireLogin()` opens it
 only for signed-out or offline users. Keep both dashboards synchronized: the

@@ -30,6 +30,7 @@ var DEFAULT_ALLOWED_ORIGINS = [
 var ALLOWED_FOLDERS = { files: true, photos: true };
 var RESERVED_USERNAME = /(ukiyo|rekindle|wantban|root|system|admin|administrator|mod|moderator|support)/i;
 var firebaseApp;
+var backendFirestore;
 var s3Client;
 var analyticsRateLimits = new Map();
 
@@ -951,7 +952,7 @@ async function handleExchangeCalendarRequest(event, path) {
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,
-        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        firestore: getBackendFirestore(),
         env: process.env
     });
 }
@@ -972,7 +973,7 @@ async function handleKindleDigestRequest(event, path) {
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,
-        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        firestore: getBackendFirestore(),
         env: process.env
     });
 }
@@ -984,7 +985,7 @@ async function handleKindleDigestWorkerRequest(event, path) {
         body: parseJsonBody(event),
         worker: true,
         workerToken: getHeader(event, "authorization"),
-        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        firestore: getBackendFirestore(),
         env: process.env
     });
 }
@@ -1028,7 +1029,7 @@ async function handleBooksKindleRequest(event, path) {
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,
-        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        firestore: getBackendFirestore(),
         env: process.env
     });
 }
@@ -1039,7 +1040,7 @@ async function handleBooksKindleWorkerRequest(event, path) {
         body: parseJsonBody(event),
         worker: true,
         workerToken: getHeader(event, "authorization"),
-        firestore: firebaseFirestore.getFirestore(getFirebaseApp()),
+        firestore: getBackendFirestore(),
         env: process.env
     });
 }
@@ -1420,6 +1421,13 @@ function getFirebaseApp() {
         projectId: "rekindle-fork"
     }, "rekindle-yandex-backend");
     return firebaseApp;
+}
+
+function getBackendFirestore() {
+    if (!backendFirestore) {
+        backendFirestore = firebaseFirestore.initializeFirestore(getFirebaseApp(), { preferRest: true });
+    }
+    return backendFirestore;
 }
 
 function getS3Client() {
