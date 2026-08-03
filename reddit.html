@@ -1119,11 +1119,11 @@
         }
 
         function parseTopSubreddits(responseText) {
-            var data = JSON.parse(responseText);
-            var children = data.data && Array.isArray(data.data.children) ? data.data.children : [];
-            return children.map(function(item) {
-                return item && item.data ? item.data.display_name : "";
-            }).filter(Boolean).slice(0, 100);
+            var subs = [];
+            var linkPattern = /href=["']https:\/\/(?:old\.)?reddit\.com\/r\/([^\/"']+)/gi;
+            var match;
+            while (subs.length < 100 && (match = linkPattern.exec(responseText))) subs.push(match[1]);
+            return subs;
         }
 
         // --- UI MANAGER ---
@@ -1698,7 +1698,7 @@
                 content.innerHTML = '<div class="loading">Loading...</div>';
 
                 try {
-                    const subs = parseTopSubreddits(await api.request('/subreddits/popular.json?limit=100&raw_json=1'));
+                    const subs = parseTopSubreddits(await api.request('/subreddits/popular.rss?limit=100'));
                     const topLabel = window.t ? window.t('reddit.feed.sort.top', 'Top') : 'Top';
                     content.innerHTML = '<div class="sidebar-header">' + escapeHtml(topLabel) + ' 100</div>';
                     subs.forEach(function(sub, index) {

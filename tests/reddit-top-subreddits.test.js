@@ -18,11 +18,11 @@ test('opens a Top button below saved subreddits', function() {
 });
 
 test('keeps the popular subreddit screen to 100 valid names', function() {
-    var children = Array.from({ length: 102 }, function(_, index) {
-        return { data: { display_name: 'sub' + index } };
+    var links = Array.from({ length: 102 }, function(_, index) {
+        return '<entry><link href="https://old.reddit.com/r/sub' + index + '/" /></entry>';
     });
-    children.splice(1, 0, { data: {} });
-    var result = context.parseTopSubreddits(JSON.stringify({ data: { children: children } }));
+    links.splice(1, 0, '<entry><link href="https://example.com/not-a-sub/" /></entry>');
+    var result = context.parseTopSubreddits('<feed>' + links.join('') + '</feed>');
 
     assert.equal(result.length, 100);
     assert.equal(result[0], 'sub0');
@@ -31,6 +31,6 @@ test('keeps the popular subreddit screen to 100 valid names', function() {
 });
 
 test('requests Reddit popular communities and opens a selected subreddit', function() {
-    assert.match(html, /api\.request\('\/subreddits\/popular\.json\?limit=100&raw_json=1'\)/);
+    assert.match(html, /api\.request\('\/subreddits\/popular\.rss\?limit=100'\)/);
     assert.match(html, /document\.getElementById\('sub-input'\)\.value = sub;\s*ui\.loadCurrentSub\(\);/);
 });
