@@ -93,4 +93,5 @@ test("calendar and dashboard agenda expose Russian UI contracts", function () {
     assert.match(calendar, /data-view="agenda"/);
     assert.match(calendar, /calendar\.event\.no_upcoming/);
     assert.match(dashboard, /calendar\.exchange\.session_expired/);
+    assert.match(dashboard, /e\.code === 'exchange-calendar-not-connected'[\s\S]*?href="calendar\.html"/);
 });

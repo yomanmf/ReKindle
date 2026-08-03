@@ -2555,6 +2555,11 @@
                 }
             } catch(e) {
                 if (exchangeEnabled) {
+                    if (e && e.code === 'exchange-calendar-not-connected') {
+                        listEl.innerHTML = '<div data-i18n="calendar.exchange.not_connected_error" style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">' + (window.t ? window.t('calendar.exchange.not_connected_error', 'Connect Exchange Calendar first.') : 'Connect Exchange Calendar first.') + '</div>' +
+                            '<a class="sys-btn" href="calendar.html" data-i18n="calendar.exchange.connect" style="display:inline-block; min-height:48px; box-sizing:border-box; color:inherit; text-decoration:none; text-align:center;">' + (window.t ? window.t('calendar.exchange.connect', 'Connect') : 'Connect') + '</a>';
+                        return;
+                    }
                     listEl.innerHTML = '<div data-i18n-html="calendar.exchange.reconnect" style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Exchange Calendar is unavailable.<br>Open Calendar to reconnect.</div>';
                     return;
                 }

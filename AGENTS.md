@@ -1426,6 +1426,11 @@ in the private Object Storage prefix
 retry in `readSessionDocument()` for transient Object Storage failures. Do not
 move this request path back to Firestore.
 
+The dashboard must distinguish `exchange-calendar-not-connected` from an
+outage. Render the localized 48px `calendar.html` connect action for that code;
+reserve `calendar.exchange.reconnect` for actual request failures. A saved
+Exchange provider preference can outlive its encrypted server session.
+
 **Yandex Firestore transport gotcha:** The shared backend's default gRPC/HTTP2
 Firestore transport can hang until the 30-second function timeout, affecting
 Exchange Calendar and both Kindle worker queues at once. All backend Firestore

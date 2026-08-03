@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v56'; // Fix bottom-left double-tap on Kindle touch screens
+const CACHE_NAME = 'rekindle-cache-v57'; // Show Exchange reconnect action on the dashboard
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
