@@ -37,7 +37,7 @@ test('puts the upvote counter immediately before the Moscow publication time', f
 
     assert.match(html, /\.post-meta\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto/s);
     assert.match(facts, /class="post-upvotes"[\s\S]*321[\s\S]*class="post-date"[\s\S]*2026-08-01 15:34/);
-    assert.match(facts, /<svg[^>]*aria-hidden="true"/);
+    assert.match(facts, />321<svg[^>]*aria-hidden="true"/);
     assert.match(context.renderPostFacts({ id: 't3_abc123', publishedAt: 1785587640000 }), /class="post-upvotes" data-post-id="t3_abc123"><\/span>[\s\S]*class="post-date"/);
     assert.equal((html.match(/\$\{renderPostFacts\((?:p|post)\)\}/g) || []).length, 3);
 });

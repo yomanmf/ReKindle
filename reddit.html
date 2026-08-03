@@ -1026,7 +1026,7 @@
 
         function renderUpvoteCount(post) {
             return typeof post.upvotes === "number"
-                ? '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14V2M3 7l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' + post.upvotes
+                ? post.upvotes + '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14V2M3 7l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
                 : '';
         }
 

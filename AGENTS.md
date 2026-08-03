@@ -427,8 +427,9 @@ the proxy's `extract=scores` mode; the function must return only a compact
 RSS as the primary content source and JSON only as its fallback. Embed feeds
 can omit pinned or recently shifted RSS entries, so enrich unmatched IDs from
 their individual embed pages. Render the counter and publication date together
-through `renderPostFacts()` so the arrow/count stays immediately left of the
-date. Score requests must stay in the current background request generation and
+through `renderPostFacts()` so the count followed by its arrow stays immediately
+left of the date. Score requests must stay in the current background request
+generation and
 must never block the first feed or thread render: emit an empty counter node,
 show the RSS content immediately, then fill matching `data-post-id` nodes when
 the compact score response arrives.
