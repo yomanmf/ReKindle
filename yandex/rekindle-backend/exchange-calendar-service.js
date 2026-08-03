@@ -14,12 +14,12 @@ async function handle(options) {
     var action = String(options.action || "");
     var body = options.body || {};
     var uid = String(options.uid || "");
-    var firestore = options.firestore;
     var env = options.env || process.env;
     var request = options.fetch || fetch;
+    var doc = options.sessionDocument;
 
-    if (!uid || !firestore) throw serviceError(500, "exchange-calendar-internal", "Exchange Calendar storage is not available.");
-    var doc = firestore.collection(SESSION_COLLECTION).doc(uid);
+    if (!doc && options.firestore) doc = options.firestore.collection(SESSION_COLLECTION).doc(uid);
+    if (!uid || !doc) throw serviceError(500, "exchange-calendar-internal", "Exchange Calendar storage is not available.");
 
     if (action === "status") return getStatus(doc, uid, env);
     if (action === "connect") return connect(doc, uid, body, env, request);

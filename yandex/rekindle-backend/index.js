@@ -952,7 +952,7 @@ async function handleExchangeCalendarRequest(event, path) {
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,
-        firestore: getBackendFirestore(),
+        sessionDocument: getExchangeCalendarSessionDocument(user.uid),
         env: process.env
     });
 }
@@ -1443,6 +1443,41 @@ function getS3Client() {
     return s3Client;
 }
 
+function getExchangeCalendarSessionDocument(uid, client, bucket) {
+    if (!/^[a-zA-Z0-9_-]{1,128}$/.test(String(uid || ""))) throw httpError(400, "invalid-user", "User ID is invalid.");
+    client = client || getS3Client();
+    bucket = bucket || getRequiredEnv("S3_BUCKET");
+    var key = "integrations/exchange-calendar-sessions/" + uid + ".json";
+    return {
+        get: async function () {
+            var object;
+            try {
+                object = await client.send(new s3Package.GetObjectCommand({ Bucket: bucket, Key: key }));
+            } catch (error) {
+                if (error && (error.name === "NoSuchKey" || error.name === "NotFound" || (error.$metadata && error.$metadata.httpStatusCode === 404))) {
+                    return { exists: false, data: function () { return null; } };
+                }
+                throw error;
+            }
+            var text = await object.Body.transformToString("utf-8");
+            if (Buffer.byteLength(text, "utf8") > 16384) throw new Error("Exchange Calendar session is too large.");
+            var value = JSON.parse(text);
+            return { exists: true, data: function () { return value; } };
+        },
+        set: async function (value) {
+            await client.send(new s3Package.PutObjectCommand({
+                Bucket: bucket,
+                Key: key,
+                Body: JSON.stringify(value),
+                ContentType: "application/json"
+            }));
+        },
+        delete: async function () {
+            await client.send(new s3Package.DeleteObjectCommand({ Bucket: bucket, Key: key }));
+        }
+    };
+}
+
 function validateFolder(folder) {
     folder = String(folder || "");
     if (!ALLOWED_FOLDERS[folder]) throw httpError(400, "invalid-folder", "Folder must be files or photos.");
@@ -1615,6 +1650,7 @@ module.exports.testHooks = {
     withReservedDailyLimit: withReservedDailyLimit,
     fetchWithTimeout: fetchWithTimeout,
     normalizeReaderTargetUrl: normalizeReaderTargetUrl,
+    getExchangeCalendarSessionDocument: getExchangeCalendarSessionDocument,
     generateWithYandex: generateWithYandex,
     aiUpstreamError: aiUpstreamError
 };

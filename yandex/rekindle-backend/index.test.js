@@ -209,6 +209,34 @@ test("Exchange Calendar integration requires a Firebase ID token", async functio
     assert.equal(JSON.parse(result.body).code, "unauthenticated");
 });
 
+test("Exchange Calendar sessions round-trip through private object storage", async function () {
+    var stored = null;
+    var client = {
+        send: async function (command) {
+            assert.equal(command.input.Bucket, "private-bucket");
+            assert.equal(command.input.Key, "integrations/exchange-calendar-sessions/uid-one.json");
+            if (command.constructor.name === "GetObjectCommand") {
+                if (stored === null) {
+                    var missing = new Error("missing");
+                    missing.name = "NoSuchKey";
+                    throw missing;
+                }
+                return { Body: { transformToString: async function () { return stored; } } };
+            }
+            if (command.constructor.name === "PutObjectCommand") stored = command.input.Body;
+            if (command.constructor.name === "DeleteObjectCommand") stored = null;
+            return {};
+        }
+    };
+    var document = backend.testHooks.getExchangeCalendarSessionDocument("uid-one", client, "private-bucket");
+
+    assert.equal((await document.get()).exists, false);
+    await document.set({ credentials: { version: 1 }, updatedAt: 1 });
+    assert.deepEqual((await document.get()).data(), { credentials: { version: 1 }, updatedAt: 1 });
+    await document.delete();
+    assert.equal((await document.get()).exists, false);
+});
+
 test("AI chat requires a Firebase ID token", async function () {
     var result = await backend.handler(event(
         "POST",

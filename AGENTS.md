@@ -1417,12 +1417,13 @@ restore it operationally on the uploader instead of redirecting the user.
 
 ## Git Workflow
 
-**Exchange Calendar transient-storage gotcha:** Production can intermittently
-return a Firestore read error while loading `exchange_calendar_sessions`, even
-though the saved Exchange connection is still valid. Keep the single retry in
-`readSessionDocument()` in `yandex/rekindle-backend/exchange-calendar-service.js`;
-both the dashboard agenda and Calendar app use that shared path. Do not turn a
-single storage failure into a reconnect flow or delete the session document.
+**Exchange Calendar session-storage gotcha:** Yandex-to-Firestore requests can
+stall until the function timeout. Encrypted Exchange credentials therefore live
+in the private Object Storage prefix
+`integrations/exchange-calendar-sessions/`, accessed through
+`getExchangeCalendarSessionDocument()` in the shared backend. Keep the single
+retry in `readSessionDocument()` for transient Object Storage failures. Do not
+move this request path back to Firestore.
 
 **Yandex Firestore transport gotcha:** The shared backend's default gRPC/HTTP2
 Firestore transport can hang until the 30-second function timeout, affecting
