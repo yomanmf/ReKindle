@@ -1342,7 +1342,7 @@ async function requireFirebaseUser(event) {
     if (!token) throw httpError(401, "unauthenticated", "Authentication is required.");
     var decoded;
     try {
-        decoded = await getFirebaseApp().auth().verifyIdToken(token, true);
+        decoded = await getFirebaseApp().auth().verifyIdToken(token);
     } catch (error) {
         throw httpError(401, "unauthenticated", "Session is invalid or expired.");
     }

@@ -1428,6 +1428,13 @@ callers must go through `getBackendFirestore()` in
 `yandex/rekindle-backend/index.js`, which initializes Firebase Admin with
 `preferRest: true`. Do not restore direct `getFirestore()` calls.
 
+**Yandex Firebase token-verification gotcha:** Do not pass `true` as the second
+argument to `verifyIdToken()` in the shared Yandex backend. That enables a
+remote revocation lookup on every authenticated request; the lookup can hang
+until the function's 30-second timeout and make Exchange Calendar appear
+offline before its handler runs. Verify the signed token locally and rely on
+its short expiry, as the existing backend routes do.
+
 **Dashboard login wall:** `index.html` and `index_old.html` keep the existing
 `#login-modal` hidden until Firebase resolves, then `requireLogin()` opens it
 only for signed-out or offline users. Keep both dashboards synchronized: the
