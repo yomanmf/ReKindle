@@ -1120,7 +1120,7 @@
 
         function parseTopSubreddits(responseText) {
             var subs = [];
-            var linkPattern = /href=["']https:\/\/(?:old\.)?reddit\.com\/r\/([^\/"']+)/gi;
+            var linkPattern = /href=["']https:\/\/(?:(?:old|www)\.)?reddit\.com\/r\/([^\/"']+)/gi;
             var match;
             while (subs.length < 100 && (match = linkPattern.exec(responseText))) subs.push(match[1]);
             return subs;
@@ -1699,6 +1699,7 @@
 
                 try {
                     const subs = parseTopSubreddits(await api.request('/subreddits/popular.rss?limit=100'));
+                    if (subs.length === 0) throw new Error('No subreddits found.');
                     const topLabel = window.t ? window.t('reddit.feed.sort.top', 'Top') : 'Top';
                     content.innerHTML = '<div class="sidebar-header">' + escapeHtml(topLabel) + ' 100</div>';
                     subs.forEach(function(sub, index) {

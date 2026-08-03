@@ -19,7 +19,8 @@ test('opens a Top button below saved subreddits', function() {
 
 test('keeps the popular subreddit screen to 100 valid names', function() {
     var links = Array.from({ length: 102 }, function(_, index) {
-        return '<entry><link href="https://old.reddit.com/r/sub' + index + '/" /></entry>';
+        var host = index % 2 ? 'www.reddit.com' : 'old.reddit.com';
+        return '<entry><link href="https://' + host + '/r/sub' + index + '/" /></entry>';
     });
     links.splice(1, 0, '<entry><link href="https://example.com/not-a-sub/" /></entry>');
     var result = context.parseTopSubreddits('<feed>' + links.join('') + '</feed>');
@@ -32,5 +33,6 @@ test('keeps the popular subreddit screen to 100 valid names', function() {
 
 test('requests Reddit popular communities and opens a selected subreddit', function() {
     assert.match(html, /api\.request\('\/subreddits\/popular\.rss\?limit=100'\)/);
+    assert.match(html, /if \(subs\.length === 0\) throw new Error\('No subreddits found\.'\)/);
     assert.match(html, /document\.getElementById\('sub-input'\)\.value = sub;\s*ui\.loadCurrentSub\(\);/);
 });

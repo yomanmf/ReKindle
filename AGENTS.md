@@ -853,6 +853,11 @@ root page plus a `sw.js` cache-name bump and full manifest deployment.
 
 **Reddit feed preference contract:** Sorting preferences are per subreddit, not global. `reddit.html` stores the normalized map locally and in `users/{uid}/apps/reddit.feed_preferences`; keep the allowed values and URL/cache construction in `js/reddit-feed-settings.js`. Reddit's non-default feeds use `/r/{sub}/{sort}` and `top`/`controversial` add the `t` period. Every cache key must include subreddit, sort, and the applicable period so an offline fallback cannot display a different feed.
 
+**Reddit Top 100 feed gotcha:** `/subreddits/popular.rss` can return community
+links on either `old.reddit.com` or `www.reddit.com`. `parseTopSubreddits()` must
+accept both hosts; matching only the old host intermittently renders an empty
+Top 100 screen even though the proxy returned all 100 Atom entries.
+
 **Retired Telegram integration (July 2026):** The MTProto page, client script,
 backend service and dependency, API Gateway route, Firestore session rule,
 catalog entry, locale contract, and static production objects were removed.
