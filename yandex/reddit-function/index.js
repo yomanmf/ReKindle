@@ -60,9 +60,17 @@ module.exports.handler = async function (event) {
     }
     target.hash = "";
     targetUrl = target.toString();
+    var extractScores = query.extract === "scores";
+    if (query.extract && !extractScores) {
+        return makeResponse(400, "Unsupported extraction mode", "text/plain; charset=utf-8", false, 0);
+    }
+    if (extractScores && target.hostname !== "embed.reddit.com") {
+        return makeResponse(403, "Score extraction requires embed.reddit.com", "text/plain; charset=utf-8", false, 0);
+    }
 
     var now = Date.now();
-    var cached = responseCache.get(targetUrl);
+    var cacheKey = targetUrl + (extractScores ? "#extract=scores" : "");
+    var cached = responseCache.get(cacheKey);
     if (cached && cached.expiresAt > now) {
         return responseFromCache(cached, method, false);
     }
@@ -107,6 +115,12 @@ module.exports.handler = async function (event) {
                     var buffer = await readLimitedBytes(upstream, MAX_RESPONSE_BYTES);
                     var binary = isBinaryContent(contentType, isImage);
                     var body = binary ? buffer.toString("base64") : buffer.toString("utf8");
+                    if (extractScores) {
+                        body = JSON.stringify(parseEmbedScores(body));
+                        buffer = Buffer.from(body, "utf8");
+                        contentType = "application/json; charset=utf-8";
+                        binary = false;
+                    }
                     var entry = {
                         body: body,
                         contentType: contentType,
@@ -117,7 +131,7 @@ module.exports.handler = async function (event) {
                         staleUntil: Date.now() + STALE_TTL_MS
                     };
 
-                    putCache(targetUrl, entry);
+                    putCache(cacheKey, entry);
                     return responseFromCache(entry, method, false);
                 }
 
@@ -146,6 +160,18 @@ function isAllowedHost(hostname) {
         if (host === allowed || endsWith(host, "." + allowed)) return true;
     }
     return false;
+}
+
+function parseEmbedScores(html) {
+    var scores = {};
+    var anchorPattern = /<a\b([^>]*\bdata-testid=["']upvote["'][^>]*)>([\s\S]*?)<\/a>/gi;
+    var anchor;
+    while ((anchor = anchorPattern.exec(String(html || "")))) {
+        var post = anchor[1].match(/\bhref=["']https:\/\/www\.reddit\.com\/r\/[^"']*\/comments\/([a-z0-9]+)\/[^"']*["']/i);
+        var score = anchor[2].match(/<faceplate-number\b[^>]*\bnumber=["']([0-9]+)["'][^>]*>/i);
+        if (post && score) scores["t3_" + post[1]] = Number(score[1]);
+    }
+    return scores;
 }
 
 async function fetchAllowedUrl(value, method) {
@@ -241,6 +267,8 @@ function responseFromCache(entry, method, stale) {
     if (stale) response.headers.Warning = '110 - "Response is stale"';
     return response;
 }
+
+module.exports.parseEmbedScores = parseEmbedScores;
 
 function makeResponse(statusCode, body, contentType, isBase64Encoded, maxAge) {
     return {

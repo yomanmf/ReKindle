@@ -19,6 +19,30 @@ test("rejects missing and non-allowlisted targets", async function () {
     assert.equal(disallowed.statusCode, 403);
 });
 
+test("extracts compact upvote counts only from Reddit embed pages", async function () {
+    var html = '<a data-testid="upvote" href="https://www.reddit.com/r/test/comments/abc123/example/?utm_source=embed"><span><faceplate-number number="42" pretty></faceplate-number> upvotes</span></a>';
+    assert.deepEqual(reddit.parseEmbedScores(html), { t3_abc123: 42 });
+
+    var originalFetch = global.fetch;
+    global.fetch = async function () {
+        return new Response(html, { status: 200, headers: { "Content-Type": "text/html" } });
+    };
+    try {
+        var request = event("GET", "https://embed.reddit.com/r/test?embed=true");
+        request.queryStringParameters.extract = "scores";
+        var result = await reddit.handler(request);
+        assert.equal(result.statusCode, 200);
+        assert.equal(result.headers["Content-Type"], "application/json; charset=utf-8");
+        assert.deepEqual(JSON.parse(result.body), { t3_abc123: 42 });
+
+        var rejected = event("GET", "https://www.reddit.com/r/test.rss");
+        rejected.queryStringParameters.extract = "scores";
+        assert.equal((await reddit.handler(rejected)).statusCode, 403);
+    } finally {
+        global.fetch = originalFetch;
+    }
+});
+
 test("revalidates redirects against the Reddit and Imgur allowlist", async function () {
     var originalFetch = global.fetch;
     var calls = 0;

@@ -864,18 +864,18 @@
                     query = "?" + parts[1];
                 }
 
-                if (!path.endsWith('.rss') && !path.endsWith('.json')) {
+                if (!options.rawPath && !path.endsWith('.rss') && !path.endsWith('.json')) {
                     path += '.rss';
                 }
 
-                const publicUrl = this.baseUrl + path + query;
+                const publicUrl = (options.baseUrl || this.baseUrl) + path + query;
                 console.log("Fetching URL:", publicUrl);
 
                 let lastError = null;
                 let lastStatus = null;
                 for (let proxy of PROXIES) {
                     try {
-                        const target = proxy + encodeURIComponent(publicUrl);
+                        const target = proxy + encodeURIComponent(publicUrl) + (options.extractScores ? '&extract=scores' : '');
 
                         if (requestId !== this.currentRequestId) {
                             throw new Error('Request superseded');
@@ -942,6 +942,20 @@
                 return this.request(url);
             },
 
+            async getSubredditScores(sub, after) {
+                const preference = window.RekindleRedditFeedSettings.normalizePreference(arguments[2]);
+                let url = '/r/' + sub + '?embed=true&limit=25&sort=' + encodeURIComponent(preference.sort);
+                if (after) url += '&after=' + encodeURIComponent(after);
+                if (window.RekindleRedditFeedSettings.usesTime(preference.sort)) url += '&t=' + encodeURIComponent(preference.time);
+                return this.request(url, {
+                    baseUrl: 'https://embed.reddit.com',
+                    rawPath: true,
+                    extractScores: true,
+                    skipThrottle: true,
+                    showLoading: false
+                });
+            },
+
             async getThread(permalink) {
                 const cleanLink = permalink.replace(/\/$/, "");
                 return this.request(cleanLink, { skipThrottle: true, showLoading: false });
@@ -955,6 +969,18 @@
             async getThreadJson(permalink) {
                 const cleanLink = permalink.replace(/\/$/, "");
                 return this.request(cleanLink + '.json?raw_json=1&limit=200&depth=10', { skipThrottle: true, showLoading: false });
+            },
+
+            async getThreadScore(permalink) {
+                const cleanLink = permalink.replace(/\/$/, "");
+                return this.request(cleanLink + '?embed=true', {
+                    baseUrl: 'https://embed.reddit.com',
+                    rawPath: true,
+                    extractScores: true,
+                    skipThrottle: true,
+                    showLoading: false,
+                    background: true
+                });
             }
         };
 
@@ -1087,6 +1113,7 @@
             var first = items[0];
             var extracted = isAtom ? extractEntryFields(first) : extractItemFields(first);
             var post = {
+                id: extracted.id,
                 title: extracted.title,
                 author: extracted.author,
                 contentHtml: extracted.contentHtml,
@@ -1134,6 +1161,36 @@
             } catch (e) {
                 return [];
             }
+        }
+
+        function parseScoreMap(jsonText) {
+            try {
+                var parsed = JSON.parse(jsonText);
+                return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function applyPostScores(posts, scores) {
+            for (var i = 0; i < posts.length; i++) {
+                if (posts[i].id && typeof scores[posts[i].id] === 'number') posts[i].upvotes = scores[posts[i].id];
+            }
+        }
+
+        async function loadPostScores(posts, sub, after, preference) {
+            var scores = parseScoreMap(await api.getSubredditScores(sub, after, preference));
+            applyPostScores(posts, scores);
+            if (Object.keys(scores).length === 0) return;
+
+            var missing = posts.filter(function(post) { return typeof post.upvotes !== 'number'; });
+            var responses = await Promise.all(missing.map(function(post) {
+                return api.getThreadScore(post.permalink).catch(function(error) {
+                    if (error.message && error.message.indexOf('superseded') !== -1) throw error;
+                    return '{}';
+                });
+            }));
+            for (var i = 0; i < missing.length; i++) applyPostScores([missing[i]], parseScoreMap(responses[i]));
         }
 
         function postFullnameFromPermalink(permalink) {
@@ -1614,22 +1671,21 @@
 
                 try {
                     const preference = this.getFeedPreference(this.currentSub);
-                    let responseText = '';
-                    let posts = [];
-                    try {
+                    let responseText = await api.getSubreddit(this.currentSub, this.afterToken, preference);
+                    console.log('Load more RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                    let posts = parseRssPosts(responseText);
+                    console.log('Load more RSS posts:', posts.length);
+                    if (posts.length === 0) {
                         responseText = await api.getSubredditJson(this.currentSub, this.afterToken, preference);
                         console.log('Load more JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
                         posts = parseJsonPosts(responseText);
                         console.log('Load more JSON posts:', posts.length);
-                    } catch (jsonError) {
-                        if (jsonError.message && jsonError.message.indexOf('superseded') !== -1) throw jsonError;
-                        console.warn('Load more JSON failed, trying RSS:', jsonError);
                     }
-                    if (posts.length === 0) {
-                        responseText = await api.getSubreddit(this.currentSub, this.afterToken, preference);
-                        console.log('Load more RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                        posts = parseRssPosts(responseText);
-                        console.log('Load more RSS posts:', posts.length);
+                    try {
+                        await loadPostScores(posts, this.currentSub, this.afterToken, preference);
+                    } catch (scoreError) {
+                        if (scoreError.message && scoreError.message.indexOf('superseded') !== -1) throw scoreError;
+                        console.warn('Load more scores failed:', scoreError);
                     }
 
                     if (posts.length > 0) {
@@ -1688,22 +1744,21 @@
                 else content.innerHTML = `<div class="loading">Loading r/${escapeHtml(sub)}...</div>`;
 
                 try {
-                    let responseText = '';
-                    let posts = [];
-                    try {
+                    let responseText = await api.getSubreddit(sub, null, preference);
+                    console.log('RSS response length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                    let posts = parseRssPosts(responseText);
+                    console.log('RSS posts parsed:', posts.length);
+                    if (posts.length === 0) {
                         responseText = await api.getSubredditJson(sub, null, preference);
                         console.log('JSON response length:', responseText.length, 'preview:', responseText.substring(0, 200));
                         posts = parseJsonPosts(responseText);
                         console.log('JSON posts parsed:', posts.length);
-                    } catch (jsonError) {
-                        if (jsonError.message && jsonError.message.indexOf('superseded') !== -1) throw jsonError;
-                        console.warn('JSON feed failed, trying RSS:', jsonError);
                     }
-                    if (posts.length === 0) {
-                        responseText = await api.getSubreddit(sub, null, preference);
-                        console.log('RSS response length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                        posts = parseRssPosts(responseText);
-                        console.log('RSS posts parsed:', posts.length);
+                    try {
+                        await loadPostScores(posts, sub, null, preference);
+                    } catch (scoreError) {
+                        if (scoreError.message && scoreError.message.indexOf('superseded') !== -1) throw scoreError;
+                        console.warn('Feed scores failed:', scoreError);
                     }
                     try {
                         localStorage.setItem(cacheKey, responseText);
@@ -1772,41 +1827,41 @@
                 try {
                     let responseText = '';
                     let data = { post: null, comments: [] };
-                    let jsonFailure = null;
+                    let rssFailure = null;
                     let shouldLoadRoots = false;
                     let rootsRequest = null;
 
                     try {
-                        responseText = await api.getThreadJson(permalink);
-                        console.log('Thread JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                        if (!window.RekindleRedditComments) throw new Error('Reddit comment parser is unavailable');
-                        data = window.RekindleRedditComments.parseThread(responseText);
-                        console.log('Thread JSON has post:', !!data.post, 'comments:', data.comments.length);
-                    } catch (jsonError) {
-                        if (jsonError.message && jsonError.message.indexOf('superseded') !== -1) throw jsonError;
-                        jsonFailure = jsonError;
-                        console.warn('Thread JSON failed, trying RSS:', jsonError);
+                        const threadRequest = api.getThread(permalink);
+                        rootsRequest = api.getThreadRoots(permalink, {
+                            silent: true,
+                            skipThrottle: true,
+                            background: true
+                        }).then(function(rootsResponse) {
+                            return { responseText: rootsResponse };
+                        }, function(rootsError) {
+                            return { error: rootsError };
+                        });
+                        responseText = await threadRequest;
+                        console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                        data = parseRssThread(responseText);
+                        console.log('Thread RSS has post:', !!data.post, 'comments:', data.comments.length);
+                        shouldLoadRoots = !!data.post;
+                    } catch (rssError) {
+                        if (rssError.message && rssError.message.indexOf('superseded') !== -1) throw rssError;
+                        rssFailure = rssError;
+                        console.warn('Thread RSS failed, trying JSON:', rssError);
                     }
 
                     if (!data.post) {
                         try {
-                            const threadRequest = api.getThread(permalink);
-                            rootsRequest = api.getThreadRoots(permalink, {
-                                silent: true,
-                                skipThrottle: true,
-                                background: true
-                            }).then(function(rootsResponse) {
-                                return { responseText: rootsResponse };
-                            }, function(rootsError) {
-                                return { error: rootsError };
-                            });
-                            responseText = await threadRequest;
-                            console.log('Thread RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
-                            data = parseRssThread(responseText);
-                            console.log('Thread RSS has post:', !!data.post, 'comments:', data.comments.length);
-                            shouldLoadRoots = !!data.post;
-                        } catch (rssError) {
-                            throw jsonFailure || rssError;
+                            responseText = await api.getThreadJson(permalink);
+                            console.log('Thread JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
+                            if (!window.RekindleRedditComments) throw new Error('Reddit comment parser is unavailable');
+                            data = window.RekindleRedditComments.parseThread(responseText);
+                            console.log('Thread JSON has post:', !!data.post, 'comments:', data.comments.length);
+                        } catch (jsonError) {
+                            throw rssFailure || jsonError;
                         }
                     }
                     const post = data.post;
@@ -1820,6 +1875,18 @@
                         content.innerHTML = `<div class="loading" style="color:red">No thread data found.</div>`;
                         this.updateCommentNavigation();
                         return;
+                    }
+
+                    const feedPost = this.currentPostIndex >= 0 ? this.feedPosts[this.currentPostIndex] : null;
+                    if (feedPost && typeof feedPost.upvotes === 'number') {
+                        post.upvotes = feedPost.upvotes;
+                    } else if (typeof post.upvotes !== 'number') {
+                        try {
+                            applyPostScores([post], parseScoreMap(await api.getThreadScore(permalink)));
+                        } catch (scoreError) {
+                            if (scoreError.message && scoreError.message.indexOf('superseded') !== -1) throw scoreError;
+                            console.warn('Thread score failed:', scoreError);
+                        }
                     }
 
                     let html = '<div class="thread-container">';

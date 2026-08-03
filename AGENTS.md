@@ -420,10 +420,15 @@ timezone suffix, in a separate
 right-aligned `.post-date` grid cell in both feed cards and opened threads.
 
 **Reddit upvote-count gotcha:** RSS and Atom responses do not expose a reliable
-post score. Prefer the existing JSON feed/thread endpoints and normalize their
-numeric `ups` field to `upvotes`; keep RSS only as the fallback when JSON is
-unavailable. Render the counter and publication date together through
-`renderPostFacts()` so the arrow/count stays immediately left of the date.
+post score, while unauthenticated Reddit JSON returns `403` from the production
+Yandex IP. Fetch score data from the official `embed.reddit.com` feed/post via
+the proxy's `extract=scores` mode; the function must return only a compact
+`{ t3_id: upvotes }` map instead of sending modern embed HTML to Kindle. Keep
+RSS as the primary content source and JSON only as its fallback. Embed feeds
+can omit pinned or recently shifted RSS entries, so enrich unmatched IDs from
+their individual embed pages. Render the counter and publication date together
+through `renderPostFacts()` so the arrow/count stays immediately left of the
+date.
 
 **Reddit feed-select gotcha:** The sorting and period controls use the shared
 `css/custom-select.css` and `js/custom-select.js` so Kindle gets 52px touch

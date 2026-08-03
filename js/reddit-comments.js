@@ -82,6 +82,7 @@
             var commentChildren = payload[1].data && payload[1].data.children;
             var postData = postChildren && postChildren[0] ? postChildren[0].data : null;
             var post = postData ? {
+                id: postData.name || (postData.id ? 't3_' + postData.id : ''),
                 title: postData.title || '',
                 author: postData.author || '',
                 contentHtml: postData.selftext_html ? decodeHtmlEntities(postData.selftext_html) : fallbackBodyHtml(postData.selftext),

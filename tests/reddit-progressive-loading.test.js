@@ -47,12 +47,11 @@ test('loads the versioned Reddit comment helper used by progressive enrichment',
     assert.match(redditHtml, /<script src="js\/reddit-comments\.js\?v=6"><\/script>/);
 });
 
-test('starts root metadata alongside the RSS fallback without blocking rendering', function () {
+test('starts root metadata alongside the main thread without blocking rendering', function () {
     var loadThreadStart = redditHtml.indexOf('async loadThread(permalink)');
     var loadThreadEnd = redditHtml.indexOf('processCommentHtml(html)', loadThreadStart);
     var loadThreadSource = redditHtml.slice(loadThreadStart, loadThreadEnd);
     var renderIndex = loadThreadSource.indexOf('content.innerHTML = html.replace');
-    var jsonRequestIndex = loadThreadSource.indexOf('responseText = await api.getThreadJson(permalink)');
     var threadRequestIndex = loadThreadSource.indexOf('const threadRequest = api.getThread(permalink)');
     var rootsRequestIndex = loadThreadSource.indexOf('rootsRequest = api.getThreadRoots(permalink');
     var awaitThreadIndex = loadThreadSource.indexOf('responseText = await threadRequest');
@@ -61,12 +60,10 @@ test('starts root metadata alongside the RSS fallback without blocking rendering
     assert.notEqual(loadThreadStart, -1);
     assert.notEqual(loadThreadEnd, -1);
     assert.notEqual(renderIndex, -1);
-    assert.notEqual(jsonRequestIndex, -1);
     assert.notEqual(threadRequestIndex, -1);
     assert.notEqual(rootsRequestIndex, -1);
     assert.notEqual(awaitThreadIndex, -1);
     assert.notEqual(backgroundRootsIndex, -1);
-    assert.ok(jsonRequestIndex < threadRequestIndex);
     assert.ok(threadRequestIndex < rootsRequestIndex);
     assert.ok(rootsRequestIndex < awaitThreadIndex);
     assert.ok(backgroundRootsIndex < renderIndex);
