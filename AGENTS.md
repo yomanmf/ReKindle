@@ -415,7 +415,8 @@ use `silent`, because it also suppresses rate-limit handling.
 source fields: RSS uses `pubDate` or namespaced `date`, Atom uses `published` or
 `updated`, and JSON uses `created_utc` in seconds. Normalize all of them to
 `publishedAt`, add Moscow's fixed UTC+3 offset, and format with UTC getters;
-Kindle's local timezone is unreliable. Keep the `MSK` timestamp in a separate
+Kindle's local timezone is unreliable. Keep the Moscow timestamp, without a
+timezone suffix, in a separate
 right-aligned `.post-date` grid cell in both feed cards and opened threads.
 
 **Reddit feed-select gotcha:** The sorting and period controls use the shared

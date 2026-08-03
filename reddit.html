@@ -981,7 +981,7 @@
             var moscowDate = new Date(date.getTime() + 3 * 3600000);
             function pad(number) { return number < 10 ? "0" + number : String(number); }
             return moscowDate.getUTCFullYear() + "-" + pad(moscowDate.getUTCMonth() + 1) + "-" + pad(moscowDate.getUTCDate())
-                + " " + pad(moscowDate.getUTCHours()) + ":" + pad(moscowDate.getUTCMinutes()) + " MSK";
+                + " " + pad(moscowDate.getUTCHours()) + ":" + pad(moscowDate.getUTCMinutes());
         }
 
         function extractTagText(xml, tagName) {
