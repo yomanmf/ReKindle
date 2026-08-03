@@ -428,7 +428,10 @@ RSS as the primary content source and JSON only as its fallback. Embed feeds
 can omit pinned or recently shifted RSS entries, so enrich unmatched IDs from
 their individual embed pages. Render the counter and publication date together
 through `renderPostFacts()` so the arrow/count stays immediately left of the
-date.
+date. Score requests must stay in the current background request generation and
+must never block the first feed or thread render: emit an empty counter node,
+show the RSS content immediately, then fill matching `data-post-id` nodes when
+the compact score response arrives.
 
 **Reddit feed-select gotcha:** The sorting and period controls use the shared
 `css/custom-select.css` and `js/custom-select.js` so Kindle gets 52px touch

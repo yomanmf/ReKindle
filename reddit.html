@@ -952,7 +952,8 @@
                     rawPath: true,
                     extractScores: true,
                     skipThrottle: true,
-                    showLoading: false
+                    showLoading: false,
+                    background: true
                 });
             },
 
@@ -1023,10 +1024,16 @@
                 + " " + pad(moscowDate.getUTCHours()) + ":" + pad(moscowDate.getUTCMinutes());
         }
 
+        function renderUpvoteCount(post) {
+            return typeof post.upvotes === "number"
+                ? '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14V2M3 7l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' + post.upvotes
+                : '';
+        }
+
         function renderPostFacts(post) {
             var published = formatPostDate(post.publishedAt);
-            var upvotes = typeof post.upvotes === "number"
-                ? '<span class="post-upvotes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14V2M3 7l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' + post.upvotes + '</span>'
+            var upvotes = post.id || typeof post.upvotes === "number"
+                ? '<span class="post-upvotes" data-post-id="' + String(post.id || '').replace(/[^a-zA-Z0-9_-]/g, '') + '">' + renderUpvoteCount(post) + '</span>'
                 : '';
             return upvotes || published
                 ? '<span class="post-facts">' + upvotes + (published ? '<span class="post-date">' + published + '</span>' : '') + '</span>'
@@ -1175,6 +1182,18 @@
         function applyPostScores(posts, scores) {
             for (var i = 0; i < posts.length; i++) {
                 if (posts[i].id && typeof scores[posts[i].id] === 'number') posts[i].upvotes = scores[posts[i].id];
+            }
+        }
+
+        function updateRenderedPostScores(posts) {
+            var counters = document.getElementsByClassName('post-upvotes');
+            for (var i = 0; i < posts.length; i++) {
+                if (!posts[i].id || typeof posts[i].upvotes !== 'number') continue;
+                for (var j = 0; j < counters.length; j++) {
+                    if (counters[j].getAttribute('data-post-id') === posts[i].id) {
+                        counters[j].innerHTML = renderUpvoteCount(posts[i]);
+                    }
+                }
             }
         }
 
@@ -1661,6 +1680,8 @@
             async loadMorePosts() {
                 if (this.currentThread || this.isLoadingMore || !this.afterToken) return;
                 this.isLoadingMore = true;
+                const sub = this.currentSub;
+                const pageAfter = this.afterToken;
 
                 const content = document.getElementById('content-area');
                 const loader = document.createElement('div');
@@ -1670,24 +1691,17 @@
                 content.appendChild(loader);
 
                 try {
-                    const preference = this.getFeedPreference(this.currentSub);
-                    let responseText = await api.getSubreddit(this.currentSub, this.afterToken, preference);
+                    const preference = this.getFeedPreference(sub);
+                    let responseText = await api.getSubreddit(sub, pageAfter, preference);
                     console.log('Load more RSS length:', responseText.length, 'preview:', responseText.substring(0, 200));
                     let posts = parseRssPosts(responseText);
                     console.log('Load more RSS posts:', posts.length);
                     if (posts.length === 0) {
-                        responseText = await api.getSubredditJson(this.currentSub, this.afterToken, preference);
+                        responseText = await api.getSubredditJson(sub, pageAfter, preference);
                         console.log('Load more JSON length:', responseText.length, 'preview:', responseText.substring(0, 200));
                         posts = parseJsonPosts(responseText);
                         console.log('Load more JSON posts:', posts.length);
                     }
-                    try {
-                        await loadPostScores(posts, this.currentSub, this.afterToken, preference);
-                    } catch (scoreError) {
-                        if (scoreError.message && scoreError.message.indexOf('superseded') !== -1) throw scoreError;
-                        console.warn('Load more scores failed:', scoreError);
-                    }
-
                     if (posts.length > 0) {
                         this.feedPosts = this.feedPosts.concat(posts);
                         posts.forEach(function(p) {
@@ -1702,6 +1716,11 @@
                             content.appendChild(el);
                         });
                         this.afterToken = postFullnameFromPermalink(posts[posts.length - 1].permalink);
+                        loadPostScores(posts, sub, pageAfter, preference).then(function() {
+                            if (ui.currentSub === sub && !ui.currentThread) updateRenderedPostScores(posts);
+                        }).catch(function(scoreError) {
+                            if (!scoreError.message || scoreError.message.indexOf('superseded') === -1) console.warn('Load more scores failed:', scoreError);
+                        });
                     } else {
                         this.afterToken = null;
                     }
@@ -1754,19 +1773,17 @@
                         posts = parseJsonPosts(responseText);
                         console.log('JSON posts parsed:', posts.length);
                     }
-                    try {
-                        await loadPostScores(posts, sub, null, preference);
-                    } catch (scoreError) {
-                        if (scoreError.message && scoreError.message.indexOf('superseded') !== -1) throw scoreError;
-                        console.warn('Feed scores failed:', scoreError);
-                    }
+                    this.renderPostList(posts, sub, false);
+                    loadPostScores(posts, sub, null, preference).then(function() {
+                        if (ui.currentSub === sub && !ui.currentThread) updateRenderedPostScores(posts);
+                    }).catch(function(scoreError) {
+                        if (!scoreError.message || scoreError.message.indexOf('superseded') === -1) console.warn('Feed scores failed:', scoreError);
+                    });
                     try {
                         localStorage.setItem(cacheKey, responseText);
                     } catch (e) {
                         console.warn('Failed to cache feed:', e);
                     }
-                    this.renderPostList(posts, sub, false);
-
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
                     if (cachedPosts.length === 0) {
@@ -1878,15 +1895,9 @@
                     }
 
                     const feedPost = this.currentPostIndex >= 0 ? this.feedPosts[this.currentPostIndex] : null;
+                    const needsPostScore = (!feedPost || typeof feedPost.upvotes !== 'number') && typeof post.upvotes !== 'number';
                     if (feedPost && typeof feedPost.upvotes === 'number') {
                         post.upvotes = feedPost.upvotes;
-                    } else if (typeof post.upvotes !== 'number') {
-                        try {
-                            applyPostScores([post], parseScoreMap(await api.getThreadScore(permalink)));
-                        } catch (scoreError) {
-                            if (scoreError.message && scoreError.message.indexOf('superseded') !== -1) throw scoreError;
-                            console.warn('Thread score failed:', scoreError);
-                        }
                     }
 
                     let html = '<div class="thread-container">';
@@ -1947,6 +1958,15 @@
                     this.commentNavIndex = -1;
                     this.commentNavLastScrollTop = 0;
                     this.updateCommentNavigation();
+                    if (needsPostScore) {
+                        api.getThreadScore(permalink).then(function(scoreResponse) {
+                            if (ui.currentThread !== permalink) return;
+                            applyPostScores([post], parseScoreMap(scoreResponse));
+                            updateRenderedPostScores([post]);
+                        }).catch(function(scoreError) {
+                            if (!scoreError.message || scoreError.message.indexOf('superseded') === -1) console.warn('Thread score failed:', scoreError);
+                        });
+                    }
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
                     content.innerHTML = `<div class="loading" style="color:red">Error loading thread<br>${escapeHtml(e.message)}</div>`;

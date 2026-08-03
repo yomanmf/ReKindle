@@ -33,9 +33,12 @@ test('applies compact embed score maps to RSS posts', function () {
 });
 
 test('puts the upvote counter immediately before the Moscow publication time', function () {
+    var facts = context.renderPostFacts({ id: 't3_abc123', upvotes: 321, publishedAt: 1785587640000 });
+
     assert.match(html, /\.post-meta\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto/s);
-    assert.match(context.renderPostFacts({ upvotes: 321, publishedAt: 1785587640000 }), /class="post-upvotes"[\s\S]*321[\s\S]*class="post-date"[\s\S]*2026-08-01 15:34/);
-    assert.match(html, /class="post-upvotes"[^>]*><svg[^>]*aria-hidden="true"/);
+    assert.match(facts, /class="post-upvotes"[\s\S]*321[\s\S]*class="post-date"[\s\S]*2026-08-01 15:34/);
+    assert.match(facts, /<svg[^>]*aria-hidden="true"/);
+    assert.match(context.renderPostFacts({ id: 't3_abc123', publishedAt: 1785587640000 }), /class="post-upvotes" data-post-id="t3_abc123"><\/span>[\s\S]*class="post-date"/);
     assert.equal((html.match(/\$\{renderPostFacts\((?:p|post)\)\}/g) || []).length, 3);
 });
 
@@ -49,7 +52,7 @@ test('keeps upvotes and publication time in the JSON thread response', function 
     assert.equal(comments.parseThread(payload).post.upvotes, 654);
 });
 
-test('keeps RSS primary and enriches it through compact embed score requests', function () {
+test('renders RSS content before enriching it through compact embed score requests', function () {
     var more = html.slice(html.indexOf('async loadMorePosts()'), html.indexOf('// FEED'));
     var feed = html.slice(html.indexOf('async loadCurrentSub()'), html.indexOf('async loadTopSubreddits()'));
     var thread = html.slice(html.indexOf('async loadThread(permalink)'), html.indexOf('processCommentHtml(html)'));
@@ -58,6 +61,8 @@ test('keeps RSS primary and enriches it through compact embed score requests', f
     assert.ok(feed.indexOf('api.getSubreddit(') < feed.indexOf('api.getSubredditJson('));
     assert.ok(thread.indexOf('api.getThread(') < thread.indexOf('api.getThreadJson('));
     assert.match(html, /baseUrl:\s*'https:\/\/embed\.reddit\.com'[\s\S]*extractScores:\s*true/);
-    assert.match(html, /await loadPostScores\(posts,/);
-    assert.match(thread, /await api\.getThreadScore\(permalink\)/);
+    assert.doesNotMatch(html, /await loadPostScores\(posts,/);
+    assert.ok(more.indexOf('content.appendChild(el)') < more.indexOf('loadPostScores(posts,'));
+    assert.ok(feed.indexOf('this.renderPostList(posts, sub, false)') < feed.indexOf('loadPostScores(posts,'));
+    assert.ok(thread.indexOf('content.innerHTML = html.replace') < thread.indexOf('api.getThreadScore(permalink)'));
 });
