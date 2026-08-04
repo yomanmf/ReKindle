@@ -447,6 +447,14 @@ hidden native select and immediately closes the custom menu. Use
 If it inherits the sidebar's `#fafafa`, root dark-theme inversion produces
 near-black `#050505`; Colorsoft dithers that empty area into visible bands and
 uneven shades below the saved subreddits.
+Keep `.sidebar-item.active` medium gray with black text so root inversion makes
+the selected saved subreddit dark gray instead of a glaring white block.
+
+**Reddit feed-preference sync gotcha:** A user can change the feed sort before
+Firebase Auth finishes. Mark local changes with
+`reddit_feed_preferences_pending_sync`, do not let a late cloud read overwrite
+them during that page session, and clear the marker only after Firestore
+acknowledges the full preferences map.
 
 Load `theme.js` before Reddit's blocking external Firebase SDK scripts. If the
 theme script comes afterward, a slow CDN response leaves the initial white

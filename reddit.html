@@ -262,8 +262,8 @@
         }
 
         .sidebar-item.active {
-            background: black;
-            color: white;
+            background: #ccc;
+            color: black;
             font-weight: bold;
         }
 
@@ -281,7 +281,7 @@
         }
 
         .sidebar-item.active .del-sub-btn {
-            color: #ccc;
+            color: #666;
         }
 
         .sidebar-item.active .del-sub-btn:hover {
@@ -1242,6 +1242,7 @@
             currentPostIndex: -1,
             feedScrollTop: 0,
             feedPreferences: {},
+            feedPreferencesChanged: false,
 
             init() {
                 if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
@@ -1283,7 +1284,8 @@
                             this.renderSidebar();
                             document.getElementById('sync-status').innerText = "Synced";
                         }
-                        if (data.feed_preferences && typeof data.feed_preferences === 'object') {
+                        const pendingFeedPreferences = localStorage.getItem('reddit_feed_preferences_pending_sync') === '1';
+                        if (data.feed_preferences && typeof data.feed_preferences === 'object' && !this.feedPreferencesChanged && !pendingFeedPreferences) {
                             const previousPreference = this.getFeedPreference(this.currentSub);
                             this.feedPreferences = window.RekindleRedditFeedSettings.normalizePreferences(data.feed_preferences);
                             this.saveLocalFeedPreferences();
@@ -1293,6 +1295,7 @@
                                 this.loadCurrentSub();
                             }
                         }
+                        if (pendingFeedPreferences) this.pushSavedSubs();
                     } else {
                         // First time: Push local to server
                         this.pushSavedSubs();
@@ -1310,6 +1313,7 @@
                     feed_preferences: this.feedPreferences,
                     last_updated: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true }).then(() => {
+                    localStorage.removeItem('reddit_feed_preferences_pending_sync');
                     document.getElementById('sync-status').innerText = "Synced";
                 }).catch(e => {
                     console.error("Push error:", e);
@@ -1382,7 +1386,9 @@
             setFeedPreference(sub, preference) {
                 const key = window.RekindleRedditFeedSettings.subredditKey(sub);
                 this.feedPreferences[key] = window.RekindleRedditFeedSettings.normalizePreference(preference);
+                this.feedPreferencesChanged = true;
                 this.saveLocalFeedPreferences();
+                localStorage.setItem('reddit_feed_preferences_pending_sync', '1');
                 this.pushSavedSubs();
             },
 

@@ -38,6 +38,14 @@ test('renders feed controls and persists a map through local and Firebase storag
     assert.match(redditHtml, /RekindleRedditFeedSettings\.cacheKey\(sub, preference\)/);
 });
 
+test('keeps a locally changed feed filter when a stale cloud read finishes later', function () {
+    assert.match(redditHtml, /feedPreferencesChanged:\s*false/);
+    assert.match(redditHtml, /!this\.feedPreferencesChanged && !pendingFeedPreferences/);
+    assert.match(redditHtml, /localStorage\.setItem\('reddit_feed_preferences_pending_sync', '1'\)/);
+    assert.match(redditHtml, /if \(pendingFeedPreferences\) this\.pushSavedSubs\(\)/);
+    assert.match(redditHtml, /localStorage\.removeItem\('reddit_feed_preferences_pending_sync'\)/);
+});
+
 test('forces long polling before Reddit uses Firestore on Kindle', function () {
     assert.match(redditHtml, /db = firebase\.firestore\(\);\s*db\.settings\(\{ experimentalForceLongPolling: true \}\);/);
 });

@@ -7,6 +7,8 @@ test('saved subreddit column uses a pure background for dark-theme inversion', f
     var reddit = fs.readFileSync(path.join(__dirname, '..', 'reddit.html'), 'utf8');
 
     assert.match(reddit, /#saved-list\s*\{[^}]*background:\s*white;/);
+    assert.match(reddit, /\.sidebar-item\.active\s*\{[^}]*background:\s*#ccc;[^}]*color:\s*black;/);
+    assert.match(reddit, /\.sidebar-item\.active \.del-sub-btn\s*\{[^}]*color:\s*#666;/);
 });
 
 test('applies the saved theme before loading external Firebase scripts', function () {
