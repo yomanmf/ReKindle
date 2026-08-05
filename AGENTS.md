@@ -276,12 +276,6 @@ inverts the rendered document at the root; `img`, `video`, `canvas`, `iframe`,
 colors are preserved. Add `.no-invert` only to a non-media subtree that must
 also keep its original palette.
 
-Load the cache-busted `theme.js` as the first render-blocking resource after
-`<title>`, before page styles, stylesheets, and external scripts. Kindle paints
-HTML incrementally while blocking scripts download; loading the theme later
-produces bright rectangular regions during dark-page navigation. Do not add
-`defer` to the theme script.
-
 Do not set dark-valued CSS variables such as `--bg-color: #000` while the root
 filter is active: the root inversion would turn them back to white. New pages
 must load the current cache-busted `theme.js` URL, and any theme release must

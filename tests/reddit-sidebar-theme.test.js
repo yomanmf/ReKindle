@@ -14,5 +14,5 @@ test('saved subreddit column uses a pure background for dark-theme inversion', f
 test('applies the saved theme before loading external Firebase scripts', function () {
     var reddit = fs.readFileSync(path.join(__dirname, '..', 'reddit.html'), 'utf8');
 
-    assert.ok(reddit.indexOf('theme.js?v=26') < reddit.indexOf('www.gstatic.com/firebasejs'));
+    assert.ok(reddit.indexOf('theme.js?v=25') < reddit.indexOf('www.gstatic.com/firebasejs'));
 });

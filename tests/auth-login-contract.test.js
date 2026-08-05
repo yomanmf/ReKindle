@@ -32,7 +32,7 @@ test("Kindle dashboards keep signed-out users behind the login wall", function (
         assert.doesNotMatch(source, /id="auth-btn"[^>]*(?:onclick="openLogin\(\)"|data-i18n="home\.nav\.login")/);
         assert.match(source, /modalId === 'login-modal' && \(!auth \|\| !auth\.currentUser\)/);
     });
-    assert.match(fs.readFileSync(path.join(root, "sw.js"), "utf8"), /rekindle-cache-v58/);
+    assert.match(fs.readFileSync(path.join(root, "sw.js"), "utf8"), /rekindle-cache-v54/);
 });
 
 test("signed-in dashboard puts the username in the rightmost account menu", function () {
