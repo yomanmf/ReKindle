@@ -16,7 +16,14 @@ test('every application page loads the current shared theme script', function ()
     var releaseManifest = read('yandex/FRONTEND-RELEASE-MANIFEST.txt').split(/\r?\n/);
 
     pages.forEach(function (page) {
-        assert.match(read(page), /theme\.js\?v=25/, page + ' must load theme.js?v=25');
+        var html = read(page);
+        var themeTag = html.indexOf('<script src="theme.js?v=26"></script>');
+        var firstPaintBlockerMatch = html.match(/^[ \t]*(?:<style|<link[^>]+stylesheet|<script[^>]+src=)/m);
+        var firstPaintBlocker = firstPaintBlockerMatch.index + firstPaintBlockerMatch[0].indexOf('<');
+
+        assert.ok(themeTag > -1, page + ' must load theme.js?v=26');
+        assert.equal(html.match(/theme\.js\?v=26/g).length, 1, page + ' must load theme.js once');
+        assert.equal(themeTag, firstPaintBlocker, page + ' must apply theme before styles and external scripts');
         assert.ok(releaseManifest.includes(page), page + ' must ship in the dark-theme release');
     });
 });
