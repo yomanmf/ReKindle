@@ -336,6 +336,12 @@
             margin-left: 18px;
         }
 
+        .feed-top-btn {
+            min-width: 48px;
+            min-height: 48px;
+            margin-left: auto;
+        }
+
         .feed-setting-label {
             font-weight: bold;
             margin-right: 7px;
@@ -744,6 +750,9 @@
                             <option value="all" data-i18n="reddit.feed.time.all">All time</option>
                         </select>
                     </div>
+                    <button class="nav-btn feed-top-btn" type="button"
+                        onclick="document.getElementById('content-area').scrollTop = 0"
+                        aria-label="Scroll to top" title="Scroll to top">^</button>
                 </div>
 
                 <div id="rate-limit-message"

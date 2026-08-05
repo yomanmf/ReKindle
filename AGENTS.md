@@ -1,5 +1,10 @@
 # Kindle Browser Compatibility Guide
 
+**Test command gotcha:** `package.json` has no `test` script, so `npm test`
+fails. Run the complete root contract suite with
+`node --test tests/*.test.js`, or use the narrower named `npm run test:*`
+scripts when only one documented area changed.
+
 **CRITICAL:** When developing for this project, you must adhere to the following constraints to ensure compatibility with Kindle and E-ink browsers.
 
 ## 📝 Agent Documentation Rule

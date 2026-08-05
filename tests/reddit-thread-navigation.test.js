@@ -23,6 +23,16 @@ test('renders an accessible next-thread button in the Reddit toolbar', function 
     assert.match(redditHtml, /\.next-thread-btn\.visible\s*\{[^}]*display:\s*inline-block/);
 });
 
+test('renders a right-aligned feed scroll-to-top button beside sorting controls', function () {
+    var topButtonStyles = redditHtml.match(/\.feed-top-btn\s*\{([^}]*)\}/);
+
+    assert.match(redditHtml, /class="nav-btn feed-top-btn"[^>]*onclick="document\.getElementById\('content-area'\)\.scrollTop = 0"[^>]*>\^<\/button>/);
+    assert.ok(topButtonStyles);
+    assert.match(topButtonStyles[1], /margin-left:\s*auto/);
+    assert.match(topButtonStyles[1], /min-width:\s*48px/);
+    assert.match(topButtonStyles[1], /min-height:\s*48px/);
+});
+
 test('keeps feed order for next-thread navigation', function () {
     var renderStart = redditHtml.indexOf('renderPostList(posts, sub, stale)');
     var renderEnd = redditHtml.indexOf('initScrollListener()', renderStart);
