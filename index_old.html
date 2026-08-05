@@ -223,8 +223,6 @@
             display: flex;
             flex-direction: column;
             background: white;
-            /* OPTIMIZATION: Isolate layout reflows */
-            contain: content;
         }
 
         .view-header {
@@ -786,7 +784,7 @@
         /* MODALS */
         .modal-overlay {
             display: none;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;

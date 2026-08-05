@@ -214,7 +214,6 @@
             flex-direction: column;
             flex-grow: 1;
             overflow: hidden;
-            contain: content;
         }
 
         .title-bar {
@@ -380,8 +379,6 @@
             display: flex;
             flex-direction: column;
             background: white;
-            /* OPTIMIZATION: Isolate layout reflows */
-            contain: content;
         }
 
         .category-header {
@@ -1007,7 +1004,7 @@
         /* MODALS */
         .modal-overlay {
             display: none;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
