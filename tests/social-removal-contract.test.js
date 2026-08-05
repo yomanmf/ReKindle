@@ -125,6 +125,7 @@ test("dashboard nests the two-player folder inside the Games folder", function (
         assert.match(source, /a\.cat !== ['"]misc['"] && a\.cat !== ['"]games['"] && a\.cat !== ['"]two_player['"] && a\.cat !== ['"]live_game['"]/);
         assert.match(source, /#folder-modal \.modal-box\s*\{[^}]*height:\s*82vh;[^}]*overflow:\s*hidden;/s);
         assert.match(source, /#folder-options\s*\{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;/s);
+        assert.match(source, /\.modal-overlay\s*\{[^}]*position:\s*absolute;/s);
         assert.match(source, /class="modal-close" onclick="closeModal\('folder-modal'\)"/);
         assert.match(source, /class="folder-actions"/);
         assert.doesNotMatch(source, /openDiscordModal/);

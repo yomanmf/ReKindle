@@ -1168,6 +1168,13 @@ Scribe Colorsoft panel dimensions in portrait (`1980x2640`) and landscape
 (`2640x1980`), as well as the conservative `600x800` CSS viewport used by the
 older Kindle-browser regression check.
 
+Both dashboards fix `<body>` to the viewport, so keep their `.modal-overlay`
+positioned `absolute`, not `fixed`. Chromium 75 on Kindle Scribe Colorsoft can
+mis-composite a fixed folder overlay above the scrollable dashboard: calendar
+and weather rectangles then paint through the modal and give it a jagged,
+clipped bottom. Absolute positioning covers the same fixed body without opening
+that extra compositor path.
+
 **Dashboard home layout:** Keep only the Home tab in the top folder strip. The
 four-square Dashboard tab and the Essentials, Tools, Lifestyle, Games, and
 Multiplayer category tabs are retired. The application heading is also absent;
