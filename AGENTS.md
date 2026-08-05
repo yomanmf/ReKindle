@@ -1156,23 +1156,13 @@ the primary app i18n key; otherwise `app.folder_*.name` is missing. When the
 Games folder is opened during dashboard edit mode, keep customization controls
 on the real child games so previously hidden games can be restored.
 
-The shared folder modal was originally sized for two or three game variants.
-The game folders contain many entries, so letting the
-entire `.modal-box` scroll creates a narrow 2-column, 2,000+ px document and
-pushes its close action off screen. Keep `#folder-modal .modal-box` as a bounded
-wide flex column with `overflow: hidden`; only `#folder-options` may scroll
-(`flex: 1 1 auto; min-height: 0; overflow-y: auto`). Both the 48x48 top close
-button and the bottom close action must remain outside that scrolling grid.
-The Games folder layout and both close actions were verified at the Kindle
-Scribe Colorsoft panel dimensions in portrait (`1980x2640`) and landscape
-(`2640x1980`), as well as the conservative `600x800` CSS viewport used by the
-older Kindle-browser regression check.
-
-Do not apply `contain: content` to `.dashboard-content` or `.app-view` in either
-dashboard. Chromium 75 on Kindle Scribe Colorsoft can mis-composite those paint
-containment layers above the folder modal: calendar and weather rectangles then
-paint through its lower half and give it a jagged, clipped bottom. Their normal
-flex and overflow bounds already constrain layout without containment.
+The shared folder modal must size to its icons instead of reserving a fixed
+viewport-height box: keep `height: auto`, a bounded `max-height`, and
+`#folder-options { flex: 0 1 auto; min-height: 0; overflow-y: auto; }`. This
+avoids the large empty lower region that Chromium 75 on Kindle Scribe Colorsoft
+can paint with a jagged edge. Long game folders still scroll inside the bounded
+grid. Keep only the 48x48 top close button; a bottom action unnecessarily makes
+the content-sized modal taller.
 
 **Dashboard home layout:** Keep only the Home tab in the top folder strip. The
 four-square Dashboard tab and the Essentials, Tools, Lifestyle, Games, and
