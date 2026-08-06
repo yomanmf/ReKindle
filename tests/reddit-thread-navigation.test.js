@@ -104,3 +104,10 @@ test('keeps external thread links on the extensionless browser route', function 
     assert.doesNotMatch(redditHtml, /browser\.html\?lite=true/);
     assert.match(releaseManifest, /^theme\.js$/m);
 });
+
+test('does not navigate when a linked post or comment image is clicked', function () {
+    var handlerStart = redditHtml.indexOf('            addLinkHandlers() {');
+    var handlerSource = redditHtml.slice(handlerStart, redditHtml.indexOf('            handleEnter(e)', handlerStart));
+
+    assert.match(handlerSource, /e\.preventDefault\(\);\s*e\.stopPropagation\(\);\s*if \(e\.target && e\.target\.closest && e\.target\.closest\('img'\)\) return;/);
+});

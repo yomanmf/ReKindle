@@ -1306,6 +1306,12 @@ returns `403` through the production proxy, while both RSS variants remain
 available; do not make JSON the primary thread source without verifying the
 deployed proxy first.
 
+**Reddit image-link gotcha:** `processCommentHtml()` puts linked post and
+comment images inside their original anchor, while `addLinkHandlers()` routes
+content links to the in-app browser. Keep the handler's early `closest('img')`
+return after it prevents the native event: tapping any rendered image must not
+navigate, but a text link in the same content remains usable.
+
 Reddit also returns `403` for individual HTML permalinks from Yandex even when
 their RSS feeds work. Media-only RSS entries include a preview image inside the
 metadata table; extract that URL before removing the table and render it through

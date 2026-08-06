@@ -2043,6 +2043,7 @@
                     a.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
+                        if (e.target && e.target.closest && e.target.closest('img')) return;
                         const href = a.getAttribute('href');
                         if (!href || href.indexOf('#') === 0 || href.indexOf('javascript:') === 0 || href.indexOf('data:') === 0) return;
                         let url = href;
