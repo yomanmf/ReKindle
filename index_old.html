@@ -1695,16 +1695,19 @@
                 const locale = document.documentElement.lang || navigator.language || 'en';
                 let weekHtml = '';
                 for (let i = 0; i < daily.time.length && i < 30; i++) {
-                    const parts = daily.time[i].split('-').map(Number);
+                    const shortRangeIndex = data.daily.time.indexOf(daily.time[i]);
+                    const dailySource = shortRangeIndex === -1 ? daily : data.daily;
+                    const dailyIndex = shortRangeIndex === -1 ? i : shortRangeIndex;
+                    const parts = dailySource.time[dailyIndex].split('-').map(Number);
                     const forecastDate = new Date(parts[0], parts[1] - 1, parts[2]);
                     const weekday = i === 0
                         ? (window.t ? window.t('weather.day.today', 'Today') : 'Today')
                         : forecastDate.toLocaleDateString(locale, { weekday: 'short' });
                     const dayLabel = weekday + ' ' + parts[2] + '.' + parts[1];
-                    weekHtml += '<a class="dashboard-weather-day" href="weather?date=' + encodeURIComponent(daily.time[i]) + '">' +
+                    weekHtml += '<a class="dashboard-weather-day" href="weather?date=' + encodeURIComponent(dailySource.time[dailyIndex]) + '">' +
                         '<div class="dashboard-weather-day-name">' + dayLabel + '</div>' +
-                        '<div class="dashboard-weather-day-icon">' + getDashboardWeatherIcon(weatherCodes[i]) + '</div>' +
-                        '<div class="dashboard-weather-day-temp">' + Math.round(daily.temperature_2m_max[i]) + '° / ' + Math.round(daily.temperature_2m_min[i]) + '°</div>' +
+                        '<div class="dashboard-weather-day-icon">' + getDashboardWeatherIcon((dailySource.weather_code || dailySource.weathercode)[dailyIndex]) + '</div>' +
+                        '<div class="dashboard-weather-day-temp">' + Math.round(dailySource.temperature_2m_max[dailyIndex]) + '° / ' + Math.round(dailySource.temperature_2m_min[dailyIndex]) + '°</div>' +
                         '</a>';
                 }
                 document.getElementById('db-weather-week').innerHTML = weekHtml;

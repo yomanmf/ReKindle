@@ -845,11 +845,12 @@ downloaded file with its staged source.
 
 **Dashboard weather contract:** Both `index.html` and `index_old.html` get the
 current conditions, apparent temperature, and button-paged 24-hour forecast
-from the generic Open-Meteo API. The button-paged 30-day forecast uses the
-compact EC46 ensemble mean from the Seasonal API because the generic endpoint
-stops at 16 days; if that request fails, the existing seven daily values remain
-as a fallback. Keep the modern and classic home-widget implementations
-synchronized. Use Open-Meteo's modern
+from the generic Open-Meteo API. The first seven 30-day cards must also use
+that generic daily response, matched by their `YYYY-MM-DD` value, so today's
+temperature and weather code agree with the hourly forecast. Use the compact
+EC46 ensemble mean from the Seasonal API only for later dates; if that request
+fails, the existing seven generic daily values remain as a fallback. Keep the
+modern and classic home-widget implementations synchronized. Use Open-Meteo's modern
 `current=temperature_2m,apparent_temperature,weather_code` parameter; combining
 it with legacy `current_weather=true` makes the API omit the `current` object.
 The hourly response uses local wall-clock strings because the request specifies

@@ -152,6 +152,8 @@ test("dashboard nests the two-player folder inside the Games folder", function (
         assert.match(source, /forecast_days=30/);
         assert.match(source, /models=ecmwf_ec46_ensemble_mean/);
         assert.match(source, /i < 30/);
+        assert.match(source, /data\.daily\.time\.indexOf\(daily\.time\[i\]\)/);
+        assert.match(source, /shortRangeIndex === -1 \? daily : data\.daily/);
         assert.match(source, /<a class="dashboard-weather-day" href="weather\?date=/);
         assert.match(source, /id="db-calendar-grid"/);
     });
