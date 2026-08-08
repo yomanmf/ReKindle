@@ -57,7 +57,7 @@ test("Misc is localized and the updated catalog bypasses old service-worker cach
     Object.keys(expected).forEach(function (language) {
         assert.equal(JSON.parse(read("locales/" + language + ".json"))["home.nav.misc"], expected[language]);
     });
-    assert.match(read("sw.js"), /rekindle-cache-v54/);
+    assert.match(read("sw.js"), /rekindle-cache-v58/);
     assert.match(read("sw.js"), /icons\.js\?v=13/);
     assert.match(read("sw.js"), /icons-beta\.js\?v=9/);
     assert.match(read("yandex/FRONTEND-RELEASE-MANIFEST.txt"), /^icons-beta\.js$/m);

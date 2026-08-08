@@ -16,7 +16,7 @@ test('every application page loads the current shared theme script', function ()
     var releaseManifest = read('yandex/FRONTEND-RELEASE-MANIFEST.txt').split(/\r?\n/);
 
     pages.forEach(function (page) {
-        assert.match(read(page), /theme\.js\?v=25/, page + ' must load theme.js?v=25');
+        assert.match(read(page), /theme\.js\?v=26/, page + ' must load theme.js?v=26');
         assert.ok(releaseManifest.includes(page), page + ' must ship in the dark-theme release');
     });
 });
@@ -64,7 +64,7 @@ test('dark theme preserves raster, canvas, and embedded content colors', functio
     assert.match(theme, /filter: invert\(1\) hue-rotate\(180deg\)/);
 });
 
-test('double tapping the bottom-left corner toggles the effective theme', function () {
+test('double tapping the lower-left band above the bottom edge toggles the effective theme', function () {
     var theme = read('theme.js');
 
     assert.match(theme, /document\.addEventListener\('click'/);
@@ -73,7 +73,8 @@ test('double tapping the bottom-left corner toggles the effective theme', functi
     assert.match(theme, /handleCornerTap\(touch\.clientX, touch\.clientY, now\)/);
     assert.match(theme, /now - lastTouchEnd <= 1000/);
     assert.match(theme, /clientX > 64/);
-    assert.match(theme, /window\.innerHeight - 64/);
+    assert.match(theme, /window\.innerHeight - 128/);
+    assert.match(theme, /clientY > window\.innerHeight - 64/);
     assert.match(theme, /now - cornerTapAt <= 600/);
     assert.match(theme, /hasAttribute\('data-theme'\) \? 'light' : 'dark'/);
     assert.match(theme, /saveThemePreference/);

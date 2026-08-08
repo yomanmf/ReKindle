@@ -295,8 +295,10 @@ Do not expose a `system` theme option: Chromium 75 predates
 API for its device appearance. Keep theme choices to light, dark, and timed auto.
 
 The global bottom-left theme gesture also lives in `theme.js`: two taps within
-600 ms inside the viewport's bottom-left 64x64 pixels switch the effective
-theme and save an explicit `light` or `dark` preference. Kindle's double-tap
+600 ms in the 64px-wide band immediately above the viewport's bottom-left 64px
+edge switch the effective theme and save an explicit `light` or `dark`
+preference. Keep the actual bottom-left 64x64 pixels free: Reddit's Saved
+Subs sidebar places its Top button there. Kindle's double-tap
 zoom guard suppresses the second synthetic `click`, so touch screens must count
 the gesture from the capture-phase `touchend` event and ignore its following
 synthetic click; `click` remains only as the mouse fallback. Do not add

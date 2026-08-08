@@ -212,7 +212,7 @@
     var lastTouchEnd = 0;
 
     function handleCornerTap(clientX, clientY, now) {
-        if (clientX > 64 || clientY < window.innerHeight - 64) {
+        if (clientX > 64 || clientY < window.innerHeight - 128 || clientY > window.innerHeight - 64) {
             cornerTapAt = 0;
             return;
         }

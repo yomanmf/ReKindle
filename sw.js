@@ -1,10 +1,10 @@
-const CACHE_NAME = 'rekindle-cache-v57'; // Show Exchange reconnect action on the dashboard
+const CACHE_NAME = 'rekindle-cache-v58'; // Move the theme gesture above Reddit's Top button
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=13',
     './icons-beta.js?v=9',
-    './theme.js?v=25',
+    './theme.js?v=26',
     './logo.svg',
     './manifest.json',
     './fonts/OpenDyslexic-Regular.woff2',
