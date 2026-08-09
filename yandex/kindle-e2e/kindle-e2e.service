@@ -1,0 +1,20 @@
+[Unit]
+Description=Run Kindle production E2E checks without delivery
+After=network-online.target vmwatch.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/vmwatch/server.env
+ExecStart=/usr/bin/python3 /opt/vmwatch/kindle-e2e.py
+TimeoutStartSec=35min
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=strict
+ReadOnlyPaths=/root/.ssh /var/lib/vmwatch
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+

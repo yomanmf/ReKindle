@@ -1434,6 +1434,19 @@ session as Telegram jobs, but must not call the Telegram API or expose Amazon
 login actions in the Kindle browser. If the shared server session expires,
 restore it operationally on the uploader instead of redirecting the user.
 
+**Daily Kindle E2E:** The existing `vmwatch-monitor` VM runs
+`yandex/kindle-e2e/kindle-e2e.py` every day at `06:00 Europe/Moscow`. It SSHes
+to the three existing production VMs and runs their checked-in dry-run commands
+in parallel: Manga builds one live chapter artifact, Books performs live
+catalog/download/conversion/cover/email assembly, and Digest builds one live
+article digest and performs delivery-size preparation. These commands must
+never call the Kindle uploader, SMTP, or Amazon; only the final delivery
+transport is replaced. The monitor reads the already configured VMWatch bot
+token and subscriber database, then sends one combined report through
+`@my_alerts_kindle_bot`. Do not create another VM, bot, source list, or delivery
+credential for this check. The production commands are `node src/e2e.mjs`,
+`flibusta-kindle-e2e`, and `node dist/src/e2e.js` respectively.
+
 ## Git Workflow
 
 **Exchange Calendar session-storage gotcha:** Yandex-to-Firestore requests can
