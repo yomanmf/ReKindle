@@ -25,8 +25,7 @@ TARGETS = (
     Target(
         "Manga Kindle",
         os.getenv("MANGA_E2E_HOST", "103.76.52.249"),
-        "container=$(sudo -n docker ps -q --filter label=com.docker.compose.service=manga-bot-worker | head -n1); "
-        "test -n \"$container\"; sudo -n docker exec \"$container\" node src/e2e.mjs",
+        "sudo -n docker exec deploy-manga-bot-worker-1 node src/e2e.mjs",
     ),
     Target(
         "Books Kindle",
