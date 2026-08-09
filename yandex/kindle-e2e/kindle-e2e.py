@@ -4,6 +4,7 @@ from __future__ import annotations
 import concurrent.futures
 import json
 import os
+import shlex
 import sqlite3
 import subprocess
 import sys
@@ -34,7 +35,7 @@ TARGETS = (
     ),
     Target(
         "Digest",
-        os.getenv("DIGEST_E2E_HOST", "10.42.0.32"),
+        os.getenv("DIGEST_E2E_HOST", "local"),
         "sudo -n docker exec telegram-articles-kindle-bot node dist/src/e2e.js",
     ),
 )
@@ -55,8 +56,11 @@ def run_target(target: Target) -> tuple[Target, dict[str, object] | None, str | 
     key = os.getenv("E2E_SSH_KEY", "/root/.ssh/vmwatch_deployer")
     user = os.getenv("E2E_SSH_USER", "vmwatch")
     try:
-        completed = subprocess.run(
-            [
+        command = shlex.split(target.command)
+        if target.host == "local":
+            command = command[2:] if command[:2] == ["sudo", "-n"] else command
+        else:
+            command = [
                 "ssh",
                 "-i", key,
                 "-o", "BatchMode=yes",
@@ -65,7 +69,9 @@ def run_target(target: Target) -> tuple[Target, dict[str, object] | None, str | 
                 "-o", "StrictHostKeyChecking=accept-new",
                 f"{user}@{target.host}",
                 target.command,
-            ],
+            ]
+        completed = subprocess.run(
+            command,
             capture_output=True,
             text=True,
             timeout=30 * 60,
