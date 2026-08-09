@@ -432,15 +432,28 @@
         }
 
         #content-area.thread-mode .thread-container {
-            padding-bottom: 80px;
+            padding-bottom: 200px;
         }
 
-        .comment-nav-btn {
+        .comment-nav-buttons {
             display: none;
             position: absolute;
             right: 16px;
             bottom: 16px;
             z-index: 3;
+            flex-direction: column;
+        }
+
+        .comment-nav-buttons.visible {
+            display: flex;
+        }
+
+        .comment-nav-buttons > * + * {
+            margin-top: 10px;
+        }
+
+        .comment-nav-btn {
+            display: flex;
             width: 50px;
             height: 50px;
             padding: 7px;
@@ -452,10 +465,6 @@
             cursor: pointer;
             align-items: center;
             justify-content: center;
-        }
-
-        .comment-nav-btn.visible {
-            display: flex;
         }
 
         .comment-nav-btn svg {
@@ -761,15 +770,33 @@
                 </div>
 
                 <div id="content-area"></div>
-                <button id="next-root-comment-btn" class="comment-nav-btn" type="button"
-                    onclick="ui.goToNextRootComment()" aria-label="Next top-level comment"
-                    data-i18n-title="reddit.comment.next_top_level" title="Next top-level comment">
-                    <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor"
-                        stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
-                        <path d="M16 4 V25"></path>
-                        <path d="M7 17 L16 26 L25 17"></path>
-                    </svg>
-                </button>
+                <div id="comment-nav-buttons" class="comment-nav-buttons">
+                    <button class="comment-nav-btn" type="button" onclick="ui.scrollThreadPage(-1)"
+                        aria-label="Scroll up one screen" title="Scroll up one screen">
+                        <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor"
+                            stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
+                            <path d="M5 4 H27 M5 28 H27 M16 25 V8"></path>
+                            <path d="M8 16 L16 8 L24 16"></path>
+                        </svg>
+                    </button>
+                    <button class="comment-nav-btn" type="button" onclick="ui.scrollThreadPage(1)"
+                        aria-label="Scroll down one screen" title="Scroll down one screen">
+                        <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor"
+                            stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
+                            <path d="M5 4 H27 M5 28 H27 M16 7 V24"></path>
+                            <path d="M8 16 L16 24 L24 16"></path>
+                        </svg>
+                    </button>
+                    <button id="next-root-comment-btn" class="comment-nav-btn" type="button"
+                        onclick="ui.goToNextRootComment()" aria-label="Next top-level comment"
+                        data-i18n-title="reddit.comment.next_top_level" title="Next top-level comment">
+                        <svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor"
+                            stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
+                            <path d="M16 4 V25"></path>
+                            <path d="M7 17 L16 26 L25 17"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1516,12 +1543,13 @@
 
             resetCommentNavigation() {
                 const content = document.getElementById('content-area');
+                const controls = document.getElementById('comment-nav-buttons');
                 const button = document.getElementById('next-root-comment-btn');
                 this.commentNavIndex = -1;
                 this.commentNavLastScrollTop = content ? content.scrollTop : 0;
                 if (content) content.classList.remove('thread-mode');
+                if (controls) controls.classList.remove('visible');
                 if (button) {
-                    button.classList.remove('visible');
                     button.disabled = false;
                 }
             },
@@ -1573,22 +1601,29 @@
 
             updateCommentNavigation() {
                 const content = document.getElementById('content-area');
+                const controls = document.getElementById('comment-nav-buttons');
                 const button = document.getElementById('next-root-comment-btn');
-                if (!content || !button) return;
+                if (!content || !controls || !button) return;
 
                 const roots = this.getRootComments();
                 if (!this.currentThread || roots.length === 0) {
                     content.classList.remove('thread-mode');
-                    button.classList.remove('visible');
+                    controls.classList.remove('visible');
                     button.disabled = false;
                     return;
                 }
 
                 content.classList.add('thread-mode');
-                button.classList.add('visible');
+                controls.classList.add('visible');
                 const buttonLabel = window.t ? window.t('reddit.comment.next_top_level', 'Next top-level comment') : 'Next top-level comment';
                 button.setAttribute('aria-label', buttonLabel);
                 button.disabled = this.commentNavIndex >= roots.length - 1;
+            },
+
+            scrollThreadPage(direction) {
+                const content = document.getElementById('content-area');
+                if (!content || !this.currentThread) return;
+                content.scrollTop += direction * content.clientHeight;
             },
 
             syncCommentNavigationFromScroll() {

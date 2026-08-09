@@ -33,6 +33,17 @@ test('renders a right-aligned feed scroll-to-top button beside sorting controls'
     assert.match(topButtonStyles[1], /min-height:\s*48px/);
 });
 
+test('stacks one-screen controls above next-comment navigation', function () {
+    var controlsStyles = redditHtml.match(/\.comment-nav-buttons\s*\{([^}]*)\}/);
+    var scrollStart = redditHtml.indexOf('            scrollThreadPage(direction) {');
+    var scrollSource = redditHtml.slice(scrollStart, redditHtml.indexOf('            syncCommentNavigationFromScroll()', scrollStart));
+
+    assert.ok(controlsStyles);
+    assert.match(controlsStyles[1], /flex-direction:\s*column/);
+    assert.match(redditHtml, /id="comment-nav-buttons"[^>]*>[\s\S]*onclick="ui\.scrollThreadPage\(-1\)"[\s\S]*onclick="ui\.scrollThreadPage\(1\)"[\s\S]*id="next-root-comment-btn"/);
+    assert.match(scrollSource, /content\.scrollTop \+= direction \* content\.clientHeight/);
+});
+
 test('keeps feed order for next-thread navigation', function () {
     var renderStart = redditHtml.indexOf('renderPostList(posts, sub, stale)');
     var renderEnd = redditHtml.indexOf('initScrollListener()', renderStart);

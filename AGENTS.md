@@ -1329,6 +1329,11 @@ The page flattens the reply tree in document order and stores `depth` plus
 to jump directly between root threads without doing expensive tree traversal on
 each Kindle render.
 
+The thread's bottom-right controls are one vertical column: one-screen up,
+one-screen down, then next top-level comment. Keep the next-comment button last
+and calculate page movement from `#content-area.clientHeight`, not the viewport,
+because the toolbar and status bar reduce the actual scrollable height.
+
 `#content-area` also drives infinite scrolling for the subreddit feed. When a
 thread is open, every scroll path must guard on `ui.currentThread` and must not
 call `loadMorePosts()`. Reset `afterToken` when opening a thread as a second line
