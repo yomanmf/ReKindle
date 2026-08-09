@@ -739,7 +739,8 @@ or supporter status back to the dashboard, settings, or locale files.
 **Books to Kindle direct-worker contract:** `bookskindle.html` never calls or
 simulates Telegram. Authenticated user actions are stored in the server-only
 `books_kindle_*` Firestore collections by `books-kindle-service.js`; the
-Flibusta worker polls `/api/rekindle/books-kindle-worker/*`, reuses its existing
+backend publishes `jobId + dispatchId` to the Books FIFO queue and the Flibusta
+worker claims it through `/api/rekindle/books-kindle-worker/claim`, reusing its existing
 catalog/conversion/cover/SMTP pipeline, and reports status back. Keep raw source
 URLs and Kindle addresses out of public job responses, keep all three
 collections denied in `firestore.rules`, and reuse the existing worker secret
@@ -752,7 +753,7 @@ delay, rolls back a healthy worker image with generic `COMMAND_FAILED`, and
 leaves web jobs indefinitely at `Waiting for the books worker.`
 
 **Books worker runtime secret:** The production VM reads
-`BOOKS_KINDLE_WORKER_SECRET` from the dedicated deletion-protected
+`BOOKS_KINDLE_WORKER_SECRET` and the YMQ reader key from the dedicated deletion-protected
 `books-kindle-worker-runtime` Lockbox secret. Its service account has
 `lockbox.payloadViewer` on that one secret only, and the secret ID is exposed
 through VM metadata key `books-kindle-lockbox-secret-id`. Do not grant the VM
@@ -1394,13 +1395,16 @@ redirect revalidation. This fallback belongs in the Reader backend rather than
 the frontend because Reddit links can enter Browser from several pages.
 
 **Kindle Digest control path:** Authenticated browser requests go through
-`/api/rekindle/kindle-digest/{action}`. The existing outbound-only article VM
-polls `/api/rekindle/kindle-digest-worker/{action}` with a Lockbox secret and
+`/api/rekindle/kindle-digest/{action}`. The backend publishes `jobId + dispatchId`
+to the Digest FIFO queue; the existing outbound-only article VM claims it through
+`/api/rekindle/kindle-digest-worker/claim` with a Lockbox secret and
 reuses its durable JSON queue and checkpoints. `kindle_digest_jobs` and
 `kindle_digest_config` are server-only Firestore collections. Keep
 `KINDLE_DIGEST_ALLOWED_UIDS` restricted because the worker currently has one
 global Kindle delivery destination. Source options come from the worker's
 `DAILY_SOURCES`; never hard-code a second source list in the frontend.
+The legacy worker `/pull` action is rollback-only and must not be restored as
+the production loop.
 
 **Kindle Digest status-history layout:** use the existing two-column CSS Grid
 for each `.history-item`. Do not float `.history-state`: inline icon badges can

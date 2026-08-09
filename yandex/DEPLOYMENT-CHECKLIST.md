@@ -52,6 +52,7 @@ Required secrets:
 - `S3_ACCESS_KEY_ID`
 - `S3_SECRET_ACCESS_KEY`
 - `KINDLE_DIGEST_WORKER_SECRET`
+- `YMQ_ACCESS_KEY_ID` and `YMQ_SECRET_ACCESS_KEY`
 
 Microsoft To Do secret (required before publishing `microsofttodo.html`):
 
@@ -67,13 +68,15 @@ Required non-secret configuration:
 - `MICROSOFT_TODO_CLIENT_ID` (public Microsoft Entra application/client ID)
 - `MICROSOFT_TODO_TENANT` (optional; defaults to `common`)
 - `KINDLE_DIGEST_ALLOWED_UIDS` (Firebase UIDs allowed to use the worker's Kindle destination)
+- `BOOKS_KINDLE_QUEUE_URL` and `KINDLE_DIGEST_QUEUE_URL` (FIFO queue URLs)
 
 Keep `@google-cloud/firestore` pinned as a direct backend dependency. Yandex can
 omit the copy declared as optional by `firebase-admin`, which causes Firestore
 routes to fail at runtime or makes the function cold start return HTTP 502.
 
 Attach the minimal permissions needed for Object Storage, Lockbox, Foundation
-Models (`ai.languageModels.user`) and Vision OCR (`ai.vision.user`). Do not set a
+Models (`ai.languageModels.user`), Vision OCR (`ai.vision.user`), and YMQ
+publishing (`ymq.writer`). Worker service accounts need only `ymq.reader`. Do not set a
 long-lived `YANDEX_IAM_TOKEN` in production; the function should receive a
 service-account token in its invocation context.
 

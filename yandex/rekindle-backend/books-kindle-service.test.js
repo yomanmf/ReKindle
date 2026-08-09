@@ -45,9 +45,15 @@ function memoryFirestore() {
 
 test("Books to Kindle searches and delivers through the private worker queue", async function () {
     var firestore = memoryFirestore();
-    var env = { KINDLE_DIGEST_ALLOWED_UIDS: "owner", KINDLE_DIGEST_WORKER_SECRET: "secret" };
+    var events = [];
+    var publish = async function (event) { events.push(event); };
+    var env = {
+        KINDLE_DIGEST_ALLOWED_UIDS: "owner",
+        KINDLE_DIGEST_WORKER_SECRET: "secret",
+        BOOKS_KINDLE_QUEUE_URL: "https://message-queue.example/books.fifo"
+    };
     var user = function (action, body) {
-        return service.handle({ action: action, body: body || {}, uid: "owner", firestore: firestore, env: env });
+        return service.handle({ action: action, body: body || {}, uid: "owner", firestore: firestore, env: env, publish: publish });
     };
     var worker = function (action, body) {
         return service.handle({
@@ -64,7 +70,10 @@ test("Books to Kindle searches and delivers through the private worker queue", a
     await user("kindle-set", { email: "reader@kindle.com" });
     var search = await user("search", { query: "War and Peace" });
     assert.equal(search.job.state, "queued");
-    assert.equal((await worker("pull")).job.action, "search");
+    assert.equal(events.length, 1);
+    var searchClaim = await worker("claim", { id: events[0].id, dispatchId: events[0].dispatchId });
+    assert.equal(searchClaim.job.action, "search");
+    assert.equal((await worker("claim", { id: search.job.id, dispatchId: "stale-dispatch" })).job, null);
     await worker("progress", { id: search.job.id, phase: "searching", message: "Searching" });
     await worker("search-results", {
         id: search.job.id,
@@ -85,7 +94,8 @@ test("Books to Kindle searches and delivers through the private worker queue", a
     assert.equal(ready.results[0].epubUrl, undefined);
 
     await user("create", { id: search.job.id, bookId: "42" });
-    var delivery = (await worker("pull")).job;
+    var deliveryEvent = events[1];
+    var delivery = (await worker("claim", { id: deliveryEvent.id, dispatchId: deliveryEvent.dispatchId })).job;
     assert.equal(delivery.action, "deliver");
     assert.equal(delivery.kindleEmail, "reader@kindle.com");
     await worker("progress", { id: search.job.id, phase: "sending", message: "Sending" });
@@ -93,6 +103,8 @@ test("Books to Kindle searches and delivers through the private worker queue", a
     assert.equal((await user("status", { id: search.job.id })).job.state, "sent");
 
     var limitedSearch = await user("search", { query: "Unknown Book" });
+    var limitedEvent = events[2];
+    await worker("claim", { id: limitedEvent.id, dispatchId: limitedEvent.dispatchId });
     await worker("search-results", {
         id: limitedSearch.job.id,
         results: [],

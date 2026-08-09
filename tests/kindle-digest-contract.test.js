@@ -42,6 +42,8 @@ test("Kindle Digest backend and worker routes are private and released", functio
     assert.match(service, /KINDLE_DIGEST_ALLOWED_UIDS/);
     assert.match(service, /KINDLE_DIGEST_WORKER_SECRET/);
     assert.match(service, /timingSafeEqual/);
+    assert.match(service, /action === "claim"/);
+    assert.match(service, /KINDLE_DIGEST_QUEUE_URL/);
     assert.match(rules, /match \/kindle_digest_jobs\/\{jobId\}[\s\S]*?allow read, write: if false/);
     assert.match(rules, /match \/kindle_digest_config\/\{docId\}[\s\S]*?allow read, write: if false/);
     assert.match(catalog, /id:\s*['"]kindledigest['"]/);

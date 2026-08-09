@@ -1,6 +1,7 @@
 "use strict";
 
 var crypto = require("node:crypto");
+var ymq = require("./ymq");
 
 var JOBS_COLLECTION = "books_kindle_jobs";
 var SETTINGS_COLLECTION = "books_kindle_settings";
@@ -15,12 +16,14 @@ async function handle(options) {
     var body = options.body || {};
     var firestore = options.firestore;
     var env = options.env || process.env;
+    var publish = options.publish || ymq.publish;
     if (!firestore) throw serviceError(500, "books-kindle-storage", "Books to Kindle storage is unavailable.");
 
     if (options.worker === true) {
         requireWorker(options.workerToken, env);
         if (action === "sync") return syncWorker(firestore, body);
         if (action === "pull") return pullJob(firestore);
+        if (action === "claim") return claimJob(firestore, body);
         if (action === "progress") return updateProgress(firestore, body);
         if (action === "check") return checkJob(firestore, body);
         if (action === "search-results") return finishSearch(firestore, body);
@@ -35,11 +38,11 @@ async function handle(options) {
     if (action === "kindle-status") return getKindleStatus(firestore, uid);
     if (action === "kindle-set") return setKindleEmail(firestore, uid, body);
     if (action === "kindle-forget") return forgetKindleEmail(firestore, uid);
-    if (action === "search") return createSearch(firestore, uid, body);
-    if (action === "create") return createDelivery(firestore, uid, body);
+    if (action === "search") return createSearch(firestore, uid, body, env, publish);
+    if (action === "create") return createDelivery(firestore, uid, body, env, publish);
     if (action === "status") return getStatus(firestore, uid, body);
     if (action === "cancel") return cancelJob(firestore, uid, body);
-    if (action === "retry") return retryJob(firestore, uid, body);
+    if (action === "retry") return retryJob(firestore, uid, body, env, publish);
     throw serviceError(404, "books-kindle-action", "Books to Kindle action was not found.");
 }
 
@@ -72,14 +75,18 @@ async function forgetKindleEmail(firestore, uid) {
     return getKindleStatus(firestore, uid);
 }
 
-async function createSearch(firestore, uid, body) {
+async function createSearch(firestore, uid, body, env, publish) {
     var query = cleanText(body.query, 160);
     if (query.length < 2) throw serviceError(400, "books-kindle-query", "Enter 2 to 160 characters.");
     var active = await activeJob(firestore, uid);
-    if (active) return { job: publicJob(active), existing: true };
+    if (active) {
+        if (active.state === "queued") await publishJob(publish, env, active);
+        return { job: publicJob(active), existing: true };
+    }
     var now = Date.now();
     var job = {
         id: crypto.randomUUID(),
+        dispatchId: crypto.randomUUID(),
         uid: uid,
         action: "search",
         query: query,
@@ -92,10 +99,11 @@ async function createSearch(firestore, uid, body) {
         updatedAt: now
     };
     await firestore.collection(JOBS_COLLECTION).doc(job.id).set(job);
+    await publishJob(publish, env, job);
     return { job: publicJob(job), existing: false };
 }
 
-async function createDelivery(firestore, uid, body) {
+async function createDelivery(firestore, uid, body, env, publish) {
     var job = await ownedJob(firestore, uid, body.id);
     if (job.state !== "ready" || !Array.isArray(job.results)) {
         throw serviceError(409, "books-kindle-selection", "Search for a book before sending it.");
@@ -107,7 +115,10 @@ async function createDelivery(firestore, uid, body) {
     var kindleEmail = settings.exists && (settings.data() || {}).kindleEmail;
     if (!kindleEmail) throw serviceError(409, "books-kindle-email", "Save your Send to Kindle address first.");
 
+    var dispatchId = crypto.randomUUID();
     await firestore.collection(JOBS_COLLECTION).doc(job.id).update({
+        dispatchId: dispatchId,
+        workerDispatchId: null,
         action: "deliver",
         selectedBook: book,
         kindleEmail: kindleEmail,
@@ -119,6 +130,7 @@ async function createDelivery(firestore, uid, body) {
         result: null,
         updatedAt: Date.now()
     });
+    await publishJob(publish, env, { id: job.id, dispatchId: dispatchId });
     return getStatus(firestore, uid, { id: job.id });
 }
 
@@ -142,12 +154,15 @@ async function cancelJob(firestore, uid, body) {
     return getStatus(firestore, uid, { id: job.id });
 }
 
-async function retryJob(firestore, uid, body) {
+async function retryJob(firestore, uid, body, env, publish) {
     var job = await ownedJob(firestore, uid, body.id);
     if (job.state !== "failed" && job.state !== "canceled") {
         throw serviceError(409, "books-kindle-retry", "Only failed or canceled jobs can be retried.");
     }
+    var dispatchId = crypto.randomUUID();
     await firestore.collection(JOBS_COLLECTION).doc(job.id).update({
+        dispatchId: dispatchId,
+        workerDispatchId: null,
         action: job.selectedBook ? "deliver" : "search",
         state: "queued",
         phase: "queued",
@@ -157,6 +172,7 @@ async function retryJob(firestore, uid, body) {
         result: null,
         updatedAt: Date.now()
     });
+    await publishJob(publish, env, { id: job.id, dispatchId: dispatchId });
     return getStatus(firestore, uid, { id: job.id });
 }
 
@@ -182,6 +198,39 @@ async function pullJob(firestore) {
             kindleEmail: job.kindleEmail
         }
     };
+}
+
+async function claimJob(firestore, body) {
+    await touchWorker(firestore);
+    var job = await jobById(firestore, body.id);
+    var dispatchId = validateId(body.dispatchId);
+    if (job.dispatchId !== dispatchId) return { job: null };
+    if (job.state !== "queued" && !(job.state === "running" && job.workerDispatchId === dispatchId)) {
+        return { job: null };
+    }
+    if (job.state === "queued") {
+        await firestore.collection(JOBS_COLLECTION).doc(job.id).update({
+            state: "running",
+            workerDispatchId: dispatchId,
+            updatedAt: Date.now()
+        });
+    }
+    return { job: workerJob(job) };
+}
+
+function workerJob(job) {
+    if (job.action === "search") return { id: job.id, action: "search", query: job.query };
+    return { id: job.id, action: "deliver", book: job.selectedBook, kindleEmail: job.kindleEmail };
+}
+
+function publishJob(publish, env, job) {
+    return publish({
+        env: env,
+        queueUrl: env.BOOKS_KINDLE_QUEUE_URL,
+        groupId: "books-kindle",
+        id: job.id,
+        dispatchId: job.dispatchId
+    });
 }
 
 async function updateProgress(firestore, body) {

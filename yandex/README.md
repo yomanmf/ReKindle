@@ -50,6 +50,7 @@ cross-instance cache is required later.
 - authenticated AI, OCR, and content proxies;
 - an authenticated Microsoft To Do client using Microsoft Graph device authorization and encrypted per-user OAuth sessions.
 - authenticated Kindle Digest jobs consumed by the existing outbound-only article worker;
+- FIFO job notifications for the Books and Digest workers through Yandex Message Queue;
 - a public GET/HEAD content proxy with SSRF protection, IP rate limits and a
   5 MB response cap.
 
@@ -61,13 +62,17 @@ The function requires these secret-backed environment variables:
 - `MICROSOFT_TODO_SESSION_ENCRYPTION_KEY` (exactly 32 random bytes encoded as base64)
 - `ANALYTICS_INGEST_TOKEN` (shared Kindle analytics ingestion token)
 - `KINDLE_DIGEST_WORKER_SECRET` (shared only with the article worker)
+- `YMQ_ACCESS_KEY_ID` and `YMQ_SECRET_ACCESS_KEY` (dedicated queue writer key)
 
 It also requires the non-secret variables `S3_BUCKET`, `ALLOWED_ORIGINS`,
 `YANDEX_FOLDER_ID`, and `ANALYTICS_URL`. Microsoft To Do additionally requires the public
 `MICROSOFT_TODO_CLIENT_ID`; `MICROSOFT_TODO_TENANT` is optional and defaults to
 `common`. Kindle Digest additionally requires `KINDLE_DIGEST_ALLOWED_UIDS`, a
 comma-separated list of Firebase accounts allowed to use the worker's global
-Kindle destination. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
+Kindle destination. Queue delivery additionally requires `BOOKS_KINDLE_QUEUE_URL`
+and `KINDLE_DIGEST_QUEUE_URL`; a dedicated static key signs YMQ requests and
+its service account has the narrow `ymq.writer` role in the queue-only folder. Worker service accounts use
+separate `ymq.reader` keys from their own Lockbox secrets. `YANDEX_IAM_TOKEN` is a local/emergency fallback only: production should
 use the IAM token supplied to the function through its attached service account.
 Secrets must be supplied from Yandex Lockbox; never paste them into source files
 or ordinary checked-in configuration.
@@ -108,8 +113,8 @@ the ReKindle function enforces its own stricter origin allowlist. The browser
 client uses `/api/rekindle/*` through the existing `rekindle-api` gateway.
 
 Kindle Digest browser requests use Firebase auth under `/kindle-digest/{action}`;
-the existing article VM polls
-`/kindle-digest-worker/{action}` with its Lockbox secret. The browser cannot
+the existing article VM receives FIFO queue events and claims them through
+`/kindle-digest-worker/claim` with its Lockbox secret. The browser cannot
 read `kindle_digest_jobs` or `kindle_digest_config` directly.
 
 The former relative `/api/proxy`, `/api/maps`, `/api/price`, and

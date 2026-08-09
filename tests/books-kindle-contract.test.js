@@ -66,6 +66,8 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
     assert.match(backend, /requireFirebaseUser[\s\S]*?booksKindleService\.handle/);
     assert.match(service, /BOOKS_KINDLE_ALLOWED_UIDS|KINDLE_DIGEST_ALLOWED_UIDS/);
     assert.match(service, /timingSafeEqual/);
+    assert.match(service, /action === "claim"/);
+    assert.match(service, /BOOKS_KINDLE_QUEUE_URL/);
     assert.match(rules, /match \/books_kindle_jobs\/\{jobId\}[\s\S]*?allow read, write: if false/);
     assert.match(rules, /match \/books_kindle_settings\/\{userId\}[\s\S]*?allow read, write: if false/);
     assert.match(catalog, /id:\s*['"]bookskindle['"][\s\S]{0,500}<path/);

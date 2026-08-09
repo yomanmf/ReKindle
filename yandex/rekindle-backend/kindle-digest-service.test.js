@@ -45,7 +45,13 @@ function memoryFirestore() {
 
 test("Kindle Digest runs a direct worker job", async function () {
     var firestore = memoryFirestore();
-    var env = { KINDLE_DIGEST_ALLOWED_UIDS: "owner-uid", KINDLE_DIGEST_WORKER_SECRET: "worker-secret" };
+    var events = [];
+    var publish = async function (event) { events.push(event); };
+    var env = {
+        KINDLE_DIGEST_ALLOWED_UIDS: "owner-uid",
+        KINDLE_DIGEST_WORKER_SECRET: "worker-secret",
+        KINDLE_DIGEST_QUEUE_URL: "https://message-queue.example/digest.fifo"
+    };
     var worker = function (action, body) {
         return service.handle({
             action: action,
@@ -57,7 +63,7 @@ test("Kindle Digest runs a direct worker job", async function () {
         });
     };
     var user = function (action, body) {
-        return service.handle({ action: action, body: body || {}, uid: "owner-uid", firestore: firestore, env: env });
+        return service.handle({ action: action, body: body || {}, uid: "owner-uid", firestore: firestore, env: env, publish: publish });
     };
 
     await worker("sync", { sources: [{ id: "the-verge", label: "The Verge", url: "https://www.theverge.com/rss/index.xml" }] });
@@ -70,7 +76,8 @@ test("Kindle Digest runs a direct worker job", async function () {
         mode: "digest", lookbackDays: 1, filter: "all", articleLimit: 2
     })).existing, true);
 
-    var pulled = await worker("pull");
+    assert.equal(events[0].groupId, "kindle-digest");
+    var pulled = await worker("claim", { id: events[0].id, dispatchId: events[0].dispatchId });
     assert.equal(pulled.job.id, created.job.id);
     assert.equal(pulled.job.url, "https://www.theverge.com/rss/index.xml");
     await worker("progress", { id: created.job.id, phase: "collecting", message: "Rendering article 2/5", current: 2, total: 5 });
@@ -86,6 +93,8 @@ test("Kindle Digest runs a direct worker job", async function () {
     assert.equal((await worker("finish", { id: created.job.id })).cancelRequested, true);
 
     await user("retry", { id: created.job.id });
+    var retryEvent = events[events.length - 1];
+    await worker("claim", { id: retryEvent.id, dispatchId: retryEvent.dispatchId });
     await worker("progress", { id: created.job.id, phase: "sending", message: "Sending EPUB to Kindle" });
     await worker("finish", {
         id: created.job.id,
