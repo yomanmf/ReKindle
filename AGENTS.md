@@ -1446,6 +1446,12 @@ token and subscriber database, then sends one combined report through
 `@my_alerts_kindle_bot`. Do not create another VM, bot, source list, or delivery
 credential for this check. The production commands are `node src/e2e.mjs`,
 `flibusta-kindle-e2e`, and `node dist/src/e2e.js` respectively.
+Open the VMWatch SQLite database with `mode=ro&immutable=1`: its WAL journal
+otherwise tries to create lock files and fails inside the read-only systemd
+sandbox.
+The VM cannot reach Telegram's DNS-selected address; keep
+`149.154.167.220 api.telegram.org` in `/etc/hosts`. Verify that pinned IPv4
+with TLS before replacing it if Telegram changes the endpoint.
 
 ## Git Workflow
 

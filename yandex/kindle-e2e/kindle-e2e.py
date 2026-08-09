@@ -96,7 +96,7 @@ def format_report(results: list[tuple[Target, dict[str, object] | None, str | No
 
 def subscribers() -> list[int]:
     database = os.getenv("DB_PATH", "/var/lib/vmwatch/state.db")
-    with sqlite3.connect(f"file:{database}?mode=ro", uri=True) as connection:
+    with sqlite3.connect(f"file:{database}?mode=ro&immutable=1", uri=True) as connection:
         return [int(row[0]) for row in connection.execute("SELECT chat_id FROM subscribers")]
 
 
