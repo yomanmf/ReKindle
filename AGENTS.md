@@ -1,5 +1,15 @@
 # Kindle Browser Compatibility Guide
 
+## Quick commands
+
+- Setup: `npm ci`
+- Test: `node --test tests/*.test.js`; when backend code changes, also run `npm test --prefix yandex/rekindle-backend` or `npm test --prefix yandex/reddit-function` as applicable.
+- Build: `npm run build`
+- Lint: there is no configured linter; run `git diff --check`.
+- Deploy: push the verified commit to `origin/main` and monitor `.github/workflows/deploy.yml`. Follow the production rules below for changes outside that workflow.
+- Health: `ops http https://rekindle.website.yandexcloud.net/` and inspect the latest workflow with `gh run list --workflow deploy.yml --limit 1`.
+- Never install `yc` or other Yandex software. If a required production step cannot use the documented CI workflow or standard HTTP API, stop and report the blocker.
+
 **Test command gotcha:** `package.json` has no `test` script, so `npm test`
 fails. Run the complete root contract suite with
 `node --test tests/*.test.js`, or use the narrower named `npm run test:*`
