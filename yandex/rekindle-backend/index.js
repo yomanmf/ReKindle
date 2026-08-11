@@ -1029,7 +1029,7 @@ async function handleBooksKindleRequest(event, path) {
         action: action,
         body: parseJsonBody(event),
         uid: user.uid,
-        firestore: getBackendFirestore(),
+        firestore: getBooksKindleStore(),
         env: process.env
     });
 }
@@ -1040,7 +1040,7 @@ async function handleBooksKindleWorkerRequest(event, path) {
         body: parseJsonBody(event),
         worker: true,
         workerToken: getHeader(event, "authorization"),
-        firestore: getBackendFirestore(),
+        firestore: getBooksKindleStore(),
         env: process.env
     });
 }
@@ -1430,6 +1430,42 @@ function getBackendFirestore() {
     return backendFirestore;
 }
 
+function getBooksKindleStore(database) {
+    var root = (database || getFirebaseApp().database()).ref("server/books_kindle");
+    return {
+        collection: function (name) {
+            var collection = root.child(name);
+            return {
+                doc: function (id) { return rtdbDocument(collection.child(id)); },
+                limit: function (maximum) {
+                    return {
+                        get: async function () {
+                            var snapshot = await collection.limitToFirst(maximum).once("value");
+                            var docs = [];
+                            snapshot.forEach(function (child) {
+                                docs.push({ id: child.key, data: function () { return child.val() || {}; } });
+                            });
+                            return { docs: docs };
+                        }
+                    };
+                }
+            };
+        },
+        doc: function (path) { return rtdbDocument(root.child(path)); }
+    };
+}
+
+function rtdbDocument(ref) {
+    return {
+        get: async function () {
+            var snapshot = await ref.once("value");
+            return { exists: snapshot.exists(), data: function () { return snapshot.val() || {}; } };
+        },
+        set: function (value, options) { return options && options.merge ? ref.update(value) : ref.set(value); },
+        update: function (value) { return ref.update(value); }
+    };
+}
+
 function getS3Client() {
     if (s3Client) return s3Client;
     s3Client = new s3Package.S3Client({
@@ -1651,6 +1687,7 @@ module.exports.testHooks = {
     fetchWithTimeout: fetchWithTimeout,
     normalizeReaderTargetUrl: normalizeReaderTargetUrl,
     getExchangeCalendarSessionDocument: getExchangeCalendarSessionDocument,
+    getBooksKindleStore: getBooksKindleStore,
     generateWithYandex: generateWithYandex,
     aiUpstreamError: aiUpstreamError
 };

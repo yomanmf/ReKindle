@@ -237,6 +237,47 @@ test("Exchange Calendar sessions round-trip through private object storage", asy
     assert.equal((await document.get()).exists, false);
 });
 
+test("Books to Kindle state uses the realtime database without Firestore", async function () {
+    var values = {};
+    function write(path, value) {
+        values[path] = value;
+        var slash = path.lastIndexOf("/");
+        if (slash !== -1) {
+            var parent = path.slice(0, slash);
+            var key = path.slice(slash + 1);
+            values[parent] = Object.assign({}, values[parent] || {}, { [key]: value });
+        }
+    }
+    function ref(path) {
+        return {
+            child: function (name) { return ref(path + "/" + name); },
+            set: async function (value) { write(path, JSON.parse(JSON.stringify(value))); },
+            update: async function (value) { write(path, Object.assign({}, values[path] || {}, value)); },
+            once: async function () { return snapshot(path, values[path]); },
+            limitToFirst: function () { return this; }
+        };
+    }
+    function snapshot(path, value) {
+        return {
+            key: path.split("/").pop(),
+            exists: function () { return value !== undefined && value !== null; },
+            val: function () { return value; },
+            forEach: function (visit) {
+                Object.keys(value || {}).forEach(function (key) { visit(snapshot(key, value[key])); });
+            }
+        };
+    }
+    var store = backend.testHooks.getBooksKindleStore({ ref: ref });
+    var job = store.collection("books_kindle_jobs").doc("job-one");
+    await job.set({ state: "queued", uid: "user-one" });
+    await job.update({ state: "running" });
+    assert.deepEqual((await job.get()).data(), { state: "running", uid: "user-one" });
+
+    var list = await store.collection("books_kindle_jobs").limit(100).get();
+    assert.equal(list.docs[0].id, "job-one");
+    assert.deepEqual(list.docs[0].data(), { state: "running", uid: "user-one" });
+});
+
 test("AI chat requires a Firebase ID token", async function () {
     var result = await backend.handler(event(
         "POST",

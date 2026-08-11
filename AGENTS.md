@@ -748,13 +748,16 @@ or supporter status back to the dashboard, settings, or locale files.
 
 **Books to Kindle direct-worker contract:** `bookskindle.html` never calls or
 simulates Telegram. Authenticated user actions are stored in the server-only
-`books_kindle_*` Firestore collections by `books-kindle-service.js`; the
+`server/books_kindle/books_kindle_*` primary RTDB tree by
+`books-kindle-service.js`; the
 backend publishes `jobId + dispatchId` to the Books FIFO queue and the Flibusta
 worker claims it through `/api/rekindle/books-kindle-worker/claim`, reusing its existing
 catalog/conversion/cover/SMTP pipeline, and reports status back. Keep raw source
 URLs and Kindle addresses out of public job responses, keep all three
-collections denied in `firestore.rules`, and reuse the existing worker secret
-only through the backend's timing-safe bearer check.
+trees server-only, and reuse the existing worker secret only through the
+backend's timing-safe bearer check. Do not move Books state back to Firestore:
+the Spark daily quota previously exhausted and made every Books request hang
+until the 30-second Yandex Function timeout.
 
 **Books worker deploy verification:** The production bot routes Telegram through
 `RUNTIME_TELEGRAM_PROXY_URL`. Its VM deploy-agent must pass that proxy to the
