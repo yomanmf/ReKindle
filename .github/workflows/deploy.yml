@@ -34,6 +34,7 @@ jobs:
       - name: Prepare frontend release
         env:
           REKINDLE_FIREBASE_API_KEY: ${{ secrets.REKINDLE_FIREBASE_API_KEY }}
+          REKINDLE_YANDEX_RELEASE_DIR: ${{ runner.temp }}/rekindle-yandex-release
         run: node yandex/prepare-frontend-release.js
       - name: Exchange GitHub OIDC token for IAM token
         env:
@@ -58,4 +59,5 @@ jobs:
       - name: Upload and verify production
         env:
           REKINDLE_BUCKET: rekindle
+          REKINDLE_YANDEX_RELEASE_DIR: ${{ runner.temp }}/rekindle-yandex-release
         run: yandex/deploy-frontend-http.sh
