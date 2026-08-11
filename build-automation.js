@@ -1501,4 +1501,7 @@ async function run() {
     console.log("✅ Build Complete!");
 }
 
-run().catch(console.error);
+run().catch(function (error) {
+    console.error(error);
+    process.exitCode = 1;
+});

@@ -10,6 +10,11 @@
 - Health: `ops http https://rekindle.website.yandexcloud.net/` and inspect the latest workflow with `gh run list --workflow deploy.yml --limit 1`.
 - Never install `yc` or other Yandex software. If a required production step cannot use the documented CI workflow or standard HTTP API, stop and report the blocker.
 
+## Yandex software prohibition
+
+- Never install `yc`, Yandex Cloud CLI, Yandex SDKs, Yandex desktop applications, or Yandex-provided GitHub Actions under any circumstances.
+- Access existing Yandex-hosted services only through standard HTTP APIs with ordinary tools such as `curl`. If that is insufficient, stop and report the blocker instead of installing Yandex software.
+
 **Test command gotcha:** `package.json` has no `test` script, so `npm test`
 fails. Run the complete root contract suite with
 `node --test tests/*.test.js`, or use the narrower named `npm run test:*`

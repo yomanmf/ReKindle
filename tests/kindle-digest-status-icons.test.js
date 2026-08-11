@@ -15,7 +15,7 @@ test("Kindle Digest draws a Kindle-safe pictogram for every job status", functio
     assert.match(html, /\.status-icon\s*\{/);
     assert.match(html, /\.history-item\s*\{[^}]*display:\s*grid/s);
     assert.doesNotMatch(html, /\.history-state\s*\{[^}]*float\s*:/s);
-    assert.match(html, /js\/kindledigest\.js\?v=2/);
+    assert.match(html, /js\/kindledigest\.js\?v=3/);
     assert.match(html, /top:\s*-14px;[^}]*right:\s*-14px;[^}]*bottom:\s*-14px;[^}]*left:\s*-14px/s);
     assert.match(html, /\.status-detail[^}]*word-break:\s*break-word/);
     assert.doesNotMatch(client + html, /[\u{1F300}-\u{1FAFF}]/u);

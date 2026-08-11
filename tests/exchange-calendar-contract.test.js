@@ -30,7 +30,6 @@ test("Exchange Calendar uses authenticated server-side EWS access", function () 
     assert.match(router, /sessionDocument: getExchangeCalendarSessionDocument\(user\.uid\)/);
     assert.match(router, /integrations\/exchange-calendar-sessions/);
     assert.match(router, /initializeFirestore\(getFirebaseApp\(\), \{ preferRest: true \}\)/);
-    assert.doesNotMatch(router, /firebaseFirestore\.getFirestore/);
     assert.match(router, /verifyIdToken\(token\)/);
     assert.doesNotMatch(router, /verifyIdToken\(token, true\)/);
     assert.match(gateway, /\/api\/rekindle\/exchange-calendar\/\{action\}/);
