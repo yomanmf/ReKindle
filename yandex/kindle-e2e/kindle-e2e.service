@@ -1,13 +1,15 @@
 [Unit]
 Description=Run Kindle production E2E checks without delivery
-After=network-online.target vmwatch.service
+After=network-online.target vmwatch.service warpns-warp-ready.service
 Wants=network-online.target
+Requires=warpns-warp-ready.service
 
 [Service]
 Type=oneshot
 User=root
 Group=root
 EnvironmentFile=/etc/vmwatch/server.env
+Environment=TELEGRAM_PROXY_URL=socks5h://10.200.0.2:40000
 ExecStart=/usr/bin/python3 /opt/vmwatch/kindle-e2e.py
 TimeoutStartSec=35min
 UMask=0077
@@ -17,4 +19,3 @@ ProtectHome=read-only
 ProtectSystem=strict
 ReadOnlyPaths=/root/.ssh /var/lib/vmwatch
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-

@@ -1461,10 +1461,10 @@ session as Telegram jobs, but must not call the Telegram API or expose Amazon
 login actions in the Kindle browser. If the shared server session expires,
 restore it operationally on the uploader instead of redirecting the user.
 
-**Daily Kindle E2E:** The existing `vmwatch-monitor` VM runs
+**Daily Kindle E2E:** The existing `some-service` VM runs
 `yandex/kindle-e2e/kindle-e2e.py` every day at `06:00 Europe/Moscow`. It SSHes
-to the three existing production VMs and runs their checked-in dry-run commands
-in parallel: Manga builds one live chapter artifact, Books performs live
+to the Manga and Books production VMs and runs Digest locally, all in parallel:
+Manga builds one live chapter artifact, Books performs live
 catalog/download/conversion/cover/email assembly, and Digest builds one live
 article digest and performs delivery-size preparation. These commands must
 never call the Kindle uploader, SMTP, or Amazon; only the final delivery
@@ -1476,9 +1476,10 @@ credential for this check. The production commands are `node src/e2e.mjs`,
 Open the VMWatch SQLite database with `mode=ro&immutable=1`: its WAL journal
 otherwise tries to create lock files and fails inside the read-only systemd
 sandbox.
-The VM cannot reach Telegram's DNS-selected address; keep
-`149.154.167.220 api.telegram.org` in `/etc/hosts`. Verify that pinned IPv4
-with TLS before replacing it if Telegram changes the endpoint.
+Print the combined report before sending it. Direct routes from Yandex Cloud to
+Telegram time out, so send the report with `curl` through the existing WARP
+SOCKS proxy at `10.200.0.2:40000` and keep curl's bounded retries. The systemd
+unit must require `warpns-warp-ready.service`.
 
 ## Git Workflow
 

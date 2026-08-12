@@ -9,7 +9,6 @@ import sqlite3
 import subprocess
 import sys
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -109,19 +108,35 @@ def subscribers() -> list[int]:
 def notify(text: str) -> None:
     token = os.environ["TELEGRAM_BOT_TOKEN"]
     for chat_id in subscribers():
-        request = urllib.request.Request(
-            f"https://api.telegram.org/bot{token}/sendMessage",
-            data=urllib.parse.urlencode({"chat_id": chat_id, "text": text}).encode(),
+        environment = os.environ.copy()
+        environment["TELEGRAM_URL"] = f"https://api.telegram.org/bot{token}/sendMessage"
+        completed = subprocess.run(
+            [
+                "/bin/sh",
+                "-c",
+                'exec curl --fail --silent --show-error --max-time 30 --retry 2 '
+                '--retry-all-errors --retry-delay 5 --proxy "$TELEGRAM_PROXY_URL" '
+                '--data-binary @- "$TELEGRAM_URL"',
+            ],
+            input=urllib.parse.urlencode({"chat_id": chat_id, "text": text}),
+            capture_output=True,
+            text=True,
+            timeout=110,
+            check=False,
+            env=environment,
         )
-        with urllib.request.urlopen(request, timeout=30) as response:
-            if json.load(response).get("ok") is not True:
-                raise RuntimeError("Telegram rejected the E2E report")
+        if completed.returncode != 0:
+            raise RuntimeError(completed.stderr.strip() or "Telegram delivery failed")
+        if json.loads(completed.stdout).get("ok") is not True:
+            raise RuntimeError("Telegram rejected the E2E report")
 
 
 def main() -> int:
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(TARGETS)) as executor:
         results = list(executor.map(run_target, TARGETS))
-    notify(format_report(results))
+    report = format_report(results)
+    print(report, flush=True)
+    notify(report)
     return 1 if any(error for _, _, error in results) else 0
 
 

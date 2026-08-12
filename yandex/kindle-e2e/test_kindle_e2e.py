@@ -31,6 +31,22 @@ class KindleE2ETest(unittest.TestCase):
         self.assertEqual(result, {"ok": True})
         self.assertIsNone(error)
 
+    @patch.object(MODULE.subprocess, "run")
+    @patch.object(MODULE, "subscribers", return_value=[1])
+    def test_sends_telegram_report_through_warp(self, _subscribers, run):
+        run.return_value.returncode = 0
+        run.return_value.stdout = '{"ok": true}'
+
+        with patch.dict(
+            MODULE.os.environ,
+            {"TELEGRAM_BOT_TOKEN": "token", "TELEGRAM_PROXY_URL": "socks5h://warp"},
+        ):
+            MODULE.notify("report")
+
+        self.assertIn("--retry 2", run.call_args.args[0][2])
+        self.assertNotIn("token", " ".join(run.call_args.args[0]))
+        self.assertEqual(run.call_args.kwargs["input"], "chat_id=1&text=report")
+
 
 if __name__ == "__main__":
     unittest.main()
