@@ -1623,7 +1623,7 @@
             scrollThreadPage(direction) {
                 const content = document.getElementById('content-area');
                 if (!content || !this.currentThread) return;
-                content.scrollTop += direction * content.clientHeight;
+                content.scrollTop += direction * content.clientHeight * 0.5;
             },
 
             syncCommentNavigationFromScroll() {
