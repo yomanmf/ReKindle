@@ -448,6 +448,14 @@
             display: flex;
         }
 
+        #next-root-comment-btn {
+            display: none;
+        }
+
+        #next-root-comment-btn.visible {
+            display: flex;
+        }
+
         .comment-nav-buttons > * + * {
             margin-top: 10px;
         }
@@ -1548,8 +1556,9 @@
                 this.commentNavIndex = -1;
                 this.commentNavLastScrollTop = content ? content.scrollTop : 0;
                 if (content) content.classList.remove('thread-mode');
-                if (controls) controls.classList.remove('visible');
+                if (controls) controls.classList.add('visible');
                 if (button) {
+                    button.classList.remove('visible');
                     button.disabled = false;
                 }
             },
@@ -1608,13 +1617,15 @@
                 const roots = this.getRootComments();
                 if (!this.currentThread || roots.length === 0) {
                     content.classList.remove('thread-mode');
-                    controls.classList.remove('visible');
+                    controls.classList.add('visible');
+                    button.classList.remove('visible');
                     button.disabled = false;
                     return;
                 }
 
                 content.classList.add('thread-mode');
                 controls.classList.add('visible');
+                button.classList.add('visible');
                 const buttonLabel = window.t ? window.t('reddit.comment.next_top_level', 'Next top-level comment') : 'Next top-level comment';
                 button.setAttribute('aria-label', buttonLabel);
                 button.disabled = this.commentNavIndex >= roots.length - 1;
@@ -1622,7 +1633,7 @@
 
             scrollThreadPage(direction) {
                 const content = document.getElementById('content-area');
-                if (!content || !this.currentThread) return;
+                if (!content) return;
                 content.scrollTop += direction * content.clientHeight * 0.5;
             },
 

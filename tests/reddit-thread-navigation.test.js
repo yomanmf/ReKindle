@@ -33,15 +33,21 @@ test('renders a right-aligned feed scroll-to-top button beside sorting controls'
     assert.match(topButtonStyles[1], /min-height:\s*48px/);
 });
 
-test('stacks half-screen controls above next-comment navigation', function () {
+test('shares half-screen controls between the feed and thread navigation', function () {
     var controlsStyles = redditHtml.match(/\.comment-nav-buttons\s*\{([^}]*)\}/);
     var scrollStart = redditHtml.indexOf('            scrollThreadPage(direction) {');
     var scrollSource = redditHtml.slice(scrollStart, redditHtml.indexOf('            syncCommentNavigationFromScroll()', scrollStart));
+    var resetStart = redditHtml.indexOf('            resetCommentNavigation() {');
+    var resetSource = redditHtml.slice(resetStart, redditHtml.indexOf('            updateThreadNavigation() {', resetStart));
 
     assert.ok(controlsStyles);
     assert.match(controlsStyles[1], /flex-direction:\s*column/);
     assert.match(redditHtml, /id="comment-nav-buttons"[^>]*>[\s\S]*onclick="ui\.scrollThreadPage\(-1\)"[\s\S]*onclick="ui\.scrollThreadPage\(1\)"[\s\S]*id="next-root-comment-btn"/);
     assert.match(scrollSource, /content\.scrollTop \+= direction \* content\.clientHeight \* 0\.5/);
+    assert.doesNotMatch(scrollSource, /currentThread/);
+    assert.match(resetSource, /controls\.classList\.add\('visible'\)/);
+    assert.match(resetSource, /button\.classList\.remove\('visible'\)/);
+    assert.match(redditHtml, /#next-root-comment-btn\.visible\s*\{[^}]*display:\s*flex/);
 });
 
 test('keeps feed order for next-thread navigation', function () {
