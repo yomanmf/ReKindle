@@ -704,6 +704,10 @@ dialog close when their backdrop is tapped. Keep the `event.target === this`
 guard so taps inside the modal do not close it; do not copy this behavior to
 editing or confirmation dialogs that can discard work.
 
+Both pages disable selection on `body`. Keep `user-select: text` and
+`-webkit-user-select: text` scoped to the read-only event details so meeting
+text remains selectable on desktop and mobile browsers.
+
 **Exchange query-range gotcha:** Do not load a year of Exchange events in one
 EWS `CalendarView` request. The dashboard succeeds because it requests a small
 window, while the large calendar request can time out before `GetItem` returns.
