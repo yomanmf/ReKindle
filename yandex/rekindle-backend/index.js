@@ -1442,7 +1442,7 @@ function getBooksKindleStore(database) {
                 limit: function (maximum) {
                     return {
                         get: async function () {
-                            var snapshot = await collection.limitToFirst(maximum).once("value");
+                            var snapshot = await collection.orderByChild("createdAt").limitToLast(maximum).once("value");
                             var docs = [];
                             snapshot.forEach(function (child) {
                                 docs.push({ id: child.key, data: function () { return child.val() || {}; } });

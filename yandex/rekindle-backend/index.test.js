@@ -254,7 +254,8 @@ test("Books to Kindle state uses the realtime database without Firestore", async
             set: async function (value) { write(path, JSON.parse(JSON.stringify(value))); },
             update: async function (value) { write(path, Object.assign({}, values[path] || {}, value)); },
             once: async function () { return snapshot(path, values[path]); },
-            limitToFirst: function () { return this; }
+            orderByChild: function (field) { assert.equal(field, "createdAt"); return this; },
+            limitToLast: function (maximum) { assert.equal(maximum, 100); return this; }
         };
     }
     function snapshot(path, value) {

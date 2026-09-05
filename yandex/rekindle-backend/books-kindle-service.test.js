@@ -26,7 +26,7 @@ function memoryFirestore() {
         collection: function (name) {
             return {
                 doc: function (id) { return reference(name + "/" + id); },
-                limit: function () {
+                limit: function (maximum) {
                     return {
                         get: async function () {
                             var docs = [];
@@ -34,7 +34,7 @@ function memoryFirestore() {
                                 if (path.indexOf(name + "/") !== 0 || path.slice(name.length + 1).indexOf("/") !== -1) return;
                                 docs.push({ id: path.slice(name.length + 1), data: function () { return value; } });
                             });
-                            return { docs: docs };
+                            return { docs: docs.slice(0, maximum) };
                         }
                     };
                 }
@@ -129,4 +129,21 @@ test("Books to Kindle rejects unknown users and invalid worker data", async func
     assert.throws(function () {
         service.testHooks.validateWorkerBook({ id: "42", title: "Book", pageUrl: "file:///tmp/book", epubUrl: "https://example.com/book" });
     });
+});
+
+
+test("Status by ID survives more than 100 jobs and verifies ownership", async function () {
+    var firestore = memoryFirestore();
+    for (var i = 0; i < 101; i++) {
+        await firestore.collection("books_kindle_jobs").doc("job-" + i).set({
+            uid: "owner", state: "ready", query: "Book " + i, createdAt: i
+        });
+    }
+    var options = { action: "status", body: {id:"job-100"}, uid:"owner",
+        firestore:firestore, env:{KINDLE_DIGEST_ALLOWED_UIDS:"owner,other"} };
+    var result = await service.handle(options);
+    assert.equal(result.job.id, "job-100");
+    assert.equal(result.job.state, "ready");
+    await assert.rejects(service.handle(Object.assign({}, options, {uid:"other"})),
+        function (error) { return error.status === 404; });
 });

@@ -135,9 +135,9 @@ async function createDelivery(firestore, uid, body, env, publish) {
 }
 
 async function getStatus(firestore, uid, body) {
+    if (body.id) return { job: publicJob(await ownedJob(firestore, uid, body.id)) };
     var jobs = (await listJobs(firestore)).filter(function (job) { return job.uid === uid; });
-    var id = String(body.id || "");
-    var job = id ? jobs.find(function (candidate) { return candidate.id === id; }) : jobs.sort(newestFirst)[0];
+    var job = jobs.sort(newestFirst)[0];
     return { job: job ? publicJob(job) : null };
 }
 
