@@ -5,6 +5,7 @@
     var currentJob = null;
     var signedIn = false;
     var pollTimer = null;
+    var refreshPending = false;
     var STATUS_ICONS = {
         queued: '<circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path>',
         running: '<path d="M4 5h12v14H4zM7 8h6M7 11h6M18 8l3 4-3 4"></path>',
@@ -185,11 +186,13 @@
     }
 
     async function refreshJob() {
-        if (!signedIn) return;
+        if (!signedIn || refreshPending) return;
+        refreshPending = true;
         try {
             renderJob((await request("status", currentJob ? { id: currentJob.id } : {})).job || null);
             setStatus(translate("bookskindle.updated", "Updated"));
         } catch (error) { showError(error); }
+        finally { refreshPending = false; }
     }
 
     async function cancelJob() {
@@ -216,7 +219,8 @@
 
     function startPolling() {
         if (pollTimer) return;
-        pollTimer = setInterval(function () { if (!document.hidden) refreshJob(); }, 8000);
+        var interval = currentJob && currentJob.action === "search" ? 2000 : 8000;
+        pollTimer = setInterval(function () { if (!document.hidden) refreshJob(); }, interval);
     }
 
     function stopPolling() {

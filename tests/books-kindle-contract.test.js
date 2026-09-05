@@ -29,7 +29,8 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     assert.doesNotMatch(html, /apiKey:\s*"AIza/);
     assert.doesNotMatch(html, /display:\s*flex[^}]*\bgap\s*:/s);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
-    assert.match(client, /setInterval\([^]*8000\)/);
+    assert.match(client, /action === "search" \? 2000 : 8000/);
+    assert.match(client, /!signedIn \|\| refreshPending/);
     assert.match(html, /id="kindle-panel" hidden/);
     assert.ok(html.indexOf('id="kindle-change-panel"') > html.indexOf('id="job-panel"'));
     assert.doesNotMatch(html, /bookskindle\.legal/);
@@ -45,7 +46,7 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     });
     assert.match(client, /setStatusValue\(byId\("job-state"\), job\.state/);
     assert.match(html, /\.status-icon\s*\{/);
-    assert.match(html, /js\/bookskindle\.js\?v=10/);
+    assert.match(html, /js\/bookskindle\.js\?v=11/);
     assert.match(client, /setStatus\(value\).*statusText\(value\)/);
     assert.match(client, /setText\(byId\("job-detail"\), statusText\(detail\)\)/);
     assert.match(client, /job\.state === "running" \|\| job\.state === "ready"/);

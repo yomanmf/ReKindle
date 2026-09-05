@@ -1535,3 +1535,5 @@ After successfully completing any task that changes code:
 5. Do not create a separate branch or Pull Request unless the user explicitly requests one.
 6. Do not push if tests fail, secrets are detected, GitHub authentication is unavailable, or the intended changes cannot be safely separated from unrelated work. Report the blocker instead.
 7. If GitHub rejects a direct push because `main` is protected, create a `codex/<short-task-name>` branch and a Pull Request, then report the restriction.
+
+**Books search polling:** Search jobs poll every 2 seconds; delivery stays at 8 seconds. Keep `refreshPending` guarding status calls so a slow Gateway cannot create overlapping requests. `bookskindle.js?v=11` carries this change.
