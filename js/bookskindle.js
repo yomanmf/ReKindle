@@ -6,6 +6,8 @@
     var signedIn = false;
     var pollTimer = null;
     var refreshPending = false;
+    var searchStartedAt = 0;
+    var searchQuery = "";
     var STATUS_ICONS = {
         queued: '<circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path>',
         running: '<path d="M4 5h12v14H4zM7 8h6M7 11h6M18 8l3 4-3 4"></path>',
@@ -103,6 +105,9 @@
         event.preventDefault();
         var query = byId("query").value.trim();
         if (query.length < 2) return;
+        searchStartedAt = Date.now();
+        searchQuery = query;
+        byId("job-panel").removeAttribute("data-search-duration-ms");
         byId("search-button").disabled = true;
         setStatus(translate("bookskindle.searching", "Searching..."));
         try {
@@ -119,6 +124,11 @@
         if (!job) {
             byId("results-panel").hidden = true;
             return stopPolling();
+        }
+        if (searchStartedAt && job.query === searchQuery &&
+            ["ready", "failed", "canceled"].indexOf(job.state) !== -1) {
+            byId("job-panel").setAttribute("data-search-duration-ms", String(Date.now() - searchStartedAt));
+            searchStartedAt = 0;
         }
         setStatusValue(byId("job-state"), job.state, stateLabel(job.state));
         setText(byId("job-book"), job.selectedBook ? job.selectedBook.title : job.query);
