@@ -1539,3 +1539,5 @@ After successfully completing any task that changes code:
 **Books search polling:** Search jobs poll every 2 seconds; delivery stays at 8 seconds. Keep `refreshPending` guarding status calls so a slow Gateway cannot create overlapping requests. `bookskindle.js?v=11` carries this change.
 
 Books E2E latency is recorded by the page on `#job-panel[data-search-duration-ms]`, from submitting a valid query to rendering its terminal state. Read this DOM value instead of timing spaced browser observations. Reset it on a new search; keep the first terminal measurement stable. The value is local to the page, not sent as telemetry.
+
+Books search has its own 60/hour user bucket; delivery retains 20/hour. HTTP 429 must be displayed as a request limit, and errors must replace the searching status.

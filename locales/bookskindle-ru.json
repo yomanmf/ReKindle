@@ -20,7 +20,7 @@
   "bookskindle.book": "Книга",
   "bookskindle.refresh": "Обновить",
   "bookskindle.loading": "Загрузка книг для Kindle...",
-  "bookskindle.error_title": "Ошибка отправки книг на Kindle",
+  "bookskindle.error_title": "Ошибка сервиса книг",
   "bookskindle.ok": "ОК",
   "bookskindle.error_connection": "Не удалось подключиться к сервису отправки книг на Kindle.",
   "bookskindle.ready": "Готово",
@@ -52,5 +52,6 @@
   "bookskindle.phase_converting": "Преобразование книги",
   "bookskindle.phase_cover": "Подготовка обложки",
   "bookskindle.phase_sending": "Отправка на Kindle",
-  "bookskindle.job_failed": "Не удалось обработать книгу."
+  "bookskindle.job_failed": "Не удалось обработать книгу.",
+  "bookskindle.error_limit": "Достигнут лимит запросов. Повторите позже."
 }

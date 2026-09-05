@@ -29,8 +29,12 @@
     function terminal(job) { return job && ["ready", "sent", "failed", "canceled"].indexOf(job.state) !== -1; }
 
     function setStatus(value) { setText(byId("status-bar"), statusText(value)); }
-    function showError() {
-        setText(byId("error-message"), translate("bookskindle.error_connection", "Could not reach Books to Kindle."));
+    function showError(error) {
+        var message = error && error.status === 429
+            ? translate("bookskindle.error_limit", "Too many requests. Please try again later.")
+            : translate("bookskindle.error_connection", "Could not reach Books to Kindle.");
+        setText(byId("error-message"), message);
+        setStatus(message);
         byId("error-modal").style.display = "flex";
     }
     function closeError() { byId("error-modal").style.display = "none"; }

@@ -46,7 +46,7 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     });
     assert.match(client, /setStatusValue\(byId\("job-state"\), job\.state/);
     assert.match(html, /\.status-icon\s*\{/);
-    assert.match(html, /js\/bookskindle\.js\?v=12/);
+    assert.match(html, /js\/bookskindle\.js\?v=13/);
     assert.match(client, /setStatus\(value\).*statusText\(value\)/);
     assert.match(client, /setText\(byId\("job-detail"\), statusText\(detail\)\)/);
     assert.match(client, /job\.state === "running" \|\| job\.state === "ready"/);
@@ -108,4 +108,23 @@ test("Books search records the first terminal render duration", function () {
     assert.equal(attributes["data-search-duration-ms"], "1345");
     render({ query: "Инферно", state: "ready" });
     assert.equal(attributes["data-search-duration-ms"], "1345");
+});
+
+test("Books limits distinguish searches from deliveries and show rate errors", async function () {
+    var source = read("yandex/rekindle-backend/index.js");
+    var block = source.slice(source.indexOf('    if (action === "search") {', source.indexOf('async function handleBooksKindleRequest')), source.indexOf('    return booksKindleService.handle', source.indexOf('async function handleBooksKindleRequest')));
+    var calls = [];
+    var limit = Function('action', 'user', 'enforceUserWindowRateLimit', 'return (async function(){' + block + '})();');
+    for (var action of ['search', 'create', 'status']) await limit(action, {uid:'test'}, async function () { calls.push(Array.from(arguments)); });
+    assert.deepEqual(calls, [['test','books_kindle_search',60,3600000],['test','books_kindle_create',20,3600000],['test','books_kindle_control',120,60000]]);
+    var client = read('js/bookskindle.js');
+    var fn = client.slice(client.indexOf('    function showError('), client.indexOf('    function closeError('));
+    var elements = {'error-message':{}, 'error-modal':{style:{}}};
+    var status;
+    var show = Function('byId','translate','setText','setStatus', fn + '; return showError;')(id=>elements[id],(key,fallback)=>key,(el,value)=>el.text=value,value=>status=value);
+    show({status:429});
+    assert.equal(elements['error-message'].text,'bookskindle.error_limit');
+    assert.equal(status,'bookskindle.error_limit');
+    show(new Error('network'));
+    assert.equal(status,'bookskindle.error_connection');
 });

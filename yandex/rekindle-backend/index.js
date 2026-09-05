@@ -1020,7 +1020,9 @@ async function handleBooksKindleRequest(event, path) {
         "kindle-forget": true
     };
     if (!allowedActions[action]) throw httpError(404, "books-kindle-action", "Books to Kindle action was not found.");
-    if (action === "search" || action === "create") {
+    if (action === "search") {
+        await enforceUserWindowRateLimit(user.uid, "books_kindle_search", 60, 60 * 60 * 1000);
+    } else if (action === "create") {
         await enforceUserWindowRateLimit(user.uid, "books_kindle_create", 20, 60 * 60 * 1000);
     } else {
         await enforceUserWindowRateLimit(user.uid, "books_kindle_control", 120, 60 * 1000);

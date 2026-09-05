@@ -20,7 +20,7 @@
   "bookskindle.book": "Book",
   "bookskindle.refresh": "Refresh",
   "bookskindle.loading": "Loading Books to Kindle...",
-  "bookskindle.error_title": "Books to Kindle error",
+  "bookskindle.error_title": "Books service error",
   "bookskindle.ok": "OK",
   "bookskindle.error_connection": "Could not reach Books to Kindle.",
   "bookskindle.ready": "Ready",
@@ -52,5 +52,6 @@
   "bookskindle.phase_converting": "Converting the book",
   "bookskindle.phase_cover": "Preparing the cover",
   "bookskindle.phase_sending": "Sending to Kindle",
-  "bookskindle.job_failed": "The book could not be processed."
+  "bookskindle.job_failed": "The book could not be processed.",
+  "bookskindle.error_limit": "Too many requests. Please try again later."
 }
