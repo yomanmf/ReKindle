@@ -46,7 +46,7 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     });
     assert.match(client, /setStatusValue\(byId\("job-state"\), job\.state/);
     assert.match(html, /\.status-icon\s*\{/);
-    assert.match(html, /js\/bookskindle\.js\?v=13/);
+    assert.match(html, /js\/bookskindle\.js\?v=14/);
     assert.match(client, /setStatus\(value\).*statusText\(value\)/);
     assert.match(client, /setText\(byId\("job-detail"\), statusText\(detail\)\)/);
     assert.match(client, /job\.state === "running" \|\| job\.state === "ready"/);
@@ -97,16 +97,18 @@ test("Books search records the first terminal render duration", function () {
     var timing = client.slice(client.indexOf("        if (searchStartedAt &&"), client.indexOf('        setStatusValue(byId("job-state")'));
     var attributes = {};
     var node = { setAttribute: function (key, value) { attributes[key] = value; } };
-    var render = Function("byId", "Date", 'var searchStartedAt = 1000, searchQuery = "Инферно"; return function(job) {\n' + timing + '\n};')(
+    var render = Function("byId", "Date", 'var searchStartedAt = 1000, searchQuery = "Инферно", searchJobId = "new"; return function(job) {\n' + timing + '\n};')(
         function () { return node; }, { now: function () { return 2345; } }
     );
-    render({ query: "old query", state: "ready" });
+    render({ id: "new", query: "old query", state: "ready" });
     assert.equal(attributes["data-search-duration-ms"], undefined);
-    render({ query: "Инферно", state: "running" });
+    render({ id: "new", query: "Инферно", state: "running" });
     assert.equal(attributes["data-search-duration-ms"], undefined);
-    render({ query: "Инферно", state: "ready" });
+    render({ id: "old", query: "Инферно", state: "ready" });
+    assert.equal(attributes["data-search-duration-ms"], undefined);
+    render({ id: "new", query: "Инферно", state: "ready" });
     assert.equal(attributes["data-search-duration-ms"], "1345");
-    render({ query: "Инферно", state: "ready" });
+    render({ id: "new", query: "Инферно", state: "ready" });
     assert.equal(attributes["data-search-duration-ms"], "1345");
 });
 

@@ -8,6 +8,7 @@
     var refreshPending = false;
     var searchStartedAt = 0;
     var searchQuery = "";
+    var searchJobId = "";
     var STATUS_ICONS = {
         queued: '<circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path>',
         running: '<path d="M4 5h12v14H4zM7 8h6M7 11h6M18 8l3 4-3 4"></path>',
@@ -111,11 +112,13 @@
         if (query.length < 2) return;
         searchStartedAt = Date.now();
         searchQuery = query;
+        searchJobId = "";
         byId("job-panel").removeAttribute("data-search-duration-ms");
         byId("search-button").disabled = true;
         setStatus(translate("bookskindle.searching", "Searching..."));
         try {
             var result = await request("search", { query: query });
+            searchJobId = result.job.id;
             renderJob(result.job);
             setStatus(result.existing ? translate("bookskindle.existing", "An unfinished job is already active.") : translate("bookskindle.queued", "Search queued."));
         } catch (error) { showError(error); }
@@ -129,7 +132,7 @@
             byId("results-panel").hidden = true;
             return stopPolling();
         }
-        if (searchStartedAt && job.query === searchQuery &&
+        if (searchStartedAt && searchJobId && job.id === searchJobId && job.query === searchQuery &&
             ["ready", "failed", "canceled"].indexOf(job.state) !== -1) {
             byId("job-panel").setAttribute("data-search-duration-ms", String(Date.now() - searchStartedAt));
             searchStartedAt = 0;
