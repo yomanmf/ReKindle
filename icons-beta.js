@@ -20,7 +20,6 @@ const APPS_BETA = [
         id: 'torrents',
         name: 'Torrents',
         cat: 'lifestyle',
-        beta: true,
         desc: 'View and remove torrent tasks and files.',
         icon: '<path d="M5 22v6h22v-6M16 3v17M9 13l7 7 7-7" fill="none" stroke="black" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/>'
     },

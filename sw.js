@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v60'; // Put torrent controls on the dashboard root
+const CACHE_NAME = 'rekindle-cache-v61'; // Remove the torrent beta badge
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=13',
-    './icons-beta.js?v=11',
+    './icons-beta.js?v=12',
     './theme.js?v=26',
     './logo.svg',
     './manifest.json',

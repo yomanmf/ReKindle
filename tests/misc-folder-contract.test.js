@@ -49,7 +49,7 @@ test("both dashboards nest Games inside Misc and two-player games inside Games",
         assert.ok(source.indexOf("id: 'folder_two_player'") < source.indexOf("id: 'folder_games'"));
         assert.ok(source.indexOf("id: 'folder_games'") < source.indexOf("groupedApps: miscApps"));
         assert.match(source, /icons\.js\?v=13/);
-        assert.match(source, /icons-beta\.js\?v=11/);
+        assert.match(source, /icons-beta\.js\?v=12/);
     });
 });
 
@@ -61,8 +61,8 @@ test("Misc is localized and the updated catalog bypasses old service-worker cach
     Object.keys(expected).forEach(function (language) {
         assert.equal(JSON.parse(read("locales/" + language + ".json"))["home.nav.misc"], expected[language]);
     });
-    assert.match(read("sw.js"), /rekindle-cache-v60/);
+    assert.match(read("sw.js"), /rekindle-cache-v61/);
     assert.match(read("sw.js"), /icons\.js\?v=13/);
-    assert.match(read("sw.js"), /icons-beta\.js\?v=11/);
+    assert.match(read("sw.js"), /icons-beta\.js\?v=12/);
     assert.match(read("yandex/FRONTEND-RELEASE-MANIFEST.txt"), /^icons-beta\.js$/m);
 });

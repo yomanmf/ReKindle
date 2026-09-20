@@ -33,11 +33,12 @@ test("torrent controls are routed, catalogued, cache-busted, and released", func
     assert.match(service, /"torrent-delete":\s*true/);
     assert.match(catalog, /id:\s*['"]torrents['"]/);
     assert.match(catalog, /id:\s*['"]torrents['"][\s\S]*?name:\s*['"]Torrents['"][\s\S]*?cat:\s*['"]lifestyle['"]/);
+    assert.doesNotMatch(catalog.match(/id:\s*['"]torrents['"][\s\S]*?\n\s*\}/)[0], /beta:\s*true/);
     ["torrents.html", "js/torrents.js", "locales/torrents-en.json", "locales/torrents-ru.json"].forEach(function (file) {
         assert.ok(manifest.includes(file), file);
     });
-    assert.match(read("index.html"), /icons-beta\.js\?v=11/);
-    assert.match(read("index_old.html"), /icons-beta\.js\?v=11/);
-    assert.match(read("sw.js"), /rekindle-cache-v60/);
-    assert.match(read("sw.js"), /icons-beta\.js\?v=11/);
+    assert.match(read("index.html"), /icons-beta\.js\?v=12/);
+    assert.match(read("index_old.html"), /icons-beta\.js\?v=12/);
+    assert.match(read("sw.js"), /rekindle-cache-v61/);
+    assert.match(read("sw.js"), /icons-beta\.js\?v=12/);
 });
