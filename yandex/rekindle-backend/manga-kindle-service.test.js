@@ -39,3 +39,28 @@ test("rejects users outside the allowlist before contacting the worker", async f
         return error.status === 403 && error.code === "manga-kindle-forbidden";
     });
 });
+
+test("forwards destructive torrent deletion only for an allowlisted user", async function () {
+    var originalFetch = global.fetch;
+    var request;
+    global.fetch = async function (url, options) {
+        request = { url: url, options: options };
+        return { ok: true, status: 200, json: async function () { return { ok: true }; } };
+    };
+    try {
+        await service.handle({
+            action: "torrent-delete",
+            body: { hash: "a".repeat(40) },
+            uid: "owner",
+            env: {
+                MANGA_KINDLE_ALLOWED_UIDS: "owner",
+                MANGA_ORCHESTRATOR_URL: "https://manga.example",
+                MANGA_CONTROL_TOKEN: "secret"
+            }
+        });
+        assert.equal(request.url, "https://manga.example/control/torrent-delete");
+        assert.equal(request.options.body, JSON.stringify({ hash: "a".repeat(40) }));
+    } finally {
+        global.fetch = originalFetch;
+    }
+});

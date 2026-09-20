@@ -6,7 +6,9 @@ var ACTIONS = {
     create: true,
     status: true,
     cancel: true,
-    retry: true
+    retry: true,
+    torrents: true,
+    "torrent-delete": true
 };
 
 async function handle(options) {
