@@ -368,6 +368,10 @@ use that fallback before Russian translations load.
 across both registries: duplicating an ID can render one copy inside Misc and a
 second copy at the dashboard root. Move a beta app by changing its existing
 `icons-beta.js` category, and publish/cache-bust that file with the dashboards.
+Root dashboard apps are sorted by the registry's English `name`, not by their
+translated label. Choose that stable name deliberately when a tile must occupy
+a specific position; for example, `Torrents` sorts immediately after `Reddit`
+while the Russian locale still renders `Загрузки`.
 
 ### 10. Dashboard customization is retired
 

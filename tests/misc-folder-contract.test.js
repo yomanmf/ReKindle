@@ -19,7 +19,7 @@ test("screenshot apps live in Misc while requested exceptions stay outside", fun
         "airtype", "breathing", "browser", "calculator", "calendar", "chat", "countdown",
         "dictionary", "docs", "files", "flashcards", "flipbook", "interactive",
         "maps", "microsofttodo", "notes", "photoframe", "quicktodo", "readlater",
-        "reader", "readwise", "tasks", "timer", "torrents", "translate", "weather",
+        "reader", "readwise", "tasks", "timer", "translate", "weather",
         "wikipedia"
     ];
     var actual = apps.filter(function (app) { return app.cat === "misc"; })
@@ -27,9 +27,13 @@ test("screenshot apps live in Misc while requested exceptions stay outside", fun
 
     assert.equal(actual.join(","), expected.sort().join(","));
     assert.equal(apps.filter(function (app) { return app.id === "readwise"; }).length, 1);
-    ["kindledigest", "reddit"].forEach(function (id) {
+    ["kindledigest", "reddit", "torrents"].forEach(function (id) {
         assert.notEqual(apps.find(function (app) { return app.id === id; }).cat, "misc");
     });
+    var rootApps = apps.filter(function (app) {
+        return app.cat !== "misc" && app.cat !== "games" && app.cat !== "two_player" && app.cat !== "live_game";
+    }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+    assert.equal(rootApps[rootApps.findIndex(function (app) { return app.id === "reddit"; }) + 1].id, "torrents");
 });
 
 test("both dashboards nest Games inside Misc and two-player games inside Games", function () {
@@ -45,7 +49,7 @@ test("both dashboards nest Games inside Misc and two-player games inside Games",
         assert.ok(source.indexOf("id: 'folder_two_player'") < source.indexOf("id: 'folder_games'"));
         assert.ok(source.indexOf("id: 'folder_games'") < source.indexOf("groupedApps: miscApps"));
         assert.match(source, /icons\.js\?v=13/);
-        assert.match(source, /icons-beta\.js\?v=10/);
+        assert.match(source, /icons-beta\.js\?v=11/);
     });
 });
 
@@ -57,8 +61,8 @@ test("Misc is localized and the updated catalog bypasses old service-worker cach
     Object.keys(expected).forEach(function (language) {
         assert.equal(JSON.parse(read("locales/" + language + ".json"))["home.nav.misc"], expected[language]);
     });
-    assert.match(read("sw.js"), /rekindle-cache-v59/);
+    assert.match(read("sw.js"), /rekindle-cache-v60/);
     assert.match(read("sw.js"), /icons\.js\?v=13/);
-    assert.match(read("sw.js"), /icons-beta\.js\?v=10/);
+    assert.match(read("sw.js"), /icons-beta\.js\?v=11/);
     assert.match(read("yandex/FRONTEND-RELEASE-MANIFEST.txt"), /^icons-beta\.js$/m);
 });
