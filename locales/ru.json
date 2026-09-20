@@ -179,6 +179,8 @@
   "app.manga.name": "Manga",
   "app.mangakindle.name": "Манга",
   "app.mangakindle.desc": "Собирайте мангу в EPUB и отправляйте на Kindle.",
+  "app.torrents.name": "Загрузки",
+  "app.torrents.desc": "Просматривайте и удаляйте торрент-задачи вместе с файлами.",
   "app.kindledigest.name": "Дайджест",
   "app.kindledigest.desc": "Собирайте статьи и отправляйте их на Kindle.",
   "app.maps.name": "Карты",

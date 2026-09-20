@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rekindle-cache-v58'; // Move the theme gesture above Reddit's Top button
+const CACHE_NAME = 'rekindle-cache-v59'; // Add authenticated torrent controls
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './icons.js?v=13',
-    './icons-beta.js?v=9',
+    './icons-beta.js?v=10',
     './theme.js?v=26',
     './logo.svg',
     './manifest.json',

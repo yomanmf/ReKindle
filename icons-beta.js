@@ -17,6 +17,14 @@ const APPS_BETA = [
         icon: '<path d="M5 4h22v24H5z" fill="white" stroke="black" stroke-width="2"/><path d="M8 13l2-6 3 3 3-5 3 5 4-3 1 7" fill="none" stroke="black" stroke-width="2" stroke-linejoin="round"/><path d="M8 16q3-3 6 0-3 4-6 0M18 16q3-3 6 0-3 4-6 0" fill="none" stroke="black" stroke-width="2"/><path d="M11 16h1M21 16h1M13 23q3 2 6 0" stroke="black" stroke-width="2" stroke-linecap="round"/>'
     },
     {
+        id: 'torrents',
+        name: 'Downloads',
+        cat: 'misc',
+        beta: true,
+        desc: 'View and remove torrent tasks and files.',
+        icon: '<path d="M5 22v6h22v-6M16 3v17M9 13l7 7 7-7" fill="none" stroke="black" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"/>'
+    },
+    {
         id: 'readwise',
         name: 'Readwise',
         cat: 'misc',

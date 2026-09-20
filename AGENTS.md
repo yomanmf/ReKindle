@@ -1455,6 +1455,17 @@ route with a server-held token. The orchestrator stores these as
 bot updates or call a messaging API from this page. Search results are selected
 before job creation so the worker never needs an interactive chat callback.
 
+**Torrent control path:** `torrents.html` reuses the authenticated
+`/api/rekindle/manga-kindle/{action}` service path with `torrents` and
+`torrent-delete`. The Yandex backend keeps the same Firebase UID allowlist and
+server-held control token. The orchestrator reaches qBittorrent only at its
+private Docker hostname, returns no filesystem paths, validates a 40- or
+64-character hexadecimal info hash, and always uses `deleteFiles=true` so the
+task and payload are removed together. Keep the qBittorrent Web UI bound to
+localhost; never expose its port or credentials to the browser. The UI must use
+its custom destructive confirmation modal because Kindle does not support
+`confirm()`.
+
 **Manga to Kindle layout:** Match Books to Kindle with `data-no-scale`, a
 `720px` maximum window width, and panels in normal document flow in every
 orientation. Do not add a landscape grid: fitting three columns into the shared

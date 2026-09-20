@@ -88,6 +88,7 @@ tetris.html
 texasholdem.html
 tictactoe.html
 timer.html
+torrents.html
 translate.html
 trivia.html
 uno.html
@@ -109,10 +110,13 @@ js/reddit-feed-settings.js
 js/microsoft-todo.js
 js/kindledigest.js
 js/mangakindle.js
+js/torrents.js
 locales/kindledigest-en.json
 locales/kindledigest-ru.json
 locales/mangakindle-en.json
 locales/mangakindle-ru.json
+locales/torrents-en.json
+locales/torrents-ru.json
 locales/bookskindle-en.json
 locales/bookskindle-ru.json
 locales/privacy-de.json

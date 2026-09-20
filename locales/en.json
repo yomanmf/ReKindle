@@ -179,6 +179,8 @@
   "app.manga.name": "Manga",
   "app.mangakindle.name": "Manga to Kindle",
   "app.mangakindle.desc": "Build manga EPUBs and send them to Kindle.",
+  "app.torrents.name": "Downloads",
+  "app.torrents.desc": "View and remove torrent tasks and files.",
   "app.kindledigest.name": "Kindle Digest",
   "app.kindledigest.desc": "Collect articles and send them to Kindle.",
   "app.maps.name": "Maps",
