@@ -64,3 +64,28 @@ test("forwards destructive torrent deletion only for an allowlisted user", async
         global.fetch = originalFetch;
     }
 });
+
+test("forwards completed media deletion only for an allowlisted user", async function () {
+    var originalFetch = global.fetch;
+    var request;
+    global.fetch = async function (url, options) {
+        request = { url: url, options: options };
+        return { ok: true, status: 200, json: async function () { return { ok: true }; } };
+    };
+    try {
+        await service.handle({
+            action: "media-delete",
+            body: { requestId: 7, mediaId: 8 },
+            uid: "owner",
+            env: {
+                MANGA_KINDLE_ALLOWED_UIDS: "owner",
+                MANGA_ORCHESTRATOR_URL: "https://manga.example",
+                MANGA_CONTROL_TOKEN: "secret"
+            }
+        });
+        assert.equal(request.url, "https://manga.example/control/media-delete");
+        assert.equal(request.options.body, JSON.stringify({ requestId: 7, mediaId: 8 }));
+    } finally {
+        global.fetch = originalFetch;
+    }
+});

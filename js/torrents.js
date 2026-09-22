@@ -95,28 +95,35 @@
         header.appendChild(state);
         card.appendChild(header);
 
-        var percent = Math.round(Math.max(0, Math.min(1, Number(torrent.progress) || 0)) * 100);
-        var track = document.createElement("div");
-        track.className = "progress-track";
-        track.setAttribute("role", "progressbar");
-        track.setAttribute("aria-valuemin", "0");
-        track.setAttribute("aria-valuemax", "100");
-        track.setAttribute("aria-valuenow", String(percent));
-        var fill = document.createElement("span");
-        fill.className = "progress-fill";
-        fill.style.width = percent + "%";
-        track.appendChild(fill);
-        card.appendChild(track);
-        var progressText = document.createElement("span");
-        progressText.className = "progress-text";
-        setText(progressText, percent + "% - " + formatBytes(torrent.completed) + " / " + formatBytes(torrent.size));
-        card.appendChild(progressText);
-
         var details = document.createElement("div");
         details.className = "torrent-details";
-        details.appendChild(metric("torrents.download_speed", "Download", formatSpeed(torrent.downloadSpeed)));
-        details.appendChild(metric("torrents.upload_speed", "Upload", formatSpeed(torrent.uploadSpeed)));
-        details.appendChild(metric("torrents.eta", "ETA", formatEta(torrent.eta)));
+        if (torrent.source === "seerr") {
+            details.appendChild(metric("torrents.source", "Source", "Seerr"));
+            details.appendChild(metric("torrents.media_type", "Media type", translate(
+                torrent.mediaType === "tv" ? "torrents.media_series" : "torrents.media_movie",
+                torrent.mediaType === "tv" ? "Series" : "Movie"
+            )));
+        } else {
+            var percent = Math.round(Math.max(0, Math.min(1, Number(torrent.progress) || 0)) * 100);
+            var track = document.createElement("div");
+            track.className = "progress-track";
+            track.setAttribute("role", "progressbar");
+            track.setAttribute("aria-valuemin", "0");
+            track.setAttribute("aria-valuemax", "100");
+            track.setAttribute("aria-valuenow", String(percent));
+            var fill = document.createElement("span");
+            fill.className = "progress-fill";
+            fill.style.width = percent + "%";
+            track.appendChild(fill);
+            card.appendChild(track);
+            var progressText = document.createElement("span");
+            progressText.className = "progress-text";
+            setText(progressText, percent + "% - " + formatBytes(torrent.completed) + " / " + formatBytes(torrent.size));
+            card.appendChild(progressText);
+            details.appendChild(metric("torrents.download_speed", "Download", formatSpeed(torrent.downloadSpeed)));
+            details.appendChild(metric("torrents.upload_speed", "Upload", formatSpeed(torrent.uploadSpeed)));
+            details.appendChild(metric("torrents.eta", "ETA", formatEta(torrent.eta)));
+        }
         card.appendChild(details);
 
         var deleteButton = document.createElement("button");
@@ -180,7 +187,9 @@
 
     function openDelete(torrent) {
         pendingTorrent = torrent;
-        var template = translate("torrents.delete_message", "Delete ${name} and all downloaded files? This cannot be undone.");
+        var template = torrent.source === "seerr"
+            ? translate("torrents.delete_media_message", "Delete ${name} from the media library with all files? A series is deleted in full. This cannot be undone.")
+            : translate("torrents.delete_message", "Delete ${name} and all downloaded files? This cannot be undone.");
         setText(byId("delete-message"), template.replace("${name}", torrent.name));
         byId("delete-modal").style.display = "flex";
         byId("delete-cancel").focus();
@@ -198,7 +207,11 @@
         button.disabled = true;
         setStatus(translate("torrents.deleting", "Deleting task and files..."));
         try {
-            await request("torrent-delete", { hash: torrent.hash });
+            if (torrent.source === "seerr") {
+                await request("media-delete", { requestId: torrent.requestId, mediaId: torrent.mediaId });
+            } else {
+                await request("torrent-delete", { hash: torrent.hash });
+            }
             closeDelete();
             await loadTorrents();
             setStatus(translate("torrents.deleted", "Task and downloaded files deleted."));

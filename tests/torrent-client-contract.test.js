@@ -16,6 +16,7 @@ test("torrent controls are authenticated, destructive, and Kindle-safe", functio
     assert.match(html, /min-height:\s*48px/);
     assert.match(html, /id="delete-modal"/);
     assert.match(client, /request\("torrent-delete",\s*\{ hash: torrent\.hash \}\)/);
+    assert.match(client, /request\("media-delete",\s*\{ requestId: torrent\.requestId, mediaId: torrent\.mediaId \}\)/);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
     assert.match(html, /id="filter-completed"/);
     assert.match(client, /currentFilter === "completed" \? items\.filter\(isCompleted\) : items/);
@@ -32,9 +33,10 @@ test("torrent controls are routed, catalogued, cache-busted, and released", func
     var service = read("yandex/rekindle-backend/manga-kindle-service.js");
     var catalog = read("icons-beta.js");
     var manifest = read("yandex/FRONTEND-RELEASE-MANIFEST.txt").split(/\r?\n/);
-    assert.match(gateway, /enum:\s*\[[^\]]*torrents[^\]]*torrent-delete/);
+    assert.match(gateway, /enum:\s*\[[^\]]*torrents[^\]]*torrent-delete[^\]]*media-delete/);
     assert.match(service, /torrents:\s*true/);
     assert.match(service, /"torrent-delete":\s*true/);
+    assert.match(service, /"media-delete":\s*true/);
     assert.match(catalog, /id:\s*['"]torrents['"]/);
     assert.match(catalog, /id:\s*['"]torrents['"][\s\S]*?name:\s*['"]Torrents['"][\s\S]*?cat:\s*['"]lifestyle['"]/);
     assert.doesNotMatch(catalog.match(/id:\s*['"]torrents['"][\s\S]*?\n\s*\}/)[0], /beta:\s*true/);
@@ -45,5 +47,5 @@ test("torrent controls are routed, catalogued, cache-busted, and released", func
     assert.match(read("index_old.html"), /icons-beta\.js\?v=12/);
     assert.match(read("sw.js"), /rekindle-cache-v61/);
     assert.match(read("sw.js"), /icons-beta\.js\?v=12/);
-    assert.match(read("torrents.html"), /js\/torrents\.js\?v=2/);
+    assert.match(read("torrents.html"), /js\/torrents\.js\?v=3/);
 });

@@ -8,7 +8,8 @@ var ACTIONS = {
     cancel: true,
     retry: true,
     torrents: true,
-    "torrent-delete": true
+    "torrent-delete": true,
+    "media-delete": true
 };
 
 async function handle(options) {

@@ -995,7 +995,7 @@ async function handleMangaKindleRequest(event, path) {
     var action = path.split("/").pop();
     if (action === "create") {
         await enforceUserWindowRateLimit(user.uid, "manga_kindle_create", 5, 60 * 60 * 1000);
-    } else if (action === "torrent-delete") {
+    } else if (action === "torrent-delete" || action === "media-delete") {
         await enforceUserWindowRateLimit(user.uid, "torrent_delete", 30, 60 * 60 * 1000);
     } else {
         await enforceUserWindowRateLimit(user.uid, "manga_kindle_control", 120, 60 * 1000);

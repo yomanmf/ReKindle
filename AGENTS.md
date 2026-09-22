@@ -1470,9 +1470,14 @@ localhost; never expose its port or credentials to the browser. The UI must use
 its custom destructive confirmation modal because Kindle does not support
 `confirm()`.
 
-The orchestrator's torrent list already requests qBittorrent with `filter=all`.
-Keep the dashboard's completed view as a client-side filter on `progress >= 1`
-so paused and seeding uploads remain visible and are labelled as completed.
+The orchestrator's torrent list requests qBittorrent with `filter=all` and also
+adds available completed requests from Seerr. Keep the dashboard's completed
+view as a client-side filter on `progress >= 1` so paused and seeding uploads
+remain visible and are labelled as completed. Seerr entries use `media-delete`:
+the orchestrator verifies the request/media ID pair, asks Seerr to delete the
+movie or complete series with its files through Radarr/Sonarr, then removes the
+request record. Never expose the Seerr API key or internal service IDs beyond
+the authenticated allowlisted control path.
 
 **Manga to Kindle layout:** Match Books to Kindle with `data-no-scale`, a
 `720px` maximum window width, and panels in normal document flow in every
