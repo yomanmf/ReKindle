@@ -8,7 +8,7 @@ var vm = require('node:vm');
 
 var redditHtml = fs.readFileSync(path.join(__dirname, '..', 'reddit.html'), 'utf8');
 
-function createApi(fetchImpl) {
+function createApi(fetchImpl, ui) {
     var start = redditHtml.indexOf('const REDDIT_PROXY_ENDPOINT');
     var end = redditHtml.indexOf('function extractPermalinkFromUrl', start);
     var source = redditHtml.slice(start, end).replace('const api =', 'globalThis.api =');
@@ -17,6 +17,7 @@ function createApi(fetchImpl) {
         RekindleCloud: { gatewayBase: 'https://gateway.example' },
         document: { getElementById: function () { return indicator; } },
         window: {},
+        ui: ui,
         fetch: fetchImpl,
         console: { log: function () {}, warn: function () {} },
         setTimeout: setTimeout,
@@ -155,6 +156,44 @@ test('does not repeat proxy failures already retried by the backend', async func
 
     await assert.rejects(api.getThread('/r/test/comments/abc/example/'), /Status 503/);
     assert.equal(fetches, 1);
+});
+
+test('handles a foreground 429 end to end with a 5-second countdown and reload', async function () {
+    var start = redditHtml.indexOf('            showRateLimitMessage() {');
+    var end = redditHtml.indexOf('            hideRateLimitMessage() {', start);
+    var source = redditHtml.slice(start, end).trim().replace(/,$/, '');
+    var now = 1000;
+    var tick;
+    var reloads = 0;
+    var message = { innerText: '', style: {} };
+    var ui = {
+        rateLimitTimer: null,
+        rateLimitUntil: 0,
+        rateLimitRetrySeconds: 5,
+        hideRateLimitMessage: function () {}
+    };
+    var show = Function('document', 'window', 'Date', 'setInterval', 'clearInterval', 'ui',
+        'return function ' + source)(
+        { getElementById: function () { return message; } },
+        { t: function (key, fallback) { return fallback; }, location: { reload: function () { reloads++; } } },
+        { now: function () { return now; } },
+        function (callback) { tick = callback; return 1; },
+        function () {},
+        ui
+    );
+
+    ui.showRateLimitMessage = show;
+    var api = createApi(async function () { return { ok: false, status: 429 }; }, ui);
+    await assert.rejects(api.request('/r/test.rss'), /Status 429/);
+    assert.equal(message.innerText, 'Reddit is rate limiting access. Reloading in 5s.');
+    assert.equal(message.style.display, 'block');
+    now += 4000;
+    tick();
+    assert.match(message.innerText, /1s\.$/);
+    now += 1000;
+    tick();
+    assert.equal(reloads, 1);
+    assert.equal(ui.rateLimitTimer, null);
 });
 
 test('does not render a feed response superseded while its body is loading', async function () {

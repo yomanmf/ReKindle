@@ -437,6 +437,12 @@ feed requests, but thread requests already render their own loading state in
 `#content-area`. Pass `showLoading: false` for thread RSS/JSON requests; do not
 use `silent`, because it also suppresses rate-limit handling.
 
+**Reddit rate-limit countdown gotcha:** Foreground HTTP 429 responses start the
+inline `#rate-limit-message` countdown and reload the page after 5 seconds.
+Keep the timer based on an absolute deadline, cancel it after a successful or
+manually retried foreground request, and never start it for background score
+enrichment; an optional score failure must not reload otherwise usable content.
+
 **Reddit publication-time gotcha:** Feed and thread timestamps use different
 source fields: RSS uses `pubDate` or namespaced `date`, Atom uses `published` or
 `updated`, and JSON uses `created_utc` in seconds. Normalize all of them to

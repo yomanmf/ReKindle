@@ -805,7 +805,7 @@
 
                 <div id="rate-limit-message"
                     style="display:none; padding:8px 10px; background:#fff3cd; border-bottom:2px solid black; font-size:0.85rem; text-align:center;">
-                    Reddit is rate limiting access. Try again shortly.
+                    Reddit is rate limiting access. Reloading shortly.
                 </div>
 
                 <div id="content-area"></div>
@@ -916,6 +916,7 @@
                 options = options || {};
                 const silent = options.silent === true;
                 const showLoading = !silent && options.showLoading !== false;
+                const showRateLimit = !silent && options.background !== true;
                 const skipThrottle = options.skipThrottle === true;
                 const requestId = options.background === true ? this.currentRequestId : ++this.currentRequestId;
                 var now = Date.now();
@@ -925,7 +926,7 @@
                 }
                 this.lastRequestTime = Date.now();
 
-                if (!silent && typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
+                if (showRateLimit && typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
                     ui.hideRateLimitMessage();
                 }
 
@@ -965,7 +966,7 @@
                         }
 
                         if (res.ok) {
-                            if (!silent && typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
+                            if (showRateLimit && typeof ui !== 'undefined' && ui.hideRateLimitMessage) {
                                 ui.hideRateLimitMessage();
                             }
                             const responseText = await res.text();
@@ -978,7 +979,7 @@
                         lastStatus = res.status;
                         lastError = new Error('Status ' + res.status);
 
-                        if (!silent && res.status === 429 && typeof ui !== 'undefined' && ui.showRateLimitMessage) {
+                        if (showRateLimit && res.status === 429 && typeof ui !== 'undefined' && ui.showRateLimitMessage) {
                             ui.showRateLimitMessage();
                         }
                     } catch (e) {
@@ -1318,6 +1319,9 @@
             feedScrollTop: 0,
             feedPreferences: {},
             feedPreferencesChanged: false,
+            rateLimitTimer: null,
+            rateLimitUntil: 0,
+            rateLimitRetrySeconds: 5,
 
             init() {
                 if (window.rekindleApplyWallpaper) window.rekindleApplyWallpaper();
@@ -2220,11 +2224,32 @@
 
             showRateLimitMessage() {
                 const msg = document.getElementById('rate-limit-message');
-                if (msg) msg.style.display = 'block';
+                if (!msg) return;
+                if (!this.rateLimitUntil) this.rateLimitUntil = Date.now() + this.rateLimitRetrySeconds * 1000;
+
+                const update = function() {
+                    const seconds = Math.max(0, Math.ceil((ui.rateLimitUntil - Date.now()) / 1000));
+                    const fallback = 'Reddit is rate limiting access. Reloading in ${seconds}s.';
+                    const template = window.t ? window.t('reddit.rate_limit.countdown', fallback) : fallback;
+                    msg.innerText = template.replace('${seconds}', seconds);
+                    msg.style.display = 'block';
+                    if (seconds > 0) return;
+
+                    if (ui.rateLimitTimer) clearInterval(ui.rateLimitTimer);
+                    ui.rateLimitTimer = null;
+                    ui.rateLimitUntil = 0;
+                    window.location.reload();
+                };
+
+                update();
+                if (this.rateLimitUntil && !this.rateLimitTimer) this.rateLimitTimer = setInterval(update, 1000);
             },
 
             hideRateLimitMessage() {
                 const msg = document.getElementById('rate-limit-message');
+                if (this.rateLimitTimer) clearInterval(this.rateLimitTimer);
+                this.rateLimitTimer = null;
+                this.rateLimitUntil = 0;
                 if (msg) msg.style.display = 'none';
             },
 

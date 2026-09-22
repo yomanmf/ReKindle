@@ -1638,6 +1638,7 @@
   "status.sync_error": "Ошибка синхронизации",
   "status.synced": "Синхр.: ",
   "status.try_again": "Пожалуйста, попробуйте еще раз.",
+  "reddit.rate_limit.countdown": "Reddit ограничил частоту запросов. Перезагрузка через ${seconds} с.",
   "strands.btn.clear": "Clear",
   "strands.btn.hint": "Hint",
   "strands.btn.submit": "Submit",

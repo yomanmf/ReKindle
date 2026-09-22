@@ -1638,6 +1638,7 @@
   "status.sync_error": "Sync Error",
   "status.synced": "Synced: ",
   "status.try_again": "Please try again.",
+  "reddit.rate_limit.countdown": "Reddit is rate limiting access. Reloading in ${seconds}s.",
   "strands.btn.clear": "Clear",
   "strands.btn.hint": "Hint",
   "strands.btn.submit": "Submit",
