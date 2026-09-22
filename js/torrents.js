@@ -4,6 +4,7 @@
     var API_PATH = "/manga-kindle/";
     var pendingTorrent = null;
     var lastTorrents = [];
+    var currentFilter = "all";
 
     function byId(id) { return document.getElementById(id); }
     function translate(key, fallback) { return typeof window.t === "function" ? window.t(key, fallback) : fallback; }
@@ -48,11 +49,32 @@
 
     function renderTorrents(items) {
         lastTorrents = items;
+        var visibleItems = currentFilter === "completed" ? items.filter(isCompleted) : items;
         var list = byId("torrent-list");
         list.innerHTML = "";
-        byId("empty-state").hidden = items.length !== 0;
-        setText(byId("torrent-count"), translate("torrents.count", "${count} tasks").replace("${count}", String(items.length)));
-        items.forEach(function (torrent) { list.appendChild(torrentCard(torrent)); });
+        var empty = byId("empty-state");
+        var title = byId("downloads-title");
+        var completed = currentFilter === "completed";
+        empty.hidden = visibleItems.length !== 0;
+        empty.setAttribute("data-i18n", completed ? "torrents.empty_completed" : "torrents.empty");
+        setText(empty, translate(completed ? "torrents.empty_completed" : "torrents.empty", completed ? "No completed downloads." : "No torrent tasks."));
+        title.setAttribute("data-i18n", completed ? "torrents.completed" : "torrents.all");
+        setText(title, translate(completed ? "torrents.completed" : "torrents.all", completed ? "Completed downloads" : "All downloads"));
+        setText(byId("torrent-count"), translate("torrents.count", "${count} tasks").replace("${count}", String(visibleItems.length)));
+        visibleItems.forEach(function (torrent) { list.appendChild(torrentCard(torrent)); });
+    }
+
+    function isCompleted(torrent) { return Math.max(0, Number(torrent.progress) || 0) >= 1; }
+
+    function setFilter(value) {
+        currentFilter = value;
+        ["all", "completed"].forEach(function (name) {
+            var active = name === value;
+            var button = byId("filter-" + name);
+            button.className = "sys-btn" + (active ? " primary" : "");
+            button.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+        renderTorrents(lastTorrents);
     }
 
     function torrentCard(torrent) {
@@ -66,7 +88,7 @@
         setText(name, torrent.name);
         var state = document.createElement("span");
         state.className = "torrent-state";
-        var stateLabel = torrentState(torrent.state);
+        var stateLabel = torrentState(torrent);
         state.setAttribute("data-i18n", stateLabel.key);
         setText(state, translate(stateLabel.key, stateLabel.fallback));
         header.appendChild(name);
@@ -121,8 +143,9 @@
         return box;
     }
 
-    function torrentState(value) {
-        var state = String(value || "").toLowerCase();
+    function torrentState(torrent) {
+        var state = String(torrent.state || "").toLowerCase();
+        if (isCompleted(torrent)) return { key: "torrents.state_completed", fallback: "Completed" };
         if (state.indexOf("error") !== -1 || state.indexOf("missing") !== -1) return { key: "torrents.state_error", fallback: "Error" };
         if (state.indexOf("paused") !== -1 || state.indexOf("stopped") !== -1) return { key: "torrents.state_paused", fallback: "Paused" };
         if (state.indexOf("check") !== -1 || state.indexOf("moving") !== -1 || state.indexOf("allocating") !== -1) return { key: "torrents.state_checking", fallback: "Checking" };
@@ -191,6 +214,8 @@
     function closeError() { byId("error-modal").style.display = "none"; }
 
     byId("refresh-button").addEventListener("click", loadTorrents);
+    byId("filter-all").addEventListener("click", function () { setFilter("all"); });
+    byId("filter-completed").addEventListener("click", function () { setFilter("completed"); });
     byId("delete-cancel").addEventListener("click", closeDelete);
     byId("delete-confirm").addEventListener("click", confirmDelete);
     byId("error-close").addEventListener("click", closeError);

@@ -125,6 +125,7 @@
         .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
         .toolbar-title { margin: 0; font-size: 1rem; text-transform: uppercase; }
         .toolbar-summary { display: block; margin-top: 4px; font-size: 0.78rem; }
+        .filter-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
 
         .sys-btn {
             min-height: 48px;
@@ -211,10 +212,14 @@
             <section id="downloads-panel" hidden>
                 <div class="panel toolbar">
                     <div>
-                        <h1 class="toolbar-title" data-i18n="torrents.all">All downloads</h1>
+                        <h1 class="toolbar-title" id="downloads-title" data-i18n="torrents.all">All downloads</h1>
                         <span class="toolbar-summary" id="torrent-count"></span>
                     </div>
                     <button class="sys-btn" type="button" id="refresh-button" data-i18n="torrents.refresh">Refresh</button>
+                </div>
+                <div class="filter-row" role="group" aria-label="Download filter">
+                    <button class="sys-btn primary" type="button" id="filter-all" aria-pressed="true" data-i18n="torrents.filter_all">All</button>
+                    <button class="sys-btn" type="button" id="filter-completed" aria-pressed="false" data-i18n="torrents.filter_completed">Completed</button>
                 </div>
                 <div id="torrent-list" aria-live="polite"></div>
                 <div class="empty-state" id="empty-state" hidden data-i18n="torrents.empty">No torrent tasks.</div>
@@ -251,6 +256,6 @@
             projectId: "rekindle-fork"
         };
     </script>
-    <script src="js/torrents.js?v=1"></script>
+    <script src="js/torrents.js?v=2"></script>
 </body>
 </html>

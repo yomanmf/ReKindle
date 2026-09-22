@@ -17,6 +17,10 @@ test("torrent controls are authenticated, destructive, and Kindle-safe", functio
     assert.match(html, /id="delete-modal"/);
     assert.match(client, /request\("torrent-delete",\s*\{ hash: torrent\.hash \}\)/);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
+    assert.match(html, /id="filter-completed"/);
+    assert.match(client, /currentFilter === "completed" \? items\.filter\(isCompleted\) : items/);
+    assert.match(client, /Number\(torrent\.progress\)[^\n]*>= 1/);
+    assert.match(client, /torrents\.state_completed/);
     assert.doesNotMatch(html + client, /alert\(|confirm\(|prompt\(/);
     assert.doesNotMatch(client, /\?\.|\?\?/);
     assert.doesNotMatch(html + client, /[\u{1F300}-\u{1FAFF}]/u);
@@ -41,4 +45,5 @@ test("torrent controls are routed, catalogued, cache-busted, and released", func
     assert.match(read("index_old.html"), /icons-beta\.js\?v=12/);
     assert.match(read("sw.js"), /rekindle-cache-v61/);
     assert.match(read("sw.js"), /icons-beta\.js\?v=12/);
+    assert.match(read("torrents.html"), /js\/torrents\.js\?v=2/);
 });

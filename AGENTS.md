@@ -1470,6 +1470,10 @@ localhost; never expose its port or credentials to the browser. The UI must use
 its custom destructive confirmation modal because Kindle does not support
 `confirm()`.
 
+The orchestrator's torrent list already requests qBittorrent with `filter=all`.
+Keep the dashboard's completed view as a client-side filter on `progress >= 1`
+so paused and seeding uploads remain visible and are labelled as completed.
+
 **Manga to Kindle layout:** Match Books to Kindle with `data-no-scale`, a
 `720px` maximum window width, and panels in normal document flow in every
 orientation. Do not add a landscape grid: fitting three columns into the shared
