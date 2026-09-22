@@ -407,15 +407,21 @@
             transform: translate(1px, 1px);
         }
 
+        .thread-refresh-btn,
         .next-thread-btn {
             display: none;
+        }
+
+        .thread-refresh-btn {
             margin-left: 24px;
         }
 
+        .thread-refresh-btn.visible,
         .next-thread-btn.visible {
             display: inline-block;
         }
 
+        .thread-refresh-btn:disabled,
         .next-thread-btn:disabled {
             color: #999;
             border-color: #999;
@@ -746,6 +752,15 @@
                     <button class="nav-btn" id="save-btn" onclick="ui.toggleSave()" title="Save Subreddit">☆</button>
                     <span id="loading-indicator"
                         style="display:none; margin-left:10px; font-size:0.8rem;">Loading...</span>
+                    <button class="nav-btn thread-refresh-btn" id="thread-refresh-btn" type="button"
+                        onclick="ui.loadThread(ui.currentThread)" aria-label="Refresh"
+                        data-i18n-title="common.refresh" title="Refresh">
+                        <svg width="14" height="14" viewBox="0 0 32 32" aria-hidden="true" fill="none"
+                            stroke="currentColor" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
+                            <path d="M25 10A11 11 0 1 0 27 20"></path>
+                            <path d="M25 4V10H19"></path>
+                        </svg>
+                    </button>
                     <button class="nav-btn next-thread-btn" id="next-thread-btn" type="button"
                         onclick="ui.goToNextThread()" aria-label="Next thread"
                         data-i18n-title="reddit.thread.next" title="Next thread">&gt;</button>
@@ -1581,21 +1596,29 @@
 
             updateThreadNavigation() {
                 const button = document.getElementById('next-thread-btn');
-                if (!button) return;
+                const refreshButton = document.getElementById('thread-refresh-btn');
+                if (!button || !refreshButton) return;
 
                 if (!this.currentThread) {
                     button.classList.remove('visible');
                     button.disabled = false;
+                    refreshButton.classList.remove('visible');
+                    refreshButton.disabled = false;
                     return;
                 }
 
                 const postCount = this.feedPosts.length;
                 const nextIndex = window.RekindleRedditComments.getNextPostIndex(this.currentPostIndex, postCount);
                 const buttonLabel = window.t ? window.t('reddit.thread.next', 'Next thread') : 'Next thread';
+                const refreshLabel = window.t ? window.t('common.refresh', 'Refresh') : 'Refresh';
                 button.classList.add('visible');
                 button.setAttribute('aria-label', buttonLabel);
                 button.title = buttonLabel;
                 button.disabled = this.isThreadLoading || nextIndex === -1;
+                refreshButton.classList.add('visible');
+                refreshButton.setAttribute('aria-label', refreshLabel);
+                refreshButton.title = refreshLabel;
+                refreshButton.disabled = this.isThreadLoading;
             },
 
             goToNextThread() {

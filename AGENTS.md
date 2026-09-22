@@ -494,9 +494,12 @@ long-polling closes each response after data arrives and makes saved-subreddit
 writes, including deletions, receive their acknowledgement.
 
 **Reddit thread-navigation spacing:** Keep a fixed left margin on
-`.next-thread-btn` instead of `margin-left: auto`. The subreddit input is the
+`.thread-refresh-btn` instead of `margin-left: auto`. The subreddit input is the
 toolbar's flexible item, so the fixed margin shrinks that field and preserves a
-safe gap between the saved-subreddit star and the next-post `>` button.
+safe gap between the saved-subreddit star and the thread refresh button. Normal
+toolbar sibling spacing then separates refresh from the next-post `>` button.
+The refresh button is visible only for an open thread, retries the saved
+`currentThread` permalink, and stays disabled while that request is active.
 
 **Reddit last-view gotcha:** `reddit_return_state` is persistent app state, not
 just a short-lived return marker for external links. `reddit.html` saves it on
@@ -1382,7 +1385,7 @@ bodies.
 
 The `>` button must remain exactly the same visual size as the toolbar's `<`
 back button. Both use `.nav-btn`; `.next-thread-btn` may control only its
-visibility and right alignment, and must not override width, height, padding,
+visibility and disabled state, and must not override width, height, padding,
 font size, or line height. Adding a separate 48px minimum made the forward
 button visibly larger at the Kindle UI scale. Keep the back button's visible
 text as the literal ASCII `<` and localize only its title; `data-i18n` replaces

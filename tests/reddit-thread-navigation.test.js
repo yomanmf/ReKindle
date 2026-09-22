@@ -10,17 +10,20 @@ var releaseManifest = fs.readFileSync(path.join(__dirname, '..', 'yandex', 'FRON
 
 test('renders an accessible next-thread button in the Reddit toolbar', function () {
     var nextButtonStyles = redditHtml.match(/\.next-thread-btn\s*\{([^}]*)\}/);
+    var refreshButtonStyles = redditHtml.match(/\.thread-refresh-btn\s*\{([^}]*)\}/);
 
     assert.match(redditHtml, /class="nav-btn"[^>]*id="back-btn"[^>]*data-i18n-title="common\.back"[^>]*>&lt;<\/button>/);
     assert.doesNotMatch(redditHtml, /id="back-btn"[^>]*data-i18n="rss\.btn\.back"/);
+    assert.match(redditHtml, /class="nav-btn thread-refresh-btn"[^>]*id="thread-refresh-btn"[^>]*onclick="ui\.loadThread\(ui\.currentThread\)"[^>]*data-i18n-title="common\.refresh"/);
     assert.match(redditHtml, /class="nav-btn next-thread-btn"[^>]*id="next-thread-btn"/);
     assert.match(redditHtml, /id="next-thread-btn"[^>]*onclick="ui\.goToNextThread\(\)"/);
     assert.match(redditHtml, /data-i18n-title="reddit\.thread\.next"/);
+    assert.ok(refreshButtonStyles);
+    assert.match(refreshButtonStyles[1], /margin-left:\s*24px/);
     assert.ok(nextButtonStyles);
     assert.match(nextButtonStyles[1], /display:\s*none/);
-    assert.match(nextButtonStyles[1], /margin-left:\s*24px/);
     assert.doesNotMatch(nextButtonStyles[1], /(?:min-)?(?:width|height)|padding|font-size|line-height/);
-    assert.match(redditHtml, /\.next-thread-btn\.visible\s*\{[^}]*display:\s*inline-block/);
+    assert.match(redditHtml, /\.thread-refresh-btn\.visible,\s*\.next-thread-btn\.visible\s*\{[^}]*display:\s*inline-block/);
 });
 
 test('renders right-aligned refresh and scroll-to-top buttons beside sorting controls', function () {
@@ -80,7 +83,10 @@ test('shows navigation only in thread mode and restores its feed context', funct
 
     assert.match(updateSource, /if \(!this\.currentThread\)/);
     assert.match(updateSource, /button\.classList\.remove\('visible'\)/);
+    assert.match(updateSource, /refreshButton\.classList\.remove\('visible'\)/);
     assert.match(updateSource, /button\.classList\.add\('visible'\)/);
+    assert.match(updateSource, /refreshButton\.classList\.add\('visible'\)/);
+    assert.match(updateSource, /refreshButton\.disabled = this\.isThreadLoading/);
     assert.match(updateSource, /button\.disabled = this\.isThreadLoading \|\| nextIndex === -1/);
     assert.match(saveSource, /feedPermalinks:/);
     assert.match(restoreSource, /Array\.isArray\(state\.feedPermalinks\)/);
