@@ -1470,7 +1470,7 @@ before job creation so the worker never needs an interactive chat callback.
 
 **Torrent control path:** `torrents.html` reuses the authenticated
 `/api/rekindle/manga-kindle/{action}` service path with `torrents` and
-`torrent-delete`. The Yandex backend keeps the same Firebase UID allowlist and
+`torrent-delete`, `torrent-pause`, and `torrent-resume`. The Yandex backend keeps the same Firebase UID allowlist and
 server-held control token. The orchestrator reaches qBittorrent only at its
 private Docker hostname, returns no filesystem paths, validates a 40- or
 64-character hexadecimal info hash, and always uses `deleteFiles=true` so the
@@ -1478,6 +1478,12 @@ task and payload are removed together. Keep the qBittorrent Web UI bound to
 localhost; never expose its port or credentials to the browser. The UI must use
 its custom destructive confirmation modal because Kindle does not support
 `confirm()`.
+
+The production qBittorrent version is 5.2.3. Pause and resume use its
+`/api/v2/torrents/stop` and `/api/v2/torrents/start` endpoints with one validated
+info hash. Its paused states begin with `stopped` (older versions use `paused`);
+only qBittorrent cards get a pause/resume button. Refresh the list after a
+successful action so the label follows the server state.
 
 The orchestrator's torrent list requests qBittorrent with `filter=all` and also
 adds available completed requests from Seerr. Keep the dashboard's completed

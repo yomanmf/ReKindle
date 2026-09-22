@@ -9,6 +9,8 @@ var ACTIONS = {
     retry: true,
     torrents: true,
     "torrent-delete": true,
+    "torrent-pause": true,
+    "torrent-resume": true,
     "media-delete": true
 };
 

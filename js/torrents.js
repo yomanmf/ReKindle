@@ -39,9 +39,11 @@
             var result = await request("torrents");
             renderTorrents(result.torrents || []);
             setStatus(translate("torrents.updated", "Updated"));
+            return true;
         } catch (error) {
             showError(error);
             setStatus(translate("torrents.error_connection", "Could not reach the download service."));
+            return false;
         } finally {
             button.disabled = false;
         }
@@ -126,14 +128,45 @@
         }
         card.appendChild(details);
 
+        if (torrent.source !== "seerr") {
+            var actions = document.createElement("div");
+            actions.className = "torrent-actions";
+            var paused = isPaused(torrent);
+            var pauseButton = document.createElement("button");
+            pauseButton.type = "button";
+            pauseButton.className = "sys-btn";
+            pauseButton.setAttribute("data-i18n", paused ? "torrents.resume" : "torrents.pause");
+            setText(pauseButton, translate(paused ? "torrents.resume" : "torrents.pause", paused ? "Resume" : "Pause"));
+            pauseButton.addEventListener("click", function () { setPaused(torrent, paused, pauseButton); });
+            actions.appendChild(pauseButton);
+        }
         var deleteButton = document.createElement("button");
         deleteButton.type = "button";
         deleteButton.className = "sys-btn delete-button";
         deleteButton.setAttribute("data-i18n", "torrents.delete");
         setText(deleteButton, translate("torrents.delete", "Delete"));
         deleteButton.addEventListener("click", function () { openDelete(torrent); });
-        card.appendChild(deleteButton);
+        if (actions) {
+            actions.appendChild(deleteButton);
+            card.appendChild(actions);
+        } else {
+            card.appendChild(deleteButton);
+        }
         return card;
+    }
+
+    function isPaused(torrent) { return /^(paused|stopped)/i.test(String(torrent.state || "")); }
+
+    async function setPaused(torrent, paused, button) {
+        button.disabled = true;
+        setStatus(translate(paused ? "torrents.resuming" : "torrents.pausing", paused ? "Resuming download..." : "Pausing download..."));
+        try {
+            await request(paused ? "torrent-resume" : "torrent-pause", { hash: torrent.hash });
+            if (await loadTorrents()) {
+                setStatus(translate(paused ? "torrents.resumed" : "torrents.paused", paused ? "Download resumed." : "Download paused."));
+            }
+        } catch (error) { showError(error); }
+        finally { button.disabled = false; }
     }
 
     function metric(key, fallback, value) {

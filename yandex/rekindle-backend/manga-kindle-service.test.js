@@ -89,3 +89,33 @@ test("forwards completed media deletion only for an allowlisted user", async fun
         global.fetch = originalFetch;
     }
 });
+
+test("forwards torrent pause and resume for an allowlisted user", async function () {
+    var originalFetch = global.fetch;
+    var calls = [];
+    global.fetch = async function (url, options) {
+        calls.push({ url: url, body: options.body });
+        return { ok: true, status: 200, json: async function () { return { ok: true }; } };
+    };
+    try {
+        for (var action of ["torrent-pause", "torrent-resume"]) {
+            await service.handle({
+                action: action,
+                body: { hash: "a".repeat(40) },
+                uid: "owner",
+                env: {
+                    MANGA_KINDLE_ALLOWED_UIDS: "owner",
+                    MANGA_ORCHESTRATOR_URL: "https://manga.example",
+                    MANGA_CONTROL_TOKEN: "secret"
+                }
+            });
+        }
+        assert.deepEqual(calls.map(function (call) { return call.url; }), [
+            "https://manga.example/control/torrent-pause",
+            "https://manga.example/control/torrent-resume"
+        ]);
+        assert.equal(calls[0].body, JSON.stringify({ hash: "a".repeat(40) }));
+    } finally {
+        global.fetch = originalFetch;
+    }
+});
