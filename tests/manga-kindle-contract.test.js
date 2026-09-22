@@ -29,7 +29,7 @@ test("Manga to Kindle is a Kindle-safe direct control UI", function () {
     assert.doesNotMatch(html, /display:\s*flex[^}]*\bgap\s*:/s);
     assert.match(client, /RekindleCloud\.request\(API_PATH \+ action/);
     assert.match(client, /setInterval\([^]*10000\)/);
-    assert.match(html, /js\/mangakindle\.js\?v=4/);
+    assert.match(html, /js\/mangakindle\.js\?v=5/);
     assert.doesNotMatch(client, /job\.progress/);
     assert.doesNotMatch(client, /file\.status/);
 });
@@ -51,7 +51,7 @@ test("Manga to Kindle is routed, catalogued, and released", function () {
     });
     assert.match(read("index.html"), /icons-beta\.js\?v=12/);
     assert.match(read("index_old.html"), /icons-beta\.js\?v=12/);
-    assert.match(read("sw.js"), /rekindle-cache-v61/);
+    assert.match(read("sw.js"), /rekindle-cache-v62/);
 });
 
 test("Manga to Kindle ships English and Russian UI contracts", function () {

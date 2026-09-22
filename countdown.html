@@ -470,7 +470,7 @@
     <div id="delete-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 data-i18n="countdown.modal.delete.title">Delete Timer?</h3>
-            <p data-i18n="countdown.modal.delete.desc">This action cannot be undone.</p>
+            <p data-i18n="countdown.modal.delete.desc">This action cannot be undone</p>
             <div style="display: flex; justify-content: center">
                 <button class="sys-btn" onclick="confirmDelete()" data-i18n="common.delete">Delete</button>
                 <button class="sys-btn" onclick="closeModal('delete-modal')" data-i18n="common.cancel"
@@ -617,7 +617,7 @@
             const frequency = document.getElementById('event-frequency').value;
 
             if (!name || !dateStr) {
-                showModal(window.t('countdown.error.fill', "Please fill in Title and Date."));
+                showModal(window.t('countdown.error.fill', "Please fill in Title and Date"));
                 return;
             }
 

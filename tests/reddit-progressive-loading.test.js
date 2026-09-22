@@ -185,11 +185,11 @@ test('handles a foreground 429 end to end with a 5-second countdown and reload',
     ui.showRateLimitMessage = show;
     var api = createApi(async function () { return { ok: false, status: 429 }; }, ui);
     await assert.rejects(api.request('/r/test.rss'), /Status 429/);
-    assert.equal(message.innerText, 'Reddit is rate limiting access. Reloading in 5s.');
+    assert.equal(message.innerText, 'Reddit is rate limiting access. Reloading in 5s');
     assert.equal(message.style.display, 'block');
     now += 4000;
     tick();
-    assert.match(message.innerText, /1s\.$/);
+    assert.match(message.innerText, /1s$/);
     now += 1000;
     tick();
     assert.equal(reloads, 1);

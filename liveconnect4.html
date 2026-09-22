@@ -257,7 +257,7 @@
         <!-- MENU -->
         <div class="window-content" id="screen-menu">
             <h1 style="font-size: 3rem; margin: 10px 0;">CONNECT 4</h1>
-            <p>Real-time Multiplayer.</p>
+            <p>Real-time Multiplayer</p>
             <button class="sys-btn" onclick="toggleModeMenu()" id="menu-mode-btn" data-i18n="connect4.btn.mode" data-i18n-args='{"num": 4}' style="width: 200px; margin-bottom: 20px;">Mode: 4</button>
             <button class="sys-btn" onclick="hostGame()" style="width: 200px;">Host Game</button>
             <button class="sys-btn" onclick="goHome()" style="width: 200px;">Back</button>
@@ -274,7 +274,7 @@
             <div class="player-list" id="lobby-players"></div>
             
             <div id="host-controls" style="display:none; width:100%; margin-top:10px;">
-                <p style="font-size: 0.9rem;">Game starts automatically when an opponent joins.</p>
+                <p style="font-size: 0.9rem;">Game starts automatically when an opponent joins</p>
                 <div style="display:flex; justify-content:center;">
                     <button class="sys-btn" onclick="toggleModeLobby()" id="lobby-mode-btn" data-i18n="connect4.btn.mode" data-i18n-args='{"num": 4}'>Mode: 4</button>
                 </div>
@@ -412,7 +412,7 @@
                 currentUser = { uid: user.uid, name: (user.email ? user.email.split('@')[0] : 'Player') };
                 checkUrlForMatch();
             } else {
-                showAlert("Sign In Required", "Please log in from the home screen first.");
+                showAlert("Sign In Required", "Please log in from the home screen first");
                 setTimeout(goHome, 3000);
             }
         });

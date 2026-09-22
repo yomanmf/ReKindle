@@ -46,7 +46,7 @@ test("Books to Kindle is a Kindle-safe direct queue UI", function () {
     });
     assert.match(client, /setStatusValue\(byId\("job-state"\), job\.state/);
     assert.match(html, /\.status-icon\s*\{/);
-    assert.match(html, /js\/bookskindle\.js\?v=14/);
+    assert.match(html, /js\/bookskindle\.js\?v=15/);
     assert.match(client, /setStatus\(value\).*statusText\(value\)/);
     assert.match(client, /setText\(byId\("job-detail"\), statusText\(detail\)\)/);
     assert.match(client, /job\.state === "running" \|\| job\.state === "ready"/);
@@ -78,7 +78,7 @@ test("Books to Kindle is routed, catalogued, isolated, and released", function (
     });
     assert.match(read("index.html"), /icons-beta\.js\?v=12/);
     assert.match(read("index_old.html"), /icons-beta\.js\?v=12/);
-    assert.match(read("sw.js"), /rekindle-cache-v61/);
+    assert.match(read("sw.js"), /rekindle-cache-v62/);
 });
 
 test("Books to Kindle ships English and Russian UI contracts", function () {

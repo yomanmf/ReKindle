@@ -514,7 +514,7 @@
         <div id="auth-overlay">
             <div class="auth-content">
                 <h3 style="margin-top:0;" data-i18n="quicktodo.auth.title">Google Tasks Sync</h3>
-                <p data-i18n="quicktodo.auth.desc">Connect to sync your scribbles with Google Tasks.</p>
+                <p data-i18n="quicktodo.auth.desc">Connect to sync your scribbles with Google Tasks</p>
                 <button class="sys-btn" style="font-size:1rem; padding:10px 20px;" onclick="oauthSignIn()" data-i18n="quicktodo.auth.btn">Log
                     In</button>
             </div>
@@ -540,7 +540,7 @@
         <div class="modal-box">
             <h3 data-i18n="quicktodo.modal.instr.title">How to Use</h3>
             <div style="text-align:left; font-size:0.9rem; margin-top:15px;">
-                <p><strong data-i18n="quicktodo.modal.instr.1">1. Write New Tasks:</strong><br><span data-i18n="quicktodo.modal.instr.1.desc">Use your pen to write on any empty line.</span></p>
+                <p><strong data-i18n="quicktodo.modal.instr.1">1. Write New Tasks:</strong><br><span data-i18n="quicktodo.modal.instr.1.desc">Use your pen to write on any empty line</span></p>
                 <p><strong data-i18n="quicktodo.modal.instr.2">2. Complete Tasks:</strong><br><span data-i18n="quicktodo.modal.instr.2.desc">Draw a horizontal line (strike-through) over existing
                         text to
                         mark it as done.</span></p>
@@ -828,7 +828,7 @@
                 console.error("Auth loop detected.");
                 document.getElementById('auth-overlay').style.display = 'flex';
                 document.querySelector('#auth-overlay h3').innerText = window.t ? window.t('status.login_failed') : "Login Failed";
-                document.querySelector('#auth-overlay p').innerText = window.t ? window.t('status.try_again') : "Please try again manually.";
+                document.querySelector('#auth-overlay p').innerText = window.t ? window.t('status.try_again') : "Please try again manually";
                 return;
             }
             sessionStorage.setItem('last_auth_attempt', now.toString());

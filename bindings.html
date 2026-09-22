@@ -484,7 +484,7 @@
             renderMistakes();
 
             if (solvedGroups.length === 4 && mistakesLeft > 0) {
-                const perfectTxt = window.t ? window.t('bindings.msg.perfect') : "Perfect! You bound them all.";
+                const perfectTxt = window.t ? window.t('bindings.msg.perfect') : "Perfect! You bound them all";
                 document.getElementById('message-bar').innerText = perfectTxt;
                 document.getElementById('grid-area').style.display = 'none';
             } else if (mistakesLeft === 0) {

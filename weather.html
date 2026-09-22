@@ -1094,7 +1094,7 @@
             container.style.display = 'block';
 
             if (results.length === 0) {
-                container.innerHTML = `<div style="padding:10px; color:#666;">${window.t('weather.status.nocity', 'No cities found.')}</div>`;
+                container.innerHTML = `<div style="padding:10px; color:#666;">${window.t('weather.status.nocity', 'No cities found')}</div>`;
                 return;
             }
 
@@ -1190,7 +1190,7 @@
             div.innerHTML = '';
 
             if (!userSettings.locations || userSettings.locations.length === 0) {
-                div.innerHTML = '<div style="padding:10px; color:#666;" data-i18n="weather.status.no_locations">' + window.t('weather.status.no_locations', 'No locations saved.') + '</div>';
+                div.innerHTML = '<div style="padding:10px; color:#666;" data-i18n="weather.status.no_locations">' + window.t('weather.status.no_locations', 'No locations saved') + '</div>';
                 return;
             }
 
@@ -1279,7 +1279,7 @@
         function openAlertModal() {
             if (!currentAlertData) return;
             document.getElementById('alert-title').innerText = currentAlertData.event || window.t('weather.alert.title', 'Alert');
-            document.getElementById('alert-content').innerText = currentAlertData.description || currentAlertData.headline || window.t('weather.alert.no_details', 'No details available.');
+            document.getElementById('alert-content').innerText = currentAlertData.description || currentAlertData.headline || window.t('weather.alert.no_details', 'No details available');
             document.getElementById('alert-modal-overlay').style.display = 'flex';
         }
 

@@ -380,7 +380,7 @@
     <!-- MENU -->
     <div class="screen center-col pad active" id="screen-menu">
         <h1 data-i18n="pictionary.title">PICTIONARY</h1>
-        <p style="text-align:center;" data-i18n="pictionary.subtitle">Draw &amp; guess. Real-time multiplayer.</p>
+        <p style="text-align:center;" data-i18n="pictionary.subtitle">Draw &amp; guess. Real-time multiplayer</p>
         <div style="display:flex; flex-wrap:wrap; justify-content:center;">
             <button class="sys-btn" onclick="cycleRounds()" id="menu-rounds-btn" style="width:200px;">Rounds: 3</button>
             <button class="sys-btn" onclick="cycleDrawTime()" id="menu-time-btn" style="width:200px;">Draw Time: 80s</button>
@@ -601,7 +601,7 @@ auth.onAuthStateChanged(function(user) {
         // localStorage. Wait a short moment before treating it as a real
         // sign-out / missing-auth situation.
         authInitTimer = setTimeout(function() {
-            showAlert(tfmt('pictionary.alert.signin_title', 'Sign In Required'), tfmt('pictionary.alert.signin_msg', 'Please log in from the home screen first.'));
+            showAlert(tfmt('pictionary.alert.signin_title', 'Sign In Required'), tfmt('pictionary.alert.signin_msg', 'Please log in from the home screen first'));
             setTimeout(goHome, 3000);
         }, 1200);
     }
@@ -689,7 +689,7 @@ async function joinMatch(mId) {
 
     const snap = await matchRef.once('value');
     if (!snap.exists()) {
-        showAlert(tfmt('pictionary.alert.notfound_title', 'Not Found'), tfmt('pictionary.alert.notfound_msg', 'Game not found or ended.'));
+        showAlert(tfmt('pictionary.alert.notfound_title', 'Not Found'), tfmt('pictionary.alert.notfound_msg', 'Game not found or ended'));
         setTimeout(goHome, 2000);
         return;
     }
@@ -705,13 +705,13 @@ async function joinMatch(mId) {
             if (state.host === currentUser.uid) {
                 isHost = true;
             } else {
-                showAlert(tfmt('pictionary.alert.inprogress_title', 'In Progress'), tfmt('pictionary.alert.inprogress_msg', 'This game has already started.'));
+                showAlert(tfmt('pictionary.alert.inprogress_title', 'In Progress'), tfmt('pictionary.alert.inprogress_msg', 'This game has already started'));
                 setTimeout(goHome, 2000);
                 return;
             }
         }
         if (playerCount >= 8) {
-            showAlert(tfmt('pictionary.alert.full_title', 'Full'), tfmt('pictionary.alert.full_msg', 'This lobby is full.'));
+            showAlert(tfmt('pictionary.alert.full_title', 'Full'), tfmt('pictionary.alert.full_msg', 'This lobby is full'));
             setTimeout(goHome, 2000);
             return;
         }
@@ -766,7 +766,7 @@ function listenToMatch() {
     matchRef.on('value', function(snap) {
         const data = snap.val();
         if (!data) {
-            showAlert(tfmt('pictionary.alert.closed_title', 'Game Closed'), tfmt('pictionary.alert.closed_msg', 'The match has ended.'));
+            showAlert(tfmt('pictionary.alert.closed_title', 'Game Closed'), tfmt('pictionary.alert.closed_msg', 'The match has ended'));
             setTimeout(goHome, 1500);
             return;
         }
@@ -843,7 +843,7 @@ function updateLobbyUI() {
     if (players.length < 2) {
         status.innerText = tfmt('pictionary.lobby.waiting', 'Waiting for more players (need 2+)...');
     } else {
-        status.innerText = tfmt('pictionary.lobby.ready', '${n} players ready.', { n: players.length });
+        status.innerText = tfmt('pictionary.lobby.ready', '${n} players ready', { n: players.length });
     }
 
     document.getElementById('lobby-rounds-btn').innerText = tfmt('pictionary.btn.rounds', 'Rounds: ${n}', { n: gameState.rounds || 3 });
@@ -856,7 +856,7 @@ function updateLobbyUI() {
 async function startMatch() {
     if (!isHost) return;
     const players = Object.keys(gameState.players || {});
-    if (players.length < 2) { showAlert(tfmt('pictionary.alert.toofew_title', 'Too Few'), tfmt('pictionary.alert.toofew_msg', 'Need at least 2 players.')); return; }
+    if (players.length < 2) { showAlert(tfmt('pictionary.alert.toofew_title', 'Too Few'), tfmt('pictionary.alert.toofew_msg', 'Need at least 2 players')); return; }
 
     // Shuffle draw order
     const order = players.slice();

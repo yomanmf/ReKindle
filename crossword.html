@@ -380,7 +380,7 @@
     <div id="new-game-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 data-i18n="crossword.modal.new.title">Start New Puzzle?</h3>
-            <p data-i18n="crossword.modal.new.body">Current progress will be lost.</p>
+            <p data-i18n="crossword.modal.new.body">Current progress will be lost</p>
             <div class="modal-btns">
                 <button class="sys-btn" onclick="confirmNewGame()" data-i18n="crossword.modal.new.yes">Yes</button>
                 <button class="sys-btn" onclick="closeNewGameModal()" data-i18n="crossword.modal.new.cancel">Cancel</button>
@@ -835,10 +835,10 @@
             const bar = document.getElementById('clue-bar');
             bar.removeAttribute('data-i18n');
             if (isEmpty) {
-                bar.innerText = window.t ? window.t('crossword.label.empty') : "Grid is empty.";
+                bar.innerText = window.t ? window.t('crossword.label.empty') : "Grid is empty";
                 setTimeout(() => updateUI(), 2000);
             } else if (hasError) {
-                bar.innerText = window.t ? window.t('crossword.label.errors_found') : "Errors found. Keep trying.";
+                bar.innerText = window.t ? window.t('crossword.label.errors_found') : "Errors found. Keep trying";
                 setTimeout(() => updateUI(), 2000);
             } else if (!isFull) {
                 bar.innerText = window.t ? window.t('crossword.label.correct_so_far') : "Correct so far!";

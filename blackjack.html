@@ -518,7 +518,7 @@
             document.getElementById('reset-controls').style.display = 'flex';
 
             if (result === 'bust') {
-                setMessage(window.t ? window.t('blackjack.msg.bust') : "Busted! You lose.");
+                setMessage(window.t ? window.t('blackjack.msg.bust') : "Busted! You lose");
                 // Bet already deducted
             } else if (result === 'win') {
                 setMessage(msg || (window.t ? window.t('blackjack.msg.win') : "You Win!"));

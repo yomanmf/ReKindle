@@ -414,7 +414,7 @@
     <div id="new-game-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 data-i18n="strands.modal.new.title">Start New Game?</h3>
-            <p data-i18n="strands.modal.new.body">Current progress will be lost.</p>
+            <p data-i18n="strands.modal.new.body">Current progress will be lost</p>
             <div class="modal-btns">
                 <button class="sys-btn" onclick="confirmNewGame()" data-i18n="strands.modal.new.yes">Yes</button>
                 <button class="sys-btn" onclick="closeNewGameModal()" data-i18n="strands.modal.new.cancel">Cancel</button>
@@ -426,7 +426,7 @@
     <div id="win-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 data-i18n="strands.modal.win.title">Puzzle Solved!</h3>
-            <p id="win-msg" data-i18n="strands.modal.win.body">Great job finding all the words.</p>
+            <p id="win-msg" data-i18n="strands.modal.win.body">Great job finding all the words</p>
             <div class="modal-btns">
                 <button class="sys-btn" onclick="closeWinModal()" data-i18n="strands.modal.win.close">Close</button>
                 <button class="sys-btn" id="win-new-btn" onclick="closeWinModal(); confirmNewGame();"
@@ -608,7 +608,7 @@
 
             renderGrid();
             updateUI();
-            setStatus(window.t ? window.t('strands.status.ready', 'Tap letters to form a word.') : 'Tap letters to form a word.');
+            setStatus(window.t ? window.t('strands.status.ready', 'Tap letters to form a word') : 'Tap letters to form a word');
             saveGame();
         }
 
@@ -636,7 +636,7 @@
 
             renderGrid();
             updateUI();
-            setStatus(window.t ? window.t('strands.status.resumed', 'Game resumed.') : 'Game resumed.');
+            setStatus(window.t ? window.t('strands.status.resumed', 'Game resumed') : 'Game resumed');
         }
 
         // --- RENDER ---
@@ -839,7 +839,7 @@
             const word = getWordFromPath();
 
             if (word.length < 4 && !themeWordsSet.has(word)) {
-                setStatus(window.t ? window.t('strands.msg.too_short', 'Too short.') : 'Too short.');
+                setStatus(window.t ? window.t('strands.msg.too_short', 'Too short') : 'Too short');
                 clearSelection();
                 return;
             }
@@ -893,7 +893,7 @@
                 return;
             }
 
-            setStatus(window.t ? window.t('strands.msg.invalid', 'Not a valid word.') : 'Not a valid word.');
+            setStatus(window.t ? window.t('strands.msg.invalid', 'Not a valid word') : 'Not a valid word');
             clearSelection();
         }
 
@@ -966,7 +966,7 @@
                 if (el) el.classList.add('hinted');
                 setStatus(window.t ? window.t('strands.msg.hint_revealed', 'Hint: look for ${letter}').replace('${letter}', letter) : 'Hint: look for ' + letter);
             } else {
-                setStatus(window.t ? window.t('strands.msg.no_hint', 'No new hints available.') : 'No new hints available.');
+                setStatus(window.t ? window.t('strands.msg.no_hint', 'No new hints available') : 'No new hints available');
             }
 
             updateUI();
@@ -981,7 +981,7 @@
                 setStatus(window.t ? window.t('strands.msg.win', 'You solved it!') : 'You solved it!');
                 setTimeout(function () {
                     document.getElementById('win-msg').innerText =
-                        (window.t ? window.t('strands.modal.win.body', 'Great job finding all the words.') : 'Great job finding all the words.') +
+                        (window.t ? window.t('strands.modal.win.body', 'Great job finding all the words') : 'Great job finding all the words') +
                         ' Hints used: ' + totalHintsUsed;
                     document.getElementById('win-new-btn').style.display = currentMode === 'unlimited' ? 'inline-block' : 'none';
                     document.getElementById('win-modal').style.display = 'flex';

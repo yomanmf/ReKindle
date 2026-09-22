@@ -497,8 +497,8 @@
 
         <div id="game-container">
             <div id="story-area" class="story-text">
-                <p data-i18n="interactive.welcome.title">Welcome to the Interactive Reader.</p>
-                <p data-i18n="interactive.welcome.desc">Select a game from the library to begin.</p>
+                <p data-i18n="interactive.welcome.title">Welcome to the Interactive Reader</p>
+                <p data-i18n="interactive.welcome.desc">Select a game from the library to begin</p>
             </div>
             <div id="choices-area" class="choices-area">
                 <button class="choice-btn" onclick="showLibrary()" data-i18n="interactive.btn.open_lib">Open
@@ -1627,7 +1627,7 @@
 
                 // 6. Render
                 if (combined.length === 0) {
-                    resultsDiv.innerHTML = '<div style="text-align:center; padding:20px;">No results found.</div>';
+                    resultsDiv.innerHTML = '<div style="text-align:center; padding:20px;">No results found</div>';
                     return;
                 }
 
@@ -1649,7 +1649,7 @@
 
             } catch (e) {
                 console.error(e);
-                resultsDiv.innerHTML = '<div style="color:red; text-align:center; padding:20px;">Error loading store.</div>';
+                resultsDiv.innerHTML = '<div style="color:red; text-align:center; padding:20px;">Error loading store</div>';
             }
         }
 
@@ -1737,7 +1737,7 @@
 
             // Normalize and Render IFDB Search Results
             if (games.length === 0) {
-                resultsDiv.innerHTML = '<div style="text-align:center; padding:20px;">No results found.</div>';
+                resultsDiv.innerHTML = '<div style="text-align:center; padding:20px;">No results found</div>';
                 return;
             }
 
@@ -2363,7 +2363,7 @@
                         // No playable URL
                         container.style.padding = '40px';
                         container.style.textAlign = 'center';
-                        container.innerHTML = '<div style="color: #666;"><strong>Story Not Found</strong><br><br>Please delete and re-add this game.</div>';
+                        container.innerHTML = '<div style="color: #666;"><strong>Story Not Found</strong><br><br>Please delete and re-add this game</div>';
                         currentGame = null;
                     }
                 }

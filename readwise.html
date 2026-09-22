@@ -698,7 +698,7 @@
                 <div id="post-list" class="post-list">
                     <div class="empty-state">
                         <h3>Welcome to Readwise</h3>
-                        <p>To access your Reader articles and highlights, connect your Readwise account.</p>
+                        <p>To access your Reader articles and highlights, connect your Readwise account</p>
                         <button class="sys-btn" onclick="openSettings()" style="margin-top:20px;">Connect Account</button>
                     </div>
                 </div>
@@ -723,7 +723,7 @@
         <div class="modal-box">
             <h2 style="margin-top:0;">Connect Readwise</h2>
             <div class="modal-text">
-                <p>Enter your Readwise API token to access your Reader articles and highlights.</p>
+                <p>Enter your Readwise API token to access your Reader articles and highlights</p>
                 <p>You can get your token from:<br><a href="https://readwise.io/access_token" target="_blank" style="color:black;">readwise.io/access_token</a></p>
             </div>
             <input type="password" id="token-input" class="modal-input" placeholder="Paste your Readwise token here...">
@@ -905,7 +905,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <h3>Welcome to Readwise</h3>
-                        <p>To access your Reader articles, connect your Readwise account.</p>
+                        <p>To access your Reader articles, connect your Readwise account</p>
                         <button class="sys-btn" onclick="openSettings()" style="margin-top:20px;">Connect Account</button>
                     </div>`;
                 return;
@@ -915,7 +915,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <h3>No Articles Found</h3>
-                        <p>No articles in this location.</p>
+                        <p>No articles in this location</p>
                     </div>`;
                 return;
             }
@@ -972,7 +972,7 @@
                 content.innerHTML = `
                     <div class="empty-state">
                         <h3>No Web Source</h3>
-                        <p>This document doesn't have a public web source.</p>
+                        <p>This document doesn't have a public web source</p>
                         <button class="sys-btn" onclick="openOriginal()" style="margin-top:15px;">Open in Readwise</button>
                     </div>`;
                 return;
@@ -992,7 +992,7 @@
                 if (article.byline) html += `<p style="font-style:italic; color:#555;">${escapeHtml(article.byline)}</p>`;
                 if (article.siteName) html += `<p style="font-size:0.8rem; color:#888;">${escapeHtml(article.siteName)}</p>`;
                 html += '<hr style="border:1px solid #ccc; margin:15px 0;">';
-                html += article.content || article.textContent || '<p>No readable content found.</p>';
+                html += article.content || article.textContent || '<p>No readable content found</p>';
 
                 content.innerHTML = html;
             } catch (e) {
@@ -1046,7 +1046,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <h3>Welcome to Readwise</h3>
-                        <p>To access your highlights, connect your Readwise account.</p>
+                        <p>To access your highlights, connect your Readwise account</p>
                         <button class="sys-btn" onclick="openSettings()" style="margin-top:20px;">Connect Account</button>
                     </div>`;
                 return;
@@ -1056,7 +1056,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <h3>No Highlights Found</h3>
-                        <p>Your highlights library is empty.</p>
+                        <p>Your highlights library is empty</p>
                     </div>`;
                 return;
             }
@@ -1134,7 +1134,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <h3>Welcome to Readwise</h3>
-                        <p>To access your daily review, connect your Readwise account.</p>
+                        <p>To access your daily review, connect your Readwise account</p>
                         <button class="sys-btn" onclick="openSettings()" style="margin-top:20px;">Connect Account</button>
                     </div>`;
                 return;
@@ -1145,7 +1145,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <h3>No Review Today</h3>
-                        <p>Your daily review is complete or not yet available.</p>
+                        <p>Your daily review is complete or not yet available</p>
                     </div>`;
                 return;
             }
@@ -1182,7 +1182,7 @@
             document.getElementById('post-list').innerHTML = `
                 <div class="empty-state">
                     <h3>Token Invalid</h3>
-                    <p>Your saved Readwise token is no longer valid.</p>
+                    <p>Your saved Readwise token is no longer valid</p>
                     <button class="sys-btn" onclick="openSettings()" style="margin-top:15px;">Update Token</button>
                 </div>`;
         }
@@ -1202,7 +1202,7 @@
             const statusEl = document.getElementById('token-status');
 
             if (!token) {
-                statusEl.textContent = "Please enter a token.";
+                statusEl.textContent = "Please enter a token";
                 statusEl.style.color = "#c00";
                 return;
             }
@@ -1226,12 +1226,12 @@
                     }, 800);
                 } else {
                     state.token = oldToken;
-                    statusEl.textContent = "Invalid token. Please check and try again.";
+                    statusEl.textContent = "Invalid token. Please check and try again";
                     statusEl.style.color = "#c00";
                 }
             } catch (e) {
                 state.token = oldToken;
-                statusEl.textContent = "Validation failed. Please try again.";
+                statusEl.textContent = "Validation failed. Please try again";
                 statusEl.style.color = "#c00";
             }
         }

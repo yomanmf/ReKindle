@@ -872,7 +872,7 @@
             });
 
             if (mergedLibrary.length === 0) {
-                list.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">${window.t('reader.msg.nobooks', 'No books.<br>Download from Online Store.')}</div>`;
+                list.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">${window.t('reader.msg.nobooks', 'No books<br>Download from Online Store')}</div>`;
                 return;
             }
 
@@ -1235,7 +1235,7 @@
                 });
                 if (nextPopularUrl) document.getElementById('btn-load-more-popular').style.display = 'block';
                 popularLoaded = true;
-            } catch (e) { popDiv.innerHTML = 'Error loading.'; }
+            } catch (e) { popDiv.innerHTML = 'Error loading'; }
         }
 
         async function loadMorePopular() {
@@ -1268,12 +1268,12 @@
             try {
                 const data = await fetchViaProxy(`https://gutendex.com/books?search=${encodeURIComponent(query)}`);
                 resultsDiv.innerHTML = '';
-                if (data.results.length === 0) { resultsDiv.innerHTML = '<div style="text-align:center;">No results.</div>'; return; }
+                if (data.results.length === 0) { resultsDiv.innerHTML = '<div style="text-align:center;">No results</div>'; return; }
                 data.results.forEach(book => {
                     const item = createOnlineBookItem(book);
                     if (item) resultsDiv.appendChild(item);
                 });
-            } catch (e) { resultsDiv.innerHTML = '<div style="text-align:center;">Error.</div>'; }
+            } catch (e) { resultsDiv.innerHTML = '<div style="text-align:center;">Error</div>'; }
         }
 
         function escapeHtml(text) {

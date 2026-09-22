@@ -461,7 +461,7 @@
             </div>
         </div>
 
-        <div id="status-bar" data-i18n="tasks.status.ready">Ready.</div>
+        <div id="status-bar" data-i18n="tasks.status.ready">Ready</div>
 
         <div id="auth-overlay">
             <h2 style="margin-bottom:10px;" data-i18n="tasks.overlay.google.title">Google Tasks</h2>
@@ -761,10 +761,10 @@
                         cont.innerHTML = `<div style="padding:20px;text-align:center;color:#888;">${window.t('common.empty', 'Empty')}</div>`;
                     }
                 }
-                document.getElementById('status-bar').innerText = window.t('tasks.status.synced_short', 'Synced.');
+                document.getElementById('status-bar').innerText = window.t('tasks.status.synced_short', 'Synced');
             } catch (e) {
                 console.error(e);
-                document.getElementById('status-bar').innerText = window.t('tasks.error.sync', 'Error syncing.');
+                document.getElementById('status-bar').innerText = window.t('tasks.error.sync', 'Error syncing');
                 if (e.status === 401) {
                     // Token expired during use -> Re-auth
                     handleUnauthorized();
@@ -807,7 +807,7 @@
             list.innerHTML = '';
 
             if (nativeTasks.length === 0) {
-                list.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">No tasks.</div>';
+                list.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">No tasks</div>';
                 return;
             }
 

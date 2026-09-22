@@ -1539,10 +1539,10 @@
                 this.updateThreadNavigation();
                 content.innerHTML = '';
                 if (stale) {
-                    content.innerHTML = '<div class="loading" style="color:#a60;">Showing cached posts for r/' + escapeHtml(sub) + ' because Reddit is busy.<br>Pull to refresh or try again shortly.</div>';
+                    content.innerHTML = '<div class="loading" style="color:#a60;">Showing cached posts for r/' + escapeHtml(sub) + ' because Reddit is busy.<br>Pull to refresh or try again shortly</div>';
                 }
                 if (posts.length === 0) {
-                    if (!stale) content.innerHTML = '<div class="loading">No posts found.</div>';
+                    if (!stale) content.innerHTML = '<div class="loading">No posts found</div>';
                     return;
                 }
                 posts.forEach(function(p) {
@@ -1891,7 +1891,7 @@
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
                     if (cachedPosts.length === 0) {
-                        content.innerHTML = `<div class="loading" style="color:red">Error loading r/${escapeHtml(sub)}<br>${escapeHtml(e.message)}<br><small>If proxy issues persist, try reloading.</small></div>`;
+                        content.innerHTML = `<div class="loading" style="color:red">Error loading r/${escapeHtml(sub)}<br>${escapeHtml(e.message)}<br><small>If proxy issues persist, try reloading</small></div>`;
                     }
                 }
             },
@@ -1993,7 +1993,7 @@
                     }
 
                     if (!post) {
-                        content.innerHTML = `<div class="loading" style="color:red">No thread data found.</div>`;
+                        content.innerHTML = `<div class="loading" style="color:red">No thread data found</div>`;
                         this.updateCommentNavigation();
                         return;
                     }
@@ -2229,7 +2229,7 @@
 
                 const update = function() {
                     const seconds = Math.max(0, Math.ceil((ui.rateLimitUntil - Date.now()) / 1000));
-                    const fallback = 'Reddit is rate limiting access. Reloading in ${seconds}s.';
+                    const fallback = 'Reddit is rate limiting access. Reloading in ${seconds}s';
                     const template = window.t ? window.t('reddit.rate_limit.countdown', fallback) : fallback;
                     msg.innerText = template.replace('${seconds}', seconds);
                     msg.style.display = 'block';

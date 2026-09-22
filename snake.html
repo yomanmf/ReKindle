@@ -536,10 +536,10 @@
                     });
                 } catch (e) {
                     console.error("Error loading leaderboard:", e);
-                    list.innerText = window.t ? window.t('snake.status.error_loading') : "Error loading scores.";
+                    list.innerText = window.t ? window.t('snake.status.error_loading') : "Error loading scores";
                 }
             } else {
-                list.innerText = window.t ? window.t('snake.status.login_required') : "Log in to see global scores.";
+                list.innerText = window.t ? window.t('snake.status.login_required') : "Log in to see global scores";
             }
         }
 

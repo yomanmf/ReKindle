@@ -825,7 +825,7 @@
 
         function endGame(playerWon) {
             document.getElementById('game-over-title').innerText = playerWon ? (window.t ? window.t('pool.msg.win') : "You Won!") : (window.t ? window.t('pool.msg.lose') : "CPU Won!");
-            document.getElementById('game-over-msg').innerText = playerWon ? (window.t ? window.t('pool.msg.congrats') : "Congratulations!") : (window.t ? window.t('pool.msg.luck') : "Better luck next time.");
+            document.getElementById('game-over-msg').innerText = playerWon ? (window.t ? window.t('pool.msg.congrats') : "Congratulations!") : (window.t ? window.t('pool.msg.luck') : "Better luck next time");
             document.getElementById('game-over-modal').style.display = 'flex';
             isMoving = false;
         }

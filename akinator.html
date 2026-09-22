@@ -344,7 +344,7 @@
 
         <div class="window-content">
             <div id="start-view" class="view active">
-                <p class="intro-text" data-i18n="akinator.intro">Think of a character, real or fictional. The genie will try to guess it in 20 questions.</p>
+                <p class="intro-text" data-i18n="akinator.intro">Think of a character, real or fictional. The genie will try to guess it in 20 questions</p>
 
                 <div>
                     <label for="region-select" data-i18n="akinator.label.region">Region</label>
@@ -527,7 +527,7 @@
                 renderGame();
             } catch (e) {
                 console.error('Start error:', e);
-                showError(translate('akinator.error.start', 'Could not start Akinator.') + ' ' + e.message);
+                showError(translate('akinator.error.start', 'Could not start Akinator') + ' ' + e.message);
             } finally {
                 setLoading(false);
             }

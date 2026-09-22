@@ -633,7 +633,7 @@
 
             const key = specificKey || document.getElementById('ai-api-key').value.trim() || apiKey;
             if (!key) {
-                if (alertUser) showAlert("Please enter an API Key first.");
+                if (alertUser) showAlert("Please enter an API Key first");
                 return;
             }
 
@@ -813,7 +813,7 @@
                     if (sendBtn) sendBtn.disabled = true;
                 } else if (!currentUserId) {
                     counterEl.style.display = 'block';
-                    counterEl.innerText = translate('chat.auth.required', 'Please sign in to use AI Assistant.');
+                    counterEl.innerText = translate('chat.auth.required', 'Please sign in to use AI Assistant');
                     counterEl.style.color = '#cc0000';
                     if (sendBtn) sendBtn.disabled = true;
                 } else if (useByoKey && apiKey) {
@@ -826,7 +826,7 @@
                         counterEl.style.color = '#666';
                         if (sendBtn) sendBtn.disabled = true;
                     } else if (dailyMessageCount === -1) {
-                        counterEl.innerText = translate('chat.quota.error', 'Error loading quota. Refresh to try again.');
+                        counterEl.innerText = translate('chat.quota.error', 'Error loading quota. Refresh to try again');
                         counterEl.style.color = '#cc0000';
                         if (sendBtn) sendBtn.disabled = true;
                     } else {
@@ -864,7 +864,7 @@
                     }
                 });
             } else {
-                showAlert("Error: Firebase not loaded.");
+                showAlert("Error: Firebase not loaded");
             }
         }
 
@@ -928,7 +928,7 @@
 
             if (!text || isSendingMessage) return;
             if (!authStateReady || !currentUserId) {
-                if (authStateReady) addMessage(translate('chat.auth.required', 'Please sign in to use AI Assistant.'), 'ai');
+                if (authStateReady) addMessage(translate('chat.auth.required', 'Please sign in to use AI Assistant'), 'ai');
                 return;
             }
 
@@ -979,12 +979,12 @@
                 if (loadingEl) loadingEl.remove();
 
                 if (data.error) {
-                    addMessage(translate('chat.error.unknown', 'The AI request failed.'), 'ai');
+                    addMessage(translate('chat.error.unknown', 'The AI request failed'), 'ai');
                 } else if (data.text) {
                     addMessage(data.text, 'ai');
                     if (!hasCustomProvider) applyQuota(data.quota);
                 } else {
-                    addMessage(translate('chat.error.empty', 'The AI provider returned an empty response.'), 'ai');
+                    addMessage(translate('chat.error.empty', 'The AI provider returned an empty response'), 'ai');
                 }
 
             } catch (e) {
@@ -1003,27 +1003,27 @@
             const code = error && error.code ? String(error.code) : '';
             let message;
             if (code === 'unauthenticated') {
-                message = translate('chat.error.session', 'Your session expired. Sign in again and retry.');
+                message = translate('chat.error.session', 'Your session expired. Sign in again and retry');
             } else if (code === 'daily-limit') {
                 message = translate('chat.error.daily_limit', 'You have reached today\'s AI message limit. Please try again tomorrow.');
             } else if (code === 'provider-authorization') {
-                message = translate('chat.error.provider_auth', 'The selected AI provider rejected the API key.');
+                message = translate('chat.error.provider_auth', 'The selected AI provider rejected the API key');
             } else if (code === 'provider-rate-limit') {
-                message = translate('chat.error.provider_rate_limit', 'The selected AI provider rate limit was reached.');
+                message = translate('chat.error.provider_rate_limit', 'The selected AI provider rate limit was reached');
             } else if (code === 'provider-request') {
-                message = error.message || translate('chat.error.provider_request', 'The selected AI provider rejected the request.');
+                message = error.message || translate('chat.error.provider_request', 'The selected AI provider rejected the request');
             } else if (code === 'ai-timeout' || (error && error.name === 'AbortError')) {
-                message = translate('chat.error.timeout', 'The AI request timed out. Please try again.');
+                message = translate('chat.error.timeout', 'The AI request timed out. Please try again');
             } else if (code === 'ai-configuration') {
-                message = translate('chat.error.configuration', 'The shared AI service is not configured correctly.');
+                message = translate('chat.error.configuration', 'The shared AI service is not configured correctly');
             } else if (code === 'ai-capacity' || code === 'ai-unavailable' || code === 'ai-network') {
-                message = translate('chat.error.unavailable', 'The AI service is temporarily unavailable. Please try again later.');
+                message = translate('chat.error.unavailable', 'The AI service is temporarily unavailable. Please try again later');
             } else if ((!error || !error.status) && (typeof navigator !== 'undefined' && navigator.onLine === false)) {
-                message = translate('chat.error.network', 'Network error. Check your connection.');
+                message = translate('chat.error.network', 'Network error. Check your connection');
             } else if ((!error || !error.status) && error && error.name === 'TypeError') {
-                message = translate('chat.error.network', 'Network error. Check your connection.');
+                message = translate('chat.error.network', 'Network error. Check your connection');
             } else {
-                message = error && error.message ? error.message : translate('chat.error.unknown', 'The AI request failed.');
+                message = error && error.message ? error.message : translate('chat.error.unknown', 'The AI request failed');
             }
             if (error && error.requestId) {
                 message += ' ' + formatTemplate(translate('chat.error.request_id', '(Request ID: ${requestId})'), {

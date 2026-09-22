@@ -481,7 +481,7 @@
         <div id="confirm-modal" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-title">Start New Game?</div>
-                <div style="margin-bottom:5px;">Current progress will be lost.</div>
+                <div style="margin-bottom:5px;">Current progress will be lost</div>
                 <div class="modal-buttons">
                     <button onclick="closeModal(false)">Cancel</button>
                     <button onclick="closeModal(true)">OK</button>
@@ -778,7 +778,7 @@
 
                     if (currentMode === 'unlimited') {
                         if (isWin) {
-                            showMessage("Splendid! Click to play again.", 5000);
+                            showMessage("Splendid! Click to play again", 5000);
                             showPlayAgainButton();
                         } else {
                             const message = "The word was " + activeState.targetWord;
@@ -876,7 +876,7 @@
 
         async function startNewUnlimitedGame(retryCount = 0) {
             if (retryCount > 3) {
-                showMessage(window.t ? window.t('wordle.error.network') : "Network Error. Try again later.", 5000);
+                showMessage(window.t ? window.t('wordle.error.network') : "Network Error. Try again later", 5000);
                 return;
             }
 
@@ -1187,7 +1187,7 @@
                 activeState.gameOver = true;
                 updateStats(true, activeState.guesses.length);
                 if (currentMode === 'unlimited') {
-                    showMessage("Splendid! Click to play again.", 5000);
+                    showMessage("Splendid! Click to play again", 5000);
                     showPlayAgainButton();
                 } else {
                     showMessage(window.t ? window.t('wordle.msg.win') : "Splendid!");

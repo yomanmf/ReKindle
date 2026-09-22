@@ -322,7 +322,7 @@
         <div class="modal-overlay hidden" id="river-modal">
             <div class="modal-box">
                 <h2 id="river-title" data-i18n="oregontrail.river.title">River Crossing</h2>
-                <p id="river-text" data-i18n="oregontrail.river.desc">River looks deep and swift.</p>
+                <p id="river-text" data-i18n="oregontrail.river.desc">River looks deep and swift</p>
                 <div class="trail-col-group" style="display: flex; flex-direction: column; margin-top: 15px;">
                     <button class="sys-btn" onclick="attemptRiver('ford')" data-i18n="oregontrail.river.ford">Ford the River</button>
                     <button class="sys-btn" onclick="attemptRiver('caulk')" data-i18n="oregontrail.river.caulk">Caulk & Float</button>
@@ -486,7 +486,7 @@
             gameLog.innerHTML = "";
             let startEntry = document.createElement('div');
             startEntry.style.marginBottom = "5px";
-            startEntry.innerText = window.t ? window.t('oregontrail.log.start', "You depart Independence, Missouri.") : "You depart Independence, Missouri.";
+            startEntry.innerText = window.t ? window.t('oregontrail.log.start', "You depart Independence, Missouri") : "You depart Independence, Missouri";
             gameLog.appendChild(startEntry);
             updateStats();
         }
@@ -597,7 +597,7 @@
             // Check win/loss
             if (state.health <= 0) {
                 localStorage.removeItem('rekindle_oregontrail_save');
-                endGame(window.t ? window.t('oregontrail.msg.died', "You have died of dysentery (or starvation).") : "You have died of dysentery (or starvation).");
+                endGame(window.t ? window.t('oregontrail.msg.died', "You have died of dysentery (or starvation)") : "You have died of dysentery (or starvation)");
             } else if (state.distance >= TARGET_DIST) {
                 localStorage.removeItem('rekindle_oregontrail_save');
                 endGame(window.t ? window.t('oregontrail.msg.win', "Congratulations! You reached Oregon City!") : "Congratulations! You reached Oregon City!");
@@ -652,7 +652,7 @@
             } else if (action === 'rest') {
                 let heal = 10 + Math.floor(Math.random() * 10);
                 state.health = Math.min(100, state.health + heal);
-                eventMsg = (window.t ? window.t('oregontrail.msg.rest', "Rested and gained health.") : "Rested and gained health.");
+                eventMsg = (window.t ? window.t('oregontrail.msg.rest', "Rested and gained health") : "Rested and gained health");
                 
             } else if (action === 'hunt') {
                 if (state.ammo <= 0) {
@@ -665,7 +665,7 @@
                     state.food += meat;
                     eventMsg = (window.t ? window.t('oregontrail.msg.hunt_success', "Hunted and gained " + meat + " lbs of food.") : "Hunted and gained " + meat + " lbs of food.");
                 } else {
-                    eventMsg = window.t ? window.t('oregontrail.msg.hunt_fail', "Hunting failed. Lost 1 ammo.") : "Hunting failed. Lost 1 ammo.";
+                    eventMsg = window.t ? window.t('oregontrail.msg.hunt_fail', "Hunting failed. Lost 1 ammo") : "Hunting failed. Lost 1 ammo";
                 }
                 // Hunting takes time
                 advancedDay = true;
@@ -675,7 +675,7 @@
                 if (state.parts > 0) {
                     state.parts -= 1;
                     state.wagonBroken = false;
-                    eventMsg = window.t ? window.t('oregontrail.msg.repair_success', "Wagon repaired using 1 part.") : "Wagon repaired using 1 part.";
+                    eventMsg = window.t ? window.t('oregontrail.msg.repair_success', "Wagon repaired using 1 part") : "Wagon repaired using 1 part";
                 } else {
                     // Try to repair without parts (low chance)
                     if (Math.random() > 0.7) {
@@ -784,11 +784,11 @@
 
         function triggerRandomEvent() {
             const events = [
-                { type: 'disease', msg: 'Someone got Dysentery. Lose 20 health.', effect: () => { state.health -= 20; } },
-                { type: 'ox_dies', msg: 'An ox strayed and died.', effect: () => { state.oxen = Math.max(0, state.oxen - 1); } },
+                { type: 'disease', msg: 'Someone got Dysentery. Lose 20 health', effect: () => { state.health -= 20; } },
+                { type: 'ox_dies', msg: 'An ox strayed and died', effect: () => { state.oxen = Math.max(0, state.oxen - 1); } },
                 { type: 'wagon', msg: 'Wagon wheel broke!', effect: () => { state.wagonBroken = true; } },
-                { type: 'thief', msg: 'Thieves stole some food.', effect: () => { state.food = Math.max(0, state.food - 50); } },
-                { type: 'fruit', msg: 'Found wild berries. Gain 30 food.', effect: () => { state.food += 30; } },
+                { type: 'thief', msg: 'Thieves stole some food', effect: () => { state.food = Math.max(0, state.food - 50); } },
+                { type: 'fruit', msg: 'Found wild berries. Gain 30 food', effect: () => { state.food += 30; } },
                 { type: 'snake', msg: 'Snake bite! Lose 15 health.', effect: () => { state.health -= 15; } },
                 { type: 'abandoned', msg: 'Found abandoned wagon. Gained parts and ammo.', effect: () => { state.parts += 1; state.ammo += 10; } },
                 { type: 'spoiled', msg: 'Some food spoiled. Lost 20 food.', effect: () => { state.food = Math.max(0, state.food - 20); } }
@@ -828,7 +828,7 @@
                     gameLog.innerHTML = "";
                     let startEntry = document.createElement('div');
                     startEntry.style.marginBottom = "5px";
-                    startEntry.innerText = window.t ? window.t('oregontrail.msg.resume', "Journey resumed.") : "Journey resumed.";
+                    startEntry.innerText = window.t ? window.t('oregontrail.msg.resume', "Journey resumed") : "Journey resumed";
                     gameLog.appendChild(startEntry);
                     
                     if (state.riverPending) {

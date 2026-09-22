@@ -448,7 +448,7 @@
             </div>
         </div>
 
-        <div id="status-bar" data-i18n="readlater.status.ready">Ready.</div>
+        <div id="status-bar" data-i18n="readlater.status.ready">Ready</div>
     </div>
 
     <!-- STANDARD MODAL POPUP -->
@@ -550,7 +550,7 @@
 
             if (readLaterItems.length === 0) {
                 list.style.display = 'block';
-                list.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">' + (window.t ? window.t('common.empty', 'No links saved yet.') : 'No links saved yet.') + '</div>';
+                list.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">' + (window.t ? window.t('common.empty', 'No links saved yet') : 'No links saved yet') + '</div>';
                 return;
             }
 
@@ -710,7 +710,7 @@
                 db.collection('users').doc(currentUser.uid).collection('readlater').add(newDoc)
                 .catch(e => {
                     console.error("Error adding doc: ", e);
-                    window.showModal(window.t ? window.t('error.generic', 'An error occurred.') : 'An error occurred.');
+                    window.showModal(window.t ? window.t('error.generic', 'An error occurred') : 'An error occurred');
                 });
             } else {
                 readLaterItems.unshift({ id: Date.now().toString(), ...newDoc });

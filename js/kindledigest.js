@@ -34,7 +34,7 @@
     function setStatus(value) { setText(byId("status-bar"), value); }
 
     function showError(error) {
-        setText(byId("error-message"), error && error.localized ? error.message : translate("kindledigest.error_connection", "Could not reach the Kindle Digest service."));
+        setText(byId("error-message"), error && error.localized ? error.message : translate("kindledigest.error_connection", "Could not reach the Kindle Digest service"));
         byId("error-modal").style.display = "flex";
     }
 
@@ -60,7 +60,7 @@
                 setBusy(false);
                 if (!signedIn) {
                     stopPolling();
-                    setStatus(translate("kindledigest.signin", "Sign in to ReKindle before creating a digest."));
+                    setStatus(translate("kindledigest.signin", "Sign in to ReKindle before creating a digest"));
                     return;
                 }
                 loadAll();
@@ -72,7 +72,7 @@
         signedIn = false;
         byId("auth-notice").hidden = false;
         byId("digest-form").hidden = true;
-        setStatus(translate("kindledigest.signin", "Sign in to ReKindle before creating a digest."));
+        setStatus(translate("kindledigest.signin", "Sign in to ReKindle before creating a digest"));
     }
 
     async function loadAll() {
@@ -85,7 +85,7 @@
             setStatus(translate("kindledigest.ready", "Ready"));
         } catch (error) {
             showError(error);
-            setStatus(translate("kindledigest.error_connection", "Could not reach the Kindle Digest service."));
+            setStatus(translate("kindledigest.error_connection", "Could not reach the Kindle Digest service"));
         }
     }
 
@@ -118,14 +118,14 @@
         event.preventDefault();
         var days = Number(byId("lookback-days").value);
         if (!Number.isInteger(days) || days < 1 || days > 30) {
-            showError({ localized: true, message: translate("kindledigest.error_days", "Recent days must be from 1 to 30.") });
+            showError({ localized: true, message: translate("kindledigest.error_days", "Recent days must be from 1 to 30") });
             return;
         }
         var mode = selected("mode");
         var sourceId = mode === "daily" ? byId("source-select").value : "";
         var customUrl = byId("custom-url").value.trim();
         if (mode === "daily" && sourceId === "custom" && !/^https?:\/\//i.test(customUrl)) {
-            showError({ localized: true, message: translate("kindledigest.error_url", "Enter a complete HTTP or HTTPS source URL.") });
+            showError({ localized: true, message: translate("kindledigest.error_url", "Enter a complete HTTP or HTTPS source URL") });
             return;
         }
         setBusy(true);
@@ -143,11 +143,11 @@
             renderJob(result.job);
             await loadHistory();
             setStatus(result.existing
-                ? translate("kindledigest.existing", "An unfinished job is already active.")
-                : translate("kindledigest.queued", "Digest queued."));
+                ? translate("kindledigest.existing", "An unfinished job is already active")
+                : translate("kindledigest.queued", "Digest queued"));
         } catch (error) {
             showError(error);
-            setStatus(translate("kindledigest.submit_failed", "Digest was not queued."));
+            setStatus(translate("kindledigest.submit_failed", "Digest was not queued"));
         } finally { setBusy(false); }
     }
 
@@ -211,7 +211,7 @@
     }
 
     function resultText(job) {
-        if (job.error) return translate("kindledigest.failed_detail", "The digest could not be prepared.");
+        if (job.error) return translate("kindledigest.failed_detail", "The digest could not be prepared");
         if (!job.result) return "";
         return String(job.result.articleCount || 0) + " " + translate("kindledigest.articles", "articles") + ", " + formatBytes(job.result.sizeBytes || 0);
     }
@@ -260,7 +260,7 @@
         try {
             var result = await request("cancel", { id: currentJob.id });
             renderJob(result.job);
-            setStatus(translate("kindledigest.cancel_requested", "Cancellation requested."));
+            setStatus(translate("kindledigest.cancel_requested", "Cancellation requested"));
         } catch (error) { showError(error); }
     }
 
@@ -269,7 +269,7 @@
         try {
             var result = await request("retry", { id: currentJob.id });
             renderJob(result.job);
-            setStatus(translate("kindledigest.queued", "Digest queued."));
+            setStatus(translate("kindledigest.queued", "Digest queued"));
         } catch (error) { showError(error); }
     }
 

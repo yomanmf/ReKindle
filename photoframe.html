@@ -429,7 +429,7 @@
 
             <div class="setting-group">
                 <div id="upload-status"></div>
-                <div class="storage-status"><span id="photo-count">0</span> photos loaded.</div>
+                <div class="storage-status"><span id="photo-count">0</span> photos loaded</div>
 
                 <div class="storage-info">
                     <span id="storage-text">Loading storage...</span>
@@ -585,7 +585,7 @@
                 if (photoData.length > 0) {
                     if (startBtn) startBtn.disabled = false;
                 } else {
-                    statusEl.innerText = window.t('photoframe.msg.empty', "No photos found. Upload some to begin.");
+                    statusEl.innerText = window.t('photoframe.msg.empty', "No photos found. Upload some to begin");
                 }
 
                 renderPreviews();
@@ -593,7 +593,7 @@
 
             } catch (error) {
                 console.error("Error loading photos:", error);
-                statusEl.innerText = "Error loading photos (Permissions or missing folder).";
+                statusEl.innerText = "Error loading photos (Permissions or missing folder)";
             }
         }
 

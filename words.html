@@ -502,14 +502,14 @@
 
         <div id="login-overlay" class="overlay" style="display:none;">
             <h2 data-i18n="words.overlay.login.title">Words Online</h2>
-            <p data-i18n="words.overlay.login.text">You must log in to play.</p>
+            <p data-i18n="words.overlay.login.text">You must log in to play</p>
             <button onclick="location.href='index?login=true'" data-i18n="words.overlay.login.btn_login">Log In</button>
         </div>
 
         <div id="new-game-modal" class="overlay" style="display:none; background:rgba(255,255,255,0.8);">
             <div class="modal-inner">
                 <h3 data-i18n="words.modal.new_game.title">New Game?</h3>
-                <p style="margin:15px 0;" data-i18n="words.modal.new_game.text">This will forfeit your current game.</p>
+                <p style="margin:15px 0;" data-i18n="words.modal.new_game.text">This will forfeit your current game</p>
                 <div style="display: flex; justify-content: center">
                     <button onclick="forfeitAndRestart(); closeNewGameModal();" data-i18n="words.modal.new_game.btn_yes">Yes</button>
                     <button onclick="closeNewGameModal()" data-i18n="words.modal.new_game.btn_no" style="margin-left: 10px">No</button>
@@ -741,7 +741,7 @@
                 }
             } catch (e) {
                 const errorTitle = window.t ? window.t('words.modal.error.title') : "Error";
-                const errorTxt = window.t ? window.t('words.modal.error.text') : "Connection error.";
+                const errorTxt = window.t ? window.t('words.modal.error.text') : "Connection error";
                 showOverlay(errorTitle, errorTxt, false);
             }
         }
@@ -755,7 +755,7 @@
 
                     if (gameData.status === 'finished') {
                         hideOverlay();
-                        document.getElementById('status-text').innerText = window.t ? window.t('words.status.game_ended') : "Game Ended.";
+                        document.getElementById('status-text').innerText = window.t ? window.t('words.status.game_ended') : "Game Ended";
                         document.getElementById('play-btn').disabled = true;
                         return;
                     }
@@ -1109,7 +1109,7 @@
             const uniqueYs = new Set(ys).size;
 
             if (uniqueXs > 1 && uniqueYs > 1) {
-                showModal(window.t ? window.t('words.error.straight_line') : "Tiles must be in a straight line.");
+                showModal(window.t ? window.t('words.error.straight_line') : "Tiles must be in a straight line");
                 return;
             }
 
@@ -1151,7 +1151,7 @@
             try {
                 await db.collection('word_games').doc(gameId).update(updates);
             } catch (e) {
-                showModal(window.t ? window.t('words.error.connection') : "Connection error.");
+                showModal(window.t ? window.t('words.error.connection') : "Connection error");
             }
         }
 

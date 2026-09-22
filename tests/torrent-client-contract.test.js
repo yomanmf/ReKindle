@@ -50,7 +50,7 @@ test("torrent controls are routed, catalogued, cache-busted, and released", func
     });
     assert.match(read("index.html"), /icons-beta\.js\?v=12/);
     assert.match(read("index_old.html"), /icons-beta\.js\?v=12/);
-    assert.match(read("sw.js"), /rekindle-cache-v61/);
+    assert.match(read("sw.js"), /rekindle-cache-v62/);
     assert.match(read("sw.js"), /icons-beta\.js\?v=12/);
-    assert.match(read("torrents.html"), /js\/torrents\.js\?v=4/);
+    assert.match(read("torrents.html"), /js\/torrents\.js\?v=5/);
 });

@@ -262,7 +262,7 @@
 
         <div class="window-content" id="screen-menu">
             <h1 style="font-size: 3rem; margin: 10px 0;">CHESS</h1>
-            <p>Real-time Multiplayer.</p>
+            <p>Real-time Multiplayer</p>
             <button class="sys-btn" onclick="hostGame()">Host Game</button>
             <button class="sys-btn" onclick="goHome()">Back</button>
         </div>
@@ -277,7 +277,7 @@
             <div class="player-list" id="lobby-players"></div>
             
             <div id="host-controls" style="display:none;">
-                <p style="font-size: 0.9rem;">Game starts automatically when an opponent joins.</p>
+                <p style="font-size: 0.9rem;">Game starts automatically when an opponent joins</p>
             </div>
             <button class="sys-btn" onclick="leaveMatch()">Leave Lobby</button>
         </div>
@@ -316,7 +316,7 @@
         <div id="reset-modal" class="modal-overlay">
             <div class="modal-box">
                 <h3>Start New Game?</h3>
-                <p style="margin: 15px 0;">Current progress will be lost.</p>
+                <p style="margin: 15px 0;">Current progress will be lost</p>
                 <div style="display: flex; justify-content: center">
                     <button class="sys-btn" onclick="confirmReset()">Yes</button>
                     <button class="sys-btn" onclick="closeResetModal()">No</button>
@@ -431,7 +431,7 @@
                 };
                 checkUrlForMatch();
             } else {
-                showAlert("Sign In Required", "Please log in from the home screen first.");
+                showAlert("Sign In Required", "Please log in from the home screen first");
                 setTimeout(goHome, 3000);
             }
         });

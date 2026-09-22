@@ -417,7 +417,7 @@
         <div class="app-content">
             <!-- Empty State -->
             <div id="empty-state">
-                <p data-i18n="docs.empty.msg">No document open.</p>
+                <p data-i18n="docs.empty.msg">No document open</p>
                 <button class="sys-btn" onclick="document.getElementById('file-upload').click()"
                     data-i18n="docs.btn.open">Open Document</button>
             </div>
@@ -538,7 +538,7 @@
             } else {
                 console.warn("User not signed in. Saving disabled.");
                 if (currentPath) {
-                    showAlert("Please sign in to view this document.");
+                    showAlert("Please sign in to view this document");
                     hideLoading();
                 }
             }
@@ -689,7 +689,7 @@
 
             // Verify CKEditor loaded
             if (typeof DecoupledEditor === 'undefined') {
-                showAlert("Editor library failed to load. Please check connection.");
+                showAlert("Editor library failed to load. Please check connection");
                 hideLoading();
                 return;
             }

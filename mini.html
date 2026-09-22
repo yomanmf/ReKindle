@@ -397,7 +397,7 @@
     <div id="new-game-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 data-i18n="mini.modal.new_title">Start New Puzzle?</h3>
-            <p data-i18n="mini.modal.new_body">Current progress will be lost.</p>
+            <p data-i18n="mini.modal.new_body">Current progress will be lost</p>
             <div class="modal-btns">
                 <button class="sys-btn" onclick="confirmNewGame()" data-i18n="mini.btn.yes">Yes</button>
                 <button class="sys-btn" onclick="closeNewGameModal()" data-i18n="mini.btn.cancel">Cancel</button>
@@ -590,7 +590,7 @@
             } catch (e) {
                 console.error(e);
                 const clueBar = document.getElementById('clue-bar');
-                clueBar.innerText = window.t ? window.t('mini.status.error') : "Error loading puzzle.";
+                clueBar.innerText = window.t ? window.t('mini.status.error') : "Error loading puzzle";
                 clueBar.removeAttribute('data-i18n');
             }
         }
@@ -882,9 +882,9 @@
 
             const bar = document.getElementById('clue-bar');
             if (isEmpty) {
-                bar.innerText = window.t ? window.t('mini.msg.empty') : "Grid is empty.";
+                bar.innerText = window.t ? window.t('mini.msg.empty') : "Grid is empty";
             } else if (hasError) {
-                bar.innerText = window.t ? window.t('mini.msg.errors') : "Errors found.";
+                bar.innerText = window.t ? window.t('mini.msg.errors') : "Errors found";
             } else if (!isFull) {
                 bar.innerText = window.t ? window.t('mini.msg.correct') : "Correct so far!";
             } else {

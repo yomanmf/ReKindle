@@ -1139,7 +1139,7 @@
             const label = pomodoroState.label || window.t('timer.pomodoro.session', 'Session');
 
             if (wasWork) {
-                notify(window.t('timer.pomodoro.workComplete', 'Work Complete!'), window.t('timer.pomodoro.takeBreak', 'Take a break.'));
+                notify(window.t('timer.pomodoro.workComplete', 'Work Complete!'), window.t('timer.pomodoro.takeBreak', 'Take a break'));
 
                 if (pomodoroState.currentSession >= pomodoroState.sessionsBeforeLongBreak) {
                     pomodoroState.phase = 'longBreak';
@@ -1149,7 +1149,7 @@
                     pomodoroState.currentSession = pomodoroState.currentSession + 1;
                 }
             } else {
-                notify(window.t('timer.pomodoro.breakComplete', 'Break Over!'), window.t('timer.pomodoro.backToWork', 'Back to work.'));
+                notify(window.t('timer.pomodoro.breakComplete', 'Break Over!'), window.t('timer.pomodoro.backToWork', 'Back to work'));
                 pomodoroState.phase = 'work';
             }
 
@@ -1288,7 +1288,7 @@
             const list = document.getElementById('timer-list');
 
             if (multiTimers.length === 0) {
-                list.innerHTML = '<div class="empty-state">No timers.<br>Tap + to add one.</div>';
+                list.innerHTML = '<div class="empty-state">No timers.<br>Tap + to add one</div>';
                 return;
             }
 

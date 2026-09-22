@@ -405,7 +405,7 @@
         <div id="content-area">
             <div style="text-align:center; margin-top:50px;">
                 <h1 style="font-family: 'Helvetica Neue'; font-size: 2rem;" data-i18n="dictionary.title">Dictionary</h1>
-                <p data-i18n="dictionary.msg.initial">Type a word above to begin.</p>
+                <p data-i18n="dictionary.msg.initial">Type a word above to begin</p>
             </div>
         </div>
     </div>
@@ -495,7 +495,7 @@
             } catch (e) {
                 content.innerHTML = `<div style="text-align:center; margin-top:50px;">
                     <h1 style="font-family:'Helvetica Neue';font-size:2rem;" data-i18n="dictionary.title">Dictionary</h1>
-                    <p data-i18n="dictionary.msg.initial">Type a word above to begin.</p>
+                    <p data-i18n="dictionary.msg.initial">Type a word above to begin</p>
                 </div>`;
             }
         }
@@ -694,7 +694,7 @@
             const content = document.getElementById('content-area');
             const title = window.t ? window.t('dictionary.error.title') : "No Definition Found";
             const body = (window.t ? window.t('dictionary.error.body') : "Sorry, we couldn't find definitions for \"${query}\".").replace('${query}', escapeHtml(query));
-            const hint = window.t ? window.t('dictionary.error.hint') : "Please check your spelling.";
+            const hint = window.t ? window.t('dictionary.error.hint') : "Please check your spelling";
 
             content.innerHTML = `
                 <div class="error-msg">
@@ -780,7 +780,7 @@
         function playAudio(url) {
             const audio = new Audio(url);
             audio.play().catch(e => {
-                const msg = window.t ? window.t('dictionary.modal.audio_error') : "Could not play audio.";
+                const msg = window.t ? window.t('dictionary.modal.audio_error') : "Could not play audio";
                 showModal(msg);
             });
         }

@@ -32,8 +32,8 @@
     function setStatus(value) { setText(byId("status-bar"), statusText(value)); }
     function showError(error) {
         var message = error && error.status === 429
-            ? translate("bookskindle.error_limit", "Too many requests. Please try again later.")
-            : translate("bookskindle.error_connection", "Could not reach Books to Kindle.");
+            ? translate("bookskindle.error_limit", "Too many requests. Please try again later")
+            : translate("bookskindle.error_connection", "Could not reach Books to Kindle");
         setText(byId("error-message"), message);
         setStatus(message);
         byId("error-modal").style.display = "flex";
@@ -65,7 +65,7 @@
         byId("search-form").hidden = true;
         byId("results-panel").hidden = true;
         byId("job-panel").hidden = true;
-        setStatus(translate("bookskindle.signin", "Sign in to ReKindle before sending books."));
+        setStatus(translate("bookskindle.signin", "Sign in to ReKindle before sending books"));
     }
 
     async function loadAll() {
@@ -77,21 +77,21 @@
             setStatus(translate("bookskindle.ready", "Ready"));
         } catch (error) {
             showError(error);
-            setStatus(translate("bookskindle.error_connection", "Could not reach Books to Kindle."));
+            setStatus(translate("bookskindle.error_connection", "Could not reach Books to Kindle"));
         }
     }
 
     async function saveKindle() {
         try {
             renderKindle(await request("kindle-set", { email: byId("kindle-email").value.trim() }));
-            setStatus(translate("bookskindle.saved", "Kindle address saved."));
+            setStatus(translate("bookskindle.saved", "Kindle address saved"));
         } catch (error) { showError(error); }
     }
 
     async function forgetKindle() {
         try {
             renderKindle(await request("kindle-forget"));
-            setStatus(translate("bookskindle.forgotten", "Kindle address forgotten."));
+            setStatus(translate("bookskindle.forgotten", "Kindle address forgotten"));
         } catch (error) { showError(error); }
     }
 
@@ -100,8 +100,8 @@
         byId("kindle-panel").hidden = result.connected === true;
         byId("kindle-change-panel").hidden = result.connected !== true;
         setText(byId("kindle-state"), result.connected ? translate("bookskindle.connected", "Address saved") : translate("bookskindle.not_connected", "Address not saved"));
-        var sender = result.sender ? translate("bookskindle.sender", "Approved sender") + ": " + result.sender : translate("bookskindle.sender_waiting", "Waiting for the delivery worker.");
-        if (result.online !== true) sender += " " + translate("bookskindle.offline", "The worker is offline.");
+        var sender = result.sender ? translate("bookskindle.sender", "Approved sender") + ": " + result.sender : translate("bookskindle.sender_waiting", "Waiting for the delivery worker");
+        if (result.online !== true) sender += " " + translate("bookskindle.offline", "The worker is offline");
         setText(byId("kindle-detail"), sender);
         byId("kindle-forget").disabled = result.connected !== true;
     }
@@ -120,7 +120,7 @@
             var result = await request("search", { query: query });
             searchJobId = result.job.id;
             renderJob(result.job);
-            setStatus(result.existing ? translate("bookskindle.existing", "An unfinished job is already active.") : translate("bookskindle.queued", "Search queued."));
+            setStatus(result.existing ? translate("bookskindle.existing", "An unfinished job is already active") : translate("bookskindle.queued", "Search queued"));
         } catch (error) { showError(error); }
         finally { byId("search-button").disabled = false; }
     }
@@ -142,11 +142,11 @@
         var detail = jobDetail(job);
         if ((job.state === "running" || job.state === "ready") && job.message) detail = job.message;
         if (job.state === "failed" && job.error === "Flibusta search is unavailable") {
-            detail = translate("bookskindle.catalog_unavailable", "The book catalog is temporarily unavailable. Try again later.");
+            detail = translate("bookskindle.catalog_unavailable", "The book catalog is temporarily unavailable. Try again later");
         } else if (job.state === "ready" && !(job.results || []).length) {
             detail = job.firstPageOnly === true
-                ? translate("bookskindle.first_page_only", "No books were found on the first page of results. Try a more specific title.")
-                : translate("bookskindle.no_results", "No books found.");
+                ? translate("bookskindle.first_page_only", "No books were found on the first page of results. Try a more specific title")
+                : translate("bookskindle.no_results", "No books found");
         }
         setText(byId("job-detail"), statusText(detail));
         renderResults(job.state === "ready" ? job.results || [] : []);
@@ -174,7 +174,7 @@
             cover: translate("bookskindle.phase_cover", "Preparing the cover"),
             sending: translate("bookskindle.phase_sending", "Sending to Kindle")
         };
-        if (job.state === "failed") return translate("bookskindle.job_failed", "The book could not be processed.");
+        if (job.state === "failed") return translate("bookskindle.job_failed", "The book could not be processed");
         return phases[job.phase] || stateLabel(job.state);
     }
 
@@ -198,7 +198,7 @@
         setStatus(translate("bookskindle.submitting", "Submitting..."));
         try {
             renderJob((await request("create", { id: currentJob.id, bookId: bookId })).job);
-            setStatus(translate("bookskindle.queued", "Book queued."));
+            setStatus(translate("bookskindle.queued", "Book queued"));
         } catch (error) { showError(error); }
     }
 

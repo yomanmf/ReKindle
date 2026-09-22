@@ -513,7 +513,7 @@
             const last = points[points.length - 1];
             const loopDist = Math.sqrt(Math.pow(last.x - first.x, 2) + Math.pow(last.y - first.y, 2));
             if (loopDist > meanR * CLOSE_THRESHOLD) {
-                document.getElementById('result-text').innerText = window.t ? window.t('circle.msg.not_closed') : 'Close the loop! End near where you started.';
+                document.getElementById('result-text').innerText = window.t ? window.t('circle.msg.not_closed') : 'Close the loop! End near where you started';
                 document.getElementById('retry-btn').style.display = 'inline-block';
                 hasResult = true;
                 return;
@@ -650,10 +650,10 @@
                     });
                 } catch (e) {
                     console.error('Error loading leaderboard:', e);
-                    list.innerText = window.t ? window.t('circle.status.error_loading') : 'Error loading scores.';
+                    list.innerText = window.t ? window.t('circle.status.error_loading') : 'Error loading scores';
                 }
             } else {
-                list.innerText = window.t ? window.t('circle.status.login_required') : 'Log in to see global scores.';
+                list.innerText = window.t ? window.t('circle.status.login_required') : 'Log in to see global scores';
             }
         }
     </script>

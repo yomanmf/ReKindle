@@ -963,7 +963,7 @@
         <div id="content-area"></div>
 
         <div id="status-bar">
-            <span id="status-msg" data-i18n="calendar.status.ready">Ready.</span>
+            <span id="status-msg" data-i18n="calendar.status.ready">Ready</span>
             <div>
                 <button class="sys-btn" id="source-btn-bottom" onclick="openSyncChoice()"
                     style="margin-right:5px;" data-i18n="calendar.btn.source">Source</button>
@@ -978,7 +978,7 @@
         <!-- AUTH OVERLAY -->
         <div id="auth-overlay">
             <h2 style="margin-bottom:10px;" data-i18n="calendar.auth.title">Google Calendar</h2>
-            <p style="margin-bottom:20px; font-size:0.9rem;" data-i18n="calendar.auth.desc">Log in to sync.</p>
+            <p style="margin-bottom:20px; font-size:0.9rem;" data-i18n="calendar.auth.desc">Log in to sync</p>
             <button class="sys-btn" onclick="oauthSignIn()" data-i18n="calendar.auth.login">Log In</button>
         </div>
     </div>
@@ -1057,7 +1057,7 @@
     <div id="sync-choice-modal">
         <div class="modal-box">
             <h3 data-i18n="calendar.sync.title">Calendar Integration</h3>
-            <p style="margin:15px 0;" data-i18n="calendar.sync.desc">Choose a calendar source.</p>
+            <p style="margin:15px 0;" data-i18n="calendar.sync.desc">Choose a calendar source</p>
             <div class="modal-btns">
                 <button class="sys-btn" onclick="setSyncPreference('exchange')" data-i18n="calendar.sync.exchange">Use Exchange</button>
                 <button class="sys-btn" onclick="setSyncPreference('google')" data-i18n="calendar.sync.google">Use
@@ -1091,7 +1091,7 @@
                         <label for="exchange-password" data-i18n="calendar.exchange.password">App password</label>
                         <input id="exchange-password" type="password" autocomplete="current-password" placeholder="CODE:PASSWORD">
                     </div>
-                    <div class="exchange-help" data-i18n="calendar.exchange.help">Use the CODE:PASSWORD value issued by the corporate mail bot. ReKindle stores it encrypted on the server.</div>
+                    <div class="exchange-help" data-i18n="calendar.exchange.help">Use the CODE:PASSWORD value issued by the corporate mail bot. ReKindle stores it encrypted on the server</div>
                     <div id="exchange-form-status" class="exchange-help"></div>
                     <div class="modal-btns">
                         <button class="sys-btn" id="exchange-connect-btn" onclick="connectExchange()" data-i18n="calendar.exchange.connect">Connect</button>
@@ -1369,9 +1369,9 @@
         }
 
         function exchangeErrorText(error) {
-            if (error && error.code === 'exchange-calendar-auth') return translate('calendar.exchange.auth_error', 'Exchange rejected the email or app password.');
-            if (error && error.code === 'exchange-calendar-not-connected') return translate('calendar.exchange.not_connected_error', 'Connect Exchange Calendar first.');
-            return translate('calendar.exchange.unavailable', 'Exchange Calendar is unavailable.');
+            if (error && error.code === 'exchange-calendar-auth') return translate('calendar.exchange.auth_error', 'Exchange rejected the email or app password');
+            if (error && error.code === 'exchange-calendar-not-connected') return translate('calendar.exchange.not_connected_error', 'Connect Exchange Calendar first');
+            return translate('calendar.exchange.unavailable', 'Exchange Calendar is unavailable');
         }
 
         async function initExchangeMode() {
@@ -1390,7 +1390,7 @@
                     events = [];
                     renderView();
                     openExchangeModal();
-                    setTranslatedStatus('calendar.status.exchange_not_connected', 'Exchange is not connected.');
+                    setTranslatedStatus('calendar.status.exchange_not_connected', 'Exchange is not connected');
                     return;
                 }
                 await loadExchangeEvents();
@@ -1482,7 +1482,7 @@
                     return event;
                 });
                 renderView();
-                setTranslatedStatus('calendar.status.exchange_synced', 'Exchange synced.');
+                setTranslatedStatus('calendar.status.exchange_synced', 'Exchange synced');
             } catch (error) {
                 events = [];
                 renderView();
@@ -1500,7 +1500,7 @@
             document.getElementById('event-detail-time').textContent = time;
             document.getElementById('event-detail-location').textContent = event.location ? translate('calendar.event.location', 'Location:') + ' ' + event.location : '';
             document.getElementById('event-detail-organizer').textContent = event.organizer ? translate('calendar.event.organizer', 'Organizer:') + ' ' + event.organizer : '';
-            document.getElementById('event-detail-description').textContent = event.description || translate('calendar.event.no_description', 'No description.');
+            document.getElementById('event-detail-description').textContent = event.description || translate('calendar.event.no_description', 'No description');
             document.getElementById('event-detail-modal').style.display = 'flex';
         }
 
@@ -1582,7 +1582,7 @@
             });
 
             if (filteredEvents.length === 0) {
-                wrapper.innerHTML = '<div style="text-align:center; padding:20px;" data-i18n="calendar.event.no_upcoming">' + translate('calendar.event.no_upcoming', 'No upcoming events.') + '</div>';
+                wrapper.innerHTML = '<div style="text-align:center; padding:20px;" data-i18n="calendar.event.no_upcoming">' + translate('calendar.event.no_upcoming', 'No upcoming events') + '</div>';
                 container.appendChild(wrapper);
                 return;
             }
@@ -1759,7 +1759,7 @@
             // Create slots for hours 6 AM to 10 PM (simplified view)
             // Or just list the events sorted
             if (dayEvents.length === 0) {
-                list.innerHTML = '<div style="padding:40px; text-align:center; color:#666;" data-i18n="calendar.event.no_scheduled">' + translate('calendar.event.no_scheduled', 'No events scheduled.') + '</div>';
+                list.innerHTML = '<div style="padding:40px; text-align:center; color:#666;" data-i18n="calendar.event.no_scheduled">' + translate('calendar.event.no_scheduled', 'No events scheduled') + '</div>';
             } else {
                 // Group by hour for a structured look
                 for (let hour = 0; hour < 24; hour++) {
@@ -1906,7 +1906,7 @@
                     }
                 } catch (e) {
                     console.error('Failed to initialize Google API:', JSON.stringify(e));
-                    setTranslatedStatus('calendar.status.error', 'Error.');
+                    setTranslatedStatus('calendar.status.error', 'Error');
                 }
             });
         }
@@ -2138,7 +2138,7 @@
                 document.querySelector('#auth-overlay h2').setAttribute('data-i18n', 'calendar.auth.failed');
                 document.querySelector('#auth-overlay h2').innerText = translate('calendar.auth.failed', 'Login failed');
                 document.querySelector('#auth-overlay p').setAttribute('data-i18n', 'calendar.auth.retry');
-                document.querySelector('#auth-overlay p').innerText = translate('calendar.auth.retry', 'Please try again manually.');
+                document.querySelector('#auth-overlay p').innerText = translate('calendar.auth.retry', 'Please try again manually');
                 return;
             }
             sessionStorage.setItem('last_auth_attempt', now.toString());
@@ -2183,7 +2183,7 @@
             if (selectedCalendarIds.length === 0) {
                 events = [];
                 renderView();
-                setTranslatedStatus('calendar.status.no_calendar', 'No calendar selected.');
+                setTranslatedStatus('calendar.status.no_calendar', 'No calendar selected');
                 return;
             }
 
@@ -2237,10 +2237,10 @@
 
                 events = allEvents;
                 renderView();
-                setTranslatedStatus('calendar.status.synced_short', 'Synced.');
+                setTranslatedStatus('calendar.status.synced_short', 'Synced');
             } catch (e) {
                 console.error(e);
-                setTranslatedStatus('calendar.status.error', 'Error.');
+                setTranslatedStatus('calendar.status.error', 'Error');
                 if (e.status === 401 || e.status === 403) {
                     // Token expired during use -> Re-auth
                     handleUnauthorized();
@@ -2509,7 +2509,7 @@
             const endTime = document.getElementById('evt-end-time').value;
             const targetCalendarId = document.getElementById('evt-calendar-select').value;
 
-            if (!title || !date) return showModal(translate('calendar.validation.required', 'Title and date are required.'));
+            if (!title || !date) return showModal(translate('calendar.validation.required', 'Title and date are required'));
 
             let isAllDay = false;
             let startDateTime, endDateTime;
@@ -2624,8 +2624,8 @@
                 }
             } catch (e) {
                 console.error(e);
-                showModal(translate('calendar.error.save', 'Could not save the event.'));
-                setTranslatedStatus('calendar.status.error_saving', 'Could not save.');
+                showModal(translate('calendar.error.save', 'Could not save the event'));
+                setTranslatedStatus('calendar.status.error_saving', 'Could not save');
             }
         }
 
@@ -2661,7 +2661,7 @@
                     }
                 } catch (e) {
                     console.error(e);
-                    showModal(translate('calendar.error.delete', 'Could not delete the event.'));
+                    showModal(translate('calendar.error.delete', 'Could not delete the event'));
                 }
             });
         }

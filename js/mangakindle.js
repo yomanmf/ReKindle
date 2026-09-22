@@ -28,7 +28,7 @@
 
     function setStatus(value) { setText(byId("status-bar"), value); }
     function showError(error) {
-        setText(byId("error-message"), error && error.localized ? error.message : translate("mangakindle.error_connection", "Could not reach Manga to Kindle."));
+        setText(byId("error-message"), error && error.localized ? error.message : translate("mangakindle.error_connection", "Could not reach Manga to Kindle"));
         byId("error-modal").style.display = "flex";
     }
     function closeError() { byId("error-modal").style.display = "none"; }
@@ -53,7 +53,7 @@
         byId("auth-notice").hidden = false;
         byId("search-form").hidden = true;
         byId("send-form").hidden = true;
-        setStatus(translate("mangakindle.signin", "Sign in to ReKindle before sending manga."));
+        setStatus(translate("mangakindle.signin", "Sign in to ReKindle before sending manga"));
     }
 
     async function loadAll() {
@@ -64,7 +64,7 @@
             setStatus(translate("mangakindle.ready", "Ready"));
         } catch (error) {
             showError(error);
-            setStatus(translate("mangakindle.error_connection", "Could not reach Manga to Kindle."));
+            setStatus(translate("mangakindle.error_connection", "Could not reach Manga to Kindle"));
         }
     }
 
@@ -77,7 +77,7 @@
         try {
             var result = await request("search", { query: query });
             renderResults(result.results || []);
-            setStatus((result.results || []).length ? translate("mangakindle.choose", "Choose a title.") : translate("mangakindle.not_found", "Nothing found."));
+            setStatus((result.results || []).length ? translate("mangakindle.choose", "Choose a title") : translate("mangakindle.not_found", "Nothing found"));
         } catch (error) { showError(error); }
         finally { byId("search-button").disabled = false; }
     }
@@ -117,7 +117,7 @@
         var from = boundary(byId("from-chapter").value, "first");
         var to = boundary(byId("to-chapter").value, "latest");
         if (!from || !to || (from !== "first" && to !== "latest" && Number(from) > Number(to))) {
-            showError({ localized: true, message: translate("mangakindle.error_range", "Enter a valid chapter range.") });
+            showError({ localized: true, message: translate("mangakindle.error_range", "Enter a valid chapter range") });
             return;
         }
         byId("send-button").disabled = true;
@@ -131,7 +131,7 @@
                 mergeVerticalPages: byId("merge-pages").checked
             });
             renderJob(result.job);
-            setStatus(result.existing ? translate("mangakindle.existing", "An unfinished job is already active.") : translate("mangakindle.queued", "Manga queued."));
+            setStatus(result.existing ? translate("mangakindle.existing", "An unfinished job is already active") : translate("mangakindle.queued", "Manga queued"));
         } catch (error) { showError(error); }
         finally { byId("send-button").disabled = false; }
     }
@@ -196,8 +196,8 @@
     }
 
     function fileText(files, error) {
-        if (error) return translate("mangakindle.job_failed", "The manga could not be processed.");
-        if (!files.length) return translate("mangakindle.no_files", "No files yet.");
+        if (error) return translate("mangakindle.job_failed", "The manga could not be processed");
+        if (!files.length) return translate("mangakindle.no_files", "No files yet");
         return files.map(function (file) { return file.filename; }).join("\n");
     }
 

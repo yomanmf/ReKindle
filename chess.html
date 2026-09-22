@@ -813,7 +813,7 @@
                     (window.t ? window.t('chess.modal.new.white') : 'White');
                 const winResult = (game.turn() === aiColor.charAt(0)) ? 'win' : 'loss';
 
-                let msg = window.t ? window.t('chess.msg.checkmate') : "Checkmate! {winner} wins.";
+                let msg = window.t ? window.t('chess.msg.checkmate') : "Checkmate! {winner} wins";
                 msg = msg.replace('{winner}', turnStr);
 
                 document.getElementById('status-bar').innerText = msg;

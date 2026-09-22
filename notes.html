@@ -589,7 +589,7 @@
                     }
                 }, (error) => {
                     console.error("Error getting notes: ", error);
-                    document.getElementById('status-bar').innerText = window.t('status.offline', "Offline. Using Cache.");
+                    document.getElementById('status-bar').innerText = window.t('status.offline', "Offline. Using Cache");
                     // We already loaded from cache, so just keep showing that.
                 });
         }
@@ -609,10 +609,10 @@
                         content: note.content,
                         updated: note.updated
                     }).then(() => {
-                        document.getElementById('status-bar').innerText = window.t('notes.status.saved', "Saved.");
+                        document.getElementById('status-bar').innerText = window.t('notes.status.saved', "Saved");
                         setTimeout(() => { document.getElementById('status-bar').innerText = window.t('status.synced', "Synced: ") + currentUser.email; }, 2000);
                     }).catch((e) => {
-                        document.getElementById('status-bar').innerText = window.t('notes.status.failed', "Save Failed.");
+                        document.getElementById('status-bar').innerText = window.t('notes.status.failed', "Save Failed");
                         console.error(e);
                     });
                 }, 1000);

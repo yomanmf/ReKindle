@@ -1145,8 +1145,8 @@
         <div id="noscript-overlay" class="modal-overlay">
             <div class="modal-box">
                 <h2 style="margin-top:0; border-bottom: 2px solid black; padding-bottom:10px;">JavaScript Required</h2>
-                <p>This application relies on JavaScript to function correctly.</p>
-                <p>Please enable JavaScript in your browser settings and reload the page.</p>
+                <p>This application relies on JavaScript to function correctly</p>
+                <p>Please enable JavaScript in your browser settings and reload the page</p>
             </div>
         </div>
     </noscript>
@@ -1154,7 +1154,7 @@
     <div id="legacy-overlay" class="modal-overlay">
         <div class="modal-box">
             <h2 style="margin-top:0; border-bottom: 2px solid black; padding-bottom:10px;">Unsupported Device</h2>
-            <p>ReKindle only officially supports firmware 5.16.4+ so expect issues.</p>
+            <p>ReKindle only officially supports firmware 5.16.4+ so expect issues</p>
             <p style="font-size: 0.9rem; margin-top: 15px;">Redirecting to legacy site in <strong
                     id="legacy-countdown">5</strong>s...</p>
         </div>
@@ -1274,7 +1274,7 @@
     <div id="login-modal" class="modal-overlay" role="dialog" aria-modal="true">
             <div class="modal-box">
                 <h2>Login / Register</h2>
-                <p id="login-msg" style="font-size:0.8rem; margin-bottom:15px;">Enter your username &amp; password.</p>
+                <p id="login-msg" style="font-size:0.8rem; margin-bottom:15px;">Enter your username &amp; password</p>
                 <input type="text" id="username" class="modal-input" placeholder="Username">
                 <input type="password" id="password" class="modal-input" placeholder="Password">
                 <div style="display: flex; justify-content: center">
@@ -1749,10 +1749,10 @@
                 grid.appendChild(launchersGrid);
 
                 if (!hasGames) {
-                    grid.innerHTML = '<div style="grid-column: 1 / -1; font-size: 0.9rem; font-style: italic;">No live games available.</div>';
+                    grid.innerHTML = '<div style="grid-column: 1 / -1; font-size: 0.9rem; font-style: italic;">No live games available</div>';
                 }
             }, err => {
-                grid.innerHTML = '<div style="grid-column: 1 / -1; font-size: 0.9rem; font-style: italic;">Error loading live games.</div>';
+                grid.innerHTML = '<div style="grid-column: 1 / -1; font-size: 0.9rem; font-style: italic;">Error loading live games</div>';
                 console.error(err);
             });
 
@@ -1933,7 +1933,7 @@
             if (!isFirebaseAvailable || !auth) { document.getElementById('login-msg').innerText = "Error: Offline / No Database Connection"; return; }
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
-            if (!u || !p) { document.getElementById('login-msg').innerText = "Error: Please enter a valid username and password."; return; }
+            if (!u || !p) { document.getElementById('login-msg').innerText = "Error: Please enter a valid username and password"; return; }
 
             document.getElementById('login-msg').innerText = "Connecting...";
             let signedInThisAttempt = false;
@@ -1948,7 +1948,7 @@
                 const ipResult = await RekindleIpBan.checkOnLogin();
                 if (ipResult.banned) {
                     await auth.signOut();
-                    document.getElementById('login-msg').innerText = "Error: Your IP address has been banned from this network.";
+                    document.getElementById('login-msg').innerText = "Error: Your IP address has been banned from this network";
                     return;
                 }
                 closeModal('login-modal');
@@ -1959,7 +1959,7 @@
                     await auth.signOut().catch(() => {});
                 }
                 const msg = (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found')
-                    ? "Invalid username or password."
+                    ? "Invalid username or password"
                     : (e.message || "Login failed.");
                 document.getElementById('login-msg').innerText = "Error: " + msg;
                 document.getElementById('login-modal').style.display = 'flex';
@@ -1976,12 +1976,12 @@
             if (!isFirebaseAvailable || !auth) { document.getElementById('login-msg').innerText = "Error: Offline / No Database Connection"; return; }
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
-            if (!u || !p) { document.getElementById('login-msg').innerText = "Error: Please enter a username and password."; return; }
-            if (u.length > 20) { document.getElementById('login-msg').innerText = "Error: Username must be 20 characters or less."; return; }
-            if (!/^[a-zA-Z0-9]+$/.test(u)) { document.getElementById('login-msg').innerText = "Error: Username can only contain letters and numbers."; return; }
-            if (u.includes('@')) { document.getElementById('login-msg').innerText = "Error: Please enter a username only, not an email."; return; }
-            if (isForbiddenUsername(u)) { document.getElementById('login-msg').innerText = "Error: Forbidden username."; return; }
-            if (isBadWord(u)) { document.getElementById('login-msg').innerText = "Error: Username contains inappropriate language."; return; }
+            if (!u || !p) { document.getElementById('login-msg').innerText = "Error: Please enter a username and password"; return; }
+            if (u.length > 20) { document.getElementById('login-msg').innerText = "Error: Username must be 20 characters or less"; return; }
+            if (!/^[a-zA-Z0-9]+$/.test(u)) { document.getElementById('login-msg').innerText = "Error: Username can only contain letters and numbers"; return; }
+            if (u.includes('@')) { document.getElementById('login-msg').innerText = "Error: Please enter a username only, not an email"; return; }
+            if (isForbiddenUsername(u)) { document.getElementById('login-msg').innerText = "Error: Forbidden username"; return; }
+            if (isBadWord(u)) { document.getElementById('login-msg').innerText = "Error: Username contains inappropriate language"; return; }
 
             document.getElementById('login-msg').innerText = "Registering...";
             try {
@@ -1999,7 +1999,7 @@
                         await auth.signInWithEmailAndPassword(`${u}@rekindle.ink`, p);
                         return;
                     } catch (loginErr) {
-                        document.getElementById('login-msg').innerText = "Error: " + (loginErr.message || "Sign-in failed.");
+                        document.getElementById('login-msg').innerText = "Error: " + (loginErr.message || "Sign-in failed");
                         return;
                     }
                 }
@@ -2502,7 +2502,7 @@
                             } while (pageToken);
                         }
                         if (hasAuthError) {
-                            listEl.innerHTML = '<div data-i18n-html="calendar.exchange.session_expired" style="text-align:center; color:#555; padding: 10px; font-size:0.8rem;">Session expired.<br>Please open the Calendar app to reconnect.</div>';
+                            listEl.innerHTML = '<div data-i18n-html="calendar.exchange.session_expired" style="text-align:center; color:#555; padding: 10px; font-size:0.8rem;">Session expired.<br>Please open the Calendar app to reconnect</div>';
                             return;
                         }
                     }
@@ -2554,11 +2554,11 @@
             } catch(e) {
                 if (exchangeEnabled) {
                     if (e && e.code === 'exchange-calendar-not-connected') {
-                        listEl.innerHTML = '<div data-i18n="calendar.exchange.not_connected_error" style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">' + (window.t ? window.t('calendar.exchange.not_connected_error', 'Connect Exchange Calendar first.') : 'Connect Exchange Calendar first.') + '</div>' +
+                        listEl.innerHTML = '<div data-i18n="calendar.exchange.not_connected_error" style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">' + (window.t ? window.t('calendar.exchange.not_connected_error', 'Connect Exchange Calendar first') : 'Connect Exchange Calendar first') + '</div>' +
                             '<a class="sys-btn" href="calendar.html" data-i18n="calendar.exchange.connect" style="display:inline-block; min-height:48px; box-sizing:border-box; color:inherit; text-decoration:none; text-align:center;">' + (window.t ? window.t('calendar.exchange.connect', 'Connect') : 'Connect') + '</a>';
                         return;
                     }
-                    listEl.innerHTML = '<div data-i18n-html="calendar.exchange.reconnect" style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Exchange Calendar is unavailable.<br>Open Calendar to reconnect.</div>';
+                    listEl.innerHTML = '<div data-i18n-html="calendar.exchange.reconnect" style="text-align:center; color:#555; padding:10px; font-size:0.8rem;">Exchange Calendar is unavailable.<br>Open Calendar to reconnect</div>';
                     return;
                 }
             }
@@ -2608,7 +2608,7 @@
             let details = time;
             if (event.location) details += '\n' + (window.t ? window.t('calendar.event.location', 'Location:') : 'Location:') + ' ' + event.location;
             if (event.organizer) details += '\n' + (window.t ? window.t('calendar.event.organizer', 'Organizer:') : 'Organizer:') + ' ' + event.organizer;
-            details += '\n\n' + (event.description || (window.t ? window.t('calendar.event.no_description', 'No description.') : 'No description.'));
+            details += '\n\n' + (event.description || (window.t ? window.t('calendar.event.no_description', 'No description') : 'No description'));
             showGenericModal(event.title || (window.t ? window.t('calendar.event.untitled', 'Untitled event') : 'Untitled event'), details);
         }
 

@@ -28,7 +28,7 @@
     function showSignedOut() {
         byId("auth-notice").hidden = false;
         byId("downloads-panel").hidden = true;
-        setStatus(translate("torrents.signin", "Sign in to ReKindle to manage downloads."));
+        setStatus(translate("torrents.signin", "Sign in to ReKindle to manage downloads"));
     }
 
     async function loadTorrents() {
@@ -42,7 +42,7 @@
             return true;
         } catch (error) {
             showError(error);
-            setStatus(translate("torrents.error_connection", "Could not reach the download service."));
+            setStatus(translate("torrents.error_connection", "Could not reach the download service"));
             return false;
         } finally {
             button.disabled = false;
@@ -59,7 +59,7 @@
         var completed = currentFilter === "completed";
         empty.hidden = visibleItems.length !== 0;
         empty.setAttribute("data-i18n", completed ? "torrents.empty_completed" : "torrents.empty");
-        setText(empty, translate(completed ? "torrents.empty_completed" : "torrents.empty", completed ? "No completed downloads." : "No torrent tasks."));
+        setText(empty, translate(completed ? "torrents.empty_completed" : "torrents.empty", completed ? "No completed downloads" : "No torrent tasks"));
         title.setAttribute("data-i18n", completed ? "torrents.completed" : "torrents.all");
         setText(title, translate(completed ? "torrents.completed" : "torrents.all", completed ? "Completed downloads" : "All downloads"));
         setText(byId("torrent-count"), translate("torrents.count", "${count} tasks").replace("${count}", String(visibleItems.length)));
@@ -163,7 +163,7 @@
         try {
             await request(paused ? "torrent-resume" : "torrent-pause", { hash: torrent.hash });
             if (await loadTorrents()) {
-                setStatus(translate(paused ? "torrents.resumed" : "torrents.paused", paused ? "Download resumed." : "Download paused."));
+                setStatus(translate(paused ? "torrents.resumed" : "torrents.paused", paused ? "Download resumed" : "Download paused"));
             }
         } catch (error) { showError(error); }
         finally { button.disabled = false; }
@@ -221,8 +221,8 @@
     function openDelete(torrent) {
         pendingTorrent = torrent;
         var template = torrent.source === "seerr"
-            ? translate("torrents.delete_media_message", "Delete ${name} from the media library with all files? A series is deleted in full. This cannot be undone.")
-            : translate("torrents.delete_message", "Delete ${name} and all downloaded files? This cannot be undone.");
+            ? translate("torrents.delete_media_message", "Delete ${name} from the media library with all files? A series is deleted in full. This cannot be undone")
+            : translate("torrents.delete_message", "Delete ${name} and all downloaded files? This cannot be undone");
         setText(byId("delete-message"), template.replace("${name}", torrent.name));
         byId("delete-modal").style.display = "flex";
         byId("delete-cancel").focus();
@@ -247,13 +247,13 @@
             }
             closeDelete();
             await loadTorrents();
-            setStatus(translate("torrents.deleted", "Task and downloaded files deleted."));
+            setStatus(translate("torrents.deleted", "Task and downloaded files deleted"));
         } catch (error) { showError(error); }
         finally { button.disabled = false; }
     }
 
     function showError() {
-        setText(byId("error-message"), translate("torrents.error_connection", "Could not reach the download service."));
+        setText(byId("error-message"), translate("torrents.error_connection", "Could not reach the download service"));
         byId("error-modal").style.display = "flex";
     }
 

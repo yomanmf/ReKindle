@@ -542,10 +542,10 @@
                     });
                 } catch (e) {
                     console.error("Error loading leaderboard:", e);
-                    list.innerText = window.t ? window.t('hanoi.status.error_loading') : "Error loading scores.";
+                    list.innerText = window.t ? window.t('hanoi.status.error_loading') : "Error loading scores";
                 }
             } else {
-                list.innerText = window.t ? window.t('hanoi.status.login_required') : "Log in to see scores.";
+                list.innerText = window.t ? window.t('hanoi.status.login_required') : "Log in to see scores";
             }
         }
 

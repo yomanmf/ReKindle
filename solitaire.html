@@ -482,7 +482,7 @@
         <div id="new-game-modal" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-title" data-i18n="solitaire.modal.new.title">New Game?</div>
-                <div data-i18n="solitaire.modal.new.text">Current progress will be lost.</div>
+                <div data-i18n="solitaire.modal.new.text">Current progress will be lost</div>
                 <div class="modal-btns">
                     <button class="sys-btn" onclick="startNewGameFromModal()" data-i18n="solitaire.btn.yes">Yes</button>
                     <button class="sys-btn" onclick="closeNewGameModal()" data-i18n="solitaire.btn.no">No</button>
@@ -983,7 +983,7 @@
                 .get()
                 .then(snapshot => {
                     if (snapshot.empty) {
-                        const emptyTxt = window.t ? window.t('solitaire.leaderboard.empty') : 'No scores yet.';
+                        const emptyTxt = window.t ? window.t('solitaire.leaderboard.empty') : 'No scores yet';
                         list.innerHTML = `<div style="padding:10px;">${emptyTxt}</div>`;
                         return;
                     }
@@ -1011,7 +1011,7 @@
                 })
                 .catch(err => {
                     console.error("Error fetching leaderboard:", err);
-                    const errorTxt = window.t ? window.t('solitaire.leaderboard.error') : 'Error loading scores.';
+                    const errorTxt = window.t ? window.t('solitaire.leaderboard.error') : 'Error loading scores';
                     list.innerHTML = `<div style="padding:10px; color:red;">${errorTxt}</div>`;
                 });
         }

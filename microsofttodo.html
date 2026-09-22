@@ -746,19 +746,19 @@
                         </div>
                         <div>
                             <h1 data-i18n="microsofttodo.setup.title">Microsoft To Do for ReKindle</h1>
-                            <p data-i18n="microsofttodo.setup.intro">A calm, text-first task list built for E-ink screens.</p>
+                            <p data-i18n="microsofttodo.setup.intro">A calm, text-first task list built for E-ink screens</p>
                         </div>
                     </div>
 
                     <ol class="instructions">
-                        <li data-i18n="microsofttodo.setup.step1">Sign in to your ReKindle account.</li>
-                        <li data-i18n="microsofttodo.setup.step2">Get a short code and enter it on Microsoft's sign-in page.</li>
-                        <li data-i18n="microsofttodo.setup.step3">Your tasks stay in Microsoft To Do; ReKindle stores only an encrypted authorization session.</li>
+                        <li data-i18n="microsofttodo.setup.step1">Sign in to your ReKindle account</li>
+                        <li data-i18n="microsofttodo.setup.step2">Get a short code and enter it on Microsoft's sign-in page</li>
+                        <li data-i18n="microsofttodo.setup.step3">Your tasks stay in Microsoft To Do; ReKindle stores only an encrypted authorization session</li>
                     </ol>
 
                     <div class="auth-stage" id="stage-signed-out">
                         <h2 class="stage-title" data-i18n="microsofttodo.auth.rekindle_title">ReKindle sign-in required</h2>
-                        <p class="stage-note" data-i18n="microsofttodo.auth.rekindle_help">Sign in on the ReKindle dashboard before connecting Microsoft To Do.</p>
+                        <p class="stage-note" data-i18n="microsofttodo.auth.rekindle_help">Sign in on the ReKindle dashboard before connecting Microsoft To Do</p>
                         <div class="button-row">
                             <button class="sys-btn primary" type="button" onclick="window.location.href='index.html?login=true'"
                                 data-i18n="microsofttodo.auth.rekindle_button">Open ReKindle sign-in</button>
@@ -767,7 +767,7 @@
 
                     <div class="auth-stage active" id="stage-start">
                         <h2 class="stage-title" data-i18n="microsofttodo.auth.connect_title">Connect Microsoft To Do</h2>
-                        <p class="stage-note" data-i18n="microsofttodo.auth.connect_help">Works with personal Microsoft accounts and supported work or school accounts.</p>
+                        <p class="stage-note" data-i18n="microsofttodo.auth.connect_help">Works with personal Microsoft accounts and supported work or school accounts</p>
                         <div class="button-row">
                             <button class="sys-btn primary" id="connect-button" type="button" onclick="microsoftTodoApp.startAuthorization()"
                                 data-i18n="microsofttodo.auth.connect_button">Get sign-in code</button>
@@ -776,7 +776,7 @@
 
                     <div class="auth-stage" id="stage-code">
                         <h2 class="stage-title" data-i18n="microsofttodo.auth.code_title">Enter this code at Microsoft</h2>
-                        <p class="stage-note" data-i18n="microsofttodo.auth.code_help">On another device, open the address below, enter the code, and approve access to your tasks.</p>
+                        <p class="stage-note" data-i18n="microsofttodo.auth.code_help">On another device, open the address below, enter the code, and approve access to your tasks</p>
                         <span class="device-code" id="device-code">ABCD-EFGH</span>
                         <a class="auth-address" id="verification-link" href="https://microsoft.com/devicelogin" target="_blank"
                             rel="noopener">https://microsoft.com/devicelogin</a>
@@ -793,7 +793,7 @@
                         <h2 class="stage-title" data-i18n="microsofttodo.auth.connected_title">Microsoft To Do connected</h2>
                         <div class="account-card">
                             <strong data-i18n="app.microsofttodo.name">Microsoft To Do</strong>
-                            <span data-i18n="microsofttodo.auth.connected_help">Task lists are read from Microsoft Graph only when you open or refresh this app.</span>
+                            <span data-i18n="microsofttodo.auth.connected_help">Task lists are read from Microsoft Graph only when you open or refresh this app</span>
                         </div>
                         <div class="button-row">
                             <button class="sys-btn primary" type="button" onclick="microsoftTodoApp.openTasks()"
@@ -848,7 +848,7 @@
                                     <line x1="18" y1="22" x2="23" y2="22"></line>
                                 </svg>
                                 <strong data-i18n="microsofttodo.empty.title">Nothing here</strong>
-                                <span data-i18n="microsofttodo.empty.help">Add a task above or choose another filter.</span>
+                                <span data-i18n="microsofttodo.empty.help">Add a task above or choose another filter</span>
                             </div>
                         </div>
                     </section>
@@ -911,7 +911,7 @@
         <div class="modal-box">
             <div class="modal-title-bar"><span data-i18n="microsofttodo.delete.title">Delete task?</span></div>
             <div class="modal-content">
-                <p class="modal-message" data-i18n="microsofttodo.delete.help">This removes the task from Microsoft To Do.</p>
+                <p class="modal-message" data-i18n="microsofttodo.delete.help">This removes the task from Microsoft To Do</p>
                 <div class="button-row">
                     <button class="sys-btn primary" id="delete-task-button" type="button" onclick="microsoftTodoApp.deleteTask()"
                         data-i18n="common.delete">Delete</button>
@@ -926,7 +926,7 @@
         <div class="modal-box">
             <div class="modal-title-bar"><span data-i18n="microsofttodo.logout.title">Disconnect Microsoft To Do?</span></div>
             <div class="modal-content">
-                <p class="modal-message" data-i18n="microsofttodo.logout.help">ReKindle will delete its encrypted Microsoft session. Your Microsoft tasks will not be deleted.</p>
+                <p class="modal-message" data-i18n="microsofttodo.logout.help">ReKindle will delete its encrypted Microsoft session. Your Microsoft tasks will not be deleted</p>
                 <div class="button-row">
                     <button class="sys-btn primary" id="logout-button" type="button" onclick="microsoftTodoApp.logout()"
                         data-i18n="microsofttodo.auth.disconnect_button">Disconnect</button>
@@ -941,7 +941,7 @@
         <div class="modal-box">
             <div class="modal-title-bar"><span data-i18n="common.error">Error</span></div>
             <div class="modal-content">
-                <p class="modal-message" id="error-message">Could not reach Microsoft To Do.</p>
+                <p class="modal-message" id="error-message">Could not reach Microsoft To Do</p>
                 <div class="button-row">
                     <button class="sys-btn primary" type="button" onclick="microsoftTodoApp.closeModal('error-modal')"
                         data-i18n="common.ok">OK</button>
@@ -960,7 +960,7 @@
             appId: "1:136525921771:web:1ab69288e786dbfd9e2dae"
         };
     </script>
-    <script src="js/microsoft-todo.js?v=1"></script>
+    <script src="js/microsoft-todo.js?v=2"></script>
 </body>
 
 </html>

@@ -265,7 +265,7 @@
         <div class="modal-overlay">
             <div class="modal-box">
                 <h3>JavaScript Required</h3>
-                <p>This page requires JavaScript to function.</p>
+                <p>This page requires JavaScript to function</p>
             </div>
         </div>
     </noscript>
@@ -492,13 +492,13 @@
 
         async function doLogin() {
             if (!isFirebaseAvailable || !auth) {
-                showAlertModal(window.t ? window.t('login.error.offline', 'Firebase is not available. Please wait or refresh.') : 'Firebase is not available. Please wait or refresh.');
+                showAlertModal(window.t ? window.t('login.error.offline', 'Firebase is not available. Please wait or refresh') : 'Firebase is not available. Please wait or refresh');
                 return;
             }
             var email = getEmailInput();
             var password = document.getElementById('password').value;
             if (!email || !password) {
-                showAlertModal(window.t ? window.t('login.error.missing_credentials', 'Please enter username and password.') : 'Please enter username and password.');
+                showAlertModal(window.t ? window.t('login.error.missing_credentials', 'Please enter username and password') : 'Please enter username and password');
                 return;
             }
 
@@ -514,7 +514,7 @@
                 if (ipResult.banned) {
                     await auth.signOut();
                     log("Sign in blocked: IP banned.", "error");
-                    showAlertModal(window.t ? window.t('login.error.ip_banned', 'Your IP address has been banned from this network.') : 'Your IP address has been banned from this network.');
+                    showAlertModal(window.t ? window.t('login.error.ip_banned', 'Your IP address has been banned from this network') : 'Your IP address has been banned from this network');
                 }
             } catch (error) {
                 // A successful Firebase sign-in is not enough: if the trusted
@@ -525,9 +525,9 @@
                 log("Sign in error: " + error.code + " - " + error.message, "error");
                 var msg = error.message || "Login failed.";
                 if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    msg = window.t ? window.t('login.error.invalid_credentials', 'Invalid username or password.') : 'Invalid username or password.';
+                    msg = window.t ? window.t('login.error.invalid_credentials', 'Invalid username or password') : 'Invalid username or password';
                 } else if (error.code === 'auth/network-request-failed') {
-                    msg = window.t ? window.t('login.error.network', 'Network request failed. Check system clock and connection.') : 'Network request failed. Check system clock and connection.';
+                    msg = window.t ? window.t('login.error.network', 'Network request failed. Check system clock and connection') : 'Network request failed. Check system clock and connection';
                 }
                 showAlertModal(msg);
             }
@@ -547,33 +547,33 @@
 
         async function doRegister() {
             if (!isFirebaseAvailable || !auth) {
-                showAlertModal(window.t ? window.t('login.error.offline', 'Firebase is not available. Please wait or refresh.') : 'Firebase is not available. Please wait or refresh.');
+                showAlertModal(window.t ? window.t('login.error.offline', 'Firebase is not available. Please wait or refresh') : 'Firebase is not available. Please wait or refresh');
                 return;
             }
             var u = document.getElementById('username').value.trim();
             var p = document.getElementById('password').value;
             if (!u || !p) {
-                showAlertModal(window.t ? window.t('login.error.missing_credentials', 'Please enter username and password.') : 'Please enter username and password.');
+                showAlertModal(window.t ? window.t('login.error.missing_credentials', 'Please enter username and password') : 'Please enter username and password');
                 return;
             }
             if (u.length > 20) {
-                showAlertModal(window.t ? window.t('login.error.username_long', 'Username must be 20 characters or less.') : 'Username must be 20 characters or less.');
+                showAlertModal(window.t ? window.t('login.error.username_long', 'Username must be 20 characters or less') : 'Username must be 20 characters or less');
                 return;
             }
             if (!/^[a-zA-Z0-9]+$/.test(u)) {
-                showAlertModal(window.t ? window.t('login.error.username_invalid', 'Username can only contain letters and numbers.') : 'Username can only contain letters and numbers.');
+                showAlertModal(window.t ? window.t('login.error.username_invalid', 'Username can only contain letters and numbers') : 'Username can only contain letters and numbers');
                 return;
             }
             if (u.indexOf('@') !== -1) {
-                showAlertModal(window.t ? window.t('login.error.username_no_email', 'Please enter a username only, not an email.') : 'Please enter a username only, not an email.');
+                showAlertModal(window.t ? window.t('login.error.username_no_email', 'Please enter a username only, not an email') : 'Please enter a username only, not an email');
                 return;
             }
             if (isForbiddenUsername(u)) {
-                showAlertModal(window.t ? window.t('login.error.username_forbidden', 'Forbidden username.') : 'Forbidden username.');
+                showAlertModal(window.t ? window.t('login.error.username_forbidden', 'Forbidden username') : 'Forbidden username');
                 return;
             }
             if (isBadWord(u)) {
-                showAlertModal(window.t ? window.t('login.error.username_bad_word', 'Username contains inappropriate language.') : 'Username contains inappropriate language.');
+                showAlertModal(window.t ? window.t('login.error.username_bad_word', 'Username contains inappropriate language') : 'Username contains inappropriate language');
                 return;
             }
 
@@ -590,7 +590,7 @@
                         log("Signed in with existing account.", "success");
                         return;
                     } catch (loginErr) {
-                        msg = loginErr.message || "Sign-in failed.";
+                        msg = loginErr.message || "Sign-in failed";
                     }
                 }
                 log("Registration error: " + msg, "error");

@@ -382,7 +382,7 @@
             <div class="player-list" id="lobby-players"></div>
 
             <div id="host-controls" style="display:none; flex-direction: column; align-items: center;">
-                <p style="font-size: 0.8rem; margin-bottom: 5px;" data-i18n="liveyahtzee.lobby.auto_start">Starts automatically when 2+ players join.</p>
+                <p style="font-size: 0.8rem; margin-bottom: 5px;" data-i18n="liveyahtzee.lobby.auto_start">Starts automatically when 2+ players join</p>
                 <button class="sys-btn" id="btn-force-start" onclick="forceStartGame()" data-i18n="liveyahtzee.btn.force_start">Force Start Now</button>
             </div>
             <button class="sys-btn" onclick="leaveMatch()" data-i18n="common.close">Leave</button>
@@ -526,7 +526,7 @@
                 currentUser = { uid: user.uid, name: (user.email ? user.email.split('@')[0] : 'Player') };
                 checkUrlForMatch();
             } else {
-                showAlert("Sign In Required", "Please log in from the home screen first.");
+                showAlert("Sign In Required", "Please log in from the home screen first");
                 setTimeout(goHome, 3000);
             }
         });
@@ -644,7 +644,7 @@
         function listenToMatch() {
             matchRef.on('value', snap => {
                 const data = snap.val();
-                if (!data) { showAlert("Game Closed", "The match has ended."); goHome(); return; }
+                if (!data) { showAlert("Game Closed", "The match has ended"); goHome(); return; }
                 gameState = data;
                 if (gameState.status === 'lobby') {
                     if (document.getElementById('screen-lobby').style.display === 'none') showScreen('lobby');

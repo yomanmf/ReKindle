@@ -333,11 +333,11 @@
                 } else if (data.error) {
                     output.value = (window.t ? window.t('translate.msg.error') : "Error: ") + data.error;
                 } else {
-                    output.value = window.t ? window.t('translate.msg.failed') : "Translation failed.";
+                    output.value = window.t ? window.t('translate.msg.failed') : "Translation failed";
                 }
 
             } catch (e) {
-                output.value = window.t ? window.t('translate.msg.network_error') : "Network Error. Check connection.";
+                output.value = window.t ? window.t('translate.msg.network_error') : "Network Error. Check connection";
             }
         }
 

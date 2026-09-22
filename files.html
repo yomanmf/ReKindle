@@ -521,7 +521,7 @@
 
             <div class="file-list" id="file-list">
                 <!-- Files will be injected here -->
-                <div class="empty-state" data-i18n="files.empty.no_files">No files found.</div>
+                <div class="empty-state" data-i18n="files.empty.no_files">No files found</div>
             </div>
         </div>
     </div>
@@ -676,7 +676,7 @@
                 } else {
                     // Redirect to login or show error
                     // window.location.href = 'index.html'; // For now just show empty
-                    document.querySelector('.empty-state').textContent = "Please sign in.";
+                    document.querySelector('.empty-state').textContent = "Please sign in";
                 }
             });
         });
@@ -899,9 +899,9 @@
             }
 
             // Prevent download/open for other types
-            // alert("Preview not available for this file type.");
+            // alert("Preview not available for this file type");
             // Actually, maybe we should just notify that they can use the menu to download?
-            showAlert("Preview not available. Use the menu (...) to download this file.");
+            showAlert("Preview not available. Use the menu (...) to download this file");
         }
 
         function toggleView() {
@@ -948,7 +948,7 @@
             const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 
             if (!validExtensions.includes(fileExtension)) {
-                showAlert("Upload failed: Only .doc and .docx files are allowed.");
+                showAlert("Upload failed: Only .doc and .docx files are allowed");
                 input.value = '';
                 return;
             }

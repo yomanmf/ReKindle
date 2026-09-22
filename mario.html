@@ -812,7 +812,7 @@
             } catch (error) {
                 console.error("Error getting leaderboard:", error);
                 if (list) {
-                    const errorTxt = window.t ? window.t('mario.leaderboard.error') : 'Error loading scores. See console.';
+                    const errorTxt = window.t ? window.t('mario.leaderboard.error') : 'Error loading scores. See console';
                     list.innerHTML = `<div style="padding:20px;text-align:center">${errorTxt}</div>`;
                 }
             }

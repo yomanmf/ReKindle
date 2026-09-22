@@ -235,7 +235,7 @@
         <!-- MENU -->
         <div class="window-content" id="screen-menu">
             <h1 style="font-size: 3rem; margin: 10px 0;">CHECKERS</h1>
-            <p>Real-time Multiplayer.</p>
+            <p>Real-time Multiplayer</p>
             <button class="sys-btn" onclick="hostGame()">Host Game</button>
             <button class="sys-btn" onclick="goHome()">Back</button>
         </div>
@@ -251,7 +251,7 @@
             <div class="player-list" id="lobby-players"></div>
             
             <div id="host-controls" style="display:none; width:100%; margin-top:10px;">
-                <p style="font-size: 0.9rem;">Game starts automatically when an opponent joins.</p>
+                <p style="font-size: 0.9rem;">Game starts automatically when an opponent joins</p>
             </div>
             <button class="sys-btn" onclick="leaveMatch()">Leave Lobby</button>
         </div>
@@ -503,7 +503,7 @@
                 currentUser = { uid: user.uid, name: (user.email ? user.email.split('@')[0] : 'Player') };
                 checkUrlForMatch();
             } else {
-                showAlert("Sign In Required", "Please log in from the home screen first.");
+                showAlert("Sign In Required", "Please log in from the home screen first");
                 setTimeout(goHome, 3000);
             }
         });

@@ -407,6 +407,14 @@ instead of the large empty strip caused by percentage heights such as `90%`.
 
 The project uses a custom `i18n.js` loader.
 
+**UI punctuation:** Short standalone descriptions, status messages, errors,
+and modal text omit a sentence-ending period. Preserve ellipses (`...`),
+abbreviations such as `Отпр.` and `мин.`, and normal punctuation in long-form
+privacy prose. Update both the relevant `locales/*.json` value and any HTML or
+JavaScript fallback text; English fallbacks may be visible before translations
+load. Bump an edited standalone JavaScript file's query version in its HTML
+page so returning Kindle browsers fetch the changed text.
+
 ### Attributes
 | Attribute | Usage |
 | :--- | :--- |

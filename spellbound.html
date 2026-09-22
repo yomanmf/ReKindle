@@ -800,7 +800,7 @@
 
         function confirmNewGame() {
             if (currentMode !== 'unlimited') return; // Cannot restart daily
-            showModal(window.t ? window.t('spellbound.modal.new.text') : "Generate a brand new puzzle? Current progress will be saved.", true, (confirmed) => {
+            showModal(window.t ? window.t('spellbound.modal.new.text') : "Generate a brand new puzzle? Current progress will be saved", true, (confirmed) => {
                 if(confirmed) {
                     startNewUnlimitedGame();
                 }
@@ -958,7 +958,7 @@
             } catch (e) {
                 console.error(e);
                 overlay.style.display = 'none';
-                showModal(window.t ? window.t('spellbound.error.generate') : "Failed to generate puzzle. Check internet connection.");
+                showModal(window.t ? window.t('spellbound.error.generate') : "Failed to generate puzzle. Check internet connection");
             }
         }
 

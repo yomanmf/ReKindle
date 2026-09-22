@@ -299,7 +299,7 @@
         <div id="content-area">
             <h1 id="article-title" data-i18n="wikipedia.welcome.title">Welcome</h1>
             <div id="article-body">
-                <p data-i18n="wikipedia.welcome.desc">Enter a topic above or click "Random" to start reading.</p>
+                <p data-i18n="wikipedia.welcome.desc">Enter a topic above or click "Random" to start reading</p>
             </div>
         </div>
     </div>
@@ -372,10 +372,10 @@
                     loadArticle(title);
                 } else {
                     document.getElementById('article-title').innerText = window.t ? window.t('wikipedia.msg.not_found', 'Not Found') : "Not Found";
-                    document.getElementById('article-body').innerText = window.t ? window.t('wikipedia.msg.empty', 'No articles found matching that query.') : "No articles found matching that query.";
+                    document.getElementById('article-body').innerText = window.t ? window.t('wikipedia.msg.empty', 'No articles found matching that query') : "No articles found matching that query";
                 }
             } catch (e) {
-                showModal(window.t ? window.t('wikipedia.msg.error_connect', 'Error connecting to Wikipedia.') : "Error connecting to Wikipedia.");
+                showModal(window.t ? window.t('wikipedia.msg.error_connect', 'Error connecting to Wikipedia') : "Error connecting to Wikipedia");
             }
         }
 
@@ -426,10 +426,10 @@
                     document.getElementById('content-area').scrollTop = 0;
 
                 } else {
-                    document.getElementById('article-body').innerText = window.t ? window.t('wikipedia.msg.error_parse', 'Error parsing article.') : "Error parsing article.";
+                    document.getElementById('article-body').innerText = window.t ? window.t('wikipedia.msg.error_parse', 'Error parsing article') : "Error parsing article";
                 }
             } catch (e) {
-                document.getElementById('article-body').innerText = window.t ? window.t('wikipedia.msg.error_load', 'Error loading article content.') : "Error loading article content.";
+                document.getElementById('article-body').innerText = window.t ? window.t('wikipedia.msg.error_load', 'Error loading article content') : "Error loading article content";
             }
         }
 

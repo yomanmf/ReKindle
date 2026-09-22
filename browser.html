@@ -806,7 +806,7 @@
         }
         function renderSearchResults(tab, data) {
             const view = tab.contentDiv;
-            if (!data.results || data.results.length === 0) { view.innerHTML = `<div class="loading-msg">No results found for "${data.query}".</div>`; return; }
+            if (!data.results || data.results.length === 0) { view.innerHTML = `<div class="loading-msg">No results found for "${data.query}"</div>`; return; }
             let html = `<h2 style="border-bottom:2px solid black; padding-bottom:5px; margin-top:0;">Results for "${data.query}"</h2>`;
             data.results.forEach(result => {
                 html += `<div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #ccc; cursor:pointer;" class="search-result"><div style="font-size:1.1rem; font-weight:bold; color:#1a0dab; margin-bottom:4px;" data-url="${result.url}">${result.title}</div><div style="font-size:0.75rem; color:#006621; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${result.url}</div>${result.snippet ? `<div style="font-size:0.9rem; color:#333; line-height:1.4;">${result.snippet}</div>` : ''}</div>`;
@@ -825,7 +825,7 @@
             if (article.byline) html += `<p style="font-style:italic; color:#555;">${article.byline}</p>`;
             if (article.siteName) html += `<p style="font-size:0.8rem; color:#888;">${article.siteName}</p>`;
             html += '<hr style="border:1px solid #ccc; margin:15px 0;">';
-            if (article.content) html += article.content; else if (article.textContent) html += `<p>${article.textContent}</p>`; else html += '<p>No readable content found.</p>';
+            if (article.content) html += article.content; else if (article.textContent) html += `<p>${article.textContent}</p>`; else html += '<p>No readable content found</p>';
             view.innerHTML = html;
             if (article.title) updateTabTitle(tab.id, article.title);
             view.querySelectorAll('a').forEach(link => {
@@ -862,7 +862,7 @@
         function openInBrowser() {
             var tab = tabs.find(function(t) { return t.id === activeTabId; });
             if (!tab || !tab.url) {
-                showModal(window.t ? window.t('browser.msg.nourl', 'No page loaded.') : 'No page loaded.');
+                showModal(window.t ? window.t('browser.msg.nourl', 'No page loaded') : 'No page loaded');
                 return;
             }
             window.open(tab.url, '_blank');
@@ -940,7 +940,7 @@
                 })
                 .catch(e => {
                     console.error("Error saving doc: ", e);
-                    showModal(window.t ? window.t('error.generic', 'An error occurred.') : 'An error occurred.');
+                    showModal(window.t ? window.t('error.generic', 'An error occurred') : 'An error occurred');
                 })
                 .finally(() => {
                     btn.innerHTML = originalHtml;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rekindle-cache-v61'; // Remove the torrent beta badge
+const CACHE_NAME = 'rekindle-cache-v62'; // Refresh dashboard copy without trailing periods
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

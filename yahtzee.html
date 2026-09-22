@@ -400,7 +400,7 @@
             list.removeAttribute('data-i18n');
 
             if (!uid) {
-                list.innerText = window.t ? window.t('yahtzee.status.login_required', 'Log in to see global scores.') : "Log in to see scores.";
+                list.innerText = window.t ? window.t('yahtzee.status.login_required', 'Log in to see global scores') : "Log in to see scores";
                 return;
             }
 
@@ -435,7 +435,7 @@
                 });
             } catch (e) {
                 console.error(e);
-                list.innerText = "Error loading scores.";
+                list.innerText = "Error loading scores";
             }
         }
         const CATS = ['ones','twos','threes','fours','fives','sixes','three_of_a_kind','four_of_a_kind','full_house','small_straight','large_straight','yahtzee','chance'];

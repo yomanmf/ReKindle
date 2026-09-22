@@ -552,7 +552,7 @@
             <div class="setting-row" id="layout-setting-row">
                 <div class="setting-text">
                     <strong data-i18n="settings.home_layout">Home Layout</strong>
-                    <div class="setting-desc" data-i18n="settings.desc.home_layout">Choose the classic or modern layout. Note: Classic layout has limited features.</div>
+                    <div class="setting-desc" data-i18n="settings.desc.home_layout">Choose the classic or modern layout. Note: Classic layout has limited features</div>
                 </div>
                 <select id="layout-select" onchange="saveLayout()">
                     <option value="new" data-i18n="settings.layout.new">Modern</option>
@@ -563,7 +563,7 @@
             <div class="setting-row">
                 <div class="setting-text">
                     <strong><span data-i18n="settings.theme">Theme</span> <span class="beta-badge">BETA</span></strong>
-                    <div class="setting-desc" data-i18n="settings.desc.theme">Light, Dark, or Auto (Night).</div>
+                    <div class="setting-desc" data-i18n="settings.desc.theme">Light, Dark, or Auto (Night)</div>
                 </div>
                 <select id="theme-select" onchange="saveTheme()">
                     <option value="light" data-i18n="settings.theme.light">Light</option>
@@ -585,7 +585,7 @@
             <div id="manual-scale-section" style="display: none; border-bottom: 1px solid #eee;">
                 <div class="setting-text" style="padding: 10px 15px 0 0; margin-left: 15px;">
                     <strong>Fixed Scale</strong>
-                    <div class="setting-desc">Pick a manual zoom level.</div>
+                    <div class="setting-desc">Pick a manual zoom level</div>
                 </div>
                 <div class="scale-grid">
                     <button class="scale-btn" onclick="saveManualScale('0.5')" data-scale="0.5">50%</button>
@@ -654,7 +654,7 @@
                 <div class="setting-text">
                     <strong><span data-i18n="settings.language">Language</span> <span
                             class="beta-badge">BETA</span></strong>
-                    <div class="setting-desc" data-i18n="settings.desc.language">System language.</div>
+                    <div class="setting-desc" data-i18n="settings.desc.language">System language</div>
                 </div>
                 <select id="language-select" onchange="saveLanguage()">
                     <option value="auto">Auto (Location)</option>
@@ -718,7 +718,7 @@
             <div class="setting-row">
                 <div class="setting-text">
                     <strong data-i18n="settings.google_tasks">Google Tasks</strong>
-                    <div class="setting-desc" data-i18n="settings.desc.google_tasks">Sync tasks via Google API.</div>
+                    <div class="setting-desc" data-i18n="settings.desc.google_tasks">Sync tasks via Google API</div>
                 </div>
                 <input type="checkbox" id="toggle-tasks" class="toggle-switch" onchange="toggleService('tasks')">
             </div>
@@ -744,7 +744,7 @@
             <div class="setting-row" id="change-password-row" style="display:none;">
                 <div class="setting-text">
                     <strong>Change Password</strong>
-                    <div class="setting-desc">Update your ReKindle account password.</div>
+                    <div class="setting-desc">Update your ReKindle account password</div>
                 </div>
                 <button class="sys-btn" onclick="openPasswordModal()" style="width: auto; padding: 5px 15px;">Edit</button>
             </div>
@@ -930,17 +930,17 @@
             errorEl.style.display = 'none';
 
             if (!current || !newPwd || !confirm) {
-                errorEl.textContent = 'Please fill in all fields.';
+                errorEl.textContent = 'Please fill in all fields';
                 errorEl.style.display = 'block';
                 return;
             }
             if (newPwd.length < 6) {
-                errorEl.textContent = 'New password must be at least 6 characters.';
+                errorEl.textContent = 'New password must be at least 6 characters';
                 errorEl.style.display = 'block';
                 return;
             }
             if (newPwd !== confirm) {
-                errorEl.textContent = 'New passwords do not match.';
+                errorEl.textContent = 'New passwords do not match';
                 errorEl.style.display = 'block';
                 return;
             }
@@ -957,9 +957,9 @@
                 })
                 .catch(err => {
                     if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-                        errorEl.textContent = 'Current password is incorrect.';
+                        errorEl.textContent = 'Current password is incorrect';
                     } else {
-                        errorEl.textContent = err.message || 'An error occurred.';
+                        errorEl.textContent = err.message || 'An error occurred';
                     }
                     errorEl.style.display = 'block';
                 });
@@ -1413,8 +1413,8 @@
                 }
 
                 const msg = isEnabled ? 
-                    window.t('settings.modal.games_disabled', "Games are now disabled and hidden.") : 
-                    window.t('settings.modal.games_enabled', "Games are now enabled.");
+                    window.t('settings.modal.games_disabled', "Games are now disabled and hidden") :
+                    window.t('settings.modal.games_enabled', "Games are now enabled");
                 showModal(msg);
                 return;
             }

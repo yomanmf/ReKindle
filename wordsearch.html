@@ -274,7 +274,7 @@
                 <!-- Words injected here -->
             </div>
 
-            <div id="status-msg" data-i18n="wordsearch.status.instruction">Tap start letter, then tap end letter.</div>
+            <div id="status-msg" data-i18n="wordsearch.status.instruction">Tap start letter, then tap end letter</div>
 
             <div id="grid-container">
                 <!-- Grid injected here -->
@@ -336,7 +336,7 @@
             placedWords = [];
             foundWords = [];
             startSelection = null;
-            document.getElementById('status-msg').innerText = window.t ? window.t('wordsearch.status.instruction') : "Tap start letter, then tap end letter.";
+            document.getElementById('status-msg').innerText = window.t ? window.t('wordsearch.status.instruction') : "Tap start letter, then tap end letter";
 
             // 1. Pick 6 random words
             const shuffled = [...WORD_POOL].sort(() => 0.5 - Math.random());

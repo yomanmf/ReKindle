@@ -76,24 +76,24 @@
     function describeError(error) {
         var code = String(error && error.code || "");
         var messages = {
-            "microsoft-todo-configuration": ["microsofttodo.error.configuration", "Microsoft To Do is not configured on the ReKindle server yet."],
-            "microsoft-todo-auth-expired": ["microsofttodo.error.auth_expired", "The Microsoft sign-in code expired. Get a new code."],
-            "microsoft-todo-auth-declined": ["microsofttodo.error.auth_declined", "Microsoft sign-in was cancelled."],
-            "microsoft-todo-session-expired": ["microsofttodo.error.session_expired", "The Microsoft session expired. Connect again."],
+            "microsoft-todo-configuration": ["microsofttodo.error.configuration", "Microsoft To Do is not configured on the ReKindle server yet"],
+            "microsoft-todo-auth-expired": ["microsofttodo.error.auth_expired", "The Microsoft sign-in code expired. Get a new code"],
+            "microsoft-todo-auth-declined": ["microsofttodo.error.auth_declined", "Microsoft sign-in was cancelled"],
+            "microsoft-todo-session-expired": ["microsofttodo.error.session_expired", "The Microsoft session expired. Connect again"],
             "microsoft-todo-not-connected": ["microsofttodo.error.session_expired", "Connect Microsoft To Do first."],
-            "microsoft-todo-rate-limited": ["microsofttodo.error.rate_limited", "Too many requests. Try again soon."],
-            "microsoft-todo-timeout": ["microsofttodo.error.timeout", "Microsoft did not respond in time."],
-            "microsoft-todo-unavailable": ["microsofttodo.error.unavailable", "Microsoft To Do is temporarily unavailable."],
-            "microsoft-todo-storage-unavailable": ["microsofttodo.error.storage", "Microsoft To Do session storage is temporarily unavailable."],
-            "microsoft-todo-invalid-title": ["microsofttodo.error.title", "Enter a task or list name."],
-            "microsoft-todo-invalid-date": ["microsofttodo.error.date", "Use a valid due date in YYYY-MM-DD format."],
-            "auth/unavailable": ["microsofttodo.error.rekindle_auth", "Sign in to ReKindle first."],
-            "auth/timeout": ["microsofttodo.error.rekindle_auth", "Sign in to ReKindle first."],
-            "auth/restore-failed": ["microsofttodo.error.rekindle_auth", "Sign in to ReKindle first."]
+            "microsoft-todo-rate-limited": ["microsofttodo.error.rate_limited", "Too many requests. Try again soon"],
+            "microsoft-todo-timeout": ["microsofttodo.error.timeout", "Microsoft did not respond in time"],
+            "microsoft-todo-unavailable": ["microsofttodo.error.unavailable", "Microsoft To Do is temporarily unavailable"],
+            "microsoft-todo-storage-unavailable": ["microsofttodo.error.storage", "Microsoft To Do session storage is temporarily unavailable"],
+            "microsoft-todo-invalid-title": ["microsofttodo.error.title", "Enter a task or list name"],
+            "microsoft-todo-invalid-date": ["microsofttodo.error.date", "Use a valid due date in YYYY-MM-DD format"],
+            "auth/unavailable": ["microsofttodo.error.rekindle_auth", "Sign in to ReKindle first"],
+            "auth/timeout": ["microsofttodo.error.rekindle_auth", "Sign in to ReKindle first"],
+            "auth/restore-failed": ["microsofttodo.error.rekindle_auth", "Sign in to ReKindle first"]
         };
         if (messages[code]) return translate(messages[code][0], messages[code][1]);
-        if (error && error.message === "Please sign in first.") return translate("microsofttodo.error.rekindle_auth", "Sign in to ReKindle first.");
-        return error && error.message || translate("microsofttodo.error.connection", "Could not reach Microsoft To Do.");
+        if (error && error.message === "Please sign in first.") return translate("microsofttodo.error.rekindle_auth", "Sign in to ReKindle first");
+        return error && error.message || translate("microsofttodo.error.connection", "Could not reach Microsoft To Do");
     }
 
     function request(action, body) {
@@ -106,7 +106,7 @@
             signal: controller ? controller.signal : undefined
         }).catch(function (error) {
             if (error && error.name === "AbortError") {
-                var timeout = new Error(translate("microsofttodo.error.timeout", "Microsoft did not respond in time."));
+                var timeout = new Error(translate("microsofttodo.error.timeout", "Microsoft did not respond in time"));
                 timeout.code = "microsoft-todo-timeout";
                 throw timeout;
             }
@@ -213,8 +213,8 @@
     function updateExpiryText() {
         var remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 60000));
         var text = remaining > 0
-            ? template("microsofttodo.auth.expires", "Code expires in about ${minutes} minutes.", { minutes: remaining })
-            : translate("microsofttodo.auth.expired", "This code has expired.");
+            ? template("microsofttodo.auth.expires", "Code expires in about ${minutes} minutes", { minutes: remaining })
+            : translate("microsofttodo.auth.expired", "This code has expired");
         setText(byId("code-expiry"), text);
     }
 

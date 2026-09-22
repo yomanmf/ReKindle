@@ -261,7 +261,7 @@
         </div>
 
         <div class="game-content">
-            <div id="msg-area" data-i18n="jigsaw.label.instruction">Tap pieces to swap them.</div>
+            <div id="msg-area" data-i18n="jigsaw.label.instruction">Tap pieces to swap them</div>
 
             <div id="puzzle-board">
                 <!-- Pieces injected here -->
@@ -358,7 +358,7 @@
             isSolved = false;
             selectedIdx = -1;
             const msgArea = document.getElementById('msg-area');
-            msgArea.innerText = window.t ? window.t('jigsaw.label.instruction') : "Tap pieces to swap them.";
+            msgArea.innerText = window.t ? window.t('jigsaw.label.instruction') : "Tap pieces to swap them";
             msgArea.removeAttribute('data-i18n');
 
             imageUrl = generateArt();

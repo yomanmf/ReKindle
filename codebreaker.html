@@ -517,7 +517,7 @@
     <div id="new-game-modal" class="modal-overlay">
         <div class="modal-box">
             <h2 data-i18n="codebreaker.modal.new.title">New Game</h2>
-            <p data-i18n="codebreaker.modal.new.body">Start a new game? Your current progress will be lost.</p>
+            <p data-i18n="codebreaker.modal.new.body">Start a new game? Your current progress will be lost</p>
             <button class="modal-btn" onclick="startNewGameFromModal()" data-i18n="codebreaker.modal.new.yes">Yes, Start
                 New</button>
             <button class="modal-btn" onclick="closeModal('new-game-modal')" data-i18n="codebreaker.modal.new.cancel">Cancel</button>
@@ -779,7 +779,7 @@
                 (window.t ? window.t('codebreaker.modal.lose.title') : "GAME OVER");
             document.getElementById('result-body').innerText = isWin ?
                 (window.t ? window.t('codebreaker.modal.win.body') : "You cracked the code!") :
-                (window.t ? window.t('codebreaker.modal.lose.body') : "You ran out of guesses.");
+                (window.t ? window.t('codebreaker.modal.lose.body') : "You ran out of guesses");
 
             document.getElementById('result-title').removeAttribute('data-i18n');
             document.getElementById('result-body').removeAttribute('data-i18n');
