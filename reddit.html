@@ -336,10 +336,18 @@
             margin-left: 18px;
         }
 
+        .feed-refresh-btn,
         .feed-top-btn {
             min-width: 48px;
             min-height: 48px;
+        }
+
+        .feed-refresh-btn {
             margin-left: auto;
+        }
+
+        .feed-top-btn {
+            margin-left: 8px;
         }
 
         .feed-setting-label {
@@ -767,6 +775,14 @@
                             <option value="all" data-i18n="reddit.feed.time.all">All time</option>
                         </select>
                     </div>
+                    <button class="nav-btn feed-refresh-btn" type="button" onclick="ui.loadCurrentSub()"
+                        aria-label="Refresh" data-i18n-title="common.refresh" title="Refresh">
+                        <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true" fill="none"
+                            stroke="currentColor" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
+                            <path d="M25 10A11 11 0 1 0 27 20"></path>
+                            <path d="M25 4V10H19"></path>
+                        </svg>
+                    </button>
                     <button class="nav-btn feed-top-btn" type="button"
                         onclick="document.getElementById('content-area').scrollTop = 0"
                         aria-label="Scroll to top" title="Scroll to top">^</button>

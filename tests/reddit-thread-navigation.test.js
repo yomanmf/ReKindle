@@ -23,14 +23,15 @@ test('renders an accessible next-thread button in the Reddit toolbar', function 
     assert.match(redditHtml, /\.next-thread-btn\.visible\s*\{[^}]*display:\s*inline-block/);
 });
 
-test('renders a right-aligned feed scroll-to-top button beside sorting controls', function () {
-    var topButtonStyles = redditHtml.match(/\.feed-top-btn\s*\{([^}]*)\}/);
+test('renders right-aligned refresh and scroll-to-top buttons beside sorting controls', function () {
+    var refreshButtonStyles = redditHtml.match(/\.feed-refresh-btn\s*\{([^}]*)\}/);
 
+    assert.match(redditHtml, /class="nav-btn feed-refresh-btn"[^>]*onclick="ui\.loadCurrentSub\(\)"[^>]*data-i18n-title="common\.refresh"/);
     assert.match(redditHtml, /class="nav-btn feed-top-btn"[^>]*onclick="document\.getElementById\('content-area'\)\.scrollTop = 0"[^>]*>\^<\/button>/);
-    assert.ok(topButtonStyles);
-    assert.match(topButtonStyles[1], /margin-left:\s*auto/);
-    assert.match(topButtonStyles[1], /min-width:\s*48px/);
-    assert.match(topButtonStyles[1], /min-height:\s*48px/);
+    assert.ok(refreshButtonStyles);
+    assert.match(refreshButtonStyles[1], /margin-left:\s*auto/);
+    assert.match(redditHtml, /\.feed-top-btn\s*\{\s*margin-left:\s*8px/);
+    assert.match(redditHtml, /\.feed-refresh-btn,\s*\.feed-top-btn\s*\{[^}]*min-width:\s*48px[^}]*min-height:\s*48px/);
 });
 
 test('shares half-screen controls between the feed and thread navigation', function () {
