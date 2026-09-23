@@ -33,6 +33,6 @@ test('keeps the popular subreddit screen to 100 valid names', function() {
 
 test('requests Reddit popular communities and opens a selected subreddit', function() {
     assert.match(html, /api\.request\('\/subreddits\/popular\.rss\?limit=100'\)/);
-    assert.match(html, /if \(subs\.length === 0\) throw new Error\('No subreddits found\.'\)/);
+    assert.match(html, /if \(subs\.length === 0\) \{[\s\S]*?data-i18n="reddit\.error\.no_subreddits"/);
     assert.match(html, /document\.getElementById\('sub-input'\)\.value = sub;\s*ui\.loadCurrentSub\(\);/);
 });

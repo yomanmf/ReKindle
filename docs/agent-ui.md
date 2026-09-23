@@ -383,6 +383,8 @@ enrichment; an optional score failure must not reload otherwise usable content.
 When the main thread RSS returns 429, skip the JSON fallback: it clears the
 countdown and makes another request during the limit. Show the same countdown
 inside the thread content area while the page waits to reload.
+Reddit's red error views must map HTTP status to localized messages instead of
+showing raw `Error.message`, which may be English browser or proxy text.
 
 **Reddit publication-time gotcha:** Feed and thread timestamps use different
 source fields: RSS uses `pubDate` or namespaced `date`, Atom uses `published` or

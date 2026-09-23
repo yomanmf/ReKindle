@@ -7,6 +7,7 @@ var path = require('node:path');
 var vm = require('node:vm');
 
 var redditHtml = fs.readFileSync(path.join(__dirname, '..', 'reddit.html'), 'utf8');
+var russian = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'locales', 'ru.json'), 'utf8'));
 
 function createApi(fetchImpl, ui) {
     var start = redditHtml.indexOf('const REDDIT_PROXY_ENDPOINT');
@@ -208,6 +209,23 @@ test('thread 429 shows the countdown without requesting the JSON fallback', func
     var source = redditHtml.slice(redditHtml.indexOf('async loadThread(permalink)'), redditHtml.indexOf('processCommentHtml(html)'));
     assert.match(source, /if \(rssError\.status === 429\) throw rssError;[\s\S]*?api\.getThreadJson\(permalink\)/);
     assert.match(source, /if \(e\.status === 429\) \{[\s\S]*?id="thread-rate-limit-message"[\s\S]*?this\.showRateLimitMessage\(\)/);
+});
+
+test('shows Russian reasons for Reddit errors without exposing English exception text', function () {
+    var start = redditHtml.indexOf('function redditErrorHtml(error)');
+    var end = redditHtml.indexOf('function escapeHtml(text)', start);
+    var render = Function('window', 'escapeHtml', 'return ' + redditHtml.slice(start, end).trim())(
+        { t: function (key, fallback) { return russian[key] || fallback; } },
+        function (value) { return String(value); }
+    );
+
+    assert.match(render({ status: 429, message: 'Status 429' }), /Reddit ограничил частоту запросов.*HTTP 429/);
+    assert.match(render({ status: 404, message: 'Status 404' }), /Прокси Reddit не найден.*HTTP 404/);
+    assert.match(render({ status: 503, message: 'Status 503' }), /Прокси Reddit временно недоступен.*HTTP 503/);
+    assert.match(render({ status: 403, message: 'Status 403' }), /Не удалось загрузить данные Reddit.*HTTP 403/);
+    assert.match(render(new Error('Failed to fetch')), /Не удалось загрузить данные Reddit/);
+    assert.doesNotMatch(render(new Error('Failed to fetch')), /Failed to fetch/);
+    assert.doesNotMatch(redditHtml, /style="color:red"[^\n]*escapeHtml\(e\.message\)/);
 });
 
 test('does not render a feed response superseded while its body is loading', async function () {

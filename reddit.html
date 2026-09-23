@@ -1544,7 +1544,7 @@
                     content.innerHTML = '<div class="loading" style="color:#a60;">Showing cached posts for r/' + escapeHtml(sub) + ' because Reddit is busy.<br>Pull to refresh or try again shortly</div>';
                 }
                 if (posts.length === 0) {
-                    if (!stale) content.innerHTML = '<div class="loading">No posts found</div>';
+                    if (!stale) content.innerHTML = '<div class="loading" data-i18n="reddit.error.no_posts">' + escapeHtml(window.t ? window.t('reddit.error.no_posts', 'No posts found') : 'No posts found') + '</div>';
                     return;
                 }
                 posts.forEach(function(p) {
@@ -1893,7 +1893,9 @@
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
                     if (cachedPosts.length === 0) {
-                        content.innerHTML = `<div class="loading" style="color:red">Error loading r/${escapeHtml(sub)}<br>${escapeHtml(e.message)}<br><small>If proxy issues persist, try reloading</small></div>`;
+                        const title = window.t ? window.t('reddit.msg.error', 'Error loading') : 'Error loading';
+                        const hint = window.t ? window.t('reddit.error.retry_hint', 'If the problem persists, reload the page') : 'If the problem persists, reload the page';
+                        content.innerHTML = `<div class="loading" style="color:red"><span data-i18n="reddit.msg.error">${escapeHtml(title)}</span> r/${escapeHtml(sub)}<br>${redditErrorHtml(e)}<br><small data-i18n="reddit.error.retry_hint">${escapeHtml(hint)}</small></div>`;
                     }
                 }
             },
@@ -1912,7 +1914,10 @@
 
                 try {
                     const subs = parseTopSubreddits(await api.request('/subreddits/popular.rss?limit=100'));
-                    if (subs.length === 0) throw new Error('No subreddits found.');
+                    if (subs.length === 0) {
+                        content.innerHTML = '<div class="loading" style="color:red" data-i18n="reddit.error.no_subreddits">' + escapeHtml(window.t ? window.t('reddit.error.no_subreddits', 'No subreddits found') : 'No subreddits found') + '</div>';
+                        return;
+                    }
                     const topLabel = window.t ? window.t('reddit.feed.sort.top', 'Top') : 'Top';
                     content.innerHTML = '<div class="sidebar-header">' + escapeHtml(topLabel) + ' 100</div>';
                     subs.forEach(function(sub, index) {
@@ -1927,7 +1932,8 @@
                     });
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
-                    content.innerHTML = '<div class="loading" style="color:red">Error loading Top 100<br>' + escapeHtml(e.message) + '</div>';
+                    const title = window.t ? window.t('reddit.error.top', 'Error loading Top 100') : 'Error loading Top 100';
+                    content.innerHTML = '<div class="loading" style="color:red"><span data-i18n="reddit.error.top">' + escapeHtml(title) + '</span><br>' + redditErrorHtml(e) + '</div>';
                 }
             },
 
@@ -1996,7 +2002,7 @@
                     }
 
                     if (!post) {
-                        content.innerHTML = `<div class="loading" style="color:red">No thread data found</div>`;
+                        content.innerHTML = '<div class="loading" style="color:red" data-i18n="reddit.error.no_thread_data">' + escapeHtml(window.t ? window.t('reddit.error.no_thread_data', 'No thread data found') : 'No thread data found') + '</div>';
                         this.updateCommentNavigation();
                         return;
                     }
@@ -2080,7 +2086,8 @@
                         content.innerHTML = '<div class="loading" id="thread-rate-limit-message"></div>';
                         this.showRateLimitMessage();
                     } else {
-                        content.innerHTML = `<div class="loading" style="color:red">Error loading thread<br>${escapeHtml(e.message)}</div>`;
+                        const title = window.t ? window.t('reddit.error.thread', 'Error loading thread') : 'Error loading thread';
+                        content.innerHTML = '<div class="loading" style="color:red"><span data-i18n="reddit.error.thread">' + escapeHtml(title) + '</span><br>' + redditErrorHtml(e) + '</div>';
                     }
                     this.updateCommentNavigation();
                 } finally {
@@ -2273,6 +2280,23 @@
                 return txt.value;
             }
         };
+
+        function redditErrorHtml(error) {
+            const status = error && error.status;
+            const key = status === 404 ? 'reddit.error.proxy_missing'
+                : status === 429 ? 'reddit.error.rate_limited'
+                : status >= 500 ? 'reddit.error.proxy_unavailable'
+                : 'reddit.error.request_failed';
+            const fallbacks = {
+                'reddit.error.proxy_missing': 'Reddit proxy was not found',
+                'reddit.error.rate_limited': 'Reddit is rate limiting requests',
+                'reddit.error.proxy_unavailable': 'Reddit proxy is temporarily unavailable',
+                'reddit.error.request_failed': 'Could not load Reddit data'
+            };
+            const label = window.t ? window.t(key, fallbacks[key]) : fallbacks[key];
+            return '<span data-i18n="' + key + '">' + escapeHtml(label) + '</span>' +
+                (typeof status === 'number' ? ' (HTTP ' + status + ')' : '');
+        }
 
         function escapeHtml(text) {
             if (!text) return '';
