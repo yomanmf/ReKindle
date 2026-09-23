@@ -166,6 +166,7 @@ test('handles a foreground 429 end to end with a 5-second countdown and reload',
     var tick;
     var reloads = 0;
     var message = { innerText: '', style: {} };
+    var threadMessage = null;
     var ui = {
         rateLimitTimer: null,
         rateLimitUntil: 0,
@@ -174,7 +175,7 @@ test('handles a foreground 429 end to end with a 5-second countdown and reload',
     };
     var show = Function('document', 'window', 'Date', 'setInterval', 'clearInterval', 'ui',
         'return function ' + source)(
-        { getElementById: function () { return message; } },
+        { getElementById: function (id) { return id === 'thread-rate-limit-message' ? threadMessage : message; } },
         { t: function (key, fallback) { return fallback; }, location: { reload: function () { reloads++; } } },
         { now: function () { return now; } },
         function (callback) { tick = callback; return 1; },
@@ -184,9 +185,16 @@ test('handles a foreground 429 end to end with a 5-second countdown and reload',
 
     ui.showRateLimitMessage = show;
     var api = createApi(async function () { return { ok: false, status: 429 }; }, ui);
-    await assert.rejects(api.request('/r/test.rss'), /Status 429/);
+    await assert.rejects(api.request('/r/test.rss'), function (error) {
+        assert.equal(error.status, 429);
+        return /Status 429/.test(error.message);
+    });
     assert.equal(message.innerText, 'Reddit is rate limiting access. Reloading in 5s');
     assert.equal(message.style.display, 'block');
+    threadMessage = { innerText: '' };
+    show.call(ui);
+    assert.equal(threadMessage.innerText, message.innerText);
+    assert.equal(message.style.display, 'none');
     now += 4000;
     tick();
     assert.match(message.innerText, /1s$/);
@@ -194,6 +202,12 @@ test('handles a foreground 429 end to end with a 5-second countdown and reload',
     tick();
     assert.equal(reloads, 1);
     assert.equal(ui.rateLimitTimer, null);
+});
+
+test('thread 429 shows the countdown without requesting the JSON fallback', function () {
+    var source = redditHtml.slice(redditHtml.indexOf('async loadThread(permalink)'), redditHtml.indexOf('processCommentHtml(html)'));
+    assert.match(source, /if \(rssError\.status === 429\) throw rssError;[\s\S]*?api\.getThreadJson\(permalink\)/);
+    assert.match(source, /if \(e\.status === 429\) \{[\s\S]*?id="thread-rate-limit-message"[\s\S]*?this\.showRateLimitMessage\(\)/);
 });
 
 test('does not render a feed response superseded while its body is loading', async function () {

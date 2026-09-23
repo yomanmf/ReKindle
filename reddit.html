@@ -1003,7 +1003,9 @@
                 }
                 if (lastStatus) msg += " (last status " + lastStatus + ")";
                 if (lastError) msg += " - " + lastError.message;
-                throw new Error(msg);
+                const error = new Error(msg);
+                error.status = lastStatus;
+                throw error;
             },
 
             async getSubreddit(sub, after) {
@@ -1970,6 +1972,7 @@
                         shouldLoadRoots = !!data.post;
                     } catch (rssError) {
                         if (rssError.message && rssError.message.indexOf('superseded') !== -1) throw rssError;
+                        if (rssError.status === 429) throw rssError;
                         rssFailure = rssError;
                         console.warn('Thread RSS failed, trying JSON:', rssError);
                     }
@@ -1982,7 +1985,7 @@
                             data = window.RekindleRedditComments.parseThread(responseText);
                             console.log('Thread JSON has post:', !!data.post, 'comments:', data.comments.length);
                         } catch (jsonError) {
-                            throw rssFailure || jsonError;
+                            throw jsonError.status === 429 ? jsonError : (rssFailure || jsonError);
                         }
                     }
                     const post = data.post;
@@ -2073,7 +2076,12 @@
                     }
                 } catch (e) {
                     if (e.message && e.message.indexOf('superseded') !== -1) return;
-                    content.innerHTML = `<div class="loading" style="color:red">Error loading thread<br>${escapeHtml(e.message)}</div>`;
+                    if (e.status === 429) {
+                        content.innerHTML = '<div class="loading" id="thread-rate-limit-message"></div>';
+                        this.showRateLimitMessage();
+                    } else {
+                        content.innerHTML = `<div class="loading" style="color:red">Error loading thread<br>${escapeHtml(e.message)}</div>`;
+                    }
                     this.updateCommentNavigation();
                 } finally {
                     if (this.currentThread === permalink) {
@@ -2232,7 +2240,9 @@
                     const fallback = 'Reddit is rate limiting access. Reloading in ${seconds}s';
                     const template = window.t ? window.t('reddit.rate_limit.countdown', fallback) : fallback;
                     msg.innerText = template.replace('${seconds}', seconds);
-                    msg.style.display = 'block';
+                    const threadMsg = document.getElementById('thread-rate-limit-message');
+                    if (threadMsg) threadMsg.innerText = msg.innerText;
+                    msg.style.display = threadMsg ? 'none' : 'block';
                     if (seconds > 0) return;
 
                     if (ui.rateLimitTimer) clearInterval(ui.rateLimitTimer);

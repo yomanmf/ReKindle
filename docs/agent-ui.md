@@ -380,6 +380,9 @@ inline `#rate-limit-message` countdown and reload the page after 5 seconds.
 Keep the timer based on an absolute deadline, cancel it after a successful or
 manually retried foreground request, and never start it for background score
 enrichment; an optional score failure must not reload otherwise usable content.
+When the main thread RSS returns 429, skip the JSON fallback: it clears the
+countdown and makes another request during the limit. Show the same countdown
+inside the thread content area while the page waits to reload.
 
 **Reddit publication-time gotcha:** Feed and thread timestamps use different
 source fields: RSS uses `pubDate` or namespaced `date`, Atom uses `published` or
